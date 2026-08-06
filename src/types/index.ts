@@ -1,169 +1,103 @@
 import type { Database } from '@/types/database.types';
 
 /**
- * Convenience row aliases from the generated schema.
+ * Row aliases over the generated schema.
  *
- * NOTE: `database.types.ts` currently reflects 0001_init.sql only. After applying
- * `supabase/migrations/0002_salon.sql`, regenerate it:
+ * `database.types.ts` is generated from the live database (0001 → 0003) with:
  *
  *   supabase gen types typescript --project-id <ref> --schema public \
  *     > src/types/database.types.ts
  *
- * The domain types below are hand-written against 0002 so the app can be built
- * before the database exists. Once the file above is regenerated, prefer the
- * generated rows and delete the duplicates here.
+ * Regenerate it after every migration. Everything below derives from it, so a
+ * schema change that breaks the app shows up as a type error rather than as a
+ * runtime surprise.
  */
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+type Tables = Database['public']['Tables'];
+type Views = Database['public']['Views'];
+type Enums = Database['public']['Enums'];
 
-export type AppSettings = Database['public']['Tables']['app_settings']['Row'];
-export type AppSettingsUpdate = Database['public']['Tables']['app_settings']['Update'];
+export type Profile = Tables['profiles']['Row'];
+export type ProfileUpdate = Tables['profiles']['Update'];
+
+export type AppSettings = Tables['app_settings']['Row'];
+export type AppSettingsUpdate = Tables['app_settings']['Update'];
 
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type ResolvedTheme = 'dark' | 'light';
 
-/* ---------------------------------------------------------------- domain -- */
+/* ---------------------------------------------------------------- enums --- */
 
-export type AppointmentStatus =
-  | 'pending_approval'
-  | 'confirmed'
-  | 'checked_in'
-  | 'in_service'
-  | 'completed'
-  | 'cancelled'
-  | 'rejected'
-  | 'rescheduled'
-  | 'no_show';
-
-export type AvailabilityRequestStatus =
-  'new' | 'awaiting_response' | 'offer_sent' | 'converted' | 'declined' | 'expired';
-
-export type EmailStatus = 'queued' | 'sending' | 'sent' | 'failed' | 'bounced';
-export type RecommendationStatus = 'pending' | 'accepted' | 'dismissed' | 'expired';
-export type ExceptionKind = 'closure' | 'extra_hours' | 'break';
+export type AppointmentStatus = Enums['appointment_status'];
+export type AvailabilityRequestStatus = Enums['availability_request_status'];
+export type EmailStatus = Enums['email_status'];
+export type RecommendationStatus = Enums['recommendation_status'];
+export type ExceptionKind = Enums['exception_kind'];
 export type Flexibility = 'any' | 'morning' | 'afternoon' | 'evening';
 
-export interface ServiceCategory {
-  id: string;
-  name: string;
-  slug: string;
-  sort_order: number;
-}
+/** The statuses that occupy the calendar — mirrors `appointments_no_overlap`. */
+export const LIVE_STATUSES = [
+  'pending_approval',
+  'confirmed',
+  'checked_in',
+  'in_service',
+  'completed',
+] as const satisfies readonly AppointmentStatus[];
 
-export interface Service {
-  id: string;
-  category_id: string | null;
-  name: string;
-  slug: string;
-  description: string | null;
-  /** Chair time, excluding buffer. */
-  duration_min: number;
-  /** Clean-down time reserved after the appointment. */
-  buffer_min: number;
-  /** Always integer pence. Never a float — money is not a float. */
-  price_pence: number;
-  image_path: string | null;
-  is_active: boolean;
-  sort_order: number;
-  archived_at: string | null;
-}
+/* --------------------------------------------------------------- domain --- */
 
-export interface Customer {
-  id: string;
-  email: string;
-  mobile: string | null;
-  full_name: string;
-  notes: string | null;
-  marketing_consent: boolean;
-  first_seen_at: string;
-  last_seen_at: string | null;
-  deleted_at: string | null;
-}
+export type ServiceCategory = Tables['service_categories']['Row'];
+export type ServiceCategoryInsert = Tables['service_categories']['Insert'];
 
-export interface Appointment {
-  id: string;
-  reference: string;
-  customer_id: string;
-  service_id: string;
-  /** UTC ISO 8601. Always convert with the salon timezone for display. */
-  starts_at: string;
-  ends_at: string;
-  status: AppointmentStatus;
-  price_pence: number;
-  customer_note: string | null;
-  owner_note: string | null;
-  source: 'web' | 'owner' | 'availability_request';
-  requires_approval: boolean;
-  approval_deadline: string | null;
-  approved_at: string | null;
-  rejected_at: string | null;
-  rejection_reason: string | null;
-  cancelled_at: string | null;
-  cancellation_reason: string | null;
-  checked_in_at: string | null;
-  completed_at: string | null;
-  review_requested_at: string | null;
-}
+export type Service = Tables['services']['Row'];
+export type ServiceInsert = Tables['services']['Insert'];
+export type ServiceUpdate = Tables['services']['Update'];
 
-export interface AvailabilityRule {
-  id: string;
-  /** 0 = Sunday, matching Postgres `extract(dow …)`. */
-  day_of_week: number;
-  opens_at: string;
-  closes_at: string;
-  is_open: boolean;
-}
+export type Customer = Tables['customers']['Row'];
+export type CustomerUpdate = Tables['customers']['Update'];
 
-export interface AvailabilityException {
-  id: string;
-  kind: ExceptionKind;
-  on_date: string;
-  starts_at: string | null;
-  ends_at: string | null;
-  reason: string | null;
-}
+export type Appointment = Tables['appointments']['Row'];
+export type AppointmentUpdate = Tables['appointments']['Update'];
 
-export interface BookingSettings {
+/**
+ * Appointment joined to its customer and service. Every owner screen uses this
+ * rather than `appointments`, because a row without the customer's name and the
+ * service name is not something anyone can act on.
+ *
+ * The view is `security_invoker`, so RLS on the base tables still governs it.
+ * Generated view columns are all nullable; the joins are inner and the columns
+ * are `not null` at source, so the non-null assertions in the alias below are
+ * narrowing, not wishful thinking.
+ */
+type DetailedRow = Views['appointments_detailed']['Row'];
+export type AppointmentDetailed = Omit<DetailedRow, keyof Appointment> & Appointment;
+
+export type AvailabilityRule = Tables['availability_rules']['Row'];
+export type AvailabilityRuleInsert = Tables['availability_rules']['Insert'];
+
+export type AvailabilityException = Tables['availability_exceptions']['Row'];
+export type AvailabilityExceptionInsert = Tables['availability_exceptions']['Insert'];
+
+export type BookingSettings = Tables['booking_settings']['Row'];
+export type BookingSettingsUpdate = Tables['booking_settings']['Update'];
+
+export type AvailabilityRequest = Tables['availability_requests']['Row'];
+export type EmailMessage = Tables['email_messages']['Row'];
+export type AiRecommendation = Tables['ai_recommendations']['Row'];
+
+/** Shape returned by `public.owner_dashboard_summary()`. */
+export interface OwnerSummary {
+  today: string;
   timezone: string;
-  slot_granularity_min: number;
-  default_buffer_min: number;
-  lead_time_min: number;
-  max_horizon_days: number;
-  max_appointments_per_day: number;
-  cancellation_window_h: number;
-  /** Hybrid policy switch: hold first-time bookings for owner approval. */
-  approve_first_time: boolean;
-  approval_window_h: number;
-  google_review_url: string | null;
-}
-
-export interface AvailabilityRequest {
-  id: string;
-  customer_id: string | null;
-  full_name: string;
-  email: string;
-  mobile: string | null;
-  service_id: string | null;
-  preferred_dates: string[];
-  preferred_times: string | null;
-  flexibility: Flexibility;
-  notes: string | null;
-  status: AvailabilityRequestStatus;
-  owner_response: string | null;
-  responded_at: string | null;
-  converted_appointment_id: string | null;
-  created_at: string;
-}
-
-export interface AiRecommendation {
-  id: string;
-  kind: string;
-  title: string;
-  rationale: string | null;
-  payload: Record<string, unknown>;
-  confidence: number | null;
-  status: RecommendationStatus;
-  created_at: string;
+  today_count: number;
+  today_revenue_pence: number;
+  pending_approval_count: number;
+  /** Holds inside their final two hours — the ones that need answering now. */
+  urgent_approval_count: number;
+  new_request_count: number;
+  upcoming_7d_count: number;
+  active_service_count: number;
+  customer_count: number;
+  failed_email_count: number;
 }
 
 /** A bookable slot produced by the availability engine. */
@@ -182,7 +116,7 @@ export interface BookingResult {
   status: Extract<AppointmentStatus, 'confirmed' | 'pending_approval'>;
 }
 
-/** Error codes raised by `book_appointment`. Surface these as copy, not stack traces. */
+/** Error codes raised by the booking and owner RPCs. Surface as copy, not stack traces. */
 export type BookingErrorCode =
   | 'SERVICE_UNAVAILABLE'
   | 'SLOT_MISALIGNED'
@@ -190,4 +124,8 @@ export type BookingErrorCode =
   | 'BEYOND_BOOKING_HORIZON'
   | 'OUTSIDE_AVAILABILITY'
   | 'DAILY_CAPACITY_REACHED'
-  | 'SLOT_TAKEN';
+  | 'SLOT_TAKEN'
+  | 'NOT_AUTHORISED'
+  | 'NOT_PENDING'
+  | 'NOT_FOUND'
+  | 'ILLEGAL_TRANSITION';

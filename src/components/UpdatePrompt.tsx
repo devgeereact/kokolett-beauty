@@ -23,8 +23,8 @@ export function UpdatePrompt(): JSX.Element | null {
   if (!needRefresh) return null;
 
   return (
-    <div className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-md animate-fade-up items-center justify-between gap-4 rounded-2xl border border-surface-border bg-surface p-4 shadow-lg">
-      <p className="text-sm text-content">A new version is available.</p>
+    <div className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-md animate-fade-up items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 shadow-lg">
+      <p className="text-sm text-foreground">A new version is available.</p>
       <Button size="sm" onClick={() => void update?.()}>
         Reload
       </Button>

@@ -13,13 +13,13 @@ export function HomePage(): JSX.Element {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
-        <p className="mb-4 inline-block rounded-full border border-surface-border bg-surface px-3 py-1 text-sm text-content-muted">
+        <p className="mb-4 inline-block rounded-full border border-border bg-card px-3 py-1 text-sm text-muted-foreground">
           Offline-first · Installable · Static
         </p>
-        <h1 className="font-display text-5xl font-extrabold tracking-tight text-content md:text-7xl">
+        <h1 className="font-display text-5xl font-extrabold tracking-tight text-foreground md:text-7xl">
           Ship a PWA <span className="text-primary">today</span>.
         </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-content-muted">
+        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
           A production-ready starter with auth, offline caching, image optimization, and
           monitoring — all on cheap static hosting.
         </p>
@@ -37,7 +37,7 @@ export function HomePage(): JSX.Element {
             href="https://github.com"
             target="_blank"
             rel="noreferrer"
-            className="text-content-muted underline-offset-4 hover:underline"
+            className="text-muted-foreground underline-offset-4 hover:underline"
           >
             View docs
           </a>

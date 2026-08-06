@@ -260,3 +260,48 @@ select id, 'owner' from public.profiles where email = 'owner@example.com';
 | hourly       | `select public.expire_pending_approvals();`                          |
 | every 15 min | drain due `email_messages` (via the Inngest endpoint)                |
 | daily 06:00  | `ai/daily-insights` — utilisation, waitlist matches, demand patterns |
+
+## 8. Migration `0003_owner_ops.sql`
+
+Added for the owner dashboard. Everything here is additive; `0001` and `0002` are
+unchanged.
+
+**Seeds.** Four service categories (Cutting, Colouring, Styling, Treatments) and
+standing hours of Tue–Sat 09:00–18:00. Services are still _not_ seeded, for the
+reason given in §6 — durations and prices are the owner's to set. The hours are a
+placeholder she is expected to correct.
+
+Note this narrows §6's "nothing else": categories and hours are structure, not
+claims about the business. A wrong opening time is visible and fixable in one
+screen; a wrong price is a promise to a customer.
+
+**Scheduling.** `expire_pending_approvals()` existed in `0002` but nothing called
+it, so an unanswered hold occupied its slot forever. Now scheduled hourly at
+`:07` via `pg_cron`, wrapped so a plan without the extension logs a notice
+instead of failing the migration.
+
+**`appointments_detailed`.** A `security_invoker` view joining appointments to
+customer and service, plus `customer_completed_count` — the same "returning"
+signal `book_appointment()` acts on. Because it is invoker, RLS on the base
+tables still governs it, and anon reads return `[]`.
+
+**Owner RPCs.** All `security definer` with an explicit `is_owner()` guard, and
+`execute` revoked from `anon`:
+
+| Function                                     | Purpose                                                     |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| `owner_dashboard_summary()`                  | Every headline count in one round trip; returns `jsonb`.    |
+| `approve_appointment(uuid)`                  | `pending_approval` → `confirmed`, stamping approver + time. |
+| `reject_appointment(uuid, text)`             | `pending_approval` → `rejected` with a reason.              |
+| `set_appointment_status(uuid, status, text)` | Check-in → in service → completed, no-show, cancel.         |
+| `create_appointment_as_owner(...)`           | Phone and walk-in bookings.                                 |
+
+`set_appointment_status` enforces a transition table rather than accepting any
+status: `confirmed` → `checked_in`/`in_service`/`completed`/`cancelled`/`no_show`,
+`checked_in` → `in_service`/`completed`/`cancelled`/`no_show`, `in_service` →
+`completed`/`cancelled`. Anything else raises `ILLEGAL_TRANSITION`. Terminal
+states have no exits.
+
+`create_appointment_as_owner` deliberately bypasses the first-time approval gate
+— the owner is looking at the customer — but not `appointments_no_overlap`, so a
+phone booking still cannot double-book a web booking.

@@ -1,0 +1,142 @@
+# Hard Coding Rules & Standards — Kokolett Beauty UK
+
+These are enforced by TypeScript, ESLint, and CodeRabbit. PRs that violate them
+do not merge.
+
+## 1. Architecture
+
+- **Static-first.** All code runs client-side or hits a managed API. No Node
+  server, no SSR, no serverless functions inside this repo.
+- **Respect the folder map** in `docs/ARCHITECTURE.md`. No new top-level folders
+  without updating that doc first.
+- **No import cycles.** Direction is `pages → services → lib`; components use
+  `hooks`/`context`. `lib` imports nothing from `pages`/`components`.
+
+## 2. TypeScript
+
+- `"strict": true`. **No implicit `any`** — `@typescript-eslint/no-explicit-any`
+  is an error.
+- Explicit return types on exported functions and all hooks.
+- Prefer `type`/`interface` over inline anonymous shapes for anything reused.
+- Use the `@/` path alias; no deep `../../../` relative imports.
+
+## 3. React
+
+- Function components + hooks only. No class components except `ErrorBoundary`.
+- Follow the Rules of Hooks (lint-enforced). Keep `useEffect` deps honest.
+- One component per file; name the file after the component (`PascalCase.tsx`).
+- Derive state; don't duplicate it. Lift state only as far as needed.
+
+## 4. Styling
+
+- Tailwind / NativeWind utilities **only**. Tokens from `tailwind.config.ts`.
+- **No** inline `style={{}}`, no `.css`/`.module.css`, no CSS-in-JS.
+- Mobile-first: base styles, then `sm:` / `md:` / `lg:` overrides.
+- Compose conditional classes with `cn()` (never string-concatenate classes).
+
+## 5. Data & security
+
+- All Supabase access via `src/services/*` (or `src/lib/supabase.ts`); components
+  don't build raw queries inline.
+- Assume RLS is the last line of defense — still scope every query to the user.
+- Never ship a secret. Browser-exposed keys must be write-only or RLS-guarded.
+  The `service_role` key and Inngest signing key are server-only.
+
+## 6. Errors & logging
+
+- No `console.log` in committed code (`warn`/`error` allowed). Use Sentry for
+  real telemetry.
+- Wrap risky async in `try/catch`; report to Sentry with context, fail gracefully.
+
+## 7. Git & reviews
+
+- Small, atomic commits; imperative messages (`feat: add install prompt`).
+- Every PR must pass `typecheck` + `lint` (zero warnings) before review.
+- **CodeRabbit only reviews pull requests** — use branch → PR → merge. Work pushed
+  straight to the default branch is never reviewed.
+- **CodeRabbit** checks: no unused vars/imports, correct RLS scoping, no leaked
+  credentials or unsanitized keys, adherence to this file.
+
+## 8. Deploy hygiene (see `docs/DEPLOYMENT.md`)
+
+- Build locally; ship only `dist/` — the server has no Node.
+- Deploy into this app's own docroot; **never** mirror-with-delete a shared docroot,
+  and dry-run any delete first.
+- **Never place backups (`*.bak`/`*.zip`/`*.sql`) inside a webroot** — Apache serves
+  them as plaintext and leaks their contents. Backups live outside every docroot.
+
+---
+
+## 9. Kokolett-specific rules
+
+### 9.1 Money
+
+- Money is **integer pence**, always. `price_pence: number`. No floats, no decimals in
+  the database, no `parseFloat` on a price. Format for display only, at the edge, with
+  `Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' })`.
+
+### 9.2 Time
+
+- Store **UTC**, always (`timestamptz`). Convert for display using the salon timezone
+  from `booking_settings.timezone`, never the browser's timezone — a customer booking
+  from Spain must see London times.
+- Never do date arithmetic on strings. Never assume a day is 24 hours: British Summer
+  Time transitions will produce a 23- and a 25-hour day every year, and the availability
+  engine must survive both.
+- `day_of_week` is 0–6 with **0 = Sunday**, matching Postgres `extract(dow …)`.
+  JavaScript's `getDay()` agrees; `date-fns` defaults do not always. Be explicit.
+
+### 9.3 Booking integrity
+
+- **Never write to `appointments` from the client for a public booking.** The only
+  public write path is `supabase.rpc('book_appointment', …)`.
+- Never treat a client-side availability check as authoritative. It exists to keep the
+  UI responsive; the database decides.
+- Handle `SLOT_TAKEN` as a first-class outcome, not an exception. Refresh availability,
+  preserve everything the customer typed, and offer the nearest alternatives.
+- Map every `BookingErrorCode` to human copy. A customer must never see a Postgres
+  error string.
+
+### 9.4 Appointment status
+
+- Transitions go through `appointmentService`. No component sets `status` directly.
+- `pending_approval` holds the slot. Any code that computes availability must treat it
+  as occupied.
+- A customer is "returning" only if they have a **completed** appointment. Cancellations
+  and no-shows do not count. This rule lives in `book_appointment()` — do not
+  reimplement it in TypeScript, because two implementations will diverge.
+
+### 9.5 Customer data (UK GDPR)
+
+- `customers.notes` is owner-private. It must never appear in a customer-facing view,
+  an email template, or an AI prompt.
+- Marketing consent is separate from booking consent. Never default it to true, never
+  bundle it into a terms checkbox.
+- Deletion is a soft delete (`deleted_at`) that preserves financial history while
+  removing personal data from all views.
+- Do not log email addresses, phone numbers, or customer names to Sentry. Scrub them.
+
+### 9.6 AI
+
+- AI output is advisory. It is written to `ai_recommendations` with status `pending`.
+- No AI code path may write to `appointments`, `customers`, or `availability_*`.
+- Never put a customer's private notes, full contact details, or another customer's
+  data into a model prompt.
+- Always render AI-drafted copy in an editable field before it is sent. The owner's
+  name goes on it, so the owner approves it.
+
+### 9.7 Naming conventions
+
+- Database: `snake_case` tables and columns, plural table names.
+- TypeScript: `camelCase` variables, `PascalCase` types and components.
+- Services: `<domain>Service.ts` exporting named functions, never a default export.
+- Hooks: `use<Thing>.ts` with an explicit return interface (see `docs/HOOKS.md`).
+- Booking references are `KB-XXXXXX`, uppercase, generated only by the database.
+- Copy is **British English** — "personalise", "colour", "jewellery", "£".
+
+### 9.8 Accessibility is a merge gate
+
+- The booking flow must be completable by keyboard alone.
+- Status is never communicated by colour alone; always pair with a text label.
+- Touch targets ≥ 44×44px, which sets the minimum time-slot button size.
+- Do not remove the global `:focus-visible` ring.

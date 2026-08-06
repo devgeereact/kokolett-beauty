@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Appointment maths is timezone-sensitive. Pinning UTC surfaces bugs that a
+  # Europe/London machine hides, because BST masks off-by-one-hour errors.
+  TZ: UTC
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      # Deliberately built with no .env present. Vite inlines VITE_* at build
+      # time, so real keys here would land in a public log — and would also hide
+      # the failure mode that actually matters: a missing variable.
+      - name: Build
+        run: npm run build
+
+      - name: Assert PWA artefacts exist
+        run: |
+          test -f dist/sw.js || { echo "::error::dist/sw.js missing — the PWA would work online and silently fail offline"; exit 1; }
+          test -f dist/manifest.webmanifest || { echo "::error::dist/manifest.webmanifest missing — the app is not installable"; exit 1; }

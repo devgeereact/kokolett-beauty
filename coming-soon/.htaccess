@@ -1,0 +1,51 @@
+# =============================================================
+#  koko.gakinz.com — coming-soon holding page
+#  Replaced by the root .htaccess (SPA rules) when the app ships.
+# =============================================================
+
+# Directory listing was ON for this docroot; never serve an index of files.
+Options -Indexes
+
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Redirect all HTTP traffic to HTTPS.
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # While the site is a single page, send unknown paths to it rather than a 404 page.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/svg+xml .svg
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript \
+    application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_headers.c>
+  # The holding page changes often; do not let it stick in caches.
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  <FilesMatch "\.(png|jpg|jpeg|gif|ico|svg|woff|woff2)$">
+    Header set Cache-Control "max-age=604800, public"
+  </FilesMatch>
+
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+ErrorDocument 404 /index.html

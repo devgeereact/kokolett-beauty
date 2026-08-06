@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Kokolett Beauty UK design tokens.
+ *
+ * The palette was supplied in Tailwind v4 `@theme inline` form. This project is
+ * pinned to Tailwind 3.4, which has no `@theme` directive, so the same tokens are
+ * expressed as CSS custom properties here and mapped in tailwind.config.ts.
+ * Semantics and hex values are unchanged.
+ *
+ * Consequence to know about: because the Tailwind colours resolve to var(),
+ * opacity modifiers such as `bg-primary/50` do not work. Use an explicit token
+ * or a rgb()/color-mix() value instead.
+ */
+@layer base {
+  :root {
+    --background: #e8ebed;
+    --foreground: #333333;
+    --card: #ffffff;
+    --card-foreground: #333333;
+    --popover: #ffffff;
+    --popover-foreground: #333333;
+    --primary: #e05d38;
+    --primary-foreground: #ffffff;
+    --secondary: #f3f4f6;
+    --secondary-foreground: #4b5563;
+    --muted: #f9fafb;
+    --muted-foreground: #6b7280;
+    --accent: #d6e4f0;
+    --accent-foreground: #1e3a8a;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #dcdfe2;
+    --input: #f4f5f7;
+    --ring: #e05d38;
+
+    --chart-1: #86a7c8;
+    --chart-2: #eea591;
+    --chart-3: #5a7ca6;
+    --chart-4: #466494;
+    --chart-5: #334c82;
+
+    --sidebar: #dddfe2;
+    --sidebar-foreground: #333333;
+    --sidebar-primary: #e05d38;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #d6e4f0;
+    --sidebar-accent-foreground: #1e3a8a;
+    --sidebar-border: #e5e7eb;
+    --sidebar-ring: #e05d38;
+
+    --radius: 0.75rem;
+    --shadow-color: 0 0% 0%;
+    --shadow-opacity: 0.1;
+    --shadow-blur: 3px;
+    --shadow-spread: 0px;
+    --shadow-offset-x: 0px;
+    --shadow-offset-y: 1px;
+
+    /* Appointment status colours — used by the calendar and status chips. */
+    --status-pending: #d97706;
+    --status-confirmed: #2563eb;
+    --status-in-service: #7c3aed;
+    --status-completed: #059669;
+    --status-cancelled: #6b7280;
+    --status-no-show: #dc2626;
+  }
+
+  .dark {
+    --background: #1c2433;
+    --foreground: #e5e5e5;
+    --card: #2a3040;
+    --card-foreground: #e5e5e5;
+    --popover: #262b38;
+    --popover-foreground: #e5e5e5;
+    --primary: #e05d38;
+    --primary-foreground: #ffffff;
+    --secondary: #2a303e;
+    --secondary-foreground: #e5e5e5;
+    --muted: #2a303e;
+    --muted-foreground: #a3a3a3;
+    --accent: #2a3656;
+    --accent-foreground: #bfdbfe;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #3d4354;
+    --input: #3d4354;
+    --ring: #e05d38;
+
+    --chart-1: #86a7c8;
+    --chart-2: #e6a08f;
+    --chart-3: #5a7ca6;
+    --chart-4: #466494;
+    --chart-5: #334c82;
+
+    --sidebar: #2a303f;
+    --sidebar-foreground: #e5e5e5;
+    --sidebar-primary: #e05d38;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #2a3656;
+    --sidebar-accent-foreground: #bfdbfe;
+    --sidebar-border: #3d4354;
+    --sidebar-ring: #e05d38;
+
+    --status-pending: #f59e0b;
+    --status-confirmed: #60a5fa;
+    --status-in-service: #a78bfa;
+    --status-completed: #34d399;
+    --status-cancelled: #9ca3af;
+    --status-no-show: #f87171;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100vh;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  /* Booking flow is keyboard-first; the focus ring must always be visible. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+    --tw-ring-offset-color: var(--background);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

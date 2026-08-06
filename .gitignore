@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Local environment variables
+.env
+.env.local
+.env.*.local
+
+# Build & PWA outputs
+dist/
+dev-dist/
+web-build/
+build/
+.output/
+
+# Cache & temp
+.vite/
+.expo/
+.cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# System & editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+.idea/
+
+# Sentry
+.sentryclirc
+
+# Ruflo local secrets and runtime data
+.claude-flow/
+.swarm/
+.agents/
+.hive-mind/
+ruvector.db
+*.db-journal
+
+# Agent tooling generated locally (skills, agents, hooks) — machine-specific noise
+.claude/
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/

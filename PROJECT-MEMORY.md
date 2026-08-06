@@ -12,6 +12,13 @@ _Last updated: 2026-08-06 (revised after intake form)_
 - **Product**: single-tenant appointment platform for one UK salon — marketing site,
   instant online booking, passwordless customer access, owner dashboard, AI operational
   assistant, automated email, reporting, installable offline-first PWA.
+- **Business scope (confirmed 06 Aug 2026)**: Kokolett is a **women's hair salon
+  only** — cutting, colouring, styling, treatments. Not a general beauty salon (no
+  nails, brows, lashes, aesthetics) and not unisex. The "Beauty" in the name is
+  branding. Structured data uses schema.org `HairSalon`.
+- **Contact address (confirmed 06 Aug 2026)**: `booking@koko.gakinz.com`, singular.
+  It is both the public enquiry address and the transactional sending address
+  (`VITE_SALON_EMAIL`, `SMTP_FROM_EMAIL`).
 - **Booking model**: **availability-first with a hybrid trust gate** (user decision,
   06 Aug 2026). Customers only ever see slots that are genuinely bookable.
   **Returning customers — those with at least one *completed* appointment — are
@@ -80,9 +87,30 @@ to change now and expensive to change after build.
 - `ASSUMPTION` Cancellation window **24 hours**; later cancellations are permitted but
   flagged to the owner.
 
+## Infrastructure (provisioned 06 Aug 2026)
+
+| Thing | Value |
+| --- | --- |
+| Repo | `github.com/devgeereact/kokolett-beauty` — **public** (unlimited Actions, free CodeQL + Dependabot) |
+| Supabase ref | `erqrfjlozqyhogneqraj` |
+| Supabase URL | `https://erqrfjlozqyhogneqraj.supabase.co` |
+| Supabase region | `eu-west-2` (London) — chosen over the usual `eu-west-1` for UK data residency |
+| Migrations applied | `0001_init`, `0002_salon` — verified via `supabase migration list` |
+| Auth | Magic link only; no OAuth provider enabled. Site URL and redirects point at `https://koko.gakinz.com`; OTP is 8 characters, 30-minute expiry, 60-second send throttle |
+| Live site | `https://koko.gakinz.com` — **holding page**, source in `coming-soon/` |
+| Dev + preview port | `5082` (block 08, `strictPort`) |
+| DB password | macOS Keychain, service `supabase-kokolett-db`. Never in a file |
+
+RLS was verified from an anonymous client, not from admin SQL: `customers`,
+`appointments`, `profiles`, `staff`, `services`, `availability_requests`,
+`email_messages` and `ai_recommendations` all return `[]`. `booking_settings` is
+deliberately world-readable — the booking UI needs lead time and horizon before
+anyone has identified themselves.
+
 ## Open Questions
 
-1. Actual service list, durations and prices.
+1. Actual service list, durations and prices. The holding page currently shows
+   four broad placeholders — Cutting, Colouring, Styling, Treatments.
 2. Real opening hours and standing breaks.
 3. Google Business review URL.
 4. SMTP provider and sending domain (SPF/DKIM/DMARC alignment).

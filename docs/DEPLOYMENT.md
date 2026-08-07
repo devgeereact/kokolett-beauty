@@ -116,3 +116,47 @@ after upload). See `docs/ARCHITECTURE.md` §8 for the security posture.
   RLS-guarded** (Supabase anon, ImageKit public, Inngest write-only event key). The
   `service_role` key and Inngest signing key are server-only and never touch this
   static bundle.
+
+## Transactional email — how it actually runs
+
+Email is an outbox. Triggers enqueue `email_messages` in the same transaction as
+the booking; a scheduled job drains it over SMTP. A mail outage therefore delays
+confirmations rather than losing them.
+
+```
+booking ──► email_messages (queued)
+                 ▲
+   pg_cron */5 ──┴──► drain_email_queue() ──► pg_net ──► send-emails ──► SMTP
+```
+
+**Secrets.** `SMTP_HOST/PORT/USER/PASSWORD/FROM_EMAIL/FROM_NAME`, `SITE_URL`,
+`ALLOWED_ORIGIN` and `EMAIL_CRON_SECRET` are Edge Function secrets, set with
+`supabase secrets set`. The mailbox password comes from `.env` and is never
+committed.
+
+**Why the cron secret is in the Vault, not in a migration.** `send-emails` is
+deployed `--no-verify-jwt`, so `EMAIL_CRON_SECRET` is the only thing between the
+internet and the salon's mail queue. This repository is public and a migration is
+forever, so `drain_email_queue()` reads the secret from `vault.decrypted_secrets`
+by name and the value is inserted out of band. If the secret is missing the job
+logs a notice and does nothing, rather than quietly posting unauthenticated
+requests every five minutes.
+
+To restore it on a fresh project:
+
+```sql
+select vault.create_secret('<secret>', 'email_cron_secret', 'Shared secret for send-emails');
+select vault.create_secret('https://<ref>.supabase.co/functions/v1/send-emails',
+                           'send_emails_url', 'Endpoint the scheduled drain posts to');
+```
+
+**Verifying delivery**, rather than assuming it:
+
+```bash
+supabase db query --linked "select public.drain_email_queue();"
+supabase db query --linked "select id, status_code, left(content,120) from net._http_response order by id desc limit 1;"
+ssh cpanel 'ls -t ~/mail/koko.gakinz.com/booking/new | head'
+```
+
+Scheduled jobs: `drain-email-queue` (5 min), `expire-pending-approvals` (hourly),
+`extend-weekly-template` (nightly), `purge-access-tokens` (nightly).

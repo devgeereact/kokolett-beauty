@@ -9,6 +9,7 @@ import { HomePage } from '@/pages/HomePage';
 import { ServicesPage as PublicServicesPage } from '@/pages/ServicesPage';
 import { BookPage } from '@/pages/BookPage';
 import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
+import { MyBookingsPage } from '@/pages/MyBookingsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { TodayPage } from '@/pages/dashboard/TodayPage';
@@ -45,6 +46,12 @@ export function App(): JSX.Element {
               path={routes.public.requestAvailability}
               element={<RequestAvailabilityPage />}
             />
+            {/* Customer identity is passwordless: /access/:token redeems a
+                single-use link, /my uses the session it produced. */}
+            <Route path="/access/:token" element={<MyBookingsPage />} />
+            <Route path={routes.customer.home} element={<MyBookingsPage />} />
+            <Route path={routes.customer.appointments} element={<MyBookingsPage />} />
+
             <Route path="/login" element={<LoginPage />} />
 
             <Route path={routes.owner.dashboard} element={owner(<TodayPage />)} />

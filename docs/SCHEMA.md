@@ -329,3 +329,50 @@ by `anon`, and an unbounded range is a cheap way to make the database expensive.
 
 Wall-clock windows are converted to instants before slots are generated, so a
 day containing a DST change still produces real times.
+
+## 10. Migrations `0005` / `0006` — email outbox and customer sessions
+
+**Outbox.** `email_messages` gains a `payload jsonb` column; bodies are rendered
+by the Edge Function from a template name plus that payload, so copy changes are
+a deploy rather than a migration. Triggers enqueue in the _same transaction_ as
+the booking, which is why an email can never be lost to a failed network call
+mid-write — the booking and its notification commit or roll back together.
+
+Enqueued by `notify_appointment_created`, `notify_appointment_status_changed`
+and `notify_availability_request`:
+
+| Moment            | Customer                                            | Owner                   |
+| ----------------- | --------------------------------------------------- | ----------------------- |
+| Booking held      | `booking_held`                                      | `owner_approval_needed` |
+| Booking confirmed | `booking_confirmed` + both reminders                | `owner_new_booking`     |
+| Approved          | `booking_approved` + both reminders                 | —                       |
+| Declined          | `booking_declined`                                  | —                       |
+| Cancelled         | `booking_cancelled`                                 | —                       |
+| Completed         | `review_request` (+2h, only if a review URL is set) | —                       |
+| Enquiry raised    | `request_received`                                  | `owner_new_request`     |
+
+Reminders are queued when the booking becomes live, not by a nightly sweep, so a
+scheduler outage delays a reminder instead of losing it. A reminder whose send
+time has already passed is not queued at all, and cancelling, declining or
+marking a no-show marks any still-queued reminder `failed` — a booking that is
+not happening must not still be reminded about.
+
+**Customer sessions.** Customers are not `auth.users`. A single-use magic link is
+minted by the `customer-access` Edge Function — not by SQL, because the raw
+token must exist only in the email, and a SQL function handing it to the mailer
+would have to persist it first. Only the SHA-256 hash reaches
+`customer_access_tokens`; `send-emails` scrubs the payload on delivery so no
+working link survives in the database.
+
+| Function                                        | Grant           | Purpose                                 |
+| ----------------------------------------------- | --------------- | --------------------------------------- |
+| `redeem_access_token(text)`                     | anon            | Single-use link → 30-day session token  |
+| `customer_from_session(text)`                   | none (internal) | Resolves a session to one `customer_id` |
+| `customer_appointments(text)`                   | anon            | That customer's bookings, nobody else's |
+| `customer_cancel_appointment(text, uuid, text)` | anon            | Cancel their own, respecting status     |
+| `purge_expired_access_tokens()`                 | none            | Daily `pg_cron` sweep of dead tokens    |
+
+`0006` exists because `0005` declared the crypto-using functions with
+`set search_path = public` while pgcrypto lives in `extensions` on Supabase, so
+`digest()` did not resolve. Pinning a search_path on a security-definer function
+is right; pinning it too narrowly is the bug. They now use `public, extensions`.

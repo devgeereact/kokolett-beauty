@@ -15,7 +15,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   plugins: ['@typescript-eslint', 'react-hooks', 'react-refresh'],
-  ignorePatterns: ['dist', 'dev-dist', 'node_modules', '.eslintrc.cjs', 'postcss.config.js', 'src/types/database.types.ts'],
+  ignorePatterns: ['dist', 'dev-dist', 'node_modules', '.eslintrc.cjs', 'postcss.config.js', 'src/types/database.types.ts', 'supabase/functions'],
   rules: {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     'react-hooks/rules-of-hooks': 'error',

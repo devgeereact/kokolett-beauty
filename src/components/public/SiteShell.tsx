@@ -14,6 +14,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
     { to: routes.public.home, label: 'Home' },
     { to: routes.public.services, label: 'Services' },
     { to: routes.public.book, label: 'Book' },
+    { to: routes.customer.home, label: 'My bookings' },
   ];
 
   return (

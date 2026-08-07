@@ -502,6 +502,7 @@ export type Database = {
           customer_id: string | null;
           id: string;
           last_error: string | null;
+          payload: Json;
           provider_id: string | null;
           scheduled_for: string | null;
           sent_at: string | null;
@@ -518,6 +519,7 @@ export type Database = {
           customer_id?: string | null;
           id?: string;
           last_error?: string | null;
+          payload?: Json;
           provider_id?: string | null;
           scheduled_for?: string | null;
           sent_at?: string | null;
@@ -534,6 +536,7 @@ export type Database = {
           customer_id?: string | null;
           id?: string;
           last_error?: string | null;
+          payload?: Json;
           provider_id?: string | null;
           scheduled_for?: string | null;
           sent_at?: string | null;
@@ -857,10 +860,51 @@ export type Database = {
           reference: string;
         }[];
       };
+      customer_appointments: {
+        Args: { p_session_token: string };
+        Returns: {
+          cancellation_reason: string;
+          customer_note: string;
+          ends_at: string;
+          id: string;
+          price_pence: number;
+          reference: string;
+          rejection_reason: string;
+          service_name: string;
+          starts_at: string;
+          status: Database['public']['Enums']['appointment_status'];
+        }[];
+      };
+      customer_cancel_appointment: {
+        Args: {
+          p_appointment_id: string;
+          p_reason?: string;
+          p_session_token: string;
+        };
+        Returns: Database['public']['Enums']['appointment_status'];
+      };
+      customer_from_session: {
+        Args: { p_session_token: string };
+        Returns: string;
+      };
       expire_pending_approvals: { Args: never; Returns: number };
       generate_booking_reference: { Args: never; Returns: string };
       is_owner: { Args: never; Returns: boolean };
       owner_dashboard_summary: { Args: never; Returns: Json };
+      purge_expired_access_tokens: { Args: never; Returns: number };
+      queue_email: {
+        Args: {
+          p_appointment_id?: string;
+          p_customer_id?: string;
+          p_payload?: Json;
+          p_scheduled_for?: string;
+          p_subject: string;
+          p_template: string;
+          p_to_email: string;
+        };
+        Returns: string;
+      };
+      redeem_access_token: { Args: { p_token: string }; Returns: Json };
       reject_appointment: {
         Args: { p_appointment_id: string; p_reason?: string };
         Returns: {

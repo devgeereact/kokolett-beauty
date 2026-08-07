@@ -41,9 +41,8 @@ export function DashboardLayout({
   const entries: NavEntry[] = [
     { to: routes.owner.dashboard, label: 'Today' },
     { to: routes.owner.calendar, label: 'Calendar' },
-    { to: routes.owner.approvals, label: 'Approvals', badge: badges?.approvals },
     { to: routes.owner.appointments, label: 'Appointments' },
-    { to: routes.owner.requests, label: 'Enquiries', badge: badges?.requests },
+    { to: routes.owner.requests, label: 'Requests', badge: badges?.requests },
     { to: routes.owner.customers, label: 'Customers' },
     { to: routes.owner.services, label: 'Services' },
     { to: routes.owner.availability, label: 'Opening hours' },

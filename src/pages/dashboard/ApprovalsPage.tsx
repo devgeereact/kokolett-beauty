@@ -90,7 +90,7 @@ export function ApprovalsPage(): JSX.Element {
       {!loading && !error && rows.length === 0 && (
         <EmptyState
           title="Nothing waiting"
-          description="First-time customers appear here. Returning customers are confirmed instantly and never reach this queue."
+          description="Under your current policy nothing lands here: published hours book instantly for everyone. This queue only fills if you switch first-time approval back on in Settings. What you answer day to day is Requests."
         />
       )}
 

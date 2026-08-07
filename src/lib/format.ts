@@ -171,6 +171,24 @@ export function salonDayRange(
   return { start, end };
 }
 
+/**
+ * The UTC instant of a salon-local wall-clock time.
+ *
+ * `new Date('2026-08-07T10:00')` parses in the *browser's* zone, so an owner
+ * abroad would book the appointment an hour or more out from what she typed.
+ *
+ * @param date `yyyy-mm-dd`, @param time `HH:MM`, both salon-local.
+ */
+export function salonInstant(
+  date: string,
+  time: string,
+  timeZone = DEFAULT_TIMEZONE,
+): Date {
+  const naiveUtc = new Date(`${date}T${time}:00Z`);
+  const firstPass = new Date(naiveUtc.getTime() - zoneOffsetMs(naiveUtc, timeZone));
+  return new Date(naiveUtc.getTime() - zoneOffsetMs(firstPass, timeZone));
+}
+
 /** Today's salon-local day boundaries, as UTC instants. */
 export function salonToday(timeZone = DEFAULT_TIMEZONE): {
   date: string;

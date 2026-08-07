@@ -376,3 +376,41 @@ working link survives in the database.
 `set search_path = public` while pgcrypto lives in `extensions` on Supabase, so
 `digest()` did not resolve. Pinning a search_path on a security-definer function
 is right; pinning it too narrowly is the bug. They now use `public, extensions`.
+
+## 11. Migration `0007` — availability is the gate
+
+A change of booking policy, decided by the owner on 2026-08-07. It replaces the
+hybrid trust gate described in §PRD and `PROJECT-MEMORY.md`.
+
+**Before:** availability was generous, trust was the gate. First-time customers
+were held for approval; returning ones confirmed instantly.
+
+**After:** the owner publishes exactly the hours she is willing to work, and
+anything inside them books instantly — for anyone, new or returning. When
+nothing is open the customer submits a request, and it is the _request_ that is
+approved. That is what makes a last-minute cancellation reachable.
+
+`approve_first_time` is set `false`. The hybrid machinery stays in the schema
+because it costs nothing and is a genuine fallback; turning the flag back on
+restores the old behaviour with no migration.
+
+| Function                                                     | Purpose                                                                                         |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `set_day_availability(date, jsonb)`                          | Publish one day's hours. `null` → weekly pattern, `[]` → closed, a list → exactly those windows |
+| `open_requests_in_order()`                                   | The queue, oldest first, each row carrying its `queue_position`                                 |
+| `offer_slot_to_request(request, service, starts_at, reason)` | Book a requester in, enforcing first-come-first-served                                          |
+| `decline_request(request, reason)`                           | Turn one down and email them                                                                    |
+
+**Publishing a day** is expressed as a whole-day closure plus `extra_hours`
+windows, which `available_slots()` already understands — a whole-day closure
+suppresses the weekday rule, and extra hours are added back independently.
+Breaks are deliberately untouched by it: "I am out between 12 and 1" should
+survive a change to the day's opening hours.
+
+**First come, first served is enforced in the database, not displayed by the
+interface.** `offer_slot_to_request` refuses with `EARLIER_REQUEST_WAITING`, and
+names who is ahead, when an older open request also wanted that date — where
+"also wanted" means asked for that date or expressed no date preference at all.
+Someone who asked for a specific Tuesday is not ahead of you for a Friday.
+`p_override_reason` is the deliberate escape hatch: skipping is sometimes right,
+but it costs a sentence and the sentence is recorded on the request.

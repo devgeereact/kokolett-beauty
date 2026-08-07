@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { Json } from '@/types/database.types';
 import type {
   AvailabilityException,
   AvailabilityExceptionInsert,
@@ -74,6 +75,31 @@ export async function listUpcomingExceptions(
 
   if (error) throw error;
   return data ?? [];
+}
+
+export interface DayWindow {
+  starts_at: string;
+  ends_at: string;
+}
+
+/**
+ * Publish one date's hours, replacing whatever governed it.
+ *
+ * `null` reverts to the standing weekly hours; `[]` closes the day; a list
+ * publishes exactly those windows and ignores the weekly rule. Breaks are left
+ * untouched — "I am out between 12 and 1" should survive a change of hours.
+ */
+export async function setDayAvailability(
+  date: string,
+  windows: DayWindow[] | null,
+): Promise<void> {
+  const { error } = await supabase.rpc('set_day_availability', {
+    p_date: date,
+    // The generated arg type is `Json`; a struct array is valid JSON but the
+    // structural check cannot see that through the interface.
+    p_windows: windows as unknown as Json,
+  });
+  if (error) throw error;
 }
 
 /** Exceptions inside a date range — one query per rendered calendar month. */

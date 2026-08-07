@@ -887,9 +887,45 @@ export type Database = {
         Args: { p_session_token: string };
         Returns: string;
       };
+      decline_request: {
+        Args: { p_reason?: string; p_request_id: string };
+        Returns: undefined;
+      };
       expire_pending_approvals: { Args: never; Returns: number };
       generate_booking_reference: { Args: never; Returns: string };
       is_owner: { Args: never; Returns: boolean };
+      offer_slot_to_request: {
+        Args: {
+          p_override_reason?: string;
+          p_request_id: string;
+          p_service_id: string;
+          p_starts_at: string;
+        };
+        Returns: {
+          appointment_id: string;
+          reference: string;
+        }[];
+      };
+      open_requests_in_order: {
+        Args: never;
+        Returns: {
+          created_at: string;
+          email: string;
+          flexibility: string;
+          full_name: string;
+          id: string;
+          mobile: string;
+          notes: string;
+          owner_response: string;
+          preferred_dates: string[];
+          preferred_times: string;
+          queue_position: number;
+          service_id: string;
+          service_name: string;
+          status: Database['public']['Enums']['availability_request_status'];
+          waiting_hours: number;
+        }[];
+      };
       owner_dashboard_summary: { Args: never; Returns: Json };
       purge_expired_access_tokens: { Args: never; Returns: number };
       queue_email: {
@@ -980,6 +1016,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      set_day_availability: {
+        Args: { p_date: string; p_windows?: Json };
+        Returns: Json;
       };
     };
     Enums: {

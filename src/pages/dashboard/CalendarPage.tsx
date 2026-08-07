@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Field, Input, Select } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
+import { DayEditor } from '@/components/dashboard/DayEditor';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
-  createException,
   deleteException,
   listExceptionsBetween,
   listRules,
@@ -38,7 +37,6 @@ import type {
   AppointmentDetailed,
   AvailabilityException,
   AvailabilityRule,
-  ExceptionKind,
 } from '@/types';
 
 /**
@@ -64,7 +62,6 @@ export function CalendarPage(): JSX.Element {
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [busy, setBusy] = useState(false);
 
   const weeks = useMemo(() => monthGrid(cursor.year, cursor.month), [cursor]);
   const range = useMemo(() => gridRange(cursor.year, cursor.month), [cursor]);
@@ -128,33 +125,12 @@ export function CalendarPage(): JSX.Element {
 
   const selectedInfo = dayInfo(selected);
 
-  const closeDay = async (): Promise<void> => {
-    setBusy(true);
-    try {
-      await createException({
-        kind: 'closure',
-        on_date: selected,
-        starts_at: null,
-        ends_at: null,
-        reason: null,
-      });
-      await load();
-    } catch (e) {
-      window.alert(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const removeException = async (id: string): Promise<void> => {
-    setBusy(true);
     try {
       await deleteException(id);
       await load();
     } catch (e) {
       window.alert(errorMessage(e));
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -293,55 +269,18 @@ export function CalendarPage(): JSX.Element {
               {formatDateLong(`${selected}T12:00:00Z`, 'UTC')}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {selectedInfo.isOpen ? `Open ${selectedInfo.windows.join(', ')}` : 'Closed'}
-            </p>
-
-            <div className="mt-4 space-y-2">
-              {selectedInfo.dayExceptions.map((exception) => (
-                <div
-                  key={exception.id}
-                  className="flex items-start justify-between gap-2 rounded-md border border-border bg-muted p-2 text-sm"
-                >
-                  <span className="text-foreground">
-                    {exception.kind === 'closure' && exception.starts_at === null
-                      ? 'Closed all day'
-                      : `${exception.kind === 'break' ? 'Break' : 'Extra hours'} ${trimSeconds(exception.starts_at ?? '')}–${trimSeconds(exception.ends_at ?? '')}`}
-                    {exception.reason ? ` · ${exception.reason}` : ''}
-                  </span>
-                  <button
-                    type="button"
-                    className="shrink-0 text-xs text-destructive underline underline-offset-2"
-                    onClick={() => void removeException(exception.id)}
-                  >
-                    Undo
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {!selectedInfo.fullClosure && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-4 w-full"
-                loading={busy}
-                onClick={() => void closeDay()}
-              >
-                Close this day
-              </Button>
-            )}
-
-            <p className="mt-3 text-xs text-muted-foreground">
-              Closing a day stops new bookings. Appointments already booked stay — cancel
-              those individually so the customer is told.
+              {selectedInfo.isOpen
+                ? `Bookable ${selectedInfo.windows.join(', ')}`
+                : 'Nothing bookable'}
             </p>
           </Card>
 
-          <DayAvailabilityForm
+          <DayEditor
             date={selected}
-            busy={busy}
+            rules={rules}
+            exceptions={exceptions.filter((e) => e.on_date === selected)}
             onSaved={() => void load()}
-            setBusy={setBusy}
+            onRemoveBreak={removeException}
           />
 
           <Card className="p-5">
@@ -374,116 +313,5 @@ export function CalendarPage(): JSX.Element {
         </div>
       </div>
     </DashboardLayout>
-  );
-}
-
-/** Add extra hours or a break to one date. */
-function DayAvailabilityForm({
-  date,
-  busy,
-  setBusy,
-  onSaved,
-}: {
-  date: string;
-  busy: boolean;
-  setBusy: (value: boolean) => void;
-  onSaved: () => void;
-}): JSX.Element {
-  const [kind, setKind] = useState<Exclude<ExceptionKind, 'closure'>>('extra_hours');
-  const [starts, setStarts] = useState('18:00');
-  const [ends, setEnds] = useState('20:00');
-  const [reason, setReason] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const submit = async (): Promise<void> => {
-    if (ends <= starts) {
-      setFormError('The end time must be after the start time.');
-      return;
-    }
-    setFormError(null);
-    setBusy(true);
-    try {
-      await createException({
-        kind,
-        on_date: date,
-        starts_at: starts,
-        ends_at: ends,
-        reason: reason.trim() || null,
-      });
-      setReason('');
-      onSaved();
-    } catch (e) {
-      setFormError(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Card className="p-5">
-      <h3 className="mb-1 font-display text-base font-semibold text-foreground">
-        Post availability
-      </h3>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Open extra hours on this date, or block out a break.
-      </p>
-
-      <Field label="What">
-        {({ id }) => (
-          <Select
-            id={id}
-            value={kind}
-            onChange={(e) => setKind(e.target.value as Exclude<ExceptionKind, 'closure'>)}
-          >
-            <option value="extra_hours">Extra hours — open for bookings</option>
-            <option value="break">Break — block out time</option>
-          </Select>
-        )}
-      </Field>
-
-      <div className="grid gap-x-3 sm:grid-cols-2">
-        <Field label="From">
-          {({ id }) => (
-            <Input
-              id={id}
-              type="time"
-              value={starts}
-              onChange={(e) => setStarts(e.target.value)}
-            />
-          )}
-        </Field>
-        <Field label="To">
-          {({ id }) => (
-            <Input
-              id={id}
-              type="time"
-              value={ends}
-              onChange={(e) => setEnds(e.target.value)}
-            />
-          )}
-        </Field>
-      </div>
-
-      <Field label="Note">
-        {({ id }) => (
-          <Input
-            id={id}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder={kind === 'break' ? 'Lunch' : 'Late night'}
-          />
-        )}
-      </Field>
-
-      {formError && (
-        <p role="alert" className="mb-3 text-sm font-medium text-destructive">
-          {formError}
-        </p>
-      )}
-
-      <Button size="sm" className="w-full" loading={busy} onClick={() => void submit()}>
-        {kind === 'extra_hours' ? 'Open these hours' : 'Block this time'}
-      </Button>
-    </Card>
   );
 }

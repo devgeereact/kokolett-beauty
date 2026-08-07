@@ -76,6 +76,22 @@ export async function listUpcomingExceptions(
   return data ?? [];
 }
 
+/** Exceptions inside a date range — one query per rendered calendar month. */
+export async function listExceptionsBetween(
+  fromDate: string,
+  toDate: string,
+): Promise<AvailabilityException[]> {
+  const { data, error } = await supabase
+    .from('availability_exceptions')
+    .select('*')
+    .gte('on_date', fromDate)
+    .lte('on_date', toDate)
+    .order('on_date', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function createException(
   input: AvailabilityExceptionInsert,
 ): Promise<AvailabilityException> {

@@ -1,0 +1,238 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { SiteShell } from '@/components/public/SiteShell';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { useServices } from '@/hooks/useServices';
+import { submitAvailabilityRequest } from '@/services/bookingService';
+import { errorMessage } from '@/lib/errors';
+import { routes } from '@/lib/routes';
+import type { Flexibility } from '@/types';
+
+/**
+ * The no-availability path.
+ *
+ * A customer who finds nothing open must never hit a dead end — that is a
+ * booking the salon nearly had. This captures enough for the owner to offer a
+ * time: who, what, roughly when, and how flexible they are.
+ */
+export function RequestAvailabilityPage(): JSX.Element {
+  const { services } = useServices();
+  const [form, setForm] = useState({
+    fullName: '',
+    email: '',
+    mobile: '',
+    serviceId: '',
+    firstChoice: '',
+    secondChoice: '',
+    preferredTimes: '',
+    flexibility: 'any' as Flexibility,
+    notes: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  const submit = async (): Promise<void> => {
+    if (!form.fullName.trim()) return setError('Please give your name.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
+      return setError('Please give a valid email address so the salon can reply.');
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      await submitAvailabilityRequest({
+        fullName: form.fullName,
+        email: form.email,
+        mobile: form.mobile,
+        serviceId: form.serviceId || null,
+        preferredDates: [form.firstChoice, form.secondChoice].filter(Boolean),
+        preferredTimes: form.preferredTimes,
+        flexibility: form.flexibility,
+        notes: form.notes,
+      });
+      setSent(true);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <SiteShell>
+        <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+          <Card className="p-6 text-center">
+            <h1 className="font-display text-2xl font-semibold text-foreground">
+              Thank you — that is with the salon
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              She will look at what she can open up and come back to you at{' '}
+              <span className="font-medium text-foreground">{form.email}</span>.
+            </p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Automatic email is not switched on yet, so the reply will come directly from
+              the salon.
+            </p>
+            <Link
+              to={routes.public.home}
+              className="mt-6 inline-flex h-11 items-center rounded-lg border border-border px-5 font-semibold text-foreground hover:bg-muted"
+            >
+              Back to the salon
+            </Link>
+          </Card>
+        </div>
+      </SiteShell>
+    );
+  }
+
+  return (
+    <SiteShell>
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+        <h1 className="font-display text-3xl font-semibold text-foreground">
+          Tell us when suits
+        </h1>
+        <p className="mb-8 mt-2 text-muted-foreground">
+          Nothing open at a time that works? Leave your details and the salon will see
+          what she can do.
+        </p>
+
+        <Card className="p-6">
+          <Field label="Your name" required>
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                autoComplete="name"
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+              />
+            )}
+          </Field>
+
+          <Field label="Email" required>
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            )}
+          </Field>
+
+          <Field label="Mobile">
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                type="tel"
+                autoComplete="tel"
+                value={form.mobile}
+                onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+              />
+            )}
+          </Field>
+
+          <Field label="What are you after?">
+            {({ id }) => (
+              <Select
+                id={id}
+                value={form.serviceId}
+                onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
+              >
+                <option value="">Not sure yet</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+
+          <div className="grid gap-x-4 sm:grid-cols-2">
+            <Field label="Preferred date">
+              {({ id }) => (
+                <Input
+                  id={id}
+                  type="date"
+                  value={form.firstChoice}
+                  onChange={(e) => setForm({ ...form, firstChoice: e.target.value })}
+                />
+              )}
+            </Field>
+            <Field label="Second choice">
+              {({ id }) => (
+                <Input
+                  id={id}
+                  type="date"
+                  value={form.secondChoice}
+                  onChange={(e) => setForm({ ...form, secondChoice: e.target.value })}
+                />
+              )}
+            </Field>
+          </div>
+
+          <Field label="Time of day">
+            {({ id }) => (
+              <Select
+                id={id}
+                value={form.flexibility}
+                onChange={(e) =>
+                  setForm({ ...form, flexibility: e.target.value as Flexibility })
+                }
+              >
+                <option value="any">Any time</option>
+                <option value="morning">Mornings</option>
+                <option value="afternoon">Afternoons</option>
+                <option value="evening">Evenings</option>
+              </Select>
+            )}
+          </Field>
+
+          <Field label="Anything more specific?">
+            {({ id }) => (
+              <Input
+                id={id}
+                value={form.preferredTimes}
+                onChange={(e) => setForm({ ...form, preferredTimes: e.target.value })}
+                placeholder="After 5pm ideally, or a Saturday"
+              />
+            )}
+          </Field>
+
+          <Field label="Notes">
+            {({ id }) => (
+              <Textarea
+                id={id}
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
+            )}
+          </Field>
+
+          {error && (
+            <p role="alert" className="mb-4 text-sm font-medium text-destructive">
+              {error}
+            </p>
+          )}
+
+          <Button
+            size="lg"
+            className="w-full"
+            loading={submitting}
+            onClick={() => void submit()}
+          >
+            Send request
+          </Button>
+        </Card>
+      </div>
+    </SiteShell>
+  );
+}

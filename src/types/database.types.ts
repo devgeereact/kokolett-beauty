@@ -821,6 +821,12 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      available_slots: {
+        Args: { p_from: string; p_service_id: string; p_to: string };
+        Returns: {
+          slot_start: string;
+        }[];
+      };
       book_appointment: {
         Args: {
           p_consent?: boolean;

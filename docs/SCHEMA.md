@@ -305,3 +305,27 @@ states have no exits.
 `create_appointment_as_owner` deliberately bypasses the first-time approval gate
 — the owner is looking at the customer — but not `appointments_no_overlap`, so a
 phone booking still cannot double-book a web booking.
+
+## 9. Migration `0004_available_slots.sql`
+
+`public.available_slots(p_service_id uuid, p_from date, p_to date)` — the
+availability engine. `security definer`, `stable`, executable by `anon` and
+`authenticated`.
+
+Returns free slot starts only. It never reveals what is taken, by whom, or how
+busy the salon is, which is why availability cannot be computed in the browser:
+that would need an anon `SELECT` on `appointments`, and any such policy leaks
+the whole schedule.
+
+What it applies, in order: the service must be active; opening rules for the
+weekday, minus whole-day closures, plus any `extra_hours` exceptions; slots
+snapped to `slot_granularity_min` on the epoch grid so nothing off-grid is ever
+offered; `lead_time_min` and `max_horizon_days`; breaks and partial closures;
+overlap against live appointments using the same status set as
+`appointments_no_overlap`; and `max_appointments_per_day`.
+
+The range is capped at 62 days regardless of what is asked for — it is callable
+by `anon`, and an unbounded range is a cheap way to make the database expensive.
+
+Wall-clock windows are converted to instants before slots are generated, so a
+day containing a DST change still produces real times.

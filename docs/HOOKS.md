@@ -101,8 +101,7 @@ export function useServices(): UseServices;
 ## 7. `useAvailability`
 
 `src/hooks/useAvailability.ts`
-Generates bookable slots for one service across a month, from opening rules minus
-exceptions minus live appointments. Client-side only — advisory, never authoritative.
+Bookable slots for one service over a rolling window.
 
 ```ts
 interface UseAvailability {
@@ -116,8 +115,31 @@ interface UseAvailability {
   isEmpty: boolean;
   refresh: () => Promise<void>;
 }
-export function useAvailability(serviceId: string | null, month: Date): UseAvailability;
+export function useAvailability(
+  service: Service | null,
+  startDate?: string,
+  days?: number,
+): UseAvailability;
 ```
+
+**Slots are generated in the database, not the browser.** This spec previously
+said the hook subtracted live appointments client-side. It cannot: anon has no
+`SELECT` on `appointments` — deliberately, per the closing comment of
+`0002_salon.sql` — and a policy broad enough to compute availability in the
+browser would publish the salon's entire schedule, including who is booked and
+how busy the business is.
+
+`public.available_slots(service, from, to)` does the subtraction under
+`security definer` and returns only free starts. It applies opening rules,
+exceptions, lead time, horizon, the daily cap and the overlap check, using the
+same status set as `appointments_no_overlap` — so every slot it offers is one
+`book_appointment()` will accept. Slots are snapped to the granularity grid,
+because an off-grid opening time such as 09:07 would otherwise produce slots
+that fail the alignment check on submission.
+
+The window is a rolling `days` (default 21) from `startDate` rather than a
+calendar month: someone opening the page on the 29th cares about the next
+fortnight, not the two days left in the month.
 
 ## 8. `useBookingFlow`
 

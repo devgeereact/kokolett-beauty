@@ -6,9 +6,13 @@ import { InstallPrompt } from '@/components/InstallPrompt';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { HomePage } from '@/pages/HomePage';
+import { ServicesPage as PublicServicesPage } from '@/pages/ServicesPage';
+import { BookPage } from '@/pages/BookPage';
+import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { TodayPage } from '@/pages/dashboard/TodayPage';
+import { CalendarPage } from '@/pages/dashboard/CalendarPage';
 import { ApprovalsPage } from '@/pages/dashboard/ApprovalsPage';
 import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
 import { RequestsPage } from '@/pages/dashboard/RequestsPage';
@@ -34,6 +38,13 @@ export function App(): JSX.Element {
         <BrowserRouter>
           <Routes>
             <Route path={routes.public.home} element={<HomePage />} />
+            <Route path={routes.public.services} element={<PublicServicesPage />} />
+            <Route path={routes.public.book} element={<BookPage />} />
+            <Route path="/book/:serviceSlug" element={<BookPage />} />
+            <Route
+              path={routes.public.requestAvailability}
+              element={<RequestAvailabilityPage />}
+            />
             <Route path="/login" element={<LoginPage />} />
 
             <Route path={routes.owner.dashboard} element={owner(<TodayPage />)} />
@@ -51,12 +62,10 @@ export function App(): JSX.Element {
             />
             <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
 
+            <Route path={routes.owner.calendar} element={owner(<CalendarPage />)} />
+
             {/* Not built yet — send these to the dashboard rather than a 404,
                 so a stale bookmark does not look like a broken app. */}
-            <Route
-              path={routes.owner.calendar}
-              element={<Navigate to={routes.owner.appointments} replace />}
-            />
             <Route
               path={routes.owner.reports}
               element={<Navigate to={routes.owner.dashboard} replace />}

@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { DayEditor } from '@/components/dashboard/DayEditor';
+import { DaySlots } from '@/components/dashboard/DaySlots';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useServices } from '@/hooks/useServices';
 import {
   deleteException,
   listExceptionsBetween,
@@ -49,6 +51,7 @@ import type {
  */
 export function CalendarPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const { services } = useServices(true);
   const today = toSalonDate(new Date(), timezone);
 
   const [cursor, setCursor] = useState(() => {
@@ -274,6 +277,8 @@ export function CalendarPage(): JSX.Element {
                 : 'Nothing bookable'}
             </p>
           </Card>
+
+          <DaySlots date={selected} services={services} onChanged={() => void load()} />
 
           <DayEditor
             date={selected}

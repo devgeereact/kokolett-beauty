@@ -414,3 +414,54 @@ names who is ahead, when an older open request also wanted that date — where
 Someone who asked for a specific Tuesday is not ahead of you for a Friday.
 `p_override_reason` is the deliberate escape hatch: skipping is sometimes right,
 but it costs a sentence and the sentence is recorded on the request.
+
+## 12. Migrations `0008`–`0010` — individual slots, and one engine
+
+**`0008` — explicit start times.** `availability_slots (on_date, starts_at)`
+holds times the owner publishes one at a time. It is a different statement from
+a window:
+
+- a **window** says "I am here between these times, fit what you like inside",
+  so the whole service must fit within it;
+- a **slot** says "you may start at 14:00", and the appointment runs its natural
+  length past that. A published 14:00 is bookable for a 90-minute colour with no
+  90-minute window around it; the overlap constraint keeps it honest.
+
+That is the flexibility a one-person salon needs — "I can take you at six if
+it's just a trim" is a slot, not an opening hour.
+
+`day_candidate_starts(date, service)` is now the **single source of truth** for
+what a day offers, merging windows and explicit slots and subtracting breaks and
+closures. Explicit slots win over a window-derived duplicate so the owner's own
+act is what shows.
+
+| Function                               | Purpose                                                     |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `day_candidate_starts(date, service)`  | Everything a day offers, before bookings/lead time          |
+| `owner_day_slots(date, service)`       | The owner's grid: every slot with source, booked, past, who |
+| `add_day_slot(date, time)`             | Publish one start time; refuses off-grid times              |
+| `remove_day_slot(date, time)`          | Delete one; returns `false` if it came from a window        |
+| `materialise_day_slots(date, service)` | Freeze a window day into an editable slot list              |
+| `clear_day_slots(date)`                | Drop every published slot, restoring the day's hours        |
+
+A window slot is computed, not stored, so it cannot be deleted individually.
+Rather than silently rewriting the day's hours, `remove_day_slot` returns
+`false` and the interface offers to convert the day to exact times.
+
+**`0009` — the writer and the reader must agree.** `book_appointment()` had
+re-derived availability from rules and exceptions since `0002`, and that copy
+fell behind the engine twice: `0007`'s published hours (a whole-day closure plus
+extra hours) made it reject its own slots with `OUTSIDE_AVAILABILITY`, and
+`0008`'s explicit slots were invisible to it. **Every day of custom published
+hours was visible and unbookable.** Booking now asks `day_candidate_starts()`
+instead of reimplementing it — the two cannot drift apart if there is only one
+of them. Grid alignment, lead time, horizon and the daily cap stay on the write
+path, where they belong.
+
+**`0010` — no reminders in the past.** The insert trigger queued a 24-hour
+reminder unconditionally, so a booking made for later the same day got one dated
+in the past, which the drain would send immediately — telling someone their
+appointment is "tomorrow" three hours before it starts. The approval path had
+this guard; the insert path never did, and since `0007` made instant
+confirmation normal, the unguarded path became the usual one. Already-stale rows
+are retired by the migration.

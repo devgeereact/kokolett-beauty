@@ -363,6 +363,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      availability_slots: {
+        Row: {
+          created_at: string;
+          id: string;
+          note: string | null;
+          on_date: string;
+          starts_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          on_date: string;
+          starts_at: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          on_date?: string;
+          starts_at?: string;
+        };
+        Relationships: [];
+      };
       booking_settings: {
         Row: {
           approval_window_h: number;
@@ -788,6 +812,10 @@ export type Database = {
       };
     };
     Functions: {
+      add_day_slot: {
+        Args: { p_date: string; p_note?: string; p_time: string };
+        Returns: string;
+      };
       approve_appointment: {
         Args: { p_appointment_id: string };
         Returns: {
@@ -846,6 +874,7 @@ export type Database = {
           status: Database['public']['Enums']['appointment_status'];
         }[];
       };
+      clear_day_slots: { Args: { p_date: string }; Returns: number };
       create_appointment_as_owner: {
         Args: {
           p_email: string;
@@ -887,6 +916,13 @@ export type Database = {
         Args: { p_session_token: string };
         Returns: string;
       };
+      day_candidate_starts: {
+        Args: { p_date: string; p_service_id: string };
+        Returns: {
+          source: string;
+          starts_at: string;
+        }[];
+      };
       decline_request: {
         Args: { p_reason?: string; p_request_id: string };
         Returns: undefined;
@@ -894,6 +930,10 @@ export type Database = {
       expire_pending_approvals: { Args: never; Returns: number };
       generate_booking_reference: { Args: never; Returns: string };
       is_owner: { Args: never; Returns: boolean };
+      materialise_day_slots: {
+        Args: { p_date: string; p_service_id: string };
+        Returns: number;
+      };
       offer_slot_to_request: {
         Args: {
           p_override_reason?: string;
@@ -927,6 +967,18 @@ export type Database = {
         }[];
       };
       owner_dashboard_summary: { Args: never; Returns: Json };
+      owner_day_slots: {
+        Args: { p_date: string; p_service_id: string };
+        Returns: {
+          customer_name: string;
+          is_booked: boolean;
+          is_past: boolean;
+          local_time: string;
+          reference: string;
+          source: string;
+          starts_at: string;
+        }[];
+      };
       purge_expired_access_tokens: { Args: never; Returns: number };
       queue_email: {
         Args: {
@@ -976,6 +1028,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      remove_day_slot: {
+        Args: { p_date: string; p_time: string };
+        Returns: boolean;
       };
       set_appointment_status: {
         Args: {

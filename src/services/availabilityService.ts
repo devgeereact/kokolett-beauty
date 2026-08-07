@@ -102,6 +102,84 @@ export async function setDayAvailability(
   if (error) throw error;
 }
 
+export interface OwnerDaySlot {
+  starts_at: string;
+  local_time: string;
+  /** `window` came from opening hours; `explicit` was published on its own. */
+  source: string;
+  is_booked: boolean;
+  is_past: boolean;
+  reference: string | null;
+  customer_name: string | null;
+}
+
+/**
+ * Every start time a day offers, annotated.
+ *
+ * Unlike the customer-facing engine this hides nothing — booked and past slots
+ * are included, because "why can nobody book 2pm?" is the question this screen
+ * exists to answer.
+ *
+ * Slot length depends on the service, so the grid is always relative to one:
+ * a 14:00 slot is free for a trim and busy for a colour.
+ */
+export async function listOwnerDaySlots(
+  date: string,
+  serviceId: string,
+): Promise<OwnerDaySlot[]> {
+  const { data, error } = await supabase.rpc('owner_day_slots', {
+    p_date: date,
+    p_service_id: serviceId,
+  });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Publish a single start time. Must sit on the granularity grid. */
+export async function addDaySlot(date: string, time: string): Promise<void> {
+  const { error } = await supabase.rpc('add_day_slot', {
+    p_date: date,
+    p_time: time,
+  });
+  if (error) throw error;
+}
+
+/**
+ * Delete a published start time.
+ *
+ * Resolves `false` when the slot came from opening hours rather than being
+ * published on its own — there is nothing to delete, and the caller should
+ * offer to switch the day to exact times instead.
+ */
+export async function removeDaySlot(date: string, time: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('remove_day_slot', {
+    p_date: date,
+    p_time: time,
+  });
+  if (error) throw error;
+  return data === true;
+}
+
+/** Freeze the day's current slots into an editable list and close the windows. */
+export async function materialiseDaySlots(
+  date: string,
+  serviceId: string,
+): Promise<number> {
+  const { data, error } = await supabase.rpc('materialise_day_slots', {
+    p_date: date,
+    p_service_id: serviceId,
+  });
+  if (error) throw error;
+  return data ?? 0;
+}
+
+/** Drop every published slot for a date, handing the day back to its hours. */
+export async function clearDaySlots(date: string): Promise<number> {
+  const { data, error } = await supabase.rpc('clear_day_slots', { p_date: date });
+  if (error) throw error;
+  return data ?? 0;
+}
+
 /** Exceptions inside a date range — one query per rendered calendar month. */
 export async function listExceptionsBetween(
   fromDate: string,

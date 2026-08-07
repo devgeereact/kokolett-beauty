@@ -465,3 +465,48 @@ appointment is "tomorrow" three hours before it starts. The approval path had
 this guard; the insert path never did, and since `0007` made instant
 confirmation normal, the unguarded path became the usual one. Already-stale rows
 are retired by the migration.
+
+## 13. Migrations `0011`–`0012` — availability rebuilt from scratch
+
+The owner asked for a rebuild after using the calendar. There were four
+overlapping ways to say when she was free — standing weekly rules, published
+"custom hours" windows, individual published slots, and breaks or closures that
+subtracted from all of them. Each was defensible alone; together they were a
+system nobody should have to hold in their head, and they produced screens that
+contradicted one another (see the display bugs fixed in the previous commit).
+
+**The model is now one sentence.** A day is a list of start times. If a time is
+on the list it can be booked; if it is not, it cannot.
+
+`availability_rules` and `availability_exceptions` are **dropped**.
+`availability_slots (on_date, starts_at)` is the whole of availability.
+"Blocking out time" is no longer a concept — you do not publish the time, or you
+delete one you published.
+
+**Slots stopped depending on the service.** Every appointment is one
+`Hair Appointment` of a fixed length, so a time is absolute rather than "free
+for a trim, busy for a colour". `hair_appointment()` resolves the single active
+service, and nothing in the booking path takes a service argument any more.
+Other services are deactivated and archived rather than deleted, because past
+appointments point at them.
+
+| Function                         | Purpose                                                |
+| -------------------------------- | ------------------------------------------------------ |
+| `available_slots(from, to)`      | Free times for customers — no service argument         |
+| `owner_day_slots(date)`          | The owner's grid: every time with booked/past/who      |
+| `month_slot_summary(from, to)`   | Slot and booking counts per day, one query per month   |
+| `set_day_slots(date, time[])`    | Replace a day's times wholesale                        |
+| `copy_day_slots(from, to)`       | Copy one day onto another                              |
+| `book_appointment(starts_at, …)` | Book. Availability is one lookup against the slot list |
+
+**`0012` protects bookings from bulk edits.** `set_day_slots` and
+`copy_day_slots` both clear the day before writing, which is right for free
+times and wrong for taken ones — deleting the slot behind a live appointment
+does not cancel it, does not tell the customer, and leaves the owner's day panel
+showing nothing at a time somebody is turning up. A time with a live appointment
+survives both operations; freeing it means cancelling the appointment, which is
+the act that tells the customer.
+
+**Consequence worth stating plainly:** with no weekly pattern underneath,
+nothing is bookable until the owner publishes times. That is the trade the
+simplicity buys.

@@ -1,32 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DayPanel } from '@/components/dashboard/DayPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatusChip } from '@/components/ui/StatusChip';
-import { DayEditor } from '@/components/dashboard/DayEditor';
-import { DaySlots } from '@/components/dashboard/DaySlots';
-import { ErrorState, LoadingState } from '@/components/ui/States';
+import { ErrorState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useServices } from '@/hooks/useServices';
-import {
-  deleteException,
-  listExceptionsBetween,
-  listRules,
-  listSlotsBetween,
-} from '@/services/availabilityService';
+import { listMonthSummary, type DaySummary } from '@/services/availabilityService';
 import { listAppointments } from '@/services/appointmentService';
-import { errorMessage } from '@/lib/errors';
-import {
-  formatDateLong,
-  formatMoney,
-  formatTime,
-  salonDayRange,
-  toSalonDate,
-  trimSeconds,
-} from '@/lib/format';
+import { formatMoney, formatTime, salonDayRange, toSalonDate } from '@/lib/format';
 import {
   dayNumber,
-  dayOfWeek,
   gridRange,
   isSameMonth,
   monthGrid,
@@ -36,22 +21,23 @@ import {
 } from '@/lib/calendar';
 import { cn } from '@/lib/utils';
 import { LIVE_STATUSES } from '@/types';
-import type {
-  AppointmentDetailed,
-  AvailabilityException,
-  AvailabilityRule,
-} from '@/types';
+import type { AppointmentDetailed } from '@/types';
 
 /**
- * The month calendar: what is open, what is booked, and where availability can
- * be changed.
+ * The calendar.
  *
- * Availability is edited *per day* here rather than per weekday, because that
- * is how the owner actually thinks about it — "I can't do next Thursday" is a
- * date, not a rule. Standing weekly hours stay on the Opening hours screen.
+ * Rebuilt in 0011 around one idea: a day is a list of start times. The month
+ * grid shows how many times each day has and how many are taken; clicking a day
+ * opens the list. There is nothing else to learn — no weekly pattern behind it,
+ * no windows, no closures, no blocked time.
+ *
+ * The month grid deliberately shows counts rather than opening hours. Under the
+ * old model a cell had to summarise four interacting sources and frequently got
+ * it wrong; "4 times · 1 booked" is a fact, and it is the fact the owner is
+ * actually looking for.
  */
 export function CalendarPage(): JSX.Element {
-  const { timezone } = useBusinessSettings();
+  const { timezone, settings } = useBusinessSettings();
   const { services } = useServices(true);
   const today = toSalonDate(new Date(), timezone);
 
@@ -61,40 +47,28 @@ export function CalendarPage(): JSX.Element {
   });
   const [selected, setSelected] = useState<string>(today);
 
-  const [rules, setRules] = useState<AvailabilityRule[]>([]);
-  const [exceptions, setExceptions] = useState<AvailabilityException[]>([]);
-  const [publishedSlots, setPublishedSlots] = useState<
-    { on_date: string; starts_at: string }[]
-  >([]);
+  const [summary, setSummary] = useState<Map<string, DaySummary>>(new Map());
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const weeks = useMemo(() => monthGrid(cursor.year, cursor.month), [cursor]);
   const range = useMemo(() => gridRange(cursor.year, cursor.month), [cursor]);
 
   const load = useCallback(async (): Promise<void> => {
-    setLoading(true);
     try {
-      const [r, e, a, sl] = await Promise.all([
-        listRules(),
-        listExceptionsBetween(range.from, range.to),
+      const [rows, appts] = await Promise.all([
+        listMonthSummary(range.from, range.to),
         listAppointments({
           from: salonDayRange(range.from, timezone).start,
           to: salonDayRange(range.to, timezone).end,
           statuses: [...LIVE_STATUSES],
         }),
-        listSlotsBetween(range.from, range.to),
       ]);
-      setRules(r);
-      setExceptions(e);
-      setAppointments(a);
-      setPublishedSlots(sl);
+      setSummary(new Map(rows.map((r) => [r.on_date, r])));
+      setAppointments(appts);
       setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)));
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error(String(e)));
     }
   }, [range.from, range.to, timezone]);
 
@@ -102,66 +76,27 @@ export function CalendarPage(): JSX.Element {
     void load();
   }, [load]);
 
-  /** Everything known about one date, assembled once per render. */
-  const dayInfo = useCallback(
-    (date: string) => {
-      const dow = dayOfWeek(date);
-      const dayExceptions = exceptions.filter((e) => e.on_date === date);
-      const fullClosure = dayExceptions.find(
-        (e) => e.kind === 'closure' && e.starts_at === null,
-      );
-      const extraHours = dayExceptions.filter((e) => e.kind === 'extra_hours');
-      const standing = rules.filter((r) => r.day_of_week === dow && r.is_open);
-      const booked = appointments.filter(
-        (a) => toSalonDate(a.starts_at, timezone) === date,
-      );
-
-      // Mirrors day_candidate_starts(): a whole-day closure suppresses the
-      // standing weekly rule, but hours published for this date still apply.
-      // "Custom hours" is expressed as exactly that combination, so treating a
-      // closure as "nothing here" made every customised day read as closed.
-      const windows = [
-        ...(fullClosure
-          ? []
-          : standing.map(
-              (r) => `${trimSeconds(r.opens_at)}–${trimSeconds(r.closes_at)}`,
-            )),
-        ...extraHours.map(
-          (e) => `${trimSeconds(e.starts_at ?? '')}–${trimSeconds(e.ends_at ?? '')}`,
-        ),
-      ];
-
-      // A day can also be open purely because individual times were published,
-      // with no window at all.
-      const slots = publishedSlots.filter((s) => s.on_date === date);
-
-      return {
-        dayExceptions,
-        fullClosure,
-        windows,
-        slots,
-        booked,
-        isOpen: windows.length > 0 || slots.length > 0,
-      };
-    },
-    [appointments, exceptions, rules, publishedSlots, timezone],
+  const appointmentMinutes = services[0]?.duration_min ?? 60;
+  const dayBookings = appointments.filter(
+    (a) => toSalonDate(a.starts_at, timezone) === selected,
   );
 
-  const selectedInfo = dayInfo(selected);
-
-  const removeException = async (id: string): Promise<void> => {
-    try {
-      await deleteException(id);
-      await load();
-    } catch (e) {
-      window.alert(errorMessage(e));
+  const monthTotals = useMemo(() => {
+    let slotsTotal = 0;
+    let bookedTotal = 0;
+    for (const date of weeks.flat()) {
+      if (!isSameMonth(date, cursor.year, cursor.month)) continue;
+      const row = summary.get(date);
+      slotsTotal += row?.slot_count ?? 0;
+      bookedTotal += row?.booked_count ?? 0;
     }
-  };
+    return { slotsTotal, bookedTotal };
+  }, [weeks, summary, cursor]);
 
   return (
     <DashboardLayout
       title="Calendar"
-      subtitle="What is open, what is booked, and when you are available"
+      subtitle="Publish the times you are free. Anything you publish can be booked."
       actions={
         <div className="flex items-center gap-1">
           <Button
@@ -195,15 +130,17 @@ export function CalendarPage(): JSX.Element {
       }
     >
       {error && <ErrorState error={error} onRetry={() => void load()} />}
-      {loading && appointments.length === 0 && <LoadingState label="Loading calendar…" />}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
+      <div className="grid gap-6 xl:grid-cols-[1fr_23rem]">
         <Card className="overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
             <h2 className="font-display text-lg font-semibold text-foreground">
               {monthLabel(cursor.year, cursor.month)}
             </h2>
-            <p className="text-xs text-muted-foreground">All times {timezone}</p>
+            <p className="text-xs text-muted-foreground">
+              {monthTotals.slotsTotal} times published · {monthTotals.bookedTotal} booked
+              · {timezone}
+            </p>
           </div>
 
           <div className="grid grid-cols-7 border-b border-border bg-muted">
@@ -219,10 +156,13 @@ export function CalendarPage(): JSX.Element {
 
           <div className="grid grid-cols-7">
             {weeks.flat().map((date) => {
-              const info = dayInfo(date);
+              const row = summary.get(date);
+              const slotCount = row?.slot_count ?? 0;
+              const bookedCount = row?.booked_count ?? 0;
               const inMonth = isSameMonth(date, cursor.year, cursor.month);
               const isToday = date === today;
               const isSelected = date === selected;
+              const isPast = date < today;
 
               return (
                 <button
@@ -231,19 +171,20 @@ export function CalendarPage(): JSX.Element {
                   onClick={() => setSelected(date)}
                   aria-current={isToday ? 'date' : undefined}
                   aria-pressed={isSelected}
+                  aria-label={`${date}: ${slotCount} times, ${bookedCount} booked`}
                   className={cn(
-                    'min-h-24 border-b border-r border-border p-2 text-left align-top',
+                    'flex min-h-20 flex-col items-start gap-1 border-b border-r border-border p-2 text-left',
                     'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    inMonth ? 'bg-card' : 'bg-muted',
+                    inMonth ? 'bg-card hover:bg-muted' : 'bg-muted',
                     isSelected && 'ring-2 ring-inset ring-primary',
                   )}
                 >
                   <span
                     className={cn(
-                      'inline-flex h-6 w-6 items-center justify-center rounded-full text-sm',
+                      'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm',
                       isToday
                         ? 'bg-primary font-semibold text-primary-foreground'
-                        : inMonth
+                        : inMonth && !isPast
                           ? 'text-foreground'
                           : 'text-muted-foreground',
                     )}
@@ -251,35 +192,21 @@ export function CalendarPage(): JSX.Element {
                     {dayNumber(date)}
                   </span>
 
-                  {inMonth && (
-                    <span className="mt-1 block">
-                      {info.isOpen ? (
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {info.windows[0]}
-                          {info.windows.length > 1 ? ` +${info.windows.length - 1}` : ''}
-                        </span>
-                      ) : (
-                        <span className="block text-xs text-muted-foreground">
-                          Closed
-                        </span>
-                      )}
-
-                      {info.booked.length > 0 && (
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground">
+                  {inMonth && slotCount > 0 && (
+                    <>
+                      <span className="text-xs font-medium text-foreground">
+                        {slotCount} time{slotCount === 1 ? '' : 's'}
+                      </span>
+                      {bookedCount > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                           <span
                             className="h-1.5 w-1.5 rounded-full bg-status-confirmed"
                             aria-hidden="true"
                           />
-                          {info.booked.length}
+                          {bookedCount} booked
                         </span>
                       )}
-
-                      {info.dayExceptions.some((e) => e.kind === 'break') && (
-                        <span className="mt-1 block text-xs text-status-pending">
-                          Break
-                        </span>
-                      )}
-                    </span>
+                    </>
                   )}
                 </button>
               );
@@ -288,38 +215,22 @@ export function CalendarPage(): JSX.Element {
         </Card>
 
         <div className="space-y-4">
-          <Card className="p-5">
-            <h2 className="font-display text-lg font-semibold text-foreground">
-              {formatDateLong(`${selected}T12:00:00Z`, 'UTC')}
-            </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {selectedInfo.windows.length > 0
-                ? `Bookable ${selectedInfo.windows.join(', ')}`
-                : selectedInfo.slots.length > 0
-                  ? `${selectedInfo.slots.length} published time${selectedInfo.slots.length === 1 ? '' : 's'}`
-                  : 'Nothing bookable'}
-            </p>
-          </Card>
-
-          <DaySlots date={selected} services={services} onChanged={() => void load()} />
-
-          <DayEditor
+          <DayPanel
             date={selected}
-            rules={rules}
-            exceptions={exceptions.filter((e) => e.on_date === selected)}
-            onSaved={() => void load()}
-            onRemoveBreak={removeException}
+            timezone={timezone}
+            appointmentMinutes={appointmentMinutes}
+            onChanged={() => void load()}
           />
 
           <Card className="p-5">
             <h3 className="mb-3 font-display text-base font-semibold text-foreground">
-              Booked ({selectedInfo.booked.length})
+              Booked this day ({dayBookings.length})
             </h3>
-            {selectedInfo.booked.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing booked this day.</p>
+            {dayBookings.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nothing booked yet.</p>
             ) : (
               <ul className="space-y-2">
-                {selectedInfo.booked.map((a) => (
+                {dayBookings.map((a) => (
                   <li
                     key={a.id}
                     className="border-b border-border pb-2 text-sm last:border-0"
@@ -331,8 +242,16 @@ export function CalendarPage(): JSX.Element {
                       <StatusChip status={a.status} />
                     </div>
                     <p className="text-muted-foreground">
-                      {a.customer_name} · {a.service_name} · {formatMoney(a.price_pence)}
+                      {a.customer_name}
+                      {settings && a.price_pence > 0
+                        ? ` · ${formatMoney(a.price_pence)}`
+                        : ''}
                     </p>
+                    {a.customer_note && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        &ldquo;{a.customer_note}&rdquo;
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

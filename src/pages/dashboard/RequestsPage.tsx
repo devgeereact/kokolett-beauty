@@ -2,10 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Field, Input, Select, Textarea } from '@/components/ui/Field';
+import { Field, Input, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useServices } from '@/hooks/useServices';
 import {
   declineRequest,
   listQueuedRequests,
@@ -37,7 +36,6 @@ const FLEXIBILITY_LABELS: Record<string, string> = {
  */
 export function RequestsPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
-  const { services } = useServices(true);
 
   const [requests, setRequests] = useState<QueuedRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +43,7 @@ export function RequestsPage(): JSX.Element {
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const [offer, setOffer] = useState({ serviceId: '', date: '', time: '10:00' });
+  const [offer, setOffer] = useState({ date: '', time: '10:00' });
   const [declineReason, setDeclineReason] = useState('');
   const [overrideReason, setOverrideReason] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -73,15 +71,10 @@ export function RequestsPage(): JSX.Element {
     setAheadWarning(null);
     setDeclineReason('');
     setOverrideReason('');
-    setOffer({
-      serviceId: request.service_id ?? services[0]?.id ?? '',
-      date: request.preferred_dates[0] ?? '',
-      time: '10:00',
-    });
+    setOffer({ date: request.preferred_dates[0] ?? '', time: '10:00' });
   };
 
   const book = async (request: QueuedRequest, override?: string): Promise<void> => {
-    if (!offer.serviceId) return setFormError('Choose which service this is for.');
     if (!offer.date) return setFormError('Choose a date.');
 
     setBusy(true);
@@ -90,12 +83,7 @@ export function RequestsPage(): JSX.Element {
       // The typed time is salon wall-clock, not the browser's.
       const when = salonInstant(offer.date, offer.time, timezone);
 
-      const result = await offerSlotToRequest(
-        request.id,
-        offer.serviceId,
-        when.toISOString(),
-        override,
-      );
+      const result = await offerSlotToRequest(request.id, when.toISOString(), override);
       window.alert(`Booked in — reference ${result.reference}. They have been emailed.`);
       setOpenId(null);
       await load();
@@ -215,25 +203,7 @@ export function RequestsPage(): JSX.Element {
                   Offer them a time
                 </h3>
 
-                <div className="grid gap-x-3 sm:grid-cols-3">
-                  <Field label="Service">
-                    {({ id }) => (
-                      <Select
-                        id={id}
-                        value={offer.serviceId}
-                        onChange={(e) =>
-                          setOffer({ ...offer, serviceId: e.target.value })
-                        }
-                      >
-                        <option value="">Choose…</option>
-                        {services.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </Field>
+                <div className="grid gap-x-3 sm:grid-cols-2">
                   <Field label="Date">
                     {({ id }) => (
                       <Input

@@ -44,8 +44,7 @@ export function DashboardLayout({
     { to: routes.owner.appointments, label: 'Appointments' },
     { to: routes.owner.requests, label: 'Requests', badge: badges?.requests },
     { to: routes.owner.customers, label: 'Customers' },
-    { to: routes.owner.services, label: 'Services' },
-    { to: routes.owner.availability, label: 'Opening hours' },
+    { to: routes.owner.appointmentType, label: 'Appointment' },
     { to: routes.owner.settings, label: 'Settings' },
   ];
 

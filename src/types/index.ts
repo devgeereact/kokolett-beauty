@@ -31,7 +31,6 @@ export type AppointmentStatus = Enums['appointment_status'];
 export type AvailabilityRequestStatus = Enums['availability_request_status'];
 export type EmailStatus = Enums['email_status'];
 export type RecommendationStatus = Enums['recommendation_status'];
-export type ExceptionKind = Enums['exception_kind'];
 export type Flexibility = 'any' | 'morning' | 'afternoon' | 'evening';
 
 /** The statuses that occupy the calendar — mirrors `appointments_no_overlap`. */
@@ -71,11 +70,12 @@ export type AppointmentUpdate = Tables['appointments']['Update'];
 type DetailedRow = Views['appointments_detailed']['Row'];
 export type AppointmentDetailed = Omit<DetailedRow, keyof Appointment> & Appointment;
 
-export type AvailabilityRule = Tables['availability_rules']['Row'];
-export type AvailabilityRuleInsert = Tables['availability_rules']['Insert'];
-
-export type AvailabilityException = Tables['availability_exceptions']['Row'];
-export type AvailabilityExceptionInsert = Tables['availability_exceptions']['Insert'];
+/**
+ * Availability is one table since 0011: a day is a list of start times.
+ * `availability_rules` and `availability_exceptions` were dropped with the
+ * weekly-pattern model they belonged to.
+ */
+export type AvailabilitySlot = Tables['availability_slots']['Row'];
 
 export type BookingSettings = Tables['booking_settings']['Row'];
 export type BookingSettingsUpdate = Tables['booking_settings']['Update'];

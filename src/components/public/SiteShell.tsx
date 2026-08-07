@@ -12,7 +12,6 @@ const SALON_EMAIL = 'booking@koko.gakinz.com';
 export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   const links = [
     { to: routes.public.home, label: 'Home' },
-    { to: routes.public.services, label: 'Services' },
     { to: routes.public.book, label: 'Book' },
     { to: routes.customer.home, label: 'My bookings' },
   ];

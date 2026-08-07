@@ -5,11 +5,13 @@ import type { BookingResult, TimeSlot } from '@/types';
 /**
  * The public booking path.
  *
- * Two rules, both enforced server-side rather than here:
- *   - Slots come from `available_slots()`, which subtracts live appointments
- *     under `security definer`. The browser never sees what is taken.
- *   - Bookings go through `book_appointment()`. There is no client insert on
- *     `appointments`, and no RLS policy that would allow one.
+ * Since 0011 there is one appointment type and slots are absolute, so nothing
+ * here takes a service: a customer picks a time, not a product. What they
+ * actually want is a note on the booking and a conversation in the chair.
+ *
+ * Availability still comes from the database rather than being computed here —
+ * anon has no read on `appointments`, and `available_slots()` subtracts what is
+ * taken without revealing it.
  */
 
 export interface SlotsByDate {
@@ -19,14 +21,12 @@ export interface SlotsByDate {
 }
 
 export async function fetchAvailableSlots(
-  serviceId: string,
   fromDate: string,
   toDate: string,
   durationMin: number,
   timezone: string,
 ): Promise<SlotsByDate> {
   const { data, error } = await supabase.rpc('available_slots', {
-    p_service_id: serviceId,
     p_from: fromDate,
     p_to: toDate,
   });
@@ -58,7 +58,6 @@ export async function fetchAvailableSlots(
 }
 
 export interface BookingInput {
-  serviceId: string;
   startsAt: string;
   fullName: string;
   email: string;
@@ -69,7 +68,6 @@ export interface BookingInput {
 
 export async function submitBooking(input: BookingInput): Promise<BookingResult> {
   const { data, error } = await supabase.rpc('book_appointment', {
-    p_service_id: input.serviceId,
     p_starts_at: input.startsAt,
     p_full_name: input.fullName.trim(),
     p_email: input.email.trim().toLowerCase(),
@@ -89,7 +87,6 @@ export interface AvailabilityRequestInput {
   fullName: string;
   email: string;
   mobile: string;
-  serviceId: string | null;
   preferredDates: string[];
   preferredTimes: string;
   flexibility: 'any' | 'morning' | 'afternoon' | 'evening';
@@ -108,7 +105,6 @@ export async function submitAvailabilityRequest(
     full_name: input.fullName.trim(),
     email: input.email.trim().toLowerCase(),
     mobile: input.mobile.trim() || null,
-    service_id: input.serviceId,
     preferred_dates: input.preferredDates,
     preferred_times: input.preferredTimes.trim() || null,
     flexibility: input.flexibility,

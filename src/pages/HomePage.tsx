@@ -2,28 +2,27 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Card } from '@/components/ui/Card';
 import { useServices } from '@/hooks/useServices';
-import { formatDuration, formatMoney, trimSeconds } from '@/lib/format';
-import { DAYS_OF_WEEK } from '@/lib/format';
+import { useAvailability } from '@/hooks/useAvailability';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { formatDateLong, formatDuration, formatMoney } from '@/lib/format';
 import { routes } from '@/lib/routes';
-import { useEffect, useState } from 'react';
-import { listRules } from '@/services/availabilityService';
-import type { AvailabilityRule } from '@/types';
 
 /**
- * The salon's front page. Editorial: one clear action, generous space, and the
- * two facts a customer actually needs — what it costs and when you are open.
+ * The salon's front page.
+ *
+ * It leads with the next few open times rather than a menu of services. There
+ * is one appointment type, so the only question a customer has is "when can I
+ * come in?" — and answering it on the front page removes a whole click.
  */
 export function HomePage(): JSX.Element {
   const { services } = useServices();
-  const [rules, setRules] = useState<AvailabilityRule[]>([]);
+  const { timezone } = useBusinessSettings();
+  const appointment = services[0];
+  const { slotsByDate, openDates, loading } = useAvailability(
+    appointment?.duration_min ?? 60,
+  );
 
-  useEffect(() => {
-    void listRules()
-      .then(setRules)
-      .catch(() => setRules([]));
-  }, []);
-
-  const featured = services.slice(0, 3);
+  const nextDays = openDates.slice(0, 3);
 
   return (
     <SiteShell>
@@ -35,8 +34,8 @@ export function HomePage(): JSX.Element {
           Hair that feels like <span className="text-primary">you</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-          Cutting, colouring, styling and treatments — booked online in under two minutes.
-          No account, no password.
+          Cutting, colouring, styling and treatments. Pick a time that suits you and tell
+          us what you are after — no account, no password.
         </p>
         <Link
           to={routes.public.book}
@@ -46,79 +45,59 @@ export function HomePage(): JSX.Element {
         </Link>
       </section>
 
-      {featured.length > 0 && (
-        <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
-          <h2 className="mb-6 text-center font-display text-2xl font-semibold text-foreground">
-            Popular
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {featured.map((service) => (
-              <Card key={service.id} className="flex flex-col p-5">
-                <p className="font-display text-lg font-semibold text-foreground">
-                  {service.name}
-                </p>
-                <p className="mt-1 flex-1 text-sm text-muted-foreground">
-                  {service.description ?? formatDuration(service.duration_min)}
-                </p>
-                <p className="mt-3 font-medium text-foreground">
-                  {formatMoney(service.price_pence)}
-                </p>
-                <Link
-                  to={routes.public.bookService(service.slug)}
-                  className="mt-3 inline-flex h-11 items-center justify-center rounded-lg border border-border font-semibold text-foreground hover:bg-muted"
-                >
-                  Book
-                </Link>
-              </Card>
-            ))}
+      {!loading && nextDays.length > 0 && (
+        <section className="border-t border-border bg-card">
+          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+            <h2 className="mb-6 text-center font-display text-2xl font-semibold text-foreground">
+              Next available
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {nextDays.map((date) => (
+                <Card key={date} className="p-4 text-center">
+                  <p className="font-medium text-foreground">
+                    {formatDateLong(`${date}T12:00:00Z`, 'UTC')}
+                  </p>
+                  <p className="mt-2 font-mono text-sm text-muted-foreground">
+                    {(slotsByDate[date] ?? [])
+                      .slice(0, 3)
+                      .map((s) => s.label)
+                      .join(' · ')}
+                    {(slotsByDate[date]?.length ?? 0) > 3 &&
+                      ` +${(slotsByDate[date]?.length ?? 0) - 3}`}
+                  </p>
+                </Card>
+              ))}
+            </div>
+            <p className="mt-6 text-center">
+              <Link
+                to={routes.public.book}
+                className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                See all open times
+              </Link>
+            </p>
           </div>
-          <p className="mt-6 text-center">
-            <Link
-              to={routes.public.services}
-              className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              See the full menu
-            </Link>
-          </p>
         </section>
       )}
 
-      {rules.length > 0 && (
-        <section className="border-t border-border bg-card">
-          <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-            <h2 className="mb-6 font-display text-2xl font-semibold text-foreground">
-              Opening hours
-            </h2>
-            <dl className="grid gap-2 sm:grid-cols-2">
-              {DAYS_OF_WEEK.map((day) => {
-                const open = rules.filter(
-                  (r) => r.day_of_week === day.index && r.is_open,
-                );
-                return (
-                  <div
-                    key={day.index}
-                    className="flex justify-between border-b border-border py-2"
-                  >
-                    <dt className="text-foreground">{day.name}</dt>
-                    <dd className="text-muted-foreground">
-                      {open.length === 0
-                        ? 'Closed'
-                        : open
-                            .map(
-                              (r) =>
-                                `${trimSeconds(r.opens_at)}–${trimSeconds(r.closes_at)}`,
-                            )
-                            .join(', ')}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
-            <p className="mt-6 text-sm text-muted-foreground">
-              Holidays and one-off changes are reflected in the booking calendar, so the
-              times you see when booking are always the real ones.
-            </p>
-          </div>
+      {appointment && (
+        <section className="mx-auto max-w-3xl px-4 py-12 text-center sm:px-6">
+          <h2 className="mb-3 font-display text-2xl font-semibold text-foreground">
+            {appointment.name}
+          </h2>
+          <p className="mx-auto max-w-xl text-muted-foreground">
+            {appointment.description ??
+              'One appointment for any hair service — tell us what you are after when you book.'}
+          </p>
+          <p className="mt-4 text-foreground">
+            {formatDuration(appointment.duration_min)}
+            {appointment.price_pence > 0
+              ? ` · ${formatMoney(appointment.price_pence)}`
+              : ' · price agreed in the salon'}
+          </p>
+          <p className="mt-6 text-sm text-muted-foreground">
+            All times shown in {timezone}.
+          </p>
         </section>
       )}
     </SiteShell>

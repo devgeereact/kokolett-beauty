@@ -72,13 +72,11 @@ export interface OfferResult {
  */
 export async function offerSlotToRequest(
   requestId: string,
-  serviceId: string,
   startsAt: string,
   overrideReason?: string,
 ): Promise<OfferResult> {
   const { data, error } = await supabase.rpc('offer_slot_to_request', {
     p_request_id: requestId,
-    p_service_id: serviceId,
     p_starts_at: startsAt,
     p_override_reason: overrideReason,
   });

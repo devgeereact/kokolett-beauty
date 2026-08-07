@@ -121,7 +121,6 @@ export async function setAppointmentStatus(
 }
 
 export interface OwnerBookingInput {
-  serviceId: string;
   startsAt: Date;
   fullName: string;
   email: string;
@@ -134,7 +133,6 @@ export async function createAppointmentAsOwner(
   input: OwnerBookingInput,
 ): Promise<Pick<BookingResult, 'appointment_id' | 'reference'>> {
   const { data, error } = await supabase.rpc('create_appointment_as_owner', {
-    p_service_id: input.serviceId,
     p_starts_at: input.startsAt.toISOString(),
     p_full_name: input.fullName,
     p_email: input.email,

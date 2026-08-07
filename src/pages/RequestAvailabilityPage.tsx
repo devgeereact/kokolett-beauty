@@ -4,7 +4,6 @@ import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
-import { useServices } from '@/hooks/useServices';
 import { submitAvailabilityRequest } from '@/services/bookingService';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
@@ -18,12 +17,10 @@ import type { Flexibility } from '@/types';
  * time: who, what, roughly when, and how flexible they are.
  */
 export function RequestAvailabilityPage(): JSX.Element {
-  const { services } = useServices();
   const [form, setForm] = useState({
     fullName: '',
     email: '',
     mobile: '',
-    serviceId: '',
     firstChoice: '',
     secondChoice: '',
     preferredTimes: '',
@@ -47,7 +44,6 @@ export function RequestAvailabilityPage(): JSX.Element {
         fullName: form.fullName,
         email: form.email,
         mobile: form.mobile,
-        serviceId: form.serviceId || null,
         preferredDates: [form.firstChoice, form.secondChoice].filter(Boolean),
         preferredTimes: form.preferredTimes,
         flexibility: form.flexibility,
@@ -139,20 +135,17 @@ export function RequestAvailabilityPage(): JSX.Element {
             )}
           </Field>
 
-          <Field label="What are you after?">
-            {({ id }) => (
-              <Select
+          <Field
+            label="What are you after?"
+            hint="Cut, colour, braids, a treatment — whatever you have in mind."
+          >
+            {({ id, describedBy }) => (
+              <Textarea
                 id={id}
-                value={form.serviceId}
-                onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
-              >
-                <option value="">Not sure yet</option>
-                {services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </Select>
+                aria-describedby={describedBy}
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
             )}
           </Field>
 

@@ -214,39 +214,6 @@ export type Database = {
           },
         ];
       };
-      availability_exceptions: {
-        Row: {
-          created_at: string;
-          ends_at: string | null;
-          id: string;
-          kind: Database['public']['Enums']['exception_kind'];
-          on_date: string;
-          reason: string | null;
-          starts_at: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          created_at?: string;
-          ends_at?: string | null;
-          id?: string;
-          kind: Database['public']['Enums']['exception_kind'];
-          on_date: string;
-          reason?: string | null;
-          starts_at?: string | null;
-          updated_at?: string;
-        };
-        Update: {
-          created_at?: string;
-          ends_at?: string | null;
-          id?: string;
-          kind?: Database['public']['Enums']['exception_kind'];
-          on_date?: string;
-          reason?: string | null;
-          starts_at?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
       availability_requests: {
         Row: {
           converted_appointment_id: string | null;
@@ -332,36 +299,6 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
-      };
-      availability_rules: {
-        Row: {
-          closes_at: string;
-          created_at: string;
-          day_of_week: number;
-          id: string;
-          is_open: boolean;
-          opens_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          closes_at: string;
-          created_at?: string;
-          day_of_week: number;
-          id?: string;
-          is_open?: boolean;
-          opens_at: string;
-          updated_at?: string;
-        };
-        Update: {
-          closes_at?: string;
-          created_at?: string;
-          day_of_week?: number;
-          id?: string;
-          is_open?: boolean;
-          opens_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
       };
       availability_slots: {
         Row: {
@@ -853,7 +790,7 @@ export type Database = {
         };
       };
       available_slots: {
-        Args: { p_from: string; p_service_id: string; p_to: string };
+        Args: { p_from: string; p_to: string };
         Returns: {
           slot_start: string;
         }[];
@@ -865,7 +802,6 @@ export type Database = {
           p_full_name: string;
           p_mobile?: string;
           p_note?: string;
-          p_service_id: string;
           p_starts_at: string;
         };
         Returns: {
@@ -875,13 +811,16 @@ export type Database = {
         }[];
       };
       clear_day_slots: { Args: { p_date: string }; Returns: number };
+      copy_day_slots: {
+        Args: { p_from: string; p_to: string };
+        Returns: number;
+      };
       create_appointment_as_owner: {
         Args: {
           p_email: string;
           p_full_name: string;
           p_mobile?: string;
           p_note?: string;
-          p_service_id: string;
           p_starts_at: string;
         };
         Returns: {
@@ -916,29 +855,50 @@ export type Database = {
         Args: { p_session_token: string };
         Returns: string;
       };
-      day_candidate_starts: {
-        Args: { p_date: string; p_service_id: string };
-        Returns: {
-          source: string;
-          starts_at: string;
-        }[];
-      };
       decline_request: {
         Args: { p_reason?: string; p_request_id: string };
         Returns: undefined;
       };
       expire_pending_approvals: { Args: never; Returns: number };
       generate_booking_reference: { Args: never; Returns: string };
+      hair_appointment: {
+        Args: never;
+        Returns: {
+          archived_at: string | null;
+          buffer_min: number;
+          category_id: string | null;
+          created_at: string;
+          description: string | null;
+          duration_min: number;
+          id: string;
+          image_path: string | null;
+          is_active: boolean;
+          name: string;
+          price_pence: number;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'services';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       is_owner: { Args: never; Returns: boolean };
-      materialise_day_slots: {
-        Args: { p_date: string; p_service_id: string };
-        Returns: number;
+      month_slot_summary: {
+        Args: { p_from: string; p_to: string };
+        Returns: {
+          booked_count: number;
+          on_date: string;
+          slot_count: number;
+        }[];
       };
       offer_slot_to_request: {
         Args: {
           p_override_reason?: string;
           p_request_id: string;
-          p_service_id: string;
           p_starts_at: string;
         };
         Returns: {
@@ -968,14 +928,13 @@ export type Database = {
       };
       owner_dashboard_summary: { Args: never; Returns: Json };
       owner_day_slots: {
-        Args: { p_date: string; p_service_id: string };
+        Args: { p_date: string };
         Returns: {
           customer_name: string;
           is_booked: boolean;
           is_past: boolean;
           local_time: string;
           reference: string;
-          source: string;
           starts_at: string;
         }[];
       };
@@ -1073,9 +1032,9 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      set_day_availability: {
-        Args: { p_date: string; p_windows?: Json };
-        Returns: Json;
+      set_day_slots: {
+        Args: { p_date: string; p_times: string[] };
+        Returns: number;
       };
     };
     Enums: {

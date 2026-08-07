@@ -6,7 +6,6 @@ import { InstallPrompt } from '@/components/InstallPrompt';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { HomePage } from '@/pages/HomePage';
-import { ServicesPage as PublicServicesPage } from '@/pages/ServicesPage';
 import { BookPage } from '@/pages/BookPage';
 import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
 import { MyBookingsPage } from '@/pages/MyBookingsPage';
@@ -18,8 +17,7 @@ import { ApprovalsPage } from '@/pages/dashboard/ApprovalsPage';
 import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
 import { RequestsPage } from '@/pages/dashboard/RequestsPage';
 import { CustomersPage } from '@/pages/dashboard/CustomersPage';
-import { ServicesPage } from '@/pages/dashboard/ServicesPage';
-import { AvailabilityPage } from '@/pages/dashboard/AvailabilityPage';
+import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
 
@@ -39,9 +37,7 @@ export function App(): JSX.Element {
         <BrowserRouter>
           <Routes>
             <Route path={routes.public.home} element={<HomePage />} />
-            <Route path={routes.public.services} element={<PublicServicesPage />} />
             <Route path={routes.public.book} element={<BookPage />} />
-            <Route path="/book/:serviceSlug" element={<BookPage />} />
             <Route
               path={routes.public.requestAvailability}
               element={<RequestAvailabilityPage />}
@@ -62,10 +58,9 @@ export function App(): JSX.Element {
             />
             <Route path={routes.owner.requests} element={owner(<RequestsPage />)} />
             <Route path={routes.owner.customers} element={owner(<CustomersPage />)} />
-            <Route path={routes.owner.services} element={owner(<ServicesPage />)} />
             <Route
-              path={routes.owner.availability}
-              element={owner(<AvailabilityPage />)}
+              path={routes.owner.appointmentType}
+              element={owner(<AppointmentTypePage />)}
             />
             <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
 

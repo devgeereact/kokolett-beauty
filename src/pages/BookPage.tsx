@@ -10,7 +10,7 @@ import { useAvailability } from '@/hooks/useAvailability';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { submitBooking } from '@/services/bookingService';
 import { toAppError } from '@/lib/errors';
-import { formatDateLong, formatDuration, formatMoney } from '@/lib/format';
+import { formatDateLong } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { routes } from '@/lib/routes';
 import type { BookingResult, TimeSlot } from '@/types';
@@ -46,8 +46,9 @@ export function BookPage(): JSX.Element {
   const { services } = useServices();
   const { settings, timezone } = useBusinessSettings();
 
-  const appointment = services[0];
-  const appointmentMinutes = appointment?.duration_min ?? 60;
+  // Length still governs how much of the calendar a booking occupies; it is
+  // simply not shown to the customer any more.
+  const appointmentMinutes = services[0]?.duration_min ?? 60;
 
   const { slotsByDate, openDates, loading, isEmpty, refresh } =
     useAvailability(appointmentMinutes);
@@ -63,11 +64,20 @@ export function BookPage(): JSX.Element {
 
   const book = async (): Promise<void> => {
     if (!slot) return;
-    if (!details.fullName.trim()) return setError('Please give your name.');
+    // A first name alone cannot tell two customers apart in a diary, so the
+    // salon asks for both. The same rules are enforced in book_appointment —
+    // validation that only lives in the browser is a suggestion.
+    const nameParts = details.fullName.trim().split(/\s+/).filter(Boolean);
+    if (nameParts.length < 2) {
+      return setError('Please give your full name — first name and surname.');
+    }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(details.email.trim())) {
       return setError(
         'Please give a valid email address — your confirmation goes there.',
       );
+    }
+    if (details.mobile.replace(/\D/g, '').length < 7) {
+      return setError('Please give a mobile number the salon can reach you on.');
     }
 
     setSubmitting(true);
@@ -142,14 +152,7 @@ export function BookPage(): JSX.Element {
           Book an appointment
         </h1>
         <p className="mb-8 mt-2 text-muted-foreground">
-          Pick a time that suits you.
-          {appointment
-            ? ` Appointments last ${formatDuration(appointmentMinutes)}${
-                appointment.price_pence > 0
-                  ? ` and cost ${formatMoney(appointment.price_pence)}`
-                  : ''
-              }.`
-            : ''}
+          Pick a time that suits you and tell us what you are after.
         </p>
 
         {loading && <LoadingState label="Finding open times…" />}
@@ -231,12 +234,6 @@ export function BookPage(): JSX.Element {
               <p className="font-medium text-foreground">
                 {formatDateLong(slot.startsAt, timezone)} at {slot.label}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {formatDuration(appointmentMinutes)}
-                {appointment && appointment.price_pence > 0
-                  ? ` · ${formatMoney(appointment.price_pence)}`
-                  : ''}
-              </p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -247,12 +244,17 @@ export function BookPage(): JSX.Element {
               </Button>
             </Card>
 
-            <Field label="Your name" required>
+            <Field
+              label="Full name"
+              required
+              hint="First name and surname, for example Koko Beauty."
+            >
               {({ id, describedBy }) => (
                 <Input
                   id={id}
                   aria-describedby={describedBy}
                   autoComplete="name"
+                  placeholder="Koko Beauty"
                   value={details.fullName}
                   onChange={(e) => setDetails({ ...details, fullName: e.target.value })}
                 />
@@ -276,7 +278,11 @@ export function BookPage(): JSX.Element {
               )}
             </Field>
 
-            <Field label="Mobile" hint="Optional, in case the salon needs to reach you.">
+            <Field
+              label="Mobile number"
+              required
+              hint="So the salon can reach you if anything changes."
+            >
               {({ id, describedBy }) => (
                 <Input
                   id={id}

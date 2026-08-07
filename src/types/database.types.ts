@@ -455,6 +455,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      day_decided: {
+        Row: {
+          decided_at: string;
+          decided_by: string;
+          on_date: string;
+        };
+        Insert: {
+          decided_at?: string;
+          decided_by?: string;
+          on_date: string;
+        };
+        Update: {
+          decided_at?: string;
+          decided_by?: string;
+          on_date?: string;
+        };
+        Relationships: [];
+      };
       email_messages: {
         Row: {
           appointment_id: string | null;
@@ -670,6 +688,27 @@ export type Database = {
           },
         ];
       };
+      weekly_template: {
+        Row: {
+          created_at: string;
+          day_of_week: number;
+          id: string;
+          starts_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          day_of_week: number;
+          id?: string;
+          starts_at: string;
+        };
+        Update: {
+          created_at?: string;
+          day_of_week?: number;
+          id?: string;
+          starts_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       appointments_detailed: {
@@ -753,6 +792,13 @@ export type Database = {
         Args: { p_date: string; p_note?: string; p_time: string };
         Returns: string;
       };
+      apply_weekly_template: {
+        Args: { p_from: string; p_replace?: boolean; p_to: string };
+        Returns: {
+          days_filled: number;
+          slots_written: number;
+        }[];
+      };
       approve_appointment: {
         Args: { p_appointment_id: string };
         Returns: {
@@ -810,6 +856,7 @@ export type Database = {
           status: Database['public']['Enums']['appointment_status'];
         }[];
       };
+      booked_times_on: { Args: { p_date: string }; Returns: string[] };
       clear_day_slots: { Args: { p_date: string }; Returns: number };
       copy_day_slots: {
         Args: { p_from: string; p_to: string };
@@ -860,6 +907,7 @@ export type Database = {
         Returns: undefined;
       };
       expire_pending_approvals: { Args: never; Returns: number };
+      extend_weekly_template: { Args: never; Returns: number };
       generate_booking_reference: { Args: never; Returns: string };
       hair_appointment: {
         Args: never;
@@ -1036,6 +1084,11 @@ export type Database = {
         Args: { p_date: string; p_times: string[] };
         Returns: number;
       };
+      set_weekly_template: {
+        Args: { p_day_of_week: number; p_times: string[] };
+        Returns: number;
+      };
+      weekly_template_status: { Args: never; Returns: Json };
     };
     Enums: {
       appointment_status:

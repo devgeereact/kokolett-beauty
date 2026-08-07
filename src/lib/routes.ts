@@ -39,6 +39,8 @@ export const routes = {
     customer: (id: string) => `/dashboard/customers/${id}`,
     /** The single appointment type: its length and price. */
     appointmentType: '/dashboard/appointment',
+    /** The repeating week that generates days on the calendar. */
+    weeklyDefault: '/dashboard/weekly',
     reports: '/dashboard/reports',
     assistant: '/dashboard/assistant',
     settings: '/dashboard/settings',

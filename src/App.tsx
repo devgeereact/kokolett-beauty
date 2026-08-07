@@ -13,6 +13,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { TodayPage } from '@/pages/dashboard/TodayPage';
 import { CalendarPage } from '@/pages/dashboard/CalendarPage';
+import { WeeklyDefaultPage } from '@/pages/dashboard/WeeklyDefaultPage';
 import { ApprovalsPage } from '@/pages/dashboard/ApprovalsPage';
 import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
 import { RequestsPage } from '@/pages/dashboard/RequestsPage';
@@ -65,6 +66,10 @@ export function App(): JSX.Element {
             <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
 
             <Route path={routes.owner.calendar} element={owner(<CalendarPage />)} />
+            <Route
+              path={routes.owner.weeklyDefault}
+              element={owner(<WeeklyDefaultPage />)}
+            />
 
             {/* Not built yet — send these to the dashboard rather than a 404,
                 so a stale bookmark does not look like a broken app. */}

@@ -25,6 +25,8 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   NOT_PENDING: 'That booking is no longer awaiting approval — it may already be decided.',
   NOT_FOUND: 'That booking could not be found.',
   ILLEGAL_TRANSITION: 'That status change is not allowed from where this booking is now.',
+  NAME_INCOMPLETE: 'Please give your full name — first name and surname.',
+  MOBILE_REQUIRED: 'Please give a mobile number the salon can reach you on.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

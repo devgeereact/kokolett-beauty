@@ -510,3 +510,40 @@ the act that tells the customer.
 **Consequence worth stating plainly:** with no weekly pattern underneath,
 nothing is bookable until the owner publishes times. That is the trade the
 simplicity buys.
+
+## 14. Migration `0013` — a repeating week, and stricter booking details
+
+**The weekly default is a generator, not a source.** The 0011 rebuild exists
+because availability had four sources that disagreed; a weekly pattern consulted
+_at booking time_ would be a fifth. `weekly_template (day_of_week, starts_at)`
+therefore writes real rows into `availability_slots` and is never read when
+anything is booked. A day is still exactly its own list of times.
+
+The difficult part is knowing when to leave a day alone. A generator that filled
+every empty day would silently refill a Wednesday the owner had cleared — she
+would delete her afternoon off and find it back the next morning.
+`day_decided (on_date, decided_by)` records every date already ruled on, by a
+human or by the generator, and the generator skips those. `set_day_slots` marks
+the date decided, so **editing a day — including clearing it — makes that day
+permanently yours**.
+
+| Function                                   | Purpose                                               |
+| ------------------------------------------ | ----------------------------------------------------- |
+| `set_weekly_template(dow, time[])`         | Set one weekday's pattern                             |
+| `apply_weekly_template(from, to, replace)` | Write it into real days                               |
+| `weekly_template_status()`                 | Pattern size and how far the calendar is set up       |
+| `extend_weekly_template()`                 | Nightly `pg_cron` fill-forward to the booking horizon |
+
+`replace = false` (the default, and what the nightly job uses) only fills
+undecided days. `replace = true` is the deliberate "lay my week over the top"
+action. Neither can remove a time with a live appointment against it — that
+guarantee comes from `set_day_slots` (0012) and holds through both.
+
+**Booking now insists on a full name and a mobile number.** Both are enforced in
+`book_appointment`, not only in the form: a validation that lives in the browser
+is a suggestion. A single-word name raises `NAME_INCOMPLETE`; fewer than seven
+digits raises `MOBILE_REQUIRED`. The name is whitespace-normalised before
+storage, so `"  Koko   Beauty  "` is stored as `Koko Beauty`.
+
+The owner's own booking path stays lenient — she is looking at the customer and
+sometimes only has a first name.

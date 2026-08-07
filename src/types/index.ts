@@ -128,4 +128,6 @@ export type BookingErrorCode =
   | 'NOT_AUTHORISED'
   | 'NOT_PENDING'
   | 'NOT_FOUND'
-  | 'ILLEGAL_TRANSITION';
+  | 'ILLEGAL_TRANSITION'
+  | 'NAME_INCOMPLETE'
+  | 'MOBILE_REQUIRED';

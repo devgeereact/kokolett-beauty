@@ -74,3 +74,86 @@ export async function copyDaySlots(fromDate: string, toDate: string): Promise<nu
   if (error) throw error;
   return data ?? 0;
 }
+
+/* ------------------------------------------------------------- weekly --- */
+
+export interface WeeklyTemplateStatus {
+  template_slot_count: number;
+  /** Furthest future date the generator has already ruled on, or null. */
+  filled_to: string | null;
+  horizon_days: number;
+  granularity_min: number;
+}
+
+export interface TemplateDay {
+  day_of_week: number;
+  times: string[];
+}
+
+/**
+ * The repeating week.
+ *
+ * It is a **generator, not a source**: applying it writes real rows into
+ * `availability_slots`, and nothing consults it when a booking is made. That is
+ * deliberate — the whole point of the 0011 rebuild was that availability has
+ * exactly one source, and a pattern read at booking time would be a second.
+ */
+export async function listWeeklyTemplate(): Promise<TemplateDay[]> {
+  const { data, error } = await supabase
+    .from('weekly_template')
+    .select('day_of_week, starts_at')
+    .order('day_of_week', { ascending: true })
+    .order('starts_at', { ascending: true });
+
+  if (error) throw error;
+
+  const byDay = new Map<number, string[]>();
+  for (const row of data ?? []) {
+    const list = byDay.get(row.day_of_week) ?? [];
+    list.push(row.starts_at.slice(0, 5));
+    byDay.set(row.day_of_week, list);
+  }
+  return [...Array(7).keys()].map((day_of_week) => ({
+    day_of_week,
+    times: byDay.get(day_of_week) ?? [],
+  }));
+}
+
+export async function setWeeklyTemplateDay(
+  dayOfWeek: number,
+  times: string[],
+): Promise<void> {
+  const { error } = await supabase.rpc('set_weekly_template', {
+    p_day_of_week: dayOfWeek,
+    p_times: times,
+  });
+  if (error) throw error;
+}
+
+/**
+ * Write the pattern into real days.
+ *
+ * `replace: false` only fills days nobody has ruled on yet, so a day the owner
+ * cleared stays cleared. `replace: true` is the deliberate "lay my week over
+ * the top" action — and still cannot remove a time that has a booking.
+ */
+export async function applyWeeklyTemplate(
+  fromDate: string,
+  toDate: string,
+  replace = false,
+): Promise<{ days_filled: number; slots_written: number }> {
+  const { data, error } = await supabase.rpc('apply_weekly_template', {
+    p_from: fromDate,
+    p_to: toDate,
+    p_replace: replace,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return row ?? { days_filled: 0, slots_written: 0 };
+}
+
+export async function getWeeklyTemplateStatus(): Promise<WeeklyTemplateStatus> {
+  const { data, error } = await supabase.rpc('weekly_template_status');
+  if (error) throw error;
+  return data as unknown as WeeklyTemplateStatus;
+}

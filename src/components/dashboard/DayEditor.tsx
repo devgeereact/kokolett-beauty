@@ -65,8 +65,31 @@ export function DayEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Re-seed whenever the selected day changes, so the editor always opens
-  // showing what that day actually is rather than the last day's edits.
+  /**
+   * A stable description of what this day *is*, according to the server.
+   *
+   * Keying the re-seed on the date alone was wrong: the first render happens
+   * before the parent's fetch resolves, so `currentMode` was computed from an
+   * empty exception list and stuck on "standard" — the panel claimed a day was
+   * on usual hours while it was actually on custom ones.
+   *
+   * Keying on the exception array itself is also wrong: it is rebuilt on every
+   * parent render, which would wipe the form mid-edit. A signature is the
+   * middle ground — it changes when the day genuinely changes, and not
+   * otherwise.
+   */
+  const signature = [
+    date,
+    fullClosure ? 'closed' : 'open',
+    published
+      .map((e) => `${trimSeconds(e.starts_at ?? '')}-${trimSeconds(e.ends_at ?? '')}`)
+      .sort()
+      .join(','),
+    dayRules
+      .map((r) => `${trimSeconds(r.opens_at)}-${trimSeconds(r.closes_at)}`)
+      .join(','),
+  ].join('|');
+
   useEffect(() => {
     setMode(currentMode);
     setWindows(
@@ -81,10 +104,8 @@ export function DayEditor({
           })),
     );
     setError(null);
-    // Keyed on the date alone: the arrays are rebuilt on every parent render,
-    // so depending on them would reset the form mid-edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date]);
+  }, [signature]);
 
   const save = async (nextMode: Mode): Promise<void> => {
     setSaving(true);

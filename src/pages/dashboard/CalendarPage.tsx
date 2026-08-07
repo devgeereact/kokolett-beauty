@@ -12,6 +12,7 @@ import {
   deleteException,
   listExceptionsBetween,
   listRules,
+  listSlotsBetween,
 } from '@/services/availabilityService';
 import { listAppointments } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
@@ -62,6 +63,9 @@ export function CalendarPage(): JSX.Element {
 
   const [rules, setRules] = useState<AvailabilityRule[]>([]);
   const [exceptions, setExceptions] = useState<AvailabilityException[]>([]);
+  const [publishedSlots, setPublishedSlots] = useState<
+    { on_date: string; starts_at: string }[]
+  >([]);
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -72,7 +76,7 @@ export function CalendarPage(): JSX.Element {
   const load = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const [r, e, a] = await Promise.all([
+      const [r, e, a, sl] = await Promise.all([
         listRules(),
         listExceptionsBetween(range.from, range.to),
         listAppointments({
@@ -80,10 +84,12 @@ export function CalendarPage(): JSX.Element {
           to: salonDayRange(range.to, timezone).end,
           statuses: [...LIVE_STATUSES],
         }),
+        listSlotsBetween(range.from, range.to),
       ]);
       setRules(r);
       setExceptions(e);
       setAppointments(a);
+      setPublishedSlots(sl);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -110,20 +116,35 @@ export function CalendarPage(): JSX.Element {
         (a) => toSalonDate(a.starts_at, timezone) === date,
       );
 
-      const windows = fullClosure
-        ? []
-        : [
-            ...standing.map(
+      // Mirrors day_candidate_starts(): a whole-day closure suppresses the
+      // standing weekly rule, but hours published for this date still apply.
+      // "Custom hours" is expressed as exactly that combination, so treating a
+      // closure as "nothing here" made every customised day read as closed.
+      const windows = [
+        ...(fullClosure
+          ? []
+          : standing.map(
               (r) => `${trimSeconds(r.opens_at)}–${trimSeconds(r.closes_at)}`,
-            ),
-            ...extraHours.map(
-              (e) => `${trimSeconds(e.starts_at ?? '')}–${trimSeconds(e.ends_at ?? '')}`,
-            ),
-          ];
+            )),
+        ...extraHours.map(
+          (e) => `${trimSeconds(e.starts_at ?? '')}–${trimSeconds(e.ends_at ?? '')}`,
+        ),
+      ];
 
-      return { dayExceptions, fullClosure, windows, booked, isOpen: windows.length > 0 };
+      // A day can also be open purely because individual times were published,
+      // with no window at all.
+      const slots = publishedSlots.filter((s) => s.on_date === date);
+
+      return {
+        dayExceptions,
+        fullClosure,
+        windows,
+        slots,
+        booked,
+        isOpen: windows.length > 0 || slots.length > 0,
+      };
     },
-    [appointments, exceptions, rules, timezone],
+    [appointments, exceptions, rules, publishedSlots, timezone],
   );
 
   const selectedInfo = dayInfo(selected);
@@ -272,9 +293,11 @@ export function CalendarPage(): JSX.Element {
               {formatDateLong(`${selected}T12:00:00Z`, 'UTC')}
             </h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {selectedInfo.isOpen
+              {selectedInfo.windows.length > 0
                 ? `Bookable ${selectedInfo.windows.join(', ')}`
-                : 'Nothing bookable'}
+                : selectedInfo.slots.length > 0
+                  ? `${selectedInfo.slots.length} published time${selectedInfo.slots.length === 1 ? '' : 's'}`
+                  : 'Nothing bookable'}
             </p>
           </Card>
 

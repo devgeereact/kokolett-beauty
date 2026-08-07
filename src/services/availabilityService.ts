@@ -180,6 +180,22 @@ export async function clearDaySlots(date: string): Promise<number> {
   return data ?? 0;
 }
 
+/** Published start times across a range, for the month grid. */
+export async function listSlotsBetween(
+  fromDate: string,
+  toDate: string,
+): Promise<{ on_date: string; starts_at: string }[]> {
+  const { data, error } = await supabase
+    .from('availability_slots')
+    .select('on_date, starts_at')
+    .gte('on_date', fromDate)
+    .lte('on_date', toDate)
+    .order('starts_at', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 /** Exceptions inside a date range — one query per rendered calendar month. */
 export async function listExceptionsBetween(
   fromDate: string,

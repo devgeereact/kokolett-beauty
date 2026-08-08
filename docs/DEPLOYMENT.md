@@ -160,3 +160,33 @@ ssh cpanel 'ls -t ~/mail/koko.gakinz.com/booking/new | head'
 
 Scheduled jobs: `drain-email-queue` (5 min), `expire-pending-approvals` (hourly),
 `extend-weekly-template` (nightly), `purge-access-tokens` (nightly).
+
+## Auth: signup is closed
+
+The salon has exactly one administrator, provisioned deliberately. Since
+2026-08-08 `[auth].enable_signup = false`, so nobody can mint an account by
+hitting `/auth/v1/signup` or asking for a magic link with `create_user: true`.
+The login form already passed `shouldCreateUser: false`, but that is a
+client-side choice — this is the server-side one.
+
+Customers are unaffected: they are not `auth.users` at all, and reach their
+bookings through a single-use token on `/access/:token`.
+
+> **`[auth.email].enable_signup` must stay `true`.** The CLI maps it onto
+> "email logins are disabled" for the whole provider, not just signup — setting
+> it to `false` locked the owner out of both password and magic-link sign-in.
+> Found the hard way, and reverted within minutes. The flag that actually gates
+> account creation is `[auth].enable_signup`.
+
+Verified after each change, because "signup is off" and "the owner can still get
+in" are two different questions:
+
+```bash
+# must fail
+curl -s -X POST "$URL/auth/v1/signup" -H "apikey: $ANON" \
+  -H 'Content-Type: application/json' -d '{"email":"x@example.com","password":"…"}'
+# must succeed
+curl -s -X POST "$URL/auth/v1/otp" -H "apikey: $ANON" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"booking@koko.gakinz.com","create_user":false}'
+```

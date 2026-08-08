@@ -54,7 +54,7 @@ export function ReschedulePicker({
       {isEmpty && (
         <EmptyState
           title="Nothing else open at the moment"
-          description="Your existing appointment is untouched. Get in touch and the salon will see what she can do."
+          description="Your existing appointment is untouched. Get in touch and we will see what we can open up."
         />
       )}
 

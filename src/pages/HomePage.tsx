@@ -5,38 +5,106 @@ import { Card } from '@/components/ui/Card';
 import { useServices } from '@/hooks/useServices';
 import { useAvailability } from '@/hooks/useAvailability';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { formatDateLong, formatDuration } from '@/lib/format';
+import { formatDateLong } from '@/lib/format';
 import { routes } from '@/lib/routes';
 
 /**
  * The salon's front page.
  *
- * It answers, in order, the three questions a stranger actually has: what is
- * this, when can I come in, and can I trust you. So it leads with the salon,
- * then shows real open times, then real reviews — rather than a carousel and a
- * paragraph about passion.
+ * It answers the three questions a stranger has, in the order they ask them:
+ * what do you do, when can I come in, and can I trust you.
  *
- * There are no invented testimonials, no stock statistics and no service menu
- * with made-up prices. Everything on this page is either a fact from the
- * database or a sentence about the salon that is true.
+ * No length or price is quoted anywhere. Two hours of knotless braids and a
+ * twenty minute trim are not the same appointment, and printing one number for
+ * both would be a promise the salon cannot keep.
  */
 
-const WHAT_WE_DO = [
+/**
+ * What the salon offers.
+ *
+ * A working list for an African hair salon, grouped the way a client thinks
+ * about it. The owner should strike anything she does not do: a service listed
+ * here that she has to turn down at the door costs more goodwill than it wins.
+ */
+const SERVICES: { group: string; items: string[] }[] = [
   {
-    title: 'Cutting',
-    body: 'Restyles, trims and shaping, cut dry or wet depending on what your hair needs.',
+    group: 'Braids',
+    items: [
+      'Knotless braids',
+      'Box braids',
+      'Cornrows',
+      'Feed-in braids',
+      'Ghana braids',
+      'Fulani braids',
+      'Lemonade braids',
+      'Stitch braids',
+      'Tribal braids',
+      'Micro braids',
+      'Kids braids',
+    ],
   },
   {
-    title: 'Colouring',
-    body: 'Full colour, roots, highlights and toning, with a patch test where it is needed.',
+    group: 'Twists and locs',
+    items: [
+      'Senegalese twists',
+      'Passion twists',
+      'Spring twists',
+      'Marley twists',
+      'Two strand twists',
+      'Faux locs',
+      'Butterfly locs',
+      'Soft locs',
+      'Starter locs',
+      'Loc retwist and styling',
+    ],
   },
   {
-    title: 'Styling',
-    body: 'Blow dries, silk presses and finishing for an occasion or a normal Tuesday.',
+    group: 'Weaves, wigs and extensions',
+    items: [
+      'Sew-in weave',
+      'Closure and frontal install',
+      'Quick weave',
+      'Crochet braids',
+      'Wig install',
+      'Wig customising and revamp',
+      'Tape-in extensions',
+      'Micro-link extensions',
+      'Take-down and detangle',
+    ],
   },
   {
-    title: 'Treatments',
-    body: 'Conditioning and repair for hair that needs bringing back to itself.',
+    group: 'Natural hair and styling',
+    items: [
+      'Wash and go',
+      'Silk press',
+      'Blow dry and style',
+      'Twist-out and braid-out',
+      'Cut, trim and shaping',
+      'Big chop and transitioning',
+      'Bridal and occasion styling',
+      'Relaxer and texturiser',
+    ],
+  },
+  {
+    group: 'Colour',
+    items: [
+      'Full colour',
+      'Root touch-up',
+      'Highlights and lowlights',
+      'Bleaching and lifting',
+      'Toning and glossing',
+    ],
+  },
+  {
+    group: 'Treatments',
+    items: [
+      'Deep conditioning',
+      'Protein and bond repair',
+      'Scalp treatment',
+      'Steam treatment',
+      'Hot oil treatment',
+      'Trim and split-end care',
+    ],
   },
 ];
 
@@ -44,26 +112,25 @@ const HOW_IT_WORKS = [
   {
     step: '1',
     title: 'Pick a time',
-    body: 'Only times that are genuinely free are shown, so nothing you choose gets refused later.',
+    body: 'The times on the booking page are the times that are genuinely free, so nothing you choose gets turned down afterwards.',
   },
   {
     step: '2',
-    title: 'Tell us what you are after',
-    body: 'A sentence is plenty. It tells the salon what to prepare before you arrive.',
+    title: 'Say what you want doing',
+    body: 'A sentence is plenty. It tells us what to prepare and roughly how long to keep aside for you.',
   },
   {
     step: '3',
-    title: 'That is it',
-    body: 'No account, no password. Your confirmation and a link to change it arrive by email.',
+    title: 'Come in',
+    body: 'Your confirmation arrives by email with a link to change or cancel. You never need an account or a password.',
   },
 ];
 
 export function HomePage(): JSX.Element {
   const { services } = useServices();
   const { settings } = useBusinessSettings();
-  const appointment = services[0];
   const { slotsByDate, openDates, loading } = useAvailability(
-    appointment?.duration_min ?? 60,
+    services[0]?.duration_min ?? 60,
   );
 
   const nextDays = openDates.slice(0, 3);
@@ -73,14 +140,14 @@ export function HomePage(): JSX.Element {
       {/* ---- Hero ---------------------------------------------------- */}
       <section className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 sm:py-28">
         <p className="mb-5 inline-block rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          Women&rsquo;s hair salon · United Kingdom
+          Women&rsquo;s hair salon, South East London
         </p>
         <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-6xl">
           Hair that feels like <span className="text-primary">you</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-          Cutting, colouring, styling and treatments — unhurried, and done properly. Book
-          the time that suits you in under two minutes.
+          Braids, locs, weaves, natural hair and colour, done with time and care. Choose a
+          time that suits you and we will do the rest.
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -97,10 +164,11 @@ export function HomePage(): JSX.Element {
           </Link>
         </div>
         <p className="mt-5 text-sm text-muted-foreground">
-          No account needed · Free to cancel or change
+          No account needed. Change or cancel free
           {settings?.cancellation_window_h
             ? ` up to ${settings.cancellation_window_h} hours before`
             : ''}
+          .
         </p>
       </section>
 
@@ -112,7 +180,7 @@ export function HomePage(): JSX.Element {
               Next available
             </h2>
             <p className="mb-8 text-center text-muted-foreground">
-              Live from the salon diary — these are free right now.
+              Straight from the salon diary. These times are free right now.
             </p>
             <div className="grid gap-4 sm:grid-cols-3">
               {nextDays.map((date) => (
@@ -150,30 +218,45 @@ export function HomePage(): JSX.Element {
         </section>
       )}
 
-      {/* ---- What we do ---------------------------------------------- */}
-      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      {/* ---- Services ------------------------------------------------- */}
+      <section id="services" className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
         <h2 className="mb-2 text-center font-display text-3xl font-semibold text-foreground">
           What we do
         </h2>
-        <p className="mx-auto mb-10 max-w-xl text-center text-muted-foreground">
-          One appointment covers whatever you need doing
-          {appointment
-            ? `, and takes about ${formatDuration(appointment.duration_min)}`
-            : ''}
-          . Tell us what you have in mind when you book.
+        <p className="mx-auto mb-10 max-w-2xl text-center text-muted-foreground">
+          One appointment covers whatever you need. Tell us what you are after when you
+          book and we will keep aside the right amount of time, because a full head of
+          knotless braids and a trim are not the same afternoon.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {WHAT_WE_DO.map((item) => (
-            <Card key={item.title} className="p-5">
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {SERVICES.map((group) => (
+            <Card key={group.group} className="p-5">
               <h3 className="font-display text-lg font-semibold text-foreground">
-                {item.title}
+                {group.group}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {item.body}
-              </p>
+              <ul className="mt-3 space-y-1.5">
+                {group.items.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                  >
+                    <span
+                      className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary"
+                      aria-hidden="true"
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </Card>
           ))}
         </div>
+
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Something you do not see here? Ask when you book and we will tell you honestly
+          whether we can do it.
+        </p>
       </section>
 
       {/* ---- How booking works --------------------------------------- */}
@@ -203,14 +286,14 @@ export function HomePage(): JSX.Element {
       {/* ---- Reviews (renders nothing until Google has some) ---------- */}
       <Reviews reviewUrl={settings?.google_review_url ?? null} />
 
-      {/* ---- Closing call to action ---------------------------------- */}
+      {/* ---- Closing ------------------------------------------------- */}
       <section className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
         <h2 className="font-display text-3xl font-semibold text-foreground">
-          Ready when you are
+          Come and see us
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
-          If you cannot see a time that works, say when suits and the salon will come back
-          to you as soon as something frees up.
+          If nothing on the calendar suits, tell us when does. We will let you know as
+          soon as something opens up.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link

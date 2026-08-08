@@ -90,7 +90,7 @@ export function MyBookingsPage(): JSX.Element {
                 className="mt-3 rounded-md border border-border bg-muted p-3 text-sm"
               >
                 That link has already been used or has expired. Links work once and last
-                30 minutes — here is how to get another.
+                30 minutes, here is how to get another.
               </p>
             )}
 
@@ -232,7 +232,7 @@ export function MyBookingsPage(): JSX.Element {
             <p className="mt-1 text-sm text-muted-foreground">
               Your new reference is{' '}
               <span className="font-mono font-medium text-foreground">{moved}</span>. The
-              old booking has been released, and a confirmation is on its way.
+              old booking has been released and a confirmation is on its way.
             </p>
           </div>
         )}

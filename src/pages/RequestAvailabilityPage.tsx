@@ -63,15 +63,14 @@ export function RequestAvailabilityPage(): JSX.Element {
         <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
           <Card className="p-6 text-center">
             <h1 className="font-display text-2xl font-semibold text-foreground">
-              Thank you — that is with the salon
+              Thank you, that is with the salon
             </h1>
             <p className="mt-2 text-muted-foreground">
-              She will look at what she can open up and come back to you at{' '}
+              We will look at what we can open up and come back to you at{' '}
               <span className="font-medium text-foreground">{form.email}</span>.
             </p>
             <p className="mt-4 text-sm text-muted-foreground">
-              Automatic email is not switched on yet, so the reply will come directly from
-              the salon.
+              Requests are answered in the order they arrive.
             </p>
             <Link
               to={routes.public.home}
@@ -92,8 +91,8 @@ export function RequestAvailabilityPage(): JSX.Element {
           Tell us when suits
         </h1>
         <p className="mb-8 mt-2 text-muted-foreground">
-          Nothing open at a time that works? Leave your details and the salon will see
-          what she can do.
+          If nothing on the calendar works, leave your details and we will see what we can
+          open up.
         </p>
 
         <Card className="p-6">
@@ -137,7 +136,7 @@ export function RequestAvailabilityPage(): JSX.Element {
 
           <Field
             label="What are you after?"
-            hint="Cut, colour, braids, a treatment — whatever you have in mind."
+            hint="Braids, locs, a weave, colour, a trim. Whatever you have in mind."
           >
             {({ id, describedBy }) => (
               <Textarea
@@ -196,16 +195,6 @@ export function RequestAvailabilityPage(): JSX.Element {
                 value={form.preferredTimes}
                 onChange={(e) => setForm({ ...form, preferredTimes: e.target.value })}
                 placeholder="After 5pm ideally, or a Saturday"
-              />
-            )}
-          </Field>
-
-          <Field label="Notes">
-            {({ id }) => (
-              <Textarea
-                id={id}
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
               />
             )}
           </Field>

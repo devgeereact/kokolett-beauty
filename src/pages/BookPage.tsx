@@ -69,11 +69,11 @@ export function BookPage(): JSX.Element {
     // validation that only lives in the browser is a suggestion.
     const nameParts = details.fullName.trim().split(/\s+/).filter(Boolean);
     if (nameParts.length < 2) {
-      return setError('Please give your full name — first name and surname.');
+      return setError('Please give your full name, first name and surname.');
     }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(details.email.trim())) {
       return setError(
-        'Please give a valid email address — your confirmation goes there.',
+        'Please give a valid email address, because your confirmation goes there.',
       );
     }
     if (details.mobile.replace(/\D/g, '').length < 7) {
@@ -129,8 +129,8 @@ export function BookPage(): JSX.Element {
             </dl>
 
             <p className="mt-6 text-sm text-muted-foreground">
-              Please keep your reference. Email confirmations are not switched on yet, so
-              take a note or a screenshot.
+              Keep your reference somewhere safe. Your confirmation and a link to change
+              the booking are on their way by email.
             </p>
 
             <Link
@@ -152,7 +152,7 @@ export function BookPage(): JSX.Element {
           Book an appointment
         </h1>
         <p className="mb-8 mt-2 text-muted-foreground">
-          Pick a time that suits you and tell us what you are after.
+          Choose a time that suits you and tell us what you would like doing.
         </p>
 
         {loading && <LoadingState label="Finding open times…" />}
@@ -297,7 +297,7 @@ export function BookPage(): JSX.Element {
 
             <Field
               label="What are you after?"
-              hint="Cut, colour, braids, a treatment — whatever you have in mind. This is how the salon knows what to prepare."
+              hint="Braids, locs, a weave, colour, a trim. Whatever you have in mind, so we know what to prepare and how long to keep aside."
             >
               {({ id, describedBy }) => (
                 <Textarea
@@ -320,7 +320,7 @@ export function BookPage(): JSX.Element {
 
             {settings?.approve_first_time && (
               <p className="mb-4 rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
-                First visit? Your slot is held while the salon confirms — usually within{' '}
+                First visit? Your slot is held while the salon confirms, usually within{' '}
                 {settings.approval_window_h} hours.
               </p>
             )}

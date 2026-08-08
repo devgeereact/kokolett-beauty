@@ -84,7 +84,7 @@ export function PrivacyPage(): JSX.Element {
         </li>
         <li>
           Your <strong>mobile number</strong> is so the salon can reach you if something
-          changes at short notice — a phone call is faster than an email when it matters.
+          changes at short notice, a phone call is faster than an email when it matters.
         </li>
         <li>
           Your <strong>note</strong> tells the salon what to prepare before you arrive.
@@ -119,7 +119,7 @@ export function PrivacyPage(): JSX.Element {
       <H2>Reviews shown on this site</H2>
       <p>
         The reviews on our home page come from our public Google Business listing. We do
-        not collect them and cannot edit them — they belong to the people who wrote them
+        not collect them and cannot edit them, they belong to the people who wrote them
         and to Google.
       </p>
 
@@ -127,7 +127,7 @@ export function PrivacyPage(): JSX.Element {
       <p>
         Appointment history is kept as the salon&rsquo;s business record. If you ask us to
         erase your details, we remove your name, contact details and any private note, and
-        you become an anonymous entry in that history — the appointment itself has to
+        you become an anonymous entry in that history, the appointment itself has to
         survive for the salon&rsquo;s accounts. If you book again afterwards you arrive as
         a completely new customer.
       </p>
@@ -194,7 +194,7 @@ export function BookingPolicyPage(): JSX.Element {
     <LegalPage title="Booking policy" updated="August 2026">
       <H2>Booking</H2>
       <p>
-        Every time shown on the booking page is genuinely free — the salon publishes the
+        Every time shown on the booking page is genuinely free, the salon publishes the
         times she can work, and a time disappears the moment somebody takes it. Your
         booking is confirmed straight away; there is nothing to wait for.
       </p>
@@ -218,8 +218,8 @@ export function BookingPolicyPage(): JSX.Element {
       </p>
       <p>
         Please give at least <strong>{window} hours&rsquo; notice</strong> where you can.
-        Later changes are still accepted — we would much rather know than have you not
-        turn up — but the salon is told, because a short-notice gap is difficult to fill.
+        Later changes are still accepted, we would much rather know than have you not turn
+        up, but the salon is told, because a short-notice gap is difficult to fill.
       </p>
       <p>
         When you move an appointment you keep the original until you have chosen a new
@@ -262,7 +262,7 @@ export function TermsPage(): JSX.Element {
     <LegalPage title="Terms of use" updated="August 2026">
       <p>
         These terms cover using this website. They are not the whole relationship between
-        you and the salon — what happens at your appointment is a matter of ordinary
+        you and the salon, what happens at your appointment is a matter of ordinary
         consumer law, and nothing here reduces your statutory rights.
       </p>
 
@@ -284,9 +284,9 @@ export function TermsPage(): JSX.Element {
 
       <H2>Using this site</H2>
       <p>
-        Please book only appointments you intend to keep, and give real contact details —
-        a booking under a false name takes a slot from somebody who wanted it. We may
-        cancel a booking that appears not to be genuine.
+        Please book only appointments you intend to keep, and give real contact details, a
+        booking under a false name takes a slot from somebody who wanted it. We may cancel
+        a booking that appears not to be genuine.
       </p>
 
       <H2>Availability of the site</H2>

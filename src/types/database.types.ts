@@ -885,6 +885,7 @@ export type Database = {
           price_pence: number;
           reference: string;
           rejection_reason: string;
+          rescheduled_from: string;
           service_name: string;
           starts_at: string;
           status: Database['public']['Enums']['appointment_status'];
@@ -902,10 +903,22 @@ export type Database = {
         Args: { p_session_token: string };
         Returns: string;
       };
+      customer_reschedule_appointment: {
+        Args: {
+          p_appointment_id: string;
+          p_new_starts_at: string;
+          p_session_token: string;
+        };
+        Returns: {
+          appointment_id: string;
+          reference: string;
+        }[];
+      };
       decline_request: {
         Args: { p_reason?: string; p_request_id: string };
         Returns: undefined;
       };
+      drain_email_queue: { Args: never; Returns: number };
       expire_pending_approvals: { Args: never; Returns: number };
       extend_weekly_template: { Args: never; Returns: number };
       generate_booking_reference: { Args: never; Returns: string };

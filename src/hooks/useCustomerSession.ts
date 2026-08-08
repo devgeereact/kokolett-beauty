@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   cancelOwnAppointment,
   fetchCustomerAppointments,
+  rescheduleOwnAppointment,
   readStoredSession,
   redeemToken,
   requestAccessLink,
@@ -20,6 +21,8 @@ interface UseCustomerSession {
   /** Email a fresh link. Always resolves true — never reveal who is on file. */
   requestLink: (email: string) => Promise<boolean>;
   cancel: (appointmentId: string, reason?: string) => Promise<void>;
+  /** Move a booking to another published time. Resolves to the new reference. */
+  reschedule: (appointmentId: string, newStartsAt: string) => Promise<string>;
   refresh: () => Promise<void>;
   signOut: () => void;
 }
@@ -93,6 +96,20 @@ export function useCustomerSession(): UseCustomerSession {
     [sessionToken, load],
   );
 
+  const reschedule = useCallback(
+    async (appointmentId: string, newStartsAt: string): Promise<string> => {
+      if (!sessionToken) throw new Error('INVALID_SESSION');
+      const result = await rescheduleOwnAppointment(
+        sessionToken,
+        appointmentId,
+        newStartsAt,
+      );
+      await load();
+      return result.reference;
+    },
+    [sessionToken, load],
+  );
+
   const signOut = useCallback((): void => {
     storeSession(null);
     setSessionToken(null);
@@ -108,6 +125,7 @@ export function useCustomerSession(): UseCustomerSession {
     exchangeToken,
     requestLink: requestAccessLink,
     cancel,
+    reschedule,
     refresh: load,
     signOut,
   };

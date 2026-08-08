@@ -27,6 +27,9 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   ILLEGAL_TRANSITION: 'That status change is not allowed from where this booking is now.',
   NAME_INCOMPLETE: 'Please give your full name — first name and surname.',
   MOBILE_REQUIRED: 'Please give a mobile number the salon can reach you on.',
+  NOT_RESCHEDULABLE: 'That booking can no longer be moved.',
+  ALREADY_PASSED: 'That appointment has already passed.',
+  SAME_TIME: 'That is the time you are already booked in for.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

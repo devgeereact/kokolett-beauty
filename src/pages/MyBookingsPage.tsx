@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
+import { ReschedulePicker } from '@/components/public/ReschedulePicker';
 import { EmptyState, LoadingState } from '@/components/ui/States';
 import { useCustomerSession } from '@/hooks/useCustomerSession';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -31,6 +32,7 @@ export function MyBookingsPage(): JSX.Element {
     exchangeToken,
     requestLink,
     cancel,
+    reschedule,
     refresh,
     signOut,
   } = useCustomerSession();
@@ -40,6 +42,10 @@ export function MyBookingsPage(): JSX.Element {
   const [email, setEmail] = useState('');
   const [linkSent, setLinkSent] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [moveBusy, setMoveBusy] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [moved, setMoved] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -150,6 +156,22 @@ export function MyBookingsPage(): JSX.Element {
   );
   const past = appointments.filter((a) => !upcoming.includes(a));
 
+  const doReschedule = async (id: string, startsAt: string): Promise<void> => {
+    setMoveBusy(true);
+    setMoveError(null);
+    try {
+      const reference = await reschedule(id, startsAt);
+      setMovingId(null);
+      setMoved(reference);
+    } catch (e) {
+      // A SLOT_TAKEN here means somebody else got there first; the original
+      // booking is untouched, so the picker stays open for another go.
+      setMoveError(errorMessage(e));
+    } finally {
+      setMoveBusy(false);
+    }
+  };
+
   const doCancel = async (id: string): Promise<void> => {
     if (!window.confirm('Cancel this appointment?')) return;
     setCancelling(id);
@@ -201,6 +223,20 @@ export function MyBookingsPage(): JSX.Element {
           />
         )}
 
+        {moved && (
+          <div
+            role="status"
+            className="mb-6 rounded-md border border-border bg-muted p-4"
+          >
+            <p className="font-medium text-foreground">Your appointment has moved</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your new reference is{' '}
+              <span className="font-mono font-medium text-foreground">{moved}</span>. The
+              old booking has been released, and a confirmation is on its way.
+            </p>
+          </div>
+        )}
+
         {upcoming.length > 0 && (
           <section className="mb-10">
             <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
@@ -231,16 +267,41 @@ export function MyBookingsPage(): JSX.Element {
                     </p>
                   )}
 
-                  {['pending_approval', 'confirmed'].includes(a.status) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-3"
-                      loading={cancelling === a.id}
-                      onClick={() => void doCancel(a.id)}
-                    >
-                      Cancel
-                    </Button>
+                  {['pending_approval', 'confirmed'].includes(a.status) &&
+                    movingId !== a.id && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setMovingId(a.id);
+                            setMoveError(null);
+                            setMoved(null);
+                          }}
+                        >
+                          Change time
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          loading={cancelling === a.id}
+                          onClick={() => void doCancel(a.id)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+
+                  {movingId === a.id && (
+                    <ReschedulePicker
+                      currentStartsAt={a.starts_at}
+                      busy={moveBusy}
+                      error={moveError}
+                      onCancel={() => {
+                        setMovingId(null);
+                        setMoveError(null);
+                      }}
+                      onChoose={(startsAt) => void doReschedule(a.id, startsAt)}
+                    />
                   )}
                 </Card>
               ))}

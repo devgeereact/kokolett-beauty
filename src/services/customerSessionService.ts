@@ -31,6 +31,8 @@ export interface CustomerAppointment {
   customer_note: string | null;
   cancellation_reason: string | null;
   rejection_reason: string | null;
+  /** Set when this booking replaced an earlier one. */
+  rescheduled_from: string | null;
 }
 
 export function readStoredSession(): string | null {
@@ -73,6 +75,30 @@ export async function fetchCustomerAppointments(
   });
   if (error) throw error;
   return data ?? [];
+}
+
+/**
+ * Move an appointment to a different published time.
+ *
+ * The old booking is retired and a new one created, linked by
+ * `rescheduled_from` — the salon keeps the history rather than seeing an
+ * unexplained cancellation followed by an unrelated booking. The reference
+ * changes as a result, which is why the caller shows the new one.
+ */
+export async function rescheduleOwnAppointment(
+  sessionToken: string,
+  appointmentId: string,
+  newStartsAt: string,
+): Promise<{ appointment_id: string; reference: string }> {
+  const { data, error } = await supabase.rpc('customer_reschedule_appointment', {
+    p_session_token: sessionToken,
+    p_appointment_id: appointmentId,
+    p_new_starts_at: newStartsAt,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error('NOT_FOUND');
+  return row;
 }
 
 export async function cancelOwnAppointment(

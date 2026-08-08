@@ -547,3 +547,42 @@ storage, so `"  Koko   Beauty  "` is stored as `Koko Beauty`.
 
 The owner's own booking path stays lenient — she is looking at the customer and
 sometimes only has a first name.
+
+## 15. Migrations `0015`–`0016` — customer reschedule
+
+`customer_reschedule_appointment(session, appointment, new_starts_at)` lets a
+customer move their own booking. Until now they could only cancel and rebook,
+which loses the thread: the salon sees an unexplained cancellation and a
+separate new booking, and the customer has to give up their slot before knowing
+the new one is still free.
+
+**A reschedule creates a new appointment and retires the old one**, linked by
+`rescheduled_from`, with the old row set to `rescheduled`. Both columns have
+existed since `0002` for this. Moving `starts_at` in place would keep the
+reference stable but erase the history, and "she moved twice, the second time at
+short notice" is something a salon owner wants to see.
+
+The new time faces every check a fresh booking would — grid alignment, lead
+time, horizon, and that the time is actually published. The old row is retired
+_before_ the new one is inserted, or moving to an adjacent time would collide
+with itself through `appointments_no_overlap`. If the insert then fails because
+somebody took the new time first, **the old booking is restored** — losing an
+appointment to a half-finished move would be far worse than the move not
+happening. Freeing the old time needs no work: `rescheduled` is not one of the
+statuses the overlap constraint covers, so the slot returns to sale immediately.
+
+Moving inside the cancellation window is allowed and recorded rather than
+refused, on the same reasoning as late cancellation: refusing it just produces a
+no-show, which costs the salon the slot anyway.
+
+**Email.** The customer receives one confirmation, for the new appointment, from
+the insert trigger; a second "you have moved" message would be noise. The owner
+gets `owner_booking_moved` carrying the old time.
+
+**`0016` fixes a bug this surfaced.** When a booking stopped being live the
+trigger retired its queued reminders but not its queued _confirmation_. Since
+the queue drains every five minutes, anyone who cancelled or moved within that
+window would receive "You are booked in" for an appointment that had already
+been retired, immediately followed by the cancellation. Now every unsent message
+about a retired booking is retired with it. Already-sent rows are untouched —
+rewriting those would make `sent_at` a lie.

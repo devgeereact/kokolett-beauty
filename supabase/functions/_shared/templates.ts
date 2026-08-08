@@ -268,6 +268,23 @@ export function render(template: string, p: TemplatePayload): RenderedEmail {
         text: `${p.customer_name} (first visit) has requested an appointment. The slot is held until you decide.\n\n${when(p.starts_at, p.timezone)} · ${p.service_name}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\n${SITE}/dashboard/approvals`,
       };
 
+    case 'owner_booking_moved':
+      return {
+        html: layout(
+          'A booking has moved',
+          line(
+            `${esc(p.customer_name)} has changed their appointment. This was the old time:`,
+          ) +
+            details(p) +
+            line(
+              `${esc(p.customer_email)}${p.customer_mobile ? ` · ${esc(p.customer_mobile)}` : ''}`,
+            ) +
+            line('The new one is on your calendar.') +
+            button(`${SITE}/dashboard/calendar`, 'Open the calendar'),
+        ),
+        text: `${p.customer_name} has changed their appointment.\n\nOld time: ${when(p.starts_at, p.timezone)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\nThe new one is on your calendar: ${SITE}/dashboard/calendar`,
+      };
+
     case 'owner_new_booking':
       return {
         html: layout(

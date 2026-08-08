@@ -18,6 +18,10 @@ interface FormState {
   approveFirstTime: boolean;
   approvalWindow: string;
   googleReviewUrl: string;
+  googlePlaceId: string;
+  instagramUrl: string;
+  addressLine: string;
+  phone: string;
 }
 
 /**
@@ -46,6 +50,10 @@ export function SettingsPage(): JSX.Element {
       approveFirstTime: settings.approve_first_time,
       approvalWindow: String(settings.approval_window_h),
       googleReviewUrl: settings.google_review_url ?? '',
+      googlePlaceId: settings.google_place_id ?? '',
+      instagramUrl: settings.instagram_url ?? '',
+      addressLine: settings.address_line ?? '',
+      phone: settings.phone ?? '',
     });
   }, [settings]);
 
@@ -98,6 +106,10 @@ export function SettingsPage(): JSX.Element {
         ...numbers,
         approve_first_time: form.approveFirstTime,
         google_review_url: form.googleReviewUrl.trim() || null,
+        google_place_id: form.googlePlaceId.trim() || null,
+        instagram_url: form.instagramUrl.trim() || null,
+        address_line: form.addressLine.trim() || null,
+        phone: form.phone.trim() || null,
       });
       setSaved(true);
       window.setTimeout(() => setSaved(false), 3000);
@@ -240,6 +252,55 @@ export function SettingsPage(): JSX.Element {
           )}
 
           <h2 className="mb-1 mt-6 font-display text-lg font-semibold text-foreground">
+            Your website
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            These appear in the footer of the public site. Anything left blank is simply
+            not shown.
+          </p>
+
+          <Field
+            label="Address"
+            hint="Shown in the footer. Leave blank if you would rather not publish it."
+          >
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                value={form.addressLine}
+                onChange={(e) => setForm({ ...form, addressLine: e.target.value })}
+                placeholder="12 Example Street, Town, AB1 2CD"
+              />
+            )}
+          </Field>
+
+          <Field label="Phone number">
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="07700 900123"
+              />
+            )}
+          </Field>
+
+          <Field label="Instagram" hint="The full link to your profile.">
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                type="url"
+                value={form.instagramUrl}
+                onChange={(e) => setForm({ ...form, instagramUrl: e.target.value })}
+                placeholder="https://www.instagram.com/yourname"
+              />
+            )}
+          </Field>
+
+          <h2 className="mb-1 mt-6 font-display text-lg font-semibold text-foreground">
             Reviews
           </h2>
           <Field
@@ -254,6 +315,21 @@ export function SettingsPage(): JSX.Element {
                 value={form.googleReviewUrl}
                 onChange={(e) => setForm({ ...form, googleReviewUrl: e.target.value })}
                 placeholder="https://g.page/r/…"
+              />
+            )}
+          </Field>
+
+          <Field
+            label="Google Place ID"
+            hint="Needed to show your reviews on the website. Find it at developers.google.com/maps/documentation/places/web-service/place-id — it starts with ChIJ. The share link above is not the same thing."
+          >
+            {({ id, describedBy }) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                value={form.googlePlaceId}
+                onChange={(e) => setForm({ ...form, googlePlaceId: e.target.value })}
+                placeholder="ChIJ…"
               />
             )}
           </Field>

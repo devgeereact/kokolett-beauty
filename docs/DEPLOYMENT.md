@@ -190,3 +190,41 @@ curl -s -X POST "$URL/auth/v1/otp" -H "apikey: $ANON" \
   -H 'Content-Type: application/json' \
   -d '{"email":"booking@koko.gakinz.com","create_user":false}'
 ```
+
+## Google reviews on the marketing site
+
+Reviews are **cached**, not fetched from the browser. The Places key is billable
+and a key shipped to a browser is a public key however it is restricted; and a
+salon's reviews change a few times a month, so refetching per page view would
+pay Google repeatedly for the same handful of paragraphs.
+
+```
+pg_cron :41 hourly → sync_google_reviews() → pg_net → sync-reviews
+                   → Places API (New) → google_reviews + google_place_snapshot
+                   → public_reviews() ← the marketing page
+```
+
+**Places API (New), not the legacy one.** Google froze the legacy Places API in
+March 2025 and it is unavailable in new Cloud projects — which is exactly what
+the salon would create. The function calls
+`https://places.googleapis.com/v1/places/{placeId}` with `X-Goog-Api-Key` and a
+mandatory `X-Goog-FieldMask`. Writing it against the legacy endpoint would have
+produced a `REQUEST_DENIED` that looks like a key problem.
+
+**Two things are still needed** before reviews appear:
+
+1. `GOOGLE_PLACES_API_KEY` as a function secret — a Places API (New) key with
+   **no HTTP referrer restriction**, because this is a server-side call. Restrict
+   it by API instead.
+   ```
+   supabase secrets set GOOGLE_PLACES_API_KEY='…' --project-ref <ref>
+   ```
+2. The **Place ID** (`ChIJ…`), set in Settings → Reviews. The `share.google` link
+   already stored is _not_ a Place ID and cannot be used with the API.
+
+Until both exist, `sync-reviews` returns 503 and the marketing page simply omits
+the reviews section — it never shows an empty heading or invented testimonials.
+
+Google returns at most five reviews and chooses which. No API returns all of
+them; anything claiming to is scraping, which breaks Google's terms and stops
+working without warning.

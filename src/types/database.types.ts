@@ -326,46 +326,58 @@ export type Database = {
       };
       booking_settings: {
         Row: {
+          address_line: string | null;
           approval_window_h: number;
           approve_first_time: boolean;
           cancellation_window_h: number;
           created_at: string;
           default_buffer_min: number;
+          google_place_id: string | null;
           google_review_url: string | null;
           id: boolean;
+          instagram_url: string | null;
           lead_time_min: number;
           max_appointments_per_day: number;
           max_horizon_days: number;
+          phone: string | null;
           slot_granularity_min: number;
           timezone: string;
           updated_at: string;
         };
         Insert: {
+          address_line?: string | null;
           approval_window_h?: number;
           approve_first_time?: boolean;
           cancellation_window_h?: number;
           created_at?: string;
           default_buffer_min?: number;
+          google_place_id?: string | null;
           google_review_url?: string | null;
           id?: boolean;
+          instagram_url?: string | null;
           lead_time_min?: number;
           max_appointments_per_day?: number;
           max_horizon_days?: number;
+          phone?: string | null;
           slot_granularity_min?: number;
           timezone?: string;
           updated_at?: string;
         };
         Update: {
+          address_line?: string | null;
           approval_window_h?: number;
           approve_first_time?: boolean;
           cancellation_window_h?: number;
           created_at?: string;
           default_buffer_min?: number;
+          google_place_id?: string | null;
           google_review_url?: string | null;
           id?: boolean;
+          instagram_url?: string | null;
           lead_time_min?: number;
           max_appointments_per_day?: number;
           max_horizon_days?: number;
+          phone?: string | null;
           slot_granularity_min?: number;
           timezone?: string;
           updated_at?: string;
@@ -548,6 +560,66 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      google_place_snapshot: {
+        Row: {
+          fetched_at: string;
+          id: boolean;
+          last_error: string | null;
+          rating: number | null;
+          rating_count: number | null;
+        };
+        Insert: {
+          fetched_at?: string;
+          id?: boolean;
+          last_error?: string | null;
+          rating?: number | null;
+          rating_count?: number | null;
+        };
+        Update: {
+          fetched_at?: string;
+          id?: boolean;
+          last_error?: string | null;
+          rating?: number | null;
+          rating_count?: number | null;
+        };
+        Relationships: [];
+      };
+      google_reviews: {
+        Row: {
+          author_name: string;
+          author_url: string | null;
+          body: string | null;
+          fetched_at: string;
+          id: string;
+          profile_photo_url: string | null;
+          published_at: string | null;
+          rating: number;
+          relative_time: string | null;
+        };
+        Insert: {
+          author_name: string;
+          author_url?: string | null;
+          body?: string | null;
+          fetched_at?: string;
+          id: string;
+          profile_photo_url?: string | null;
+          published_at?: string | null;
+          rating: number;
+          relative_time?: string | null;
+        };
+        Update: {
+          author_name?: string;
+          author_url?: string | null;
+          body?: string | null;
+          fetched_at?: string;
+          id?: string;
+          profile_photo_url?: string | null;
+          published_at?: string | null;
+          rating?: number;
+          relative_time?: string | null;
+        };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -999,6 +1071,7 @@ export type Database = {
           starts_at: string;
         }[];
       };
+      public_reviews: { Args: { p_limit?: number }; Returns: Json };
       purge_expired_access_tokens: { Args: never; Returns: number };
       queue_email: {
         Args: {
@@ -1101,6 +1174,7 @@ export type Database = {
         Args: { p_day_of_week: number; p_times: string[] };
         Returns: number;
       };
+      sync_google_reviews: { Args: never; Returns: number };
       weekly_template_status: { Args: never; Returns: Json };
     };
     Enums: {

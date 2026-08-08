@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useUsualHours } from '@/hooks/useUsualHours';
 
 const SALON_EMAIL = 'booking@koko.gakinz.com';
 
@@ -20,6 +21,7 @@ const SALON_EMAIL = 'booking@koko.gakinz.com';
  */
 export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   const { settings } = useBusinessSettings();
+  const { lines: hours } = useUsualHours();
   const year = new Date().getFullYear();
 
   const links = [
@@ -72,7 +74,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-          <div className="grid gap-8 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <p className="font-display text-lg font-semibold text-foreground">
                 Kokolett <span className="text-primary">Beauty</span> UK
@@ -82,11 +84,50 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 booked online in under two minutes.
               </p>
               {settings?.address_line && (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  {settings.address_line}
+                <p className="mt-3 text-sm">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      `Kokolett Beauty UK, ${settings.address_line}`,
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                  >
+                    {settings.address_line}
+                  </a>
                 </p>
               )}
             </div>
+
+            {hours.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">Usual hours</h2>
+                <dl className="mt-3 space-y-1 text-sm">
+                  {hours.map((line) => (
+                    <div key={line.days} className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">{line.days}</dt>
+                      <dd
+                        className={
+                          line.hours ? 'text-foreground' : 'text-muted-foreground'
+                        }
+                      >
+                        {line.hours ?? 'Closed'}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Individual days can differ —{' '}
+                  <Link
+                    to={routes.public.book}
+                    className="underline underline-offset-4 hover:text-foreground"
+                  >
+                    check what is open
+                  </Link>
+                  .
+                </p>
+              </div>
+            )}
 
             <div>
               <h2 className="text-sm font-semibold text-foreground">Get in touch</h2>
@@ -169,14 +210,37 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground">
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-border pt-6 text-xs text-muted-foreground">
             <p>&copy; {year} Kokolett Beauty UK. All rights reserved.</p>
-            <Link
-              to="/login"
-              className="underline underline-offset-4 hover:text-foreground"
+            <nav
+              aria-label="Legal"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2"
             >
-              Salon sign in
-            </Link>
+              <Link
+                to={routes.public.privacy}
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Privacy
+              </Link>
+              <Link
+                to={routes.public.bookingPolicy}
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Booking policy
+              </Link>
+              <Link
+                to={routes.public.terms}
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Terms
+              </Link>
+              <Link
+                to="/login"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Salon sign in
+              </Link>
+            </nav>
           </div>
         </div>
       </footer>

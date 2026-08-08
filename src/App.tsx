@@ -9,6 +9,7 @@ import { HomePage } from '@/pages/HomePage';
 import { BookPage } from '@/pages/BookPage';
 import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
 import { MyBookingsPage } from '@/pages/MyBookingsPage';
+import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { TodayPage } from '@/pages/dashboard/TodayPage';
@@ -48,6 +49,10 @@ export function App(): JSX.Element {
             <Route path="/access/:token" element={<MyBookingsPage />} />
             <Route path={routes.customer.home} element={<MyBookingsPage />} />
             <Route path={routes.customer.appointments} element={<MyBookingsPage />} />
+
+            <Route path={routes.public.privacy} element={<PrivacyPage />} />
+            <Route path={routes.public.bookingPolicy} element={<BookingPolicyPage />} />
+            <Route path={routes.public.terms} element={<TermsPage />} />
 
             <Route path="/login" element={<LoginPage />} />
 

@@ -1,0 +1,86 @@
+import { useEffect, useState } from 'react';
+import { listWeeklyTemplate } from '@/services/availabilityService';
+
+export interface HoursLine {
+  /** e.g. "Tuesday – Sunday" or "Monday" */
+  days: string;
+  /** e.g. "09:00 – 17:00", or null when closed. */
+  hours: string | null;
+}
+
+const DAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+
+/** Monday first, because that is how opening hours are read. */
+const ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+/**
+ * The salon's usual week, summarised for the footer.
+ *
+ * Derived from the weekly template rather than hard-coded, so it cannot drift
+ * from what the owner actually publishes. It is deliberately labelled *usual*:
+ * the template is what generates days, but any individual day can be changed on
+ * the calendar, so the only authority on a specific date is the booking page.
+ *
+ * Consecutive days with the same hours are collapsed — "Tuesday – Sunday
+ * 09:00 – 17:00" is what a person reads, not seven identical lines.
+ */
+export function useUsualHours(): { lines: HoursLine[]; loading: boolean } {
+  const [lines, setLines] = useState<HoursLine[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    void listWeeklyTemplate()
+      .then((template) => {
+        if (!active) return;
+
+        const byDay = new Map(template.map((d) => [d.day_of_week, d.times]));
+
+        // First and last appointment start is the honest summary of a list of
+        // discrete times; the salon does not work "09:00 to 17:00 continuously".
+        const summarise = (day: number): string | null => {
+          const times = (byDay.get(day) ?? []).slice().sort();
+          if (times.length === 0) return null;
+          return times.length === 1
+            ? times[0]!
+            : `${times[0]} – ${times[times.length - 1]}`;
+        };
+
+        const grouped: HoursLine[] = [];
+        for (const day of ORDER) {
+          const hours = summarise(day);
+          const previous = grouped[grouped.length - 1];
+
+          // Extend the run only if this day is adjacent in the displayed order.
+          if (previous && previous.hours === hours) {
+            previous.days = `${previous.days.split(' – ')[0]} – ${DAY_NAMES[day]}`;
+          } else {
+            grouped.push({ days: DAY_NAMES[day] ?? '', hours });
+          }
+        }
+
+        setLines(grouped);
+      })
+      .catch(() => {
+        if (active) setLines([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return { lines, loading };
+}

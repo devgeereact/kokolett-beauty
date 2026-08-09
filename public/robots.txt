@@ -1,5 +1,13 @@
 User-agent: *
 Allow: /
 
-# Update with your deployed domain:
-# Sitemap: https://yourdomain.com/sitemap.xml
+# The owner's dashboard, a customer's own bookings, and the single-use
+# sign-in links. None of these should ever appear in a search result: an
+# indexed /access/<token> is a customer's booking history handed to whoever
+# searches for it.
+Disallow: /dashboard
+Disallow: /my
+Disallow: /access
+Disallow: /login
+
+Sitemap: https://koko.gakinz.com/sitemap.xml

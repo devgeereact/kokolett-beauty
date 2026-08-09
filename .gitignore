@@ -47,3 +47,10 @@ ruvector.db
 # Supabase CLI local state
 supabase/.temp/
 supabase/.branches/
+
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+
+# `ruflo init --force` overwrites CLAUDE.md and drops this backup beside it.
+CLAUDE.md.pre-ruflo

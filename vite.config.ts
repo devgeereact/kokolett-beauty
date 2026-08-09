@@ -5,8 +5,23 @@ import path from 'node:path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Relative base so the static bundle works from any cPanel sub-directory.
-  base: './',
+  /**
+   * Absolute base. This is not a preference; a relative base is broken for
+   * this app.
+   *
+   * With `base: './'` the entrypoint emits `./assets/index-*.js`. A browser
+   * resolves that against the *current URL*, so it only works at depth zero.
+   * Load https://koko.gakinz.com/dashboard/appointments directly and the
+   * browser asks for /dashboard/assets/index-*.js, which does not exist, so
+   * the SPA rewrite in .htaccess answers with index.html — a 200 carrying
+   * text/html where a module was expected. Strict MIME checking refuses it and
+   * the page renders blank. Every two-segment route was affected, including
+   * every /access/<token> magic link in every email.
+   *
+   * The cost is that the bundle can no longer be served from a subdirectory,
+   * which this app never does: koko.gakinz.com is its own document root.
+   */
+  base: '/',
 
   resolve: {
     alias: {

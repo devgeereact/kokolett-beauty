@@ -37,6 +37,7 @@ export function AppointmentCard({
   timezone,
   onStatusChange,
   onNoteSave,
+  onBookFollowUp,
   className,
 }: {
   appointment: AppointmentDetailed;
@@ -44,6 +45,8 @@ export function AppointmentCard({
   onStatusChange?: (id: string, status: AppointmentStatus) => Promise<void>;
   /** Owner's private note. Omit to hide the notes control entirely. */
   onNoteSave?: (id: string, note: string) => Promise<void>;
+  /** Opens the booking form with this customer already filled in. */
+  onBookFollowUp?: (appointment: AppointmentDetailed) => void;
   className?: string;
 }): JSX.Element {
   const [busy, setBusy] = useState<AppointmentStatus | null>(null);
@@ -166,6 +169,17 @@ export function AppointmentCard({
           {onNoteSave && (
             <Button size="sm" variant="ghost" onClick={() => setNoteOpen((v) => !v)}>
               {appointment.owner_note ? 'Note ✓' : 'Add note'}
+            </Button>
+          )}
+          {/* The best moment to book the next one is while this one is still
+              in front of her, so the action lives on the booking itself. */}
+          {onBookFollowUp && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onBookFollowUp(appointment)}
+            >
+              Book follow-up
             </Button>
           )}
         </div>

@@ -126,6 +126,9 @@ export interface ServiceMenuGroup {
 
 export type Subscriber = Tables['subscribers']['Row'];
 
+/** A calendar subscription. The token itself is never in this row. */
+export type CalendarFeed = Tables['calendar_feeds']['Row'];
+
 /** Result of `public.book_appointment(...)`. */
 export interface BookingResult {
   appointment_id: string;

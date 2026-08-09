@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
+import {
+  NewBookingPanel,
+  type PrefilledCustomer,
+} from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input, Select } from '@/components/ui/Field';
@@ -35,6 +39,9 @@ export function AppointmentsPage(): JSX.Element {
   const [rangeKey, setRangeKey] = useState<string>('7');
   const [statusFilter, setStatusFilter] = useState<string>('live');
   const [search, setSearch] = useState('');
+  const [booking, setBooking] = useState(false);
+  const [prefill, setPrefill] = useState<PrefilledCustomer | null>(null);
+  const [justBooked, setJustBooked] = useState<string | null>(null);
 
   const { from, to } = useMemo(() => {
     const range = RANGES.find((r) => r.key === rangeKey) ?? RANGES[1];
@@ -124,11 +131,46 @@ export function AppointmentsPage(): JSX.Element {
       title="Appointments"
       subtitle="Mark them complete and keep your notes"
       actions={
-        <Button variant="ghost" size="sm" onClick={() => void refresh()}>
-          Refresh
-        </Button>
+        <>
+          <Button variant="ghost" size="sm" onClick={() => void refresh()}>
+            Refresh
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              setPrefill(null);
+              setBooking(true);
+            }}
+          >
+            New booking
+          </Button>
+        </>
       }
     >
+      {booking && (
+        <NewBookingPanel
+          prefill={prefill}
+          onClose={() => setBooking(false)}
+          onBooked={(reference) => {
+            setBooking(false);
+            setJustBooked(reference);
+            setSearch(reference);
+            void refresh();
+          }}
+        />
+      )}
+
+      {justBooked && (
+        <div className="mb-6 rounded-lg border border-status-completed p-4 text-sm">
+          <p className="font-medium text-foreground">
+            Booked. Reference {justBooked}.
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Their confirmation email is on its way, with a link they can use to change or
+            cancel it themselves.
+          </p>
+        </div>
+      )}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label} className="p-4">
@@ -234,6 +276,16 @@ export function AppointmentsPage(): JSX.Element {
                   timezone={timezone}
                   onStatusChange={changeStatus}
                   onNoteSave={saveNote}
+                  onBookFollowUp={(a) => {
+                    setPrefill({
+                      fullName: a.customer_name ?? '',
+                      email: a.customer_email ?? '',
+                      mobile: a.customer_mobile ?? '',
+                    });
+                    setJustBooked(null);
+                    setBooking(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                 />
               ))}
             </div>

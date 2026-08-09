@@ -389,6 +389,36 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_feeds: {
+        Row: {
+          created_at: string
+          fetch_count: number
+          id: string
+          label: string
+          last_fetched_at: string | null
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          fetch_count?: number
+          id?: string
+          label?: string
+          last_fetched_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          fetch_count?: number
+          id?: string
+          label?: string
+          last_fetched_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: []
+      }
       customer_access_tokens: {
         Row: {
           created_at: string
@@ -997,6 +1027,24 @@ export type Database = {
         }[]
       }
       booked_times_on: { Args: { p_date: string }; Returns: string[] }
+      calendar_feed_events: {
+        Args: { p_token: string }
+        Returns: {
+          created_at: string
+          customer_email: string
+          customer_mobile: string
+          customer_name: string
+          customer_note: string
+          ends_at: string
+          first_visit: boolean
+          id: string
+          owner_note: string
+          reference: string
+          starts_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }[]
+      }
       clear_day_slots: { Args: { p_date: string }; Returns: number }
       copy_day_slots: {
         Args: { p_from: string; p_to: string }
@@ -1004,6 +1052,7 @@ export type Database = {
       }
       create_appointment_as_owner: {
         Args: {
+          p_duration_min?: number
           p_email: string
           p_full_name: string
           p_mobile?: string
@@ -1013,6 +1062,13 @@ export type Database = {
         Returns: {
           appointment_id: string
           reference: string
+        }[]
+      }
+      create_calendar_feed: {
+        Args: { p_label?: string }
+        Returns: {
+          id: string
+          token: string
         }[]
       }
       customer_appointments: {
@@ -1195,6 +1251,7 @@ export type Database = {
         Args: { p_date: string; p_time: string }
         Returns: boolean
       }
+      revoke_calendar_feed: { Args: { p_id: string }; Returns: undefined }
       set_appointment_status: {
         Args: {
           p_appointment_id: string

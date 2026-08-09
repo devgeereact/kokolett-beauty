@@ -126,6 +126,8 @@ export interface OwnerBookingInput {
   email: string;
   mobile?: string;
   note?: string;
+  /** Overrides the appointment type's own length for this booking only. */
+  durationMin?: number;
 }
 
 /** Phone and walk-in bookings. Skips the trust gate, never the overlap constraint. */
@@ -138,6 +140,7 @@ export async function createAppointmentAsOwner(
     p_email: input.email,
     p_mobile: input.mobile,
     p_note: input.note,
+    p_duration_min: input.durationMin,
   });
 
   if (error) throw error;

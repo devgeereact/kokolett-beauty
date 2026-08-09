@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { CalendarSubscription } from '@/components/dashboard/CalendarSubscription';
 import { ShareLink } from '@/components/dashboard/ShareLink';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -186,7 +187,7 @@ export function SettingsPage(): JSX.Element {
 
       {/* ---- Your links ------------------------------------------------- */}
       {tab === 'share' && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid items-start gap-6 lg:grid-cols-2">
           <Card className="p-5">
             <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
               Links to share
@@ -220,7 +221,12 @@ export function SettingsPage(): JSX.Element {
             )}
           </Card>
 
-          <Card className="h-fit p-5">
+          <div className="space-y-6">
+          <Card className="p-5">
+            <CalendarSubscription />
+          </Card>
+
+          <Card className="p-5">
             <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
               Mailing list
             </h2>
@@ -270,6 +276,7 @@ export function SettingsPage(): JSX.Element {
               </>
             )}
           </Card>
+          </div>
         </div>
       )}
 

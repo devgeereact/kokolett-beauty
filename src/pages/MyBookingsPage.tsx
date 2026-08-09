@@ -10,7 +10,7 @@ import { EmptyState, LoadingState } from '@/components/ui/States';
 import { useCustomerSession } from '@/hooks/useCustomerSession';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { errorMessage } from '@/lib/errors';
-import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
+import { formatDateLong, formatTime } from '@/lib/format';
 import { routes } from '@/lib/routes';
 
 /**
@@ -256,9 +256,12 @@ export function MyBookingsPage(): JSX.Element {
                     <StatusChip status={a.status} />
                   </div>
 
+                  {/* No price. The figure on the row is the appointment type's
+                      placeholder, and what the appointment actually costs is
+                      agreed in the salon; printing it here would be a quote
+                      the salon never gave. */}
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {formatMoney(a.price_pence)} ·{' '}
-                    <span className="font-mono">{a.reference}</span>
+                    Reference <span className="font-mono">{a.reference}</span>
                   </p>
 
                   {a.status === 'pending_approval' && (

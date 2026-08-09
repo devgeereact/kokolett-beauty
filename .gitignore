@@ -42,7 +42,7 @@ ruvector.db
 *.db-journal
 
 # Agent tooling generated locally (skills, agents, hooks) — machine-specific noise
-.claude/
+.claude/*
 
 # Supabase CLI local state
 supabase/.temp/
@@ -54,3 +54,11 @@ supabase/.branches/
 
 # `ruflo init --force` overwrites CLAUDE.md and drops this backup beside it.
 CLAUDE.md.pre-ruflo
+
+# `.claude/` is ignored above because ruflo generates ~110 files into it. The
+# hookify rules are the exception: they encode safety lessons this project paid
+# for once already (a destroyed customer booking, an hour of blank magic links)
+# and are worthless if they vanish on a fresh clone. The `.local.md` suffix is
+# hookify's required naming, not a statement about version control.
+!.claude/hookify.*.local.md
+

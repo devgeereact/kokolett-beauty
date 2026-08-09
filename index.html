@@ -21,6 +21,30 @@
     />
 
     <title>Kokolett Beauty UK</title>
+    <!--
+      Paint the right theme before the first frame.
+
+      React applies the `dark` class after it mounts, which is several hundred
+      milliseconds too late: a dark-mode user gets a full-screen white flash on
+      every load. This runs synchronously in <head>, reads the same key the
+      ThemeProvider writes, and falls back to the operating system. Kept inline
+      and tiny on purpose, since a separate request would defeat the point.
+    -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('kokolett-theme');
+          var dark =
+            stored === 'dark' ||
+            ((stored === null || stored === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (e) {
+          /* Private mode blocks localStorage; the default light theme is fine. */
+        }
+      })();
+    </script>
   </head>
   <body class="bg-background text-content">
     <div id="root"></div>

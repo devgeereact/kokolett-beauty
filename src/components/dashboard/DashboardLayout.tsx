@@ -3,9 +3,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/Button';
-import type { ThemeMode } from '@/types';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface NavEntry {
   to: string;
@@ -35,7 +34,6 @@ export function DashboardLayout({
 }): JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, signOut } = useSupabaseAuth();
-  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const entries: NavEntry[] = [
@@ -46,6 +44,7 @@ export function DashboardLayout({
     { to: routes.owner.requests, label: 'Requests', badge: badges?.requests },
     { to: routes.owner.customers, label: 'Customers' },
     { to: routes.owner.appointmentType, label: 'Appointment' },
+    { to: routes.owner.serviceMenu, label: 'Services' },
     { to: routes.owner.settings, label: 'Settings' },
   ];
 
@@ -94,21 +93,6 @@ export function DashboardLayout({
           >
             {user?.email}
           </p>
-          <div className="flex items-center gap-2">
-            <label htmlFor="theme-mode" className="sr-only">
-              Theme
-            </label>
-            <select
-              id="theme-mode"
-              value={theme}
-              onChange={(e) => setTheme(e.target.value as ThemeMode)}
-              className="w-full rounded-md border border-sidebar-border bg-card px-2 py-1.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-            >
-              <option value="system">System theme</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -162,7 +146,10 @@ export function DashboardLayout({
                 </p>
               )}
             </div>
-            {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+            <div className="flex shrink-0 items-center gap-2">
+              {actions}
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 

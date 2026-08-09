@@ -27,6 +27,21 @@ function systemTheme(): ResolvedTheme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+/**
+ * Paint the theme.
+ *
+ * `colorScheme` matters as much as the class: it is what tells the browser to
+ * render form controls, scrollbars and the native date picker dark. Without it
+ * a dark dashboard shows a white date picker.
+ *
+ * The same two lines run inline in index.html before React mounts, so the
+ * first frame is already correct.
+ */
+function apply(next: ResolvedTheme): void {
+  document.documentElement.classList.toggle('dark', next === 'dark');
+  document.documentElement.style.colorScheme = next;
+}
+
 function getInitialTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'system';
   const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -44,7 +59,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): JSX.Elemen
   useEffect(() => {
     const next: ResolvedTheme = theme === 'system' ? systemTheme() : theme;
     setResolvedTheme(next);
-    document.documentElement.classList.toggle('dark', next === 'dark');
+    apply(next);
     window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
@@ -55,7 +70,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): JSX.Elemen
     const onChange = (e: MediaQueryListEvent): void => {
       const next: ResolvedTheme = e.matches ? 'dark' : 'light';
       setResolvedTheme(next);
-      document.documentElement.classList.toggle('dark', next === 'dark');
+      apply(next);
     };
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
@@ -63,13 +78,17 @@ export function ThemeProvider({ children }: { children: ReactNode }): JSX.Elemen
 
   const setTheme = useCallback((mode: ThemeMode) => setThemeState(mode), []);
 
-  // Cycles system → light → dark → system.
+  /**
+   * Flip to the opposite of what is on screen right now.
+   *
+   * Deliberately not a three-way cycle through 'system'. One press should
+   * change what the person is looking at; a cycle that lands back on 'system'
+   * can leave the screen looking unchanged, which reads as a broken button.
+   * Returning to 'system' is its own control.
+   */
   const toggleTheme = useCallback(
-    () =>
-      setThemeState((t) =>
-        t === 'system' ? 'light' : t === 'light' ? 'dark' : 'system',
-      ),
-    [],
+    () => setThemeState(resolvedTheme === 'dark' ? 'light' : 'dark'),
+    [resolvedTheme],
   );
 
   const value = useMemo(

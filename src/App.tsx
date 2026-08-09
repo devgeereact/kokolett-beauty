@@ -8,6 +8,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { HomePage } from '@/pages/HomePage';
 import { BookPage } from '@/pages/BookPage';
 import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
+import { SubscribePage } from '@/pages/SubscribePage';
 import { MyBookingsPage } from '@/pages/MyBookingsPage';
 import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
 import { LoginPage } from '@/pages/LoginPage';
@@ -20,6 +21,7 @@ import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
 import { RequestsPage } from '@/pages/dashboard/RequestsPage';
 import { CustomersPage } from '@/pages/dashboard/CustomersPage';
 import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
+import { ServiceMenuPage } from '@/pages/dashboard/ServiceMenuPage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
 
@@ -46,6 +48,8 @@ export function App(): JSX.Element {
             />
             {/* Customer identity is passwordless: /access/:token redeems a
                 single-use link, /my uses the session it produced. */}
+            <Route path={routes.public.subscribe} element={<SubscribePage />} />
+
             <Route path="/access/:token" element={<MyBookingsPage />} />
             <Route path={routes.customer.home} element={<MyBookingsPage />} />
             <Route path={routes.customer.appointments} element={<MyBookingsPage />} />
@@ -67,6 +71,10 @@ export function App(): JSX.Element {
             <Route
               path={routes.owner.appointmentType}
               element={owner(<AppointmentTypePage />)}
+            />
+            <Route
+              path={routes.owner.serviceMenu}
+              element={owner(<ServiceMenuPage />)}
             />
             <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
 

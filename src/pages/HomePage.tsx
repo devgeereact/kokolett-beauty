@@ -3,6 +3,7 @@ import { SiteShell } from '@/components/public/SiteShell';
 import { Reviews } from '@/components/public/Reviews';
 import { Card } from '@/components/ui/Card';
 import { useServices } from '@/hooks/useServices';
+import { useServiceMenu } from '@/hooks/useServiceMenu';
 import { useAvailability } from '@/hooks/useAvailability';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { formatDateLong } from '@/lib/format';
@@ -18,95 +19,6 @@ import { routes } from '@/lib/routes';
  * twenty minute trim are not the same appointment, and printing one number for
  * both would be a promise the salon cannot keep.
  */
-
-/**
- * What the salon offers.
- *
- * A working list for an African hair salon, grouped the way a client thinks
- * about it. The owner should strike anything she does not do: a service listed
- * here that she has to turn down at the door costs more goodwill than it wins.
- */
-const SERVICES: { group: string; items: string[] }[] = [
-  {
-    group: 'Braids',
-    items: [
-      'Knotless braids',
-      'Box braids',
-      'Cornrows',
-      'Feed-in braids',
-      'Ghana braids',
-      'Fulani braids',
-      'Lemonade braids',
-      'Stitch braids',
-      'Tribal braids',
-      'Micro braids',
-      'Kids braids',
-    ],
-  },
-  {
-    group: 'Twists and locs',
-    items: [
-      'Senegalese twists',
-      'Passion twists',
-      'Spring twists',
-      'Marley twists',
-      'Two strand twists',
-      'Faux locs',
-      'Butterfly locs',
-      'Soft locs',
-      'Starter locs',
-      'Loc retwist and styling',
-    ],
-  },
-  {
-    group: 'Weaves, wigs and extensions',
-    items: [
-      'Sew-in weave',
-      'Closure and frontal install',
-      'Quick weave',
-      'Crochet braids',
-      'Wig install',
-      'Wig customising and revamp',
-      'Tape-in extensions',
-      'Micro-link extensions',
-      'Take-down and detangle',
-    ],
-  },
-  {
-    group: 'Natural hair and styling',
-    items: [
-      'Wash and go',
-      'Silk press',
-      'Blow dry and style',
-      'Twist-out and braid-out',
-      'Cut, trim and shaping',
-      'Big chop and transitioning',
-      'Bridal and occasion styling',
-      'Relaxer and texturiser',
-    ],
-  },
-  {
-    group: 'Colour',
-    items: [
-      'Full colour',
-      'Root touch-up',
-      'Highlights and lowlights',
-      'Bleaching and lifting',
-      'Toning and glossing',
-    ],
-  },
-  {
-    group: 'Treatments',
-    items: [
-      'Deep conditioning',
-      'Protein and bond repair',
-      'Scalp treatment',
-      'Steam treatment',
-      'Hot oil treatment',
-      'Trim and split-end care',
-    ],
-  },
-];
 
 const HOW_IT_WORKS = [
   {
@@ -128,6 +40,7 @@ const HOW_IT_WORKS = [
 
 export function HomePage(): JSX.Element {
   const { services } = useServices();
+  const { groups: menu } = useServiceMenu();
   const { settings } = useBusinessSettings();
   const { slotsByDate, openDates, loading } = useAvailability(
     services[0]?.duration_min ?? 60,
@@ -218,7 +131,10 @@ export function HomePage(): JSX.Element {
         </section>
       )}
 
-      {/* ---- Services ------------------------------------------------- */}
+      {/* ---- Services -------------------------------------------------
+          Straight from the salon's own menu, which she edits in the
+          dashboard. Nothing renders until there is something to show. */}
+      {menu.length > 0 && (
       <section id="services" className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
         <h2 className="mb-2 text-center font-display text-3xl font-semibold text-foreground">
           What we do
@@ -230,22 +146,29 @@ export function HomePage(): JSX.Element {
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICES.map((group) => (
-            <Card key={group.group} className="p-5">
+          {menu.map((group) => (
+            <Card key={group.group_name} className="p-5">
               <h3 className="font-display text-lg font-semibold text-foreground">
-                {group.group}
+                {group.group_name}
               </h3>
               <ul className="mt-3 space-y-1.5">
                 {group.items.map((item) => (
                   <li
-                    key={item}
+                    key={item.name}
                     className="flex items-start gap-2 text-sm text-muted-foreground"
                   >
                     <span
                       className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary"
                       aria-hidden="true"
                     />
-                    {item}
+                    <span>
+                      {item.name}
+                      {item.note && (
+                        <span className="block text-xs text-muted-foreground">
+                          {item.note}
+                        </span>
+                      )}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -258,6 +181,7 @@ export function HomePage(): JSX.Element {
           whether we can do it.
         </p>
       </section>
+      )}
 
       {/* ---- How booking works --------------------------------------- */}
       <section className="border-t border-border bg-card">

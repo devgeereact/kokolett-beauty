@@ -109,6 +109,23 @@ export interface TimeSlot {
   label: string;
 }
 
+/**
+ * The menu of styles on the home page.
+ *
+ * Distinct from `Service`, which is the one bookable appointment type. A menu
+ * row is descriptive only: it tells a visitor the salon does knotless braids,
+ * it does not create a bookable product.
+ */
+export type ServiceMenuItem = Tables['service_menu']['Row'];
+
+/** One group as `public_service_menu()` returns it. */
+export interface ServiceMenuGroup {
+  group_name: string;
+  items: { name: string; note: string | null }[];
+}
+
+export type Subscriber = Tables['subscribers']['Row'];
+
 /** Result of `public.book_appointment(...)`. */
 export interface BookingResult {
   appointment_id: string;

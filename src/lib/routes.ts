@@ -16,6 +16,7 @@ export const routes = {
     contact: '/contact',
     book: '/book',
     requestAvailability: '/request-availability',
+    subscribe: '/subscribe',
     privacy: '/privacy',
     bookingPolicy: '/booking-policy',
     terms: '/terms',
@@ -39,6 +40,8 @@ export const routes = {
     customer: (id: string) => `/dashboard/customers/${id}`,
     /** The single appointment type: its length and price. */
     appointmentType: '/dashboard/appointment',
+    /** The menu of styles shown on the website. Descriptive, not bookable. */
+    serviceMenu: '/dashboard/services',
     /** The repeating week that generates days on the calendar. */
     weeklyDefault: '/dashboard/weekly',
     reports: '/dashboard/reports',

@@ -59,10 +59,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     auth: { persistSession: false },
   });
 
+  // `.eq`, never `.ilike`. The regex above accepts `%` and `_`, which are LIKE
+  // wildcards, so `.ilike` turned this endpoint into a search: `%@%.%` matched
+  // every customer, and an attacker could narrow a pattern one character at a
+  // time and read the hit count off the response latency (one match does two
+  // extra writes before answering; several match and abort early). That defeats
+  // the promise in this file's header. `customers.email` is `citext`
+  // (0002_salon.sql:102), so equality is already case-insensitive and the
+  // wildcard match bought nothing in the first place.
   const { data: customer } = await supabase
     .from('customers')
     .select('id, full_name, email')
-    .ilike('email', email)
+    .eq('email', email)
     .is('deleted_at', null)
     .maybeSingle();
 

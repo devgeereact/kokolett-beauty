@@ -142,6 +142,17 @@ by name and the value is inserted out of band. If the secret is missing the job
 logs a notice and does nothing, rather than quietly posting unauthenticated
 requests every five minutes.
 
+Note that turning JWT verification back on would not substitute for this. The
+anon key ships inside the browser bundle and is itself a valid JWT, so anyone can
+present one; the shared secret is the actual control.
+
+> ⚠️ **The guard fails closed as of 0022.** It used to read
+> `if (secret && provided !== secret)`, which skipped the check entirely when
+> `EMAIL_CRON_SECRET` was unset in the deployed function — the exact case where
+> you are least protected. It now refuses every request when the secret is
+> missing, so confirm the secret is set **before** deploying `send-emails`, or
+> the outbox stops draining.
+
 To restore it on a fresh project:
 
 ```sql
@@ -211,7 +222,7 @@ the salon would create. The function calls
 mandatory `X-Goog-FieldMask`. Writing it against the legacy endpoint would have
 produced a `REQUEST_DENIED` that looks like a key problem.
 
-**Two things are still needed** before reviews appear:
+**Three things are still needed** before reviews appear:
 
 1. `GOOGLE_PLACES_API_KEY` as a function secret — a Places API (New) key with
    **no HTTP referrer restriction**, because this is a server-side call. Restrict
@@ -221,6 +232,24 @@ produced a `REQUEST_DENIED` that looks like a key problem.
    ```
 2. The **Place ID** (`ChIJ…`), set in Settings → Reviews. The `share.google` link
    already stored is _not_ a Place ID and cannot be used with the API.
+3. `REVIEWS_CRON_SECRET`, in **both** places — the function secret and the Vault
+   entry `sync_google_reviews()` reads. Same value in each, or the call is
+   refused.
+   ```
+   supabase secrets set REVIEWS_CRON_SECRET='…' --project-ref <ref>
+   ```
+   ```sql
+   select vault.create_secret('<same value>', 'reviews_cron_secret',
+                              'Shared secret for sync-reviews');
+   ```
+
+   > ⚠️ **Set both before deploying the function (0022 and later).** `sync-reviews`
+   > used to take no request argument at all, so there was nothing to
+   > authenticate: anyone who found the URL could POST to it in a loop and spend
+   > the owner's Places budget, one billable call per request. It now **fails
+   > closed** — a missing secret refuses every caller, including the cron job. So
+   > deploying the new function without setting the secret does not leave reviews
+   > working; it stops them updating, silently, until the secret exists.
 
 Until both exist, `sync-reviews` returns 503 and the marketing page simply omits
 the reviews section — it never shows an empty heading or invented testimonials.

@@ -18,6 +18,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 import { render, type TemplatePayload } from '../_shared/templates.ts';
+import { requireCronSecret } from '../_shared/auth.ts';
 
 const MAX_ATTEMPTS = 5;
 const BATCH = 25;
@@ -43,10 +44,8 @@ function nextAttemptAt(attempts: number): string {
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  const secret = env('EMAIL_CRON_SECRET');
-  if (secret && req.headers.get('x-cron-secret') !== secret) {
-    return new Response('Forbidden', { status: 403 });
-  }
+  const refusal = await requireCronSecret(req, env('EMAIL_CRON_SECRET'), 'EMAIL_CRON_SECRET');
+  if (refusal) return refusal;
 
   const supabase = createClient(
     env('SUPABASE_URL'),

@@ -16,6 +16,14 @@
  *   GOOGLE_PLACES_API_KEY   — a Places API (New) key, unrestricted by referrer
  *                             (this is a server-side call, so a referrer
  *                             restriction would block it)
+ *   REVIEWS_CRON_SECRET     — shared secret so only the scheduler can trigger it
+ *
+ * That second secret is not ceremony. This function is deployed
+ * `--no-verify-jwt`, and until it was added the handler took no request argument
+ * at all, so there was nothing to check: anyone who found the URL could POST to
+ * it in a loop, and every request spent the owner's money on a billable Places
+ * call. Turning JWT verification on would not have closed it either — the anon
+ * key ships in the browser bundle and is a valid JWT.
  *
  * The Place ID comes from `booking_settings.google_place_id`, so it can be
  * changed from the dashboard without a deploy.
@@ -26,6 +34,7 @@
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { requireCronSecret } from '../_shared/auth.ts';
 
 interface NewReview {
   name?: string;
@@ -54,7 +63,14 @@ async function reviewId(placeId: string, r: NewReview): Promise<string> {
     .join('');
 }
 
-Deno.serve(async (): Promise<Response> => {
+Deno.serve(async (req: Request): Promise<Response> => {
+  const refusal = await requireCronSecret(
+    req,
+    env('REVIEWS_CRON_SECRET'),
+    'REVIEWS_CRON_SECRET',
+  );
+  if (refusal) return refusal;
+
   const supabase = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
     auth: { persistSession: false },
   });

@@ -4,7 +4,7 @@ import {
   hourRange,
   offsetPercent,
 } from '@/lib/calendar';
-import { formatDateLong, minutesSinceMidnight } from '@/lib/format';
+import { formatDateLong, formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
@@ -52,7 +52,7 @@ export function DayView({
   const agendaEntries: AgendaEntry[] = [
     ...appointments.map((a) => ({
       key: a.id,
-      time: a.starts_at.slice(11, 16),
+      time: formatTime(a.starts_at, timezone),
       label: a.customer_name ?? 'Customer',
       variant: 'booked' as const,
       status: a.status,
@@ -133,7 +133,7 @@ export function DayView({
                             key={appointment.id}
                             variant="booked"
                             status={appointment.status}
-                            time={appointment.starts_at.slice(11, 16)}
+                            time={formatTime(appointment.starts_at, timezone)}
                             label={appointment.customer_name ?? 'Customer'}
                             topPercent={offsetPercent(start, range)}
                             heightPercent={offsetPercent(end, range) - offsetPercent(start, range)}

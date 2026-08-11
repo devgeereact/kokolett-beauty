@@ -5,6 +5,7 @@ import { WeekView } from '@/components/dashboard/calendar/WeekView';
 import { DayView } from '@/components/dashboard/calendar/DayView';
 import { MonthView } from '@/components/dashboard/calendar/MonthView';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
+import { MoveAppointmentPanel } from '@/components/dashboard/calendar/MoveAppointmentPanel';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -64,6 +65,7 @@ export function CalendarPage(): JSX.Element {
   const [view, setView] = useState<CalendarView>('week');
   const [anchor, setAnchor] = useState(today);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [moving, setMoving] = useState(false);
 
   const [summary, setSummary] = useState<Map<string, DaySummary>>(new Map());
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
@@ -140,6 +142,7 @@ export function CalendarPage(): JSX.Element {
   // buttons live on screen with no indication it belongs to a different day.
   useEffect(() => {
     setSelectedId(null);
+    setMoving(false);
   }, [view, anchor]);
 
   const appointmentsByDate = useMemo(() => groupByDate(appointments, timezone), [appointments, timezone]);
@@ -246,6 +249,23 @@ export function CalendarPage(): JSX.Element {
             timezone={timezone}
             onStatusChange={changeStatus}
             onNoteSave={saveNote}
+            onMove={() => setMoving(true)}
+          />
+        </div>
+      )}
+
+      {selected && moving && (
+        <div className="mt-4">
+          <MoveAppointmentPanel
+            key={selected.id}
+            appointment={selected}
+            timezone={timezone}
+            onClose={() => setMoving(false)}
+            onMoved={() => {
+              setMoving(false);
+              setSelectedId(null);
+              void load();
+            }}
           />
         </div>
       )}

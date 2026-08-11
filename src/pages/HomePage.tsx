@@ -135,52 +135,52 @@ export function HomePage(): JSX.Element {
           Straight from the salon's own menu, which she edits in the
           dashboard. Nothing renders until there is something to show. */}
       {menu.length > 0 && (
-      <section id="services" className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-        <h2 className="mb-2 text-center font-display text-3xl font-semibold text-foreground">
-          What we do
-        </h2>
-        <p className="mx-auto mb-10 max-w-2xl text-center text-muted-foreground">
-          One appointment covers whatever you need. Tell us what you are after when you
-          book and we will keep aside the right amount of time, because a full head of
-          knotless braids and a trim are not the same afternoon.
-        </p>
+        <section id="services" className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+          <h2 className="mb-2 text-center font-display text-3xl font-semibold text-foreground">
+            What we do
+          </h2>
+          <p className="mx-auto mb-10 max-w-2xl text-center text-muted-foreground">
+            One appointment covers whatever you need. Tell us what you are after when you
+            book and we will keep aside the right amount of time, because a full head of
+            knotless braids and a trim are not the same afternoon.
+          </p>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {menu.map((group) => (
-            <Card key={group.group_name} className="p-5">
-              <h3 className="font-display text-lg font-semibold text-foreground">
-                {group.group_name}
-              </h3>
-              <ul className="mt-3 space-y-1.5">
-                {group.items.map((item) => (
-                  <li
-                    key={item.name}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
-                  >
-                    <span
-                      className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      {item.name}
-                      {item.note && (
-                        <span className="block text-xs text-muted-foreground">
-                          {item.note}
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ))}
-        </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {menu.map((group) => (
+              <Card key={group.group_name} className="p-5">
+                <h3 className="font-display text-lg font-semibold text-foreground">
+                  {group.group_name}
+                </h3>
+                <ul className="mt-3 space-y-1.5">
+                  {group.items.map((item) => (
+                    <li
+                      key={item.name}
+                      className="flex items-start gap-2 text-sm text-muted-foreground"
+                    >
+                      <span
+                        className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        {item.name}
+                        {item.note && (
+                          <span className="block text-xs text-muted-foreground">
+                            {item.note}
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ))}
+          </div>
 
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          Something you do not see here? Ask when you book and we will tell you honestly
-          whether we can do it.
-        </p>
-      </section>
+          <p className="mt-8 text-center text-sm text-muted-foreground">
+            Something you do not see here? Ask when you book and we will tell you honestly
+            whether we can do it.
+          </p>
+        </section>
       )}
 
       {/* ---- How booking works --------------------------------------- */}

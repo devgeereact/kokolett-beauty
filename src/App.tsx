@@ -72,10 +72,7 @@ export function App(): JSX.Element {
               path={routes.owner.appointmentType}
               element={owner(<AppointmentTypePage />)}
             />
-            <Route
-              path={routes.owner.serviceMenu}
-              element={owner(<ServiceMenuPage />)}
-            />
+            <Route path={routes.owner.serviceMenu} element={owner(<ServiceMenuPage />)} />
             <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
 
             <Route path={routes.owner.calendar} element={owner(<CalendarPage />)} />

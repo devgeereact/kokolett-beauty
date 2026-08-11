@@ -174,11 +174,7 @@ export function AppointmentCard({
           {/* The best moment to book the next one is while this one is still
               in front of her, so the action lives on the booking itself. */}
           {onBookFollowUp && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onBookFollowUp(appointment)}
-            >
+            <Button size="sm" variant="ghost" onClick={() => onBookFollowUp(appointment)}>
               Book follow-up
             </Button>
           )}

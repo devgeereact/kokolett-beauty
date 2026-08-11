@@ -162,9 +162,7 @@ export function AppointmentsPage(): JSX.Element {
 
       {justBooked && (
         <div className="mb-6 rounded-lg border border-status-completed p-4 text-sm">
-          <p className="font-medium text-foreground">
-            Booked. Reference {justBooked}.
-          </p>
+          <p className="font-medium text-foreground">Booked. Reference {justBooked}.</p>
           <p className="mt-1 text-muted-foreground">
             Their confirmation email is on its way, with a link they can use to change or
             cancel it themselves.
@@ -205,7 +203,11 @@ export function AppointmentsPage(): JSX.Element {
       <div className="mb-6 grid gap-x-4 sm:grid-cols-3">
         <Field label="Period">
           {({ id }) => (
-            <Select id={id} value={rangeKey} onChange={(e) => setRangeKey(e.target.value)}>
+            <Select
+              id={id}
+              value={rangeKey}
+              onChange={(e) => setRangeKey(e.target.value)}
+            >
               {RANGES.map((r) => (
                 <option key={r.key} value={r.key}>
                   {r.label}

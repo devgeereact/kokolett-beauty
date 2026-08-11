@@ -222,60 +222,60 @@ export function SettingsPage(): JSX.Element {
           </Card>
 
           <div className="space-y-6">
-          <Card className="p-5">
-            <CalendarSubscription />
-          </Card>
+            <Card className="p-5">
+              <CalendarSubscription />
+            </Card>
 
-          <Card className="p-5">
-            <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
-              Mailing list
-            </h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Everyone who signed up through your link.
-            </p>
-
-            {subscribers === null ? (
-              <LoadingState label="Counting…" />
-            ) : subscribers.length === 0 ? (
-              <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-                Nobody yet. Share the link above and they will appear here.
+            <Card className="p-5">
+              <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+                Mailing list
+              </h2>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Everyone who signed up through your link.
               </p>
-            ) : (
-              <>
-                <p className="font-display text-3xl font-semibold text-foreground">
-                  {subscribers.length}
+
+              {subscribers === null ? (
+                <LoadingState label="Counting…" />
+              ) : subscribers.length === 0 ? (
+                <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                  Nobody yet. Share the link above and they will appear here.
                 </p>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  {subscribers.length === 1 ? 'person' : 'people'} on the list
-                </p>
-                <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
-                  {subscribers.slice(0, 50).map((s) => (
-                    <li key={s.id} className="truncate text-muted-foreground">
-                      {s.full_name ? `${s.full_name} · ` : ''}
-                      {s.email}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="mt-4"
-                  onClick={() =>
-                    window.open(
-                      `mailto:?bcc=${subscribers.map((s) => s.email).join(',')}`,
-                      '_self',
-                    )
-                  }
-                >
-                  Email everyone
-                </Button>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Opens your mail app with everyone in Bcc, so no one sees anyone else&rsquo;s
-                  address.
-                </p>
-              </>
-            )}
-          </Card>
+              ) : (
+                <>
+                  <p className="font-display text-3xl font-semibold text-foreground">
+                    {subscribers.length}
+                  </p>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    {subscribers.length === 1 ? 'person' : 'people'} on the list
+                  </p>
+                  <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
+                    {subscribers.slice(0, 50).map((s) => (
+                      <li key={s.id} className="truncate text-muted-foreground">
+                        {s.full_name ? `${s.full_name} · ` : ''}
+                        {s.email}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() =>
+                      window.open(
+                        `mailto:?bcc=${subscribers.map((s) => s.email).join(',')}`,
+                        '_self',
+                      )
+                    }
+                  >
+                    Email everyone
+                  </Button>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Opens your mail app with everyone in Bcc, so no one sees anyone
+                    else&rsquo;s address.
+                  </p>
+                </>
+              )}
+            </Card>
           </div>
         </div>
       )}

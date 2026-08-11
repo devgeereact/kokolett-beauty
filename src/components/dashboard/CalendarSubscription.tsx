@@ -169,9 +169,9 @@ export function CalendarSubscription(): JSX.Element {
         </p>
         <p>
           <span className="font-semibold text-foreground">It is not instant.</span> Your
-          calendar app decides how often to check. iPhone and Mac can be set to every
-          five minutes; Google Calendar refreshes on its own schedule and can take a few
-          hours. For anything time-critical, this dashboard is the truth.
+          calendar app decides how often to check. iPhone and Mac can be set to every five
+          minutes; Google Calendar refreshes on its own schedule and can take a few hours.
+          For anything time-critical, this dashboard is the truth.
         </p>
       </div>
     </>

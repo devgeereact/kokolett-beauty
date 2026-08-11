@@ -29,7 +29,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 20 is deprecated on GitHub runners: the job still ran, but the
+          # actions were silently forced onto Node 24 anyway, so the pinned
+          # version was a fiction. 22 is the current LTS and is what the
+          # runner will actually use.
+          node-version: 22
           cache: npm
 
       - run: npm ci

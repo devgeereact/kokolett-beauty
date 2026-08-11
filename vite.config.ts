@@ -124,6 +124,27 @@ export default defineConfig({
     environmentOptions: { jsdom: { url: 'https://koko.gakinz.com/' } },
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+
+    /**
+     * Placeholder Supabase credentials, for tests only.
+     *
+     * `src/lib/supabase.ts` calls `createClient()` at module scope, so importing
+     * anything under `src/services/` transitively constructs a client — and
+     * `createClient` throws "supabaseUrl is required" on an empty string. CI
+     * deliberately runs with no `.env` (a missing variable should fail the
+     * build, and real keys must never reach a public log), so a storage test
+     * that touches no network still failed there while passing locally purely
+     * because a developer machine has a `.env`.
+     *
+     * These are syntactically valid and point nowhere. Any test that needs real
+     * behaviour from the client should mock the module rather than reach for a
+     * live project.
+     */
+    env: {
+      VITE_SUPABASE_URL: 'https://test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key-not-a-real-credential',
+      VITE_APP_URL: 'https://koko.gakinz.com',
+    },
     // The salon's own clock is the one that matters, and CI pins TZ=UTC so that
     // a Europe/London machine cannot hide an off-by-one-hour error behind BST.
     // Tests must therefore never assume the host timezone.

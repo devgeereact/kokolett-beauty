@@ -10,7 +10,11 @@ import pathlib
 import re
 import sys
 
-ROOT = pathlib.Path('/Users/mrgee/WebstormProjects/kokolett-beauty/.claude')
+# Resolved from this file's own location, not hardcoded to one machine. The
+# absolute path here used to be /Users/mrgee/..., which meant this suite could
+# only ever run on one laptop — so wiring it into CI failed immediately, and any
+# other clone of a public repository could not run it at all.
+ROOT = pathlib.Path(__file__).resolve().parent.parent / '.claude'
 
 
 def pattern_of(name: str) -> str:

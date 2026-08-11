@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addDays,
   formatMoney,
+  minutesSinceMidnight,
   parseMoney,
   salonDayRange,
   salonInstant,
@@ -94,5 +95,23 @@ describe('the salon clock, not the browser clock', () => {
     expect(addDays('2026-03-28', 1)).toBe('2026-03-29');
     expect(addDays('2026-03-29', 1)).toBe('2026-03-30');
     expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+  });
+});
+
+describe('minutesSinceMidnight', () => {
+  it('reads the salon-local wall clock, not UTC', () => {
+    // 09:15 UTC in August is 10:15 BST for Europe/London.
+    expect(minutesSinceMidnight('2026-08-11T09:15:00Z', 'Europe/London')).toBe(
+      10 * 60 + 15,
+    );
+  });
+
+  it('reads UTC directly when the timezone is UTC', () => {
+    expect(minutesSinceMidnight('2026-08-11T14:30:00Z', 'UTC')).toBe(14 * 60 + 30);
+  });
+
+  it('treats local midnight as 0, not 24 times 60', () => {
+    // 23:00 UTC in August is 00:00 BST the next day.
+    expect(minutesSinceMidnight('2026-08-11T23:00:00Z', 'Europe/London')).toBe(0);
   });
 });

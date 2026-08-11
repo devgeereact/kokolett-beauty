@@ -109,6 +109,26 @@ export function toSalonDate(iso: string | Date, timeZone = DEFAULT_TIMEZONE): st
   }).format(date);
 }
 
+/** Minutes since local midnight in `timeZone` — for positioning on a time axis. */
+export function minutesSinceMidnight(
+  iso: string | Date,
+  timeZone = DEFAULT_TIMEZONE,
+): number {
+  const date = typeof iso === 'string' ? new Date(iso) : iso;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(date);
+
+  const get = (type: Intl.DateTimeFormatPartTypes): number =>
+    Number(parts.find((p) => p.type === type)?.value ?? '0');
+
+  // hour12: false can emit "24" for local midnight.
+  return (get('hour') % 24) * 60 + get('minute');
+}
+
 /**
  * Offset of `timeZone` from UTC, in milliseconds, at a given instant.
  * Positive east of Greenwich. Derived by asking Intl what the wall clock reads

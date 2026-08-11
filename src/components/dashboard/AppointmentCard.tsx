@@ -38,6 +38,7 @@ export function AppointmentCard({
   onStatusChange,
   onNoteSave,
   onBookFollowUp,
+  onMove,
   className,
 }: {
   appointment: AppointmentDetailed;
@@ -47,6 +48,8 @@ export function AppointmentCard({
   onNoteSave?: (id: string, note: string) => Promise<void>;
   /** Opens the booking form with this customer already filled in. */
   onBookFollowUp?: (appointment: AppointmentDetailed) => void;
+  /** Opens the Move panel for this appointment. Omit to hide the control. */
+  onMove?: (appointment: AppointmentDetailed) => void;
   className?: string;
 }): JSX.Element {
   const [busy, setBusy] = useState<AppointmentStatus | null>(null);
@@ -171,6 +174,13 @@ export function AppointmentCard({
               {appointment.owner_note ? 'Note ✓' : 'Add note'}
             </Button>
           )}
+          {onMove &&
+            (appointment.status === 'confirmed' ||
+              appointment.status === 'pending_approval') && (
+              <Button size="sm" variant="ghost" onClick={() => onMove(appointment)}>
+                Move
+              </Button>
+            )}
           {/* The best moment to book the next one is while this one is still
               in front of her, so the action lives on the booking itself. */}
           {onBookFollowUp && (

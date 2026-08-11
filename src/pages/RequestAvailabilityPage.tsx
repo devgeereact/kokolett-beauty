@@ -97,10 +97,9 @@ export function RequestAvailabilityPage(): JSX.Element {
 
         <Card className="p-6">
           <Field label="Your name" required>
-            {({ id, describedBy }) => (
+            {({ controlProps }) => (
               <Input
-                id={id}
-                aria-describedby={describedBy}
+                {...controlProps}
                 autoComplete="name"
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
@@ -109,10 +108,9 @@ export function RequestAvailabilityPage(): JSX.Element {
           </Field>
 
           <Field label="Email" required>
-            {({ id, describedBy }) => (
+            {({ controlProps }) => (
               <Input
-                id={id}
-                aria-describedby={describedBy}
+                {...controlProps}
                 type="email"
                 autoComplete="email"
                 value={form.email}

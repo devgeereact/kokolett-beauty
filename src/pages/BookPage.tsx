@@ -249,10 +249,9 @@ export function BookPage(): JSX.Element {
               required
               hint="First name and surname, for example Koko Beauty."
             >
-              {({ id, describedBy }) => (
+              {({ controlProps }) => (
                 <Input
-                  id={id}
-                  aria-describedby={describedBy}
+                  {...controlProps}
                   autoComplete="name"
                   placeholder="Koko Beauty"
                   value={details.fullName}
@@ -266,10 +265,9 @@ export function BookPage(): JSX.Element {
               required
               hint="Your confirmation and booking reference go here."
             >
-              {({ id, describedBy }) => (
+              {({ controlProps }) => (
                 <Input
-                  id={id}
-                  aria-describedby={describedBy}
+                  {...controlProps}
                   type="email"
                   autoComplete="email"
                   value={details.email}
@@ -283,10 +281,9 @@ export function BookPage(): JSX.Element {
               required
               hint="So the salon can reach you if anything changes."
             >
-              {({ id, describedBy }) => (
+              {({ controlProps }) => (
                 <Input
-                  id={id}
-                  aria-describedby={describedBy}
+                  {...controlProps}
                   type="tel"
                   autoComplete="tel"
                   value={details.mobile}

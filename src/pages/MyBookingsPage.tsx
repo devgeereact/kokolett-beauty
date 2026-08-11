@@ -58,7 +58,8 @@ export function MyBookingsPage(): JSX.Element {
       // Get the token out of the address bar either way: a single-use link in
       // browser history is a link someone else can find, and a used one only
       // produces a confusing error on refresh.
-      if (ok) navigate(routes.customer.home, { replace: true });
+      // `void` because react-router 7 made navigate() return a promise.
+      if (ok) void navigate(routes.customer.home, { replace: true });
     });
     return () => {
       active = false;

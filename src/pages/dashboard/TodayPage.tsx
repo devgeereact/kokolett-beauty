@@ -9,8 +9,9 @@ import { useOwnerSummary } from '@/hooks/useOwnerSummary';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments';
+import { useSalonToday } from '@/hooks/useSalonToday';
 import { setAppointmentStatus } from '@/services/appointmentService';
-import { formatDateLong, formatMoney, salonToday } from '@/lib/format';
+import { formatDateLong, formatMoney } from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import { LIVE_STATUSES, type AppointmentStatus } from '@/types';
@@ -19,14 +20,17 @@ import { LIVE_STATUSES, type AppointmentStatus } from '@/types';
  * The dashboard opens on today's schedule — the question the owner actually has
  * when she picks up her phone between clients.
  *
- * "Today" is the salon's day, not the browser's: `salonToday` anchors to the
- * salon timezone so an owner abroad still sees the same day her clients booked.
+ * "Today" is the salon's day, not the browser's: `useSalonToday` anchors to the
+ * salon timezone so an owner abroad still sees the same day her clients booked,
+ * and re-derives it on rollover so a tablet left open overnight moves on too.
  */
 export function TodayPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
   const { summary, refresh: refreshSummary } = useOwnerSummary();
 
-  const { start, end } = useMemo(() => salonToday(timezone), [timezone]);
+  // Recomputed on rollover, not frozen at mount — this screen is left open on a
+  // salon tablet overnight.
+  const { start, end } = useSalonToday(timezone);
   const statuses = useMemo<AppointmentStatus[]>(() => [...LIVE_STATUSES], []);
   const { appointments, loading, error, refresh } = useAppointments({
     from: start,
@@ -75,7 +79,7 @@ export function TodayPage(): JSX.Element {
   return (
     <DashboardLayout
       title="Today"
-      subtitle={formatDateLong(new Date(), timezone)}
+      subtitle={formatDateLong(start, timezone)}
       badges={{
         approvals: summary?.pending_approval_count,
         requests: summary?.new_request_count,

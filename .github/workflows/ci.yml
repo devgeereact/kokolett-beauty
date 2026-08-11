@@ -47,6 +47,17 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      # Unit tests run under the pinned TZ=UTC above. That is the point: a
+      # Europe/London runner would pass the BST cases for the wrong reason.
+      - name: Unit tests
+        run: npm test
+
+      # These guard the five hookify rules that encode safety lessons this
+      # project has already paid for once. They have always passed and have
+      # never run in CI, so nothing would have caught them breaking.
+      - name: Hookify rule tests
+        run: npm run test:hooks
+
       # Deliberately built with no .env present. Vite inlines VITE_* at build
       # time, so real keys here would land in a public log — and would also hide
       # the failure mode that actually matters: a missing variable.

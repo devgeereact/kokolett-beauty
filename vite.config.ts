@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -113,6 +114,22 @@ export default defineConfig({
       },
     }),
   ],
+
+  test: {
+    environment: 'jsdom',
+    // jsdom defaults to `about:blank`, which is an opaque origin — and an opaque
+    // origin has no `localStorage`. The customer session lives in localStorage,
+    // so without a real URL those tests fail on the storage shim rather than on
+    // anything they are actually asserting.
+    environmentOptions: { jsdom: { url: 'https://koko.gakinz.com/' } },
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+    // The salon's own clock is the one that matters, and CI pins TZ=UTC so that
+    // a Europe/London machine cannot hide an off-by-one-hour error behind BST.
+    // Tests must therefore never assume the host timezone.
+    include: ['src/**/*.test.{ts,tsx}'],
+    css: false,
+  },
 
   build: {
     outDir: 'dist',

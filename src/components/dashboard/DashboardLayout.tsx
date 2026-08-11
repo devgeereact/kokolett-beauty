@@ -103,7 +103,7 @@ export function DashboardLayout({
           // borrowed device that made her want to.
           void signOut()
             .catch((e: unknown) => reportError(e, { where: 'DashboardLayout.signOut' }))
-            .finally(() => navigate(routes.public.home));
+            .finally(() => void navigate(routes.public.home));
         }}
       >
         Sign out

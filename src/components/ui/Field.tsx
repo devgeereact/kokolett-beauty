@@ -28,7 +28,28 @@ interface FieldShellProps {
   hint?: string;
   error?: string | null;
   required?: boolean;
-  children: (ids: { id: string; describedBy: string | undefined }) => ReactNode;
+  /**
+   * The render prop hands the control everything it needs to describe itself.
+   *
+   * `required` is passed down as `aria-required` because the asterisk beside the
+   * label is `aria-hidden`, and it was the *only* signal: a screen-reader user
+   * was never told a field was mandatory and found out at submit. `invalid`
+   * comes with it so the control carries `aria-invalid` whenever the field is
+   * rendering an error, rather than each caller remembering to.
+   */
+  children: (ids: {
+    id: string;
+    describedBy: string | undefined;
+    required: boolean;
+    invalid: boolean;
+    /** Spread onto the control to get all four at once. */
+    controlProps: {
+      id: string;
+      'aria-describedby': string | undefined;
+      'aria-required': true | undefined;
+      'aria-invalid': true | undefined;
+    };
+  }) => ReactNode;
   className?: string;
 }
 
@@ -57,7 +78,18 @@ export function Field({
         )}
       </label>
 
-      {children({ id, describedBy })}
+      {children({
+        id,
+        describedBy,
+        required: Boolean(required),
+        invalid: Boolean(error),
+        controlProps: {
+          id,
+          'aria-describedby': describedBy,
+          'aria-required': required ? true : undefined,
+          'aria-invalid': error ? true : undefined,
+        },
+      })}
 
       {hint && !error && (
         <p id={hintId} className="mt-1.5 text-xs text-muted-foreground">

@@ -86,10 +86,9 @@ export function SubscribePage(): JSX.Element {
               </Field>
 
               <Field label="Email" required>
-                {({ id, describedBy }) => (
+                {({ controlProps }) => (
                   <Input
-                    id={id}
-                    aria-describedby={describedBy}
+                    {...controlProps}
                     type="email"
                     autoComplete="email"
                     value={email}

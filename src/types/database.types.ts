@@ -1251,6 +1251,16 @@ export type Database = {
         Args: { p_date: string; p_time: string }
         Returns: boolean
       }
+      reschedule_appointment_as_owner: {
+        Args: {
+          p_appointment_id: string
+          p_new_starts_at: string
+        }
+        Returns: {
+          appointment_id: string
+          reference: string
+        }[]
+      }
       revoke_calendar_feed: { Args: { p_id: string }; Returns: undefined }
       set_appointment_status: {
         Args: {

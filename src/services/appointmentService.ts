@@ -150,6 +150,27 @@ export async function createAppointmentAsOwner(
   return row;
 }
 
+/**
+ * Move a booked appointment to a new time. Retire-and-recreate under the
+ * hood (migration 0024) — the returned id and reference belong to the new
+ * row, not the one that was there before.
+ */
+export async function rescheduleAppointmentAsOwner(
+  id: string,
+  newStartsAt: Date,
+): Promise<Pick<BookingResult, 'appointment_id' | 'reference'>> {
+  const { data, error } = await supabase.rpc('reschedule_appointment_as_owner', {
+    p_appointment_id: id,
+    p_new_starts_at: newStartsAt.toISOString(),
+  });
+
+  if (error) throw error;
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error('NOT_FOUND');
+  return row;
+}
+
 /** Owner's private note on a booking. The one field safe to write directly. */
 export async function setOwnerNote(id: string, note: string): Promise<void> {
   const { error } = await supabase

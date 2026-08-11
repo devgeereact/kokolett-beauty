@@ -6,7 +6,7 @@ import {
   offsetPercent,
   WEEKDAY_HEADINGS,
 } from '@/lib/calendar';
-import { minutesSinceMidnight } from '@/lib/format';
+import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
@@ -167,7 +167,7 @@ export function WeekView({
                               key={appointment.id}
                               variant="booked"
                               status={appointment.status}
-                              time={appointment.starts_at.slice(11, 16)}
+                              time={formatTime(appointment.starts_at, timezone)}
                               label={appointment.customer_name ?? 'Customer'}
                               topPercent={offsetPercent(start, range)}
                               heightPercent={

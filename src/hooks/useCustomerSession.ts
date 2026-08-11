@@ -14,6 +14,14 @@ import {
 interface UseCustomerSession {
   customer: CustomerIdentity | null;
   appointments: CustomerAppointment[];
+  /**
+   * Whether a session token is held — the only honest test of "signed in".
+   *
+   * Callers used to infer it from `appointments.length > 0 || customer !== null`,
+   * which quietly signed out any customer whose bookings were all cancelled or
+   * completed.
+   */
+  hasSession: boolean;
   loading: boolean;
   error: Error | null;
   /** Exchange a single-use token from /access/:token. */
@@ -35,12 +43,17 @@ interface UseCustomerSession {
  * nothing until a `security definer` function hashes it and finds a match.
  */
 export function useCustomerSession(): UseCustomerSession {
-  const [sessionToken, setSessionToken] = useState<string | null>(() =>
-    readStoredSession(),
+  const [stored] = useState(() => readStoredSession());
+  const [sessionToken, setSessionToken] = useState<string | null>(stored?.token ?? null);
+  const [customer, setCustomer] = useState<CustomerIdentity | null>(
+    stored?.customer ?? null,
   );
-  const [customer, setCustomer] = useState<CustomerIdentity | null>(null);
   const [appointments, setAppointments] = useState<CustomerAppointment[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Start loading when a session is being restored. Initialising to `false`
+  // meant the first committed render of /my had no session data and was not
+  // loading either, so the "email me a link" card painted for a frame before
+  // the effect ran — a signed-in customer saw a sign-in screen flash past.
+  const [loading, setLoading] = useState(stored !== null);
   const [error, setError] = useState<Error | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
@@ -74,7 +87,7 @@ export function useCustomerSession(): UseCustomerSession {
     setLoading(true);
     try {
       const { sessionToken: next, customer: identity } = await redeemToken(token);
-      storeSession(next);
+      storeSession(next, identity);
       setSessionToken(next);
       setCustomer(identity);
       setError(null);
@@ -120,6 +133,7 @@ export function useCustomerSession(): UseCustomerSession {
   return {
     customer,
     appointments,
+    hasSession: sessionToken !== null,
     loading,
     error,
     exchangeToken,

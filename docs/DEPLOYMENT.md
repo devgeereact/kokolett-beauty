@@ -235,9 +235,11 @@ produced a `REQUEST_DENIED` that looks like a key problem.
 3. `REVIEWS_CRON_SECRET`, in **both** places — the function secret and the Vault
    entry `sync_google_reviews()` reads. Same value in each, or the call is
    refused.
+
    ```
    supabase secrets set REVIEWS_CRON_SECRET='…' --project-ref <ref>
    ```
+
    ```sql
    select vault.create_secret('<same value>', 'reviews_cron_secret',
                               'Shared secret for sync-reviews');

@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { env } from '@/lib/env';
 import { routes } from '@/lib/routes';
+import { reportError } from '@/lib/sentry';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -53,7 +54,15 @@ export function LoginPage(): JSX.Element {
             emailRedirectTo: `${env.appUrl || window.location.origin}${routes.owner.dashboard}`,
           },
         });
-        if (linkError) throw linkError;
+        // Deliberately not thrown. With `shouldCreateUser: false`, GoTrue
+        // answers an unregistered address with "Signups not allowed for otp",
+        // and rendering that verbatim turned this form into an enumeration
+        // oracle for exactly the fact the success card is careful not to state.
+        // The confirmation below says "*if* that address is registered", so it
+        // is shown either way and the failure goes to Sentry instead.
+        if (linkError) {
+          reportError(linkError, { where: 'LoginPage.signInWithOtp' });
+        }
         setSent(true);
       } else {
         const { error: pwError } = await supabase.auth.signInWithPassword({
@@ -64,11 +73,11 @@ export function LoginPage(): JSX.Element {
         // The auth listener in AuthProvider picks this up and the redirect above fires.
       }
     } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : 'Could not sign you in. Please check the address and try again.',
-      );
+      // A fixed message. The password path is the only one that reaches here
+      // now, and naming which half was wrong tells an attacker which addresses
+      // exist.
+      reportError(e, { where: 'LoginPage.submit', mode });
+      setError('Could not sign you in. Please check the details and try again.');
     } finally {
       setBusy(false);
     }

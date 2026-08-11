@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DayPanel } from '@/components/dashboard/DayPanel';
 import { Button } from '@/components/ui/Button';
@@ -54,7 +54,14 @@ export function CalendarPage(): JSX.Element {
   const weeks = useMemo(() => monthGrid(cursor.year, cursor.month), [cursor]);
   const range = useMemo(() => gridRange(cursor.year, cursor.month), [cursor]);
 
+  // Stepping through months with the arrows restarts this fetch before the
+  // previous one has landed. Without the sequence guard a slow earlier month
+  // can overwrite the month now on screen, so the heading and the grid disagree
+  // and a fully booked day reads as free.
+  const requestId = useRef(0);
+
   const load = useCallback(async (): Promise<void> => {
+    const id = (requestId.current += 1);
     try {
       const [rows, appts] = await Promise.all([
         listMonthSummary(range.from, range.to),
@@ -64,10 +71,12 @@ export function CalendarPage(): JSX.Element {
           statuses: [...LIVE_STATUSES],
         }),
       ]);
+      if (id !== requestId.current) return;
       setSummary(new Map(rows.map((r) => [r.on_date, r])));
       setAppointments(appts);
       setError(null);
     } catch (e) {
+      if (id !== requestId.current) return;
       setError(e instanceof Error ? e : new Error(String(e)));
     }
   }, [range.from, range.to, timezone]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { listAppointments } from '@/services/appointmentService';
 import type { AppointmentDetailed, AppointmentStatus } from '@/types';
 
@@ -34,7 +34,20 @@ export function useAppointments(options: UseAppointmentsOptions): UseAppointment
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  /**
+   * Sequence number of the newest request.
+   *
+   * The range dropdown changes `from`/`to`, which restarts this fetch while the
+   * previous one is still in flight. Without the guard a slower earlier
+   * response lands after a faster later one and wins, so the owner reads
+   * October in the heading beside August's bookings — days that are fully
+   * booked shown as free. The check lives here rather than in the effect
+   * because `load` is also handed out as `refresh`.
+   */
+  const requestId = useRef(0);
+
   const load = useCallback(async (): Promise<void> => {
+    const id = (requestId.current += 1);
     setLoading(true);
     try {
       const rows = await listAppointments({
@@ -42,12 +55,14 @@ export function useAppointments(options: UseAppointmentsOptions): UseAppointment
         to: new Date(toMs),
         statuses: statusKey ? (statusKey.split(',') as AppointmentStatus[]) : undefined,
       });
+      if (id !== requestId.current) return;
       setAppointments(rows);
       setError(null);
     } catch (e) {
+      if (id !== requestId.current) return;
       setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [fromMs, toMs, statusKey]);
 

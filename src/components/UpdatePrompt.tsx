@@ -17,6 +17,26 @@ export function UpdatePrompt(): JSX.Element | null {
         setUpdate(() => () => updateSW(true));
         setNeedRefresh(true);
       },
+
+      /**
+       * Ask the server for a new service worker every hour.
+       *
+       * With `registerType: 'prompt'` the update prompt only ever appears after
+       * the browser has noticed a new worker, and the browser checks on
+       * navigation. An installed standalone PWA can go days without one, so a
+       * customer whose install predates a fix would keep the broken build and
+       * never be offered the prompt. The server already sends `no-cache` for
+       * `sw.js`, so this check is cheap and always sees the truth.
+       */
+      onRegisteredSW(_swUrl, registration) {
+        if (!registration) return;
+        setInterval(
+          () => {
+            void registration.update();
+          },
+          60 * 60 * 1000,
+        );
+      },
     });
   }, []);
 

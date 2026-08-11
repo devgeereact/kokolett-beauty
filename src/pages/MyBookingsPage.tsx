@@ -27,6 +27,7 @@ export function MyBookingsPage(): JSX.Element {
   const {
     customer,
     appointments,
+    hasSession,
     loading,
     error,
     exchangeToken,
@@ -63,8 +64,6 @@ export function MyBookingsPage(): JSX.Element {
       active = false;
     };
   }, [token, exchangeToken, navigate]);
-
-  const hasSession = appointments.length > 0 || customer !== null;
 
   if (redeeming) {
     return (

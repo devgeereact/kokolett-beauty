@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { env } from '@/lib/env';
+import { reportError } from '@/lib/sentry';
 import type { AppointmentStatus } from '@/types';
 
 /**
@@ -35,19 +36,46 @@ export interface CustomerAppointment {
   rescheduled_from: string | null;
 }
 
-export function readStoredSession(): string | null {
+/**
+ * The stored session is `{ token, customer }`, written as JSON.
+ *
+ * It used to be the bare token string, and the identity was held only in React
+ * state set by `exchangeToken`. That meant identity survived exactly as long as
+ * the tab: on any reload of /my the customer was `null`, so a customer with a
+ * perfectly good 30-day session who had no *upcoming* bookings was shown the
+ * "tell us the email you booked with" card forever, and her name never
+ * appeared. Keeping the identity next to the token is what makes a restored
+ * session a real session rather than half of one.
+ *
+ * Reads still accept the old bare-string form so existing sessions survive.
+ */
+interface StoredSession {
+  token: string;
+  customer: CustomerIdentity | null;
+}
+
+export function readStoredSession(): StoredSession | null {
   try {
-    return window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    if (!raw.startsWith('{')) return { token: raw, customer: null };
+    const parsed = JSON.parse(raw) as Partial<StoredSession>;
+    if (typeof parsed.token !== 'string' || parsed.token.length === 0) return null;
+    return { token: parsed.token, customer: parsed.customer ?? null };
   } catch {
-    // Private browsing can throw on access rather than returning null.
+    // Private browsing can throw on access rather than returning null, and a
+    // half-written value should log the customer out rather than crash them.
     return null;
   }
 }
 
-export function storeSession(token: string | null): void {
+export function storeSession(
+  token: string | null,
+  customer: CustomerIdentity | null = null,
+): void {
   try {
     if (token === null) window.localStorage.removeItem(STORAGE_KEY);
-    else window.localStorage.setItem(STORAGE_KEY, token);
+    else window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, customer }));
   } catch {
     /* A customer with storage disabled simply gets a session for this tab. */
   }
@@ -120,7 +148,7 @@ export async function cancelOwnAppointment(
  */
 export async function requestAccessLink(email: string): Promise<boolean> {
   try {
-    await fetch(`${env.supabaseUrl}/functions/v1/customer-access`, {
+    const res = await fetch(`${env.supabaseUrl}/functions/v1/customer-access`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -129,8 +157,20 @@ export async function requestAccessLink(email: string): Promise<boolean> {
       },
       body: JSON.stringify({ email: email.trim().toLowerCase() }),
     });
-  } catch {
-    /* Swallowed on purpose — see above. */
+
+    // Still resolve true, so the customer sees the same neutral message either
+    // way — but do not throw the failure away. Not revealing *which* address is
+    // on file is the point; discarding the transport result is not. Without
+    // this, an Edge Function returning 500 looked exactly like success, so
+    // customers were told a link was coming, none arrived, and nothing reached
+    // Sentry for the owner to notice.
+    if (!res.ok) {
+      reportError(new Error(`customer-access responded ${res.status}`), {
+        status: res.status,
+      });
+    }
+  } catch (e) {
+    reportError(e, { where: 'requestAccessLink' });
   }
   return true;
 }

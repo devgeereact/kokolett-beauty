@@ -45,6 +45,44 @@
         }
       })();
     </script>
+
+    <!--
+      Structured data for the local-business rich result.
+
+      `HairSalon`, not `BeautySalon`: this is a women's hair salon — cutting,
+      colouring, styling and treatments. The word "Beauty" in the name is
+      branding, not scope, and claiming nails or aesthetics here would be an
+      invitation to enquiries the salon cannot serve.
+
+      Static in index.html rather than rendered by React, because the crawlers
+      that build this result read the served HTML and this is a client-rendered
+      SPA — anything injected after mount is not reliably seen.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "HairSalon",
+        "name": "Kokolett Beauty UK",
+        "url": "https://koko.gakinz.com",
+        "email": "booking@koko.gakinz.com",
+        "image": "https://koko.gakinz.com/icons/pwa-512.png",
+        "description": "Women's hair salon in the UK. Braids, locs, colour, cutting, styling and treatments, by appointment.",
+        "areaServed": { "@type": "Country", "name": "United Kingdom" },
+        "currenciesAccepted": "GBP",
+        "potentialAction": {
+          "@type": "ReserveAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://koko.gakinz.com/book",
+            "actionPlatform": [
+              "http://schema.org/DesktopWebPlatform",
+              "http://schema.org/MobileWebPlatform"
+            ]
+          },
+          "result": { "@type": "Reservation", "name": "Appointment booking" }
+        }
+      }
+    </script>
   </head>
   <body class="bg-background text-content">
     <div id="root"></div>

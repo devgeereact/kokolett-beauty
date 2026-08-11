@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
+import { reportError } from '@/lib/sentry';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -77,6 +78,39 @@ export function DashboardLayout({
     </nav>
   );
 
+  /**
+   * The signed-in address and the way out.
+   *
+   * Rendered in the mobile drawer as well as the desktop sidebar. It used to
+   * live only inside the `hidden lg:flex` sidebar, so below that breakpoint —
+   * which includes an iPad in portrait, a plausible salon device — there was no
+   * way to sign out at all.
+   */
+  const account = (
+    <div className="space-y-3 px-3">
+      <p className="truncate text-xs text-sidebar-foreground" title={user?.email ?? ''}>
+        {user?.email}
+      </p>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full"
+        onClick={() => {
+          setMenuOpen(false);
+          // Navigate whether or not the network call succeeds. `signOut()`
+          // rejects when offline, and a silent no-op leaves the owner looking
+          // at the dashboard believing she has signed out — worst of all on the
+          // borrowed device that made her want to.
+          void signOut()
+            .catch((e: unknown) => reportError(e, { where: 'DashboardLayout.signOut' }))
+            .finally(() => navigate(routes.public.home));
+        }}
+      >
+        Sign out
+      </Button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop sidebar */}
@@ -86,24 +120,7 @@ export function DashboardLayout({
         </p>
         {nav}
 
-        <div className="mt-auto space-y-3 px-3 pt-6">
-          <p
-            className="truncate text-xs text-sidebar-foreground"
-            title={user?.email ?? ''}
-          >
-            {user?.email}
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full"
-            onClick={() => {
-              void signOut().then(() => navigate(routes.public.home));
-            }}
-          >
-            Sign out
-          </Button>
-        </div>
+        <div className="mt-auto pt-6">{account}</div>
       </aside>
 
       {/* Mobile slide-over */}
@@ -115,11 +132,12 @@ export function DashboardLayout({
             className="absolute inset-0 bg-black/50"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 w-64 border-r border-sidebar-border bg-sidebar p-4">
+          <div className="absolute inset-y-0 left-0 flex w-64 flex-col border-r border-sidebar-border bg-sidebar p-4">
             <p className="mb-6 px-3 font-display text-lg font-semibold text-sidebar-foreground">
               Kokolett
             </p>
             {nav}
+            <div className="mt-auto pt-6">{account}</div>
           </div>
         </div>
       )}

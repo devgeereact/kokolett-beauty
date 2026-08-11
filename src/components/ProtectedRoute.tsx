@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/Button';
  */
 export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Element {
   const { user, loading, signOut } = useSupabaseAuth();
-  const { isOwner, loading: ownerLoading } = useIsOwner();
+  const { isOwner, loading: ownerLoading, failed, retry } = useIsOwner();
   const location = useLocation();
 
   if (loading || (user && ownerLoading)) {
@@ -30,6 +30,32 @@ export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Eleme
 
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  // Could not reach the database to ask. That is not a "no", and answering it
+  // with the dead-end screen below would tell the owner she is not staff and
+  // offer her nothing but Sign out — the one action that makes it harder to
+  // recover. Offer the retry instead.
+  if (failed) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="mb-2 font-display text-2xl font-semibold text-foreground">
+            Cannot reach the salon right now
+          </h1>
+          <p className="mb-6 text-muted-foreground">
+            You are still signed in. This is a connection problem, not a problem with your
+            account.
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <Button onClick={retry}>Try again</Button>
+            <Button variant="ghost" onClick={() => void signOut()}>
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!isOwner) {

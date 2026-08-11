@@ -67,6 +67,7 @@ export function MonthView({
               type="button"
               onClick={() => onSelectDate(date)}
               aria-label={`${date}: ${row?.slot_count ?? 0} times, ${row?.booked_count ?? 0} booked`}
+              aria-current={isToday ? 'date' : undefined}
               className={cn(
                 'flex min-h-[6.5rem] flex-col items-start gap-0.5 border-b border-r border-border p-2 text-left',
                 'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -88,15 +89,31 @@ export function MonthView({
 
               {inMonth && (
                 <>
+                  {/*
+                    The published-times count is a fact of its own — how many
+                    slots are open that day — independent of whether any of
+                    them are booked. It stays visible even when there are no
+                    pills to show (docs/superpowers/specs/2026-08-11-calendar-
+                    rebuild-design.md §6), so it renders here rather than
+                    folding into the pill list below.
+                  */}
+                  {row && row.slot_count > 0 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {row.slot_count} time{row.slot_count === 1 ? '' : 's'}
+                    </span>
+                  )}
                   {pills.map((a) => (
                     <span
                       key={a.id}
-                      className={cn(
-                        'w-full truncate rounded px-1.5 py-0.5 text-[10px] font-medium text-white',
-                        STATUS_DOTS[a.status],
-                      )}
+                      className="flex w-full items-center gap-1 truncate rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground"
                     >
-                      {formatTime(a.starts_at, timezone)} {a.customer_name?.split(' ')[0] ?? 'Customer'}
+                      <span
+                        aria-hidden="true"
+                        className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOTS[a.status])}
+                      />
+                      <span className="truncate">
+                        {formatTime(a.starts_at, timezone)} {a.customer_name?.split(' ')[0] ?? 'Customer'}
+                      </span>
                     </span>
                   ))}
                   {overflow > 0 && (

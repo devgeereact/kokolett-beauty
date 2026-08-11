@@ -12,20 +12,25 @@ const VIEWS: { key: CalendarView; label: string }[] = [
   { key: 'month', label: 'Month' },
 ];
 
-/** The Week / Day / Month tab switcher. Navigation (prev/today/next) stays in `CalendarPage`'s existing header `actions` slot — this is only the mode switch. */
+/**
+ * The Week / Day / Month view switcher. Navigation (prev/today/next) stays in
+ * `CalendarPage`'s existing header `actions` slot — this is only the mode
+ * switch.
+ *
+ * Deliberately plain buttons, not the ARIA tab pattern: `role="tablist"` /
+ * `role="tab"` promises arrow-key roving-tabindex navigation and
+ * `role="tabpanel"` wiring that this component never implements, which is
+ * worse for assistive tech than no ARIA at all. `aria-pressed` describes the
+ * actual behaviour — a toggle group — without any unmet contract.
+ */
 export function CalendarShell({ view, onViewChange }: CalendarShellProps): JSX.Element {
   return (
-    <div
-      role="tablist"
-      aria-label="Calendar view"
-      className="inline-flex gap-0.5 rounded-lg bg-muted p-1"
-    >
+    <div aria-label="Calendar view" className="inline-flex gap-0.5 rounded-lg bg-muted p-1">
       {VIEWS.map((v) => (
         <button
           key={v.key}
           type="button"
-          role="tab"
-          aria-selected={view === v.key}
+          aria-pressed={view === v.key}
           onClick={() => onViewChange(v.key)}
           className={cn(
             'rounded-md px-3.5 py-1.5 text-sm font-medium',

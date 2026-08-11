@@ -35,6 +35,27 @@ export const STATUS_DOTS: Record<AppointmentStatus, string> = {
   no_show: 'bg-status-no-show',
 };
 
+/**
+ * The status hue as a left-border accent, for surfaces (EventBlock's booked
+ * variant) that need a neutral fill with `text-foreground` text rather than a
+ * solid colour fill with white text — the latter fails WCAG contrast at small
+ * sizes (docs/DESIGN.md §3; see StatusChip's doc comment for the numbers).
+ * Kept as its own literal-string record, not derived from `STATUS_DOTS` by
+ * string substitution, so every class name Tailwind needs to see stays static
+ * in source and survives the production content scan.
+ */
+export const STATUS_BORDERS: Record<AppointmentStatus, string> = {
+  pending_approval: 'border-l-status-pending',
+  confirmed: 'border-l-status-confirmed',
+  checked_in: 'border-l-status-confirmed',
+  in_service: 'border-l-status-in-service',
+  completed: 'border-l-status-completed',
+  cancelled: 'border-l-status-cancelled',
+  rejected: 'border-l-status-cancelled',
+  rescheduled: 'border-l-status-cancelled',
+  no_show: 'border-l-status-no-show',
+};
+
 export function statusLabel(status: AppointmentStatus): string {
   return STATUS_LABELS[status];
 }

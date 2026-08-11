@@ -1,6 +1,7 @@
 import {
   HOUR_ROW_PX,
   dayNumber,
+  dayOfWeek,
   hourLabels,
   hourRange,
   offsetPercent,
@@ -60,7 +61,8 @@ export function WeekView({
     <div className="overflow-hidden rounded-xl border border-border bg-card">
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">
-          Week of {dates[0]} to {dates[6]}
+          Week of {dates[0]} to {dates[6]}. Select a day heading, or switch to Day view, for a
+          full list of that day&apos;s times.
         </caption>
         <thead>
           <tr className="border-b border-border">
@@ -82,11 +84,7 @@ export function WeekView({
                   )}
                 >
                   <span className="text-[11px] font-medium text-muted-foreground">
-                    {
-                      WEEKDAY_HEADINGS[
-                        (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7
-                      ]
-                    }
+                    {WEEKDAY_HEADINGS[(dayOfWeek(date) + 6) % 7]}
                   </span>
                   <span
                     className={cn(

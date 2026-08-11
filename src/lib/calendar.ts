@@ -87,14 +87,6 @@ export const WEEKDAY_HEADINGS = [
   'Sun',
 ] as const;
 
-/** First and last date of the rendered grid, for one query per month. */
-export function gridRange(year: number, month: number): { from: string; to: string } {
-  const days = monthGrid(year, month).flat();
-  // The grid is always 6x7, so both ends exist; the fallbacks satisfy
-  // noUncheckedIndexedAccess without pretending an empty grid is possible.
-  return { from: days[0] ?? '', to: days[days.length - 1] ?? '' };
-}
-
 // Hour-axis grid rendering support
 
 /** Minutes-since-midnight bounds for the hour axis. Always multiples of 60. */

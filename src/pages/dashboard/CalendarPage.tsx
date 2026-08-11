@@ -254,21 +254,23 @@ export function CalendarPage(): JSX.Element {
         </div>
       )}
 
-      {selected && moving && (
-        <div className="mt-4">
-          <MoveAppointmentPanel
-            key={selected.id}
-            appointment={selected}
-            timezone={timezone}
-            onClose={() => setMoving(false)}
-            onMoved={() => {
-              setMoving(false);
-              setSelectedId(null);
-              void load();
-            }}
-          />
-        </div>
-      )}
+      {selected &&
+        moving &&
+        (selected.status === 'confirmed' || selected.status === 'pending_approval') && (
+          <div className="mt-4">
+            <MoveAppointmentPanel
+              key={selected.id}
+              appointment={selected}
+              timezone={timezone}
+              onClose={() => setMoving(false)}
+              onMoved={() => {
+                setMoving(false);
+                setSelectedId(null);
+                void load();
+              }}
+            />
+          </div>
+        )}
     </DashboardLayout>
   );
 }

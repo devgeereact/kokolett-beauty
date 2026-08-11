@@ -33,6 +33,9 @@ Thumbs.db
 # Sentry
 .sentryclirc
 
+# Superpowers brainstorming companion (local mockup scratch)
+.superpowers/
+
 # Ruflo local secrets and runtime data
 .claude-flow/
 .swarm/

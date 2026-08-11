@@ -99,6 +99,18 @@ begin
          cancellation_reason = 'Moved by the salon'
    where id = p_appointment_id;
 
+  -- The retire UPDATE above just changed status, which fires
+  -- notify_appointment_status_changed's 'rescheduled' branch and queues an
+  -- owner_booking_moved email ("Moved: <customer>") addressed to the owner
+  -- about her own action, keyed to the OLD row's id and carrying the OLD
+  -- time. Suppress it here, before the insert attempt below, so it never
+  -- goes out whether that insert then succeeds or collides and restores.
+  update public.email_messages
+     set status = 'failed', last_error = 'Rescheduled by the salon'
+   where email_messages.appointment_id = p_appointment_id
+     and status = 'queued'
+     and template = 'owner_booking_moved';
+
   begin
     insert into public.appointments
       (reference, customer_id, service_id, starts_at, ends_at, price_pence,
@@ -106,7 +118,14 @@ begin
        approval_deadline, approved_at, rescheduled_from)
     values
       (v_ref, v_old.customer_id, v_service.id, p_new_starts_at,
-       p_new_starts_at + make_interval(mins => v_service.duration_min + v_service.buffer_min),
+       -- Preserve the OLD appointment's actual duration rather than
+       -- recomputing it from the currently active service's default length.
+       -- Appointments have no duration column — length lives only in
+       -- ends_at - starts_at — and an owner-created booking can already
+       -- differ from the default (create_appointment_as_owner's
+       -- p_duration_min, 0019). Rebuilding from v_service.duration_min would
+       -- silently shrink a longer booking to the default on every move.
+       p_new_starts_at + (v_old.ends_at - v_old.starts_at),
        v_old.price_pence, v_old.customer_note, v_old.owner_note, v_old.source,
        v_old.status, v_old.requires_approval, v_deadline,
        v_old.approved_at, p_appointment_id)

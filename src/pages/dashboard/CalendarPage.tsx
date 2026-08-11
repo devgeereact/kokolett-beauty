@@ -132,6 +132,16 @@ export function CalendarPage(): JSX.Element {
     void load();
   }, [load]);
 
+  // A detail card open when the owner switches view or date must not survive
+  // the switch — including on a failed refetch, where `appointments` is left
+  // stale (matching how the rest of this page already handles a failed
+  // reload, via the `ErrorState`/retry affordance above). Without this, a
+  // dropped connection mid-navigation can leave a stale appointment's status
+  // buttons live on screen with no indication it belongs to a different day.
+  useEffect(() => {
+    setSelectedId(null);
+  }, [view, anchor]);
+
   const appointmentsByDate = useMemo(() => groupByDate(appointments, timezone), [appointments, timezone]);
   const selected = appointments.find((a) => a.id === selectedId) ?? null;
 

@@ -7,6 +7,8 @@
  * near midnight — which is exactly when nobody is looking.
  */
 
+import { addDays } from '@/lib/format';
+
 /** `yyyy-mm-dd` for a Date, read in UTC. */
 function iso(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -94,7 +96,6 @@ export function gridRange(year: number, month: number): { from: string; to: stri
 }
 
 // Hour-axis grid rendering support
-import { addDays } from '@/lib/format';
 
 /** Minutes-since-midnight bounds for the hour axis. Always multiples of 60. */
 export interface HourRange {

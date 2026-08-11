@@ -1,0 +1,94 @@
+import { describe, expect, it } from 'vitest';
+import {
+  hourRange,
+  offsetPercent,
+  hourLabels,
+  weekDates,
+  shiftAnchor,
+} from '@/lib/calendar';
+
+describe('hourRange', () => {
+  it('falls back to 08:00–20:00 when there is nothing to fit', () => {
+    expect(hourRange([])).toEqual({ startMin: 480, endMin: 1200 });
+  });
+
+  it('fits tightly around the given times with an hour of padding', () => {
+    // 09:15 and 13:00 -> pad to 08:00 and floor(14*60/60)=14:00
+    expect(hourRange([9 * 60 + 15, 13 * 60])).toEqual({ startMin: 480, endMin: 840 });
+  });
+
+  it('never produces a span shorter than 6 hours', () => {
+    const range = hourRange([9 * 60, 9 * 60 + 30]);
+    expect(range.endMin - range.startMin).toBeGreaterThanOrEqual(360);
+  });
+
+  it('clamps to a single day', () => {
+    const range = hourRange([0, 23 * 60 + 59]);
+    expect(range.startMin).toBeGreaterThanOrEqual(0);
+    expect(range.endMin).toBeLessThanOrEqual(24 * 60);
+  });
+});
+
+describe('offsetPercent', () => {
+  const range = { startMin: 480, endMin: 720 }; // 08:00-12:00, 240 min span
+
+  it('places the range start at 0% and the end at 100%', () => {
+    expect(offsetPercent(480, range)).toBe(0);
+    expect(offsetPercent(720, range)).toBe(100);
+  });
+
+  it('places the midpoint at 50%', () => {
+    expect(offsetPercent(600, range)).toBe(50);
+  });
+
+  it('clamps outside the range instead of overflowing', () => {
+    expect(offsetPercent(0, range)).toBe(0);
+    expect(offsetPercent(2000, range)).toBe(100);
+  });
+});
+
+describe('hourLabels', () => {
+  it('lists one label per hour, half-open', () => {
+    expect(hourLabels({ startMin: 540, endMin: 720 })).toEqual([
+      '09:00',
+      '10:00',
+      '11:00',
+    ]);
+  });
+});
+
+describe('weekDates', () => {
+  it('returns the Monday-first week containing the anchor', () => {
+    // 2026-08-11 is a Tuesday
+    expect(weekDates('2026-08-11')).toEqual([
+      '2026-08-10',
+      '2026-08-11',
+      '2026-08-12',
+      '2026-08-13',
+      '2026-08-14',
+      '2026-08-15',
+      '2026-08-16',
+    ]);
+  });
+
+  it('handles a Sunday anchor as the last day of its own week', () => {
+    expect(weekDates('2026-08-16')[0]).toBe('2026-08-10');
+    expect(weekDates('2026-08-16')[6]).toBe('2026-08-16');
+  });
+});
+
+describe('shiftAnchor', () => {
+  it('moves a week anchor by 7 days', () => {
+    expect(shiftAnchor('week', '2026-08-11', 1)).toBe('2026-08-18');
+    expect(shiftAnchor('week', '2026-08-11', -1)).toBe('2026-08-04');
+  });
+
+  it('moves a day anchor by 1 day', () => {
+    expect(shiftAnchor('day', '2026-08-11', 1)).toBe('2026-08-12');
+  });
+
+  it('moves a month anchor to the 1st of the next/previous month', () => {
+    expect(shiftAnchor('month', '2026-08-11', 1)).toBe('2026-09-01');
+    expect(shiftAnchor('month', '2026-08-11', -1)).toBe('2026-07-01');
+  });
+});

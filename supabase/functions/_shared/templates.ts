@@ -50,6 +50,10 @@ export interface TemplatePayload {
   flexibility?: string;
   /** Injected by the sender, never stored. */
   manage_url?: string;
+  /** Owner password-recovery link. Injected by the sender, never stored. */
+  reset_url?: string;
+  /** How long the recovery link stays valid, for the copy. */
+  reset_ttl_minutes?: number;
 }
 
 const SALON = 'Kokolett Beauty UK';
@@ -519,6 +523,28 @@ export function render(template: string, p: TemplatePayload): RenderedEmail {
           `Here is your secure link. It works once and expires in 30 minutes.\n\n${p.manage_url ?? ''}\n\nIf you did not ask for this, you can safely ignore it.`,
           p,
           'Somebody asked to see the bookings held against this address.',
+        ),
+      };
+
+    case 'owner_password_reset':
+      return {
+        html: layout(
+          'Set a new password',
+          'A link to choose a new password for your Kokolett Beauty dashboard',
+          line(
+            `Somebody asked to reset the password on your salon dashboard. This link works once and expires in ${p.reset_ttl_minutes ?? 60} minutes.`,
+          ) +
+            (p.reset_url ? button(p.reset_url, 'Choose a new password') : '') +
+            small(
+              'If this was not you, ignore this email and nothing changes — your current password keeps working. Nobody can sign in from this message alone, and the link is useless once it has been used or has expired.',
+            ),
+          p,
+          'You are receiving this because a password reset was requested for the salon dashboard.',
+        ),
+        text: plainShell(
+          `Somebody asked to reset the password on your salon dashboard. This link works once and expires in ${p.reset_ttl_minutes ?? 60} minutes.\n\n${p.reset_url ?? ''}\n\nIf this was not you, ignore this email and nothing changes.`,
+          p,
+          'A password reset was requested for the salon dashboard.',
         ),
       };
 

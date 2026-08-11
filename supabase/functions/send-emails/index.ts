@@ -43,6 +43,60 @@ function nextAttemptAt(attempts: number): string {
   return new Date(Date.now() + minutes * 60_000).toISOString();
 }
 
+/**
+ * KNOWN DEFECT — the plain-text part can lose a full stop in a long URL.
+ *
+ * denomailer 1.6.0 encodes every body as quoted-printable, which soft-wraps at
+ * ~74 columns. When a wrap puts a `.` at the start of a continuation line the
+ * character is silently lost, because RFC 5321 §4.5.2 requires an SMTP client
+ * to double a leading `.` and denomailer does not — the receiving MTA then
+ * strips it as the transparency mechanism.
+ *
+ * Confirmed on delivered mail: every other soft break kept its character
+ * (`wo`+`rks`, `Kok`+`olett`, `reset-pass`+`word`) and only the one before
+ * `.co` lost anything, so `...supabase.co/auth/v1/verify...` arrived as
+ * `...supabaseco/auth/v1/verify...` in the text part while the HTML part was
+ * intact.
+ *
+ * Impact: the HTML part is correct, and that is what essentially every mail
+ * client renders, so the visible link works. A recipient reading plain text
+ * gets a dead link. It affects any long URL — customer magic links included.
+ *
+ * NOT worked around here on purpose. Four attempts were made to shift the wrap
+ * off the offending character by padding the line, and all four failed because
+ * the library's real column budget is not a constant (74, 74, 73, 148 observed
+ * on one message) and does not match any simple model of it. Folding the body
+ * to pure ASCII did not help either: denomailer chooses quoted-printable
+ * unconditionally, not because of the content. Shipping a guess that only
+ * appears to work would be worse than a documented defect, and each attempt
+ * added complexity to the one code path that carries every customer email.
+ *
+ * The real fix is to stop using denomailer — either a maintained Deno SMTP
+ * client that dot-stuffs correctly, or an HTTP mail API. Tracked as such.
+ */
+
+/**
+ * Whether the relay has told us this will never work.
+ *
+ * SMTP 5xx is a permanent refusal; 4xx is "try later". Retrying a 5xx five
+ * times over six hours achieves nothing except repeatedly asking a mail server
+ * to reject the same message, which is exactly the behaviour that gets a
+ * sending IP throttled — the opposite of what this domain needs while it is
+ * building reputation.
+ *
+ * Found the hard way: a reset addressed to `dev@koko.gakinz.com` came back
+ * `550: No Such User Here` and was queued for four more attempts.
+ */
+function isPermanentFailure(message: string): boolean {
+  // Leading 5xx, or the phrasings relays use for an address that does not exist.
+  return (
+    /(^|\s)5\d\d(\s|:|-)/.test(message) ||
+    /no such user|user unknown|does not exist|mailbox unavailable|recipient rejected|address rejected/i.test(
+      message,
+    )
+  );
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   const refusal = await requireCronSecret(req, env('EMAIL_CRON_SECRET'), 'EMAIL_CRON_SECRET');
   if (refusal) return refusal;
@@ -170,14 +224,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
       sent += 1;
     } catch (e) {
       const attempts = row.attempts + 1;
-      const exhausted = attempts >= MAX_ATTEMPTS;
+      const message = e instanceof Error ? e.message : String(e);
+      // A permanent refusal is not worth another five attempts, and the retries
+      // cost sending reputation rather than buying a delivery.
+      const giveUp = attempts >= MAX_ATTEMPTS || isPermanentFailure(message);
       await supabase
         .from('email_messages')
         .update({
           // Not exhausted yet? Back to the queue with a later schedule.
-          status: exhausted ? 'failed' : 'queued',
-          scheduled_for: exhausted ? undefined : nextAttemptAt(attempts),
-          last_error: e instanceof Error ? e.message.slice(0, 500) : String(e).slice(0, 500),
+          status: giveUp ? 'failed' : 'queued',
+          scheduled_for: giveUp ? undefined : nextAttemptAt(attempts),
+          last_error: message.slice(0, 500),
         })
         .eq('id', row.id);
       failed += 1;

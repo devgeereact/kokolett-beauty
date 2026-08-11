@@ -48,6 +48,15 @@ export const routes = {
     assistant: '/dashboard/assistant',
     settings: '/dashboard/settings',
   },
+  auth: {
+    login: '/login',
+    /**
+     * Where a recovery email lands. Outside `owner` on purpose: it must be
+     * reachable *without* a session, since being unable to sign in is the whole
+     * reason for arriving here.
+     */
+    resetPassword: '/reset-password',
+  },
 } as const;
 
 export type PublicRoute = typeof routes.public;

@@ -30,12 +30,56 @@ export function LoginPage(): JSX.Element {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!loading && user) {
     const from = (location.state as { from?: string } | null)?.from;
     return <Navigate to={from ?? routes.owner.dashboard} replace />;
   }
+
+  /**
+   * Ask for a recovery link.
+   *
+   * Goes through our own Edge Function rather than
+   * `supabase.auth.resetPasswordForEmail()`, so the mail leaves the salon's
+   * outbox — DKIM-signed, from the address the owner recognises — instead of
+   * Supabase's shared sender, which is rate limited and has none of this
+   * domain's reputation. Same neutral confirmation either way, so this cannot
+   * be used to discover which addresses are staff.
+   */
+  const requestReset = async (): Promise<void> => {
+    const address = email.trim();
+    if (!address) {
+      setError('Enter your email address first, then ask for a reset link.');
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`${env.supabaseUrl}/functions/v1/owner-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.supabaseAnonKey}`,
+          apikey: env.supabaseAnonKey,
+        },
+        body: JSON.stringify({ email: address }),
+      });
+      if (!res.ok) {
+        reportError(new Error(`owner-password-reset responded ${res.status}`), {
+          status: res.status,
+        });
+      }
+    } catch (e) {
+      reportError(e, { where: 'LoginPage.requestReset' });
+    } finally {
+      setBusy(false);
+      // Shown whatever happened, for the same reason the magic-link path is.
+      setResetSent(true);
+    }
+  };
 
   const submit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
@@ -93,7 +137,26 @@ export function LoginPage(): JSX.Element {
           Sign in to manage your bookings.
         </p>
 
-        {sent ? (
+        {resetSent ? (
+          <div role="status" className="rounded-md border border-border bg-muted p-4">
+            <p className="font-medium text-foreground">Check your email</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              If <span className="font-medium">{email}</span> can sign in, a link to set a
+              new password is on its way. It works once and expires in an hour.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-3"
+              onClick={() => {
+                setResetSent(false);
+                setError(null);
+              }}
+            >
+              Back to sign in
+            </Button>
+          </div>
+        ) : sent ? (
           <div role="status" className="rounded-md border border-border bg-muted p-4">
             <p className="font-medium text-foreground">Check your email</p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -130,19 +193,33 @@ export function LoginPage(): JSX.Element {
             </Field>
 
             {mode === 'password' && (
-              <Field label="Password" required>
-                {({ id, describedBy }) => (
-                  <Input
-                    id={id}
-                    aria-describedby={describedBy}
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                )}
-              </Field>
+              <>
+                <Field label="Password" required>
+                  {({ controlProps }) => (
+                    <Input
+                      {...controlProps}
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  )}
+                </Field>
+
+                {/* Forgetting the password is exactly when the dashboard is
+                    unreachable, so the way out has to live on this screen
+                    rather than behind a Supabase login the owner also cannot
+                    reach. */}
+                <button
+                  type="button"
+                  className="mb-4 -mt-2 text-sm font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => void requestReset()}
+                  disabled={busy}
+                >
+                  Forgotten your password?
+                </button>
+              </>
             )}
 
             {error && (

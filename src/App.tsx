@@ -12,6 +12,7 @@ import { SubscribePage } from '@/pages/SubscribePage';
 import { MyBookingsPage } from '@/pages/MyBookingsPage';
 import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
 import { LoginPage } from '@/pages/LoginPage';
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { TodayPage } from '@/pages/dashboard/TodayPage';
 import { CalendarPage } from '@/pages/dashboard/CalendarPage';
@@ -59,6 +60,7 @@ export function App(): JSX.Element {
             <Route path={routes.public.terms} element={<TermsPage />} />
 
             <Route path="/login" element={<LoginPage />} />
+            <Route path={routes.auth.resetPassword} element={<ResetPasswordPage />} />
 
             <Route path={routes.owner.dashboard} element={owner(<TodayPage />)} />
             <Route path={routes.owner.approvals} element={owner(<ApprovalsPage />)} />

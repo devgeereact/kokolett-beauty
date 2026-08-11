@@ -18,7 +18,7 @@ import { routes } from '@/lib/routes';
  * A privacy notice with a made-up registration number is worse than none.
  */
 
-const SALON_EMAIL = 'booking@koko.gakinz.com';
+const SALON_EMAIL = 'booking@kokolettbeauty.com';
 
 function LegalPage({
   title,

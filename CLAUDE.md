@@ -7,14 +7,14 @@ assistant, and automated transactional email. Hybrid booking policy: returning
 customers are confirmed instantly, first-time customers are held for owner approval.
 
 You are working inside a **static, offline-first PWA** deployed to cPanel at
-`https://koko.gakinz.com`. Treat the constraints below as ground truth for every
+`https://www.kokolettbeauty.com`. Treat the constraints below as ground truth for every
 response.
 
 ## Live coordinates
 | Thing | Value |
 | --- | --- |
-| Domain | `https://koko.gakinz.com` — **the app is live here** since 2026-08-09 |
-| Contact / sending address | `booking@koko.gakinz.com` (singular `booking`) |
+| Domain | `https://www.kokolettbeauty.com` — migrated here 2026-08-11 (was `koko.gakinz.com`) |
+| Contact / sending address | `booking@kokolettbeauty.com` (singular `booking`) |
 | Repo | `github.com/devgeereact/kokolett-beauty` (**public**) |
 | Supabase ref / region | `erqrfjlozqyhogneqraj` / `eu-west-2` (London) |
 | Dev + preview port | `5082` (block 08, `strictPort`) |

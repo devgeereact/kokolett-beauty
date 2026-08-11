@@ -15,7 +15,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const TOKEN_TTL_MINUTES = 30;
-const SITE = 'https://koko.gakinz.com';
+const SITE = 'https://www.kokolettbeauty.com';
 
 function env(name: string, fallback = ''): string {
   return Deno.env.get(name) ?? fallback;

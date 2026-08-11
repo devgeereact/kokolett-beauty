@@ -20,7 +20,7 @@
  */
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const SITE = 'https://koko.gakinz.com';
+const SITE = 'https://www.kokolettbeauty.com';
 
 interface FeedEvent {
   id: string;
@@ -131,7 +131,7 @@ function buildCalendar(events: FeedEvent[], address: string | null): string {
     lines.push(
       'BEGIN:VEVENT',
       // Stable per appointment, so an update replaces rather than duplicates.
-      `UID:${e.id}@koko.gakinz.com`,
+      `UID:${e.id}@kokolettbeauty.com`,
       `DTSTAMP:${now}`,
       `DTSTART:${stamp(e.starts_at)}`,
       `DTEND:${stamp(e.ends_at)}`,

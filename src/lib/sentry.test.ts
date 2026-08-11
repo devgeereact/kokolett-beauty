@@ -14,8 +14,8 @@ describe('magic-link redaction', () => {
   });
 
   it('removes it from a full URL, keeping the rest intact', () => {
-    expect(redactAccessToken('https://koko.gakinz.com/access/deadbeef')).toBe(
-      'https://koko.gakinz.com/access/[redacted]',
+    expect(redactAccessToken('https://www.kokolettbeauty.com/access/deadbeef')).toBe(
+      'https://www.kokolettbeauty.com/access/[redacted]',
     );
   });
 

@@ -57,8 +57,8 @@ export interface TemplatePayload {
 }
 
 const SALON = 'Kokolett Beauty UK';
-const SITE = 'https://koko.gakinz.com';
-const EMAIL = 'booking@koko.gakinz.com';
+const SITE = 'https://www.kokolettbeauty.com';
+const EMAIL = 'booking@kokolettbeauty.com';
 
 /* Palette lifted from docs/DESIGN.md. Hard-coded, because an email cannot read
    a CSS custom property and half of clients would drop the variable anyway. */

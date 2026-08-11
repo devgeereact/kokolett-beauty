@@ -1,7 +1,7 @@
 # Product Requirements — Kokolett Beauty UK
 
 Version 3.1 · MVP · single salon, single owner
-Production domain: `https://koko.gakinz.com`
+Production domain: `https://www.kokolettbeauty.com`
 
 ---
 

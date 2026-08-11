@@ -12,7 +12,7 @@ This has already destroyed real customer data on this project. A cleanup script
 looped over every row in `customers` instead of the test ones and permanently
 deleted booking `KB-LFQEJK`, belonging to a real person. There was no backup.
 
-`koko.gakinz.com` is live and taking bookings, so these tables are production.
+`www.kokolettbeauty.com` is live and taking bookings, so these tables are production.
 
 **Before deleting anything, name what you are deleting.** Collect the specific
 ids or references first, print them, then delete by that list:

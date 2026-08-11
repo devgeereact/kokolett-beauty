@@ -16,7 +16,7 @@ _Last updated: 2026-08-06 (revised after intake form)_
   only** — cutting, colouring, styling, treatments. Not a general beauty salon (no
   nails, brows, lashes, aesthetics) and not unisex. The "Beauty" in the name is
   branding. Structured data uses schema.org `HairSalon`.
-- **Contact address (confirmed 06 Aug 2026)**: `booking@koko.gakinz.com`, singular.
+- **Contact address (confirmed 06 Aug 2026, moved to client domain 11 Aug 2026)**: `booking@kokolettbeauty.com`, singular.
   It is both the public enquiry address and the transactional sending address
   (`VITE_SALON_EMAIL`, `SMTP_FROM_EMAIL`).
 - **Booking model**: **availability-first with a hybrid trust gate** (user decision,
@@ -33,7 +33,7 @@ _Last updated: 2026-08-06 (revised after intake form)_
   alternatives `rejected`, `cancelled`, `rescheduled`, `no_show`. `pending_approval`
   occupies the calendar — a hold that did not block the slot would let two customers
   wait on the same time.
-- **Domain**: `https://koko.gakinz.com`.
+- **Domain**: `https://www.kokolettbeauty.com` (moved from `koko.gakinz.com` 11 Aug 2026).
 - **Theme**: default follows the operating system preference; explicit light and dark
   both available and persisted as the *preference*, not the resolved value.
 - **Design tokens**: supplied by the user as a full shadcn-style token set —
@@ -96,8 +96,8 @@ to change now and expensive to change after build.
 | Supabase URL | `https://erqrfjlozqyhogneqraj.supabase.co` |
 | Supabase region | `eu-west-2` (London) — chosen over the usual `eu-west-1` for UK data residency |
 | Migrations applied | `0001_init`, `0002_salon` — verified via `supabase migration list` |
-| Auth | Magic link only; no OAuth provider enabled. Site URL and redirects point at `https://koko.gakinz.com`; OTP is 8 characters, 30-minute expiry, 60-second send throttle |
-| Live site | `https://koko.gakinz.com` — **holding page**, source in `coming-soon/` |
+| Auth | Magic link only; no OAuth provider enabled. Site URL and redirects point at `https://www.kokolettbeauty.com`; OTP is 8 characters, 30-minute expiry, 60-second send throttle |
+| Live site | `https://www.kokolettbeauty.com` — source in `coming-soon/` or `dist/` depending on launch state |
 | Dev + preview port | `5082` (block 08, `strictPort`) |
 | DB password | macOS Keychain, service `supabase-kokolett-db`. Never in a file |
 
@@ -290,7 +290,7 @@ codebase · no secrets in the client bundle, ever.
 ### Naming & Branding (→ forge.config.json)
 
 appName `Kokolett Beauty UK` · shortName `Kokolett` · slug `kokolett-beauty` ·
-appUrl `https://koko.gakinz.com` · themeColor `#e05d38` ·
+appUrl `https://www.kokolettbeauty.com` · themeColor `#e05d38` ·
 backgroundColor `#e8ebed`
 
 Palette and type as supplied. Tokens were given in Tailwind v4 `@theme inline` syntax;

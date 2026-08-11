@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useUsualHours } from '@/hooks/useUsualHours';
 
-const SALON_EMAIL = 'booking@koko.gakinz.com';
+const SALON_EMAIL = 'booking@kokolettbeauty.com';
 
 /**
  * The public site chrome.

@@ -134,7 +134,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
-  const fromEmail = env('SMTP_FROM_EMAIL', 'booking@koko.gakinz.com');
+  const fromEmail = env('SMTP_FROM_EMAIL', 'booking@kokolettbeauty.com');
   const fromName = env('SMTP_FROM_NAME', 'Kokolett Beauty UK');
 
   let sent = 0;

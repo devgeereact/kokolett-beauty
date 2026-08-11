@@ -53,7 +53,7 @@ interface FormState {
 }
 
 /** The live site, not wherever the dashboard happens to be open. */
-const SITE = 'https://koko.gakinz.com';
+const SITE = 'https://www.kokolettbeauty.com';
 
 export function SettingsPage(): JSX.Element {
   const { settings, loading, error, update, refresh } = useBusinessSettings();

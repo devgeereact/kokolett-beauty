@@ -6,7 +6,7 @@ action: warn
 pattern: (?:^|[;&|]\s*)[^\s;&|]*cpanel-deploy\s[^|;&]*--go
 ---
 
-**About to write to the live site.** `koko.gakinz.com` is public and taking
+**About to write to the live site.** `www.kokolettbeauty.com` is public and taking
 bookings. Three things have gone wrong here before:
 
 **1. Relative asset paths blank every nested route.** Check the build first:

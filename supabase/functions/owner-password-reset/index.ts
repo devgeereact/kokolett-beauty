@@ -8,7 +8,7 @@
  * reputation. Outlook already junks mail from this two-day-old domain even when
  * it is fully authenticated — a recovery mail from a shared sender would fare
  * worse. The salon's own outbox is DKIM-signed, sends from
- * `booking@koko.gakinz.com`, and is the path every other message already takes.
+ * `booking@kokolettbeauty.com`, and is the path every other message already takes.
  *
  * So this function mints the recovery link with the service-role key and queues
  * it in `email_messages` like everything else. The owner gets a branded email
@@ -31,7 +31,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const SITE = 'https://koko.gakinz.com';
+const SITE = 'https://www.kokolettbeauty.com';
 /** Supabase recovery links are valid for an hour by default. */
 const LINK_TTL_MINUTES = 60;
 /** Per address, per hour. Generous for a person, useless for a script. */

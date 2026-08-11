@@ -9,8 +9,8 @@ and only the built artifacts are shipped.
 
 |           |                                                           |
 | --------- | --------------------------------------------------------- |
-| Domain    | `koko.gakinz.com`                                         |
-| Docroot   | `~/koko.gakinz.com/` (dedicated — never a shared docroot) |
+| Domain    | `www.kokolettbeauty.com`                                  |
+| Docroot   | `~/kokolettbeauty.com/` (dedicated — never a shared docroot; confirm exact path in cPanel) |
 | Artifacts | `dist/*` plus the repo-root `.htaccess`                   |
 | Timezone  | `Europe/London`                                           |
 
@@ -59,7 +59,7 @@ redirect, SPA rewrite to `index.html`, MIME types, cache + security headers).
 ## 2. Ship the artifacts — into THIS app's own docroot
 
 Deploy `dist/*` and `.htaccess` into **the target site's own document root or a
-dedicated subdirectory** — here, `~/koko.gakinz.com/`. For example, `~/<domain>/` for an addon domain, or
+dedicated subdirectory** — here, `~/kokolettbeauty.com/`. For example, `~/<domain>/` for an addon domain, or
 `public_html/<app>/` for a subpath. **Never** deploy into a shared docroot that other
 sites live in.
 
@@ -166,7 +166,7 @@ select vault.create_secret('https://<ref>.supabase.co/functions/v1/send-emails',
 ```bash
 supabase db query --linked "select public.drain_email_queue();"
 supabase db query --linked "select id, status_code, left(content,120) from net._http_response order by id desc limit 1;"
-ssh cpanel 'ls -t ~/mail/koko.gakinz.com/booking/new | head'
+ssh cpanel 'ls -t ~/mail/kokolettbeauty.com/booking/new | head'
 ```
 
 Scheduled jobs: `drain-email-queue` (5 min), `expire-pending-approvals` (hourly),
@@ -199,7 +199,7 @@ curl -s -X POST "$URL/auth/v1/signup" -H "apikey: $ANON" \
 # must succeed
 curl -s -X POST "$URL/auth/v1/otp" -H "apikey: $ANON" \
   -H 'Content-Type: application/json' \
-  -d '{"email":"booking@koko.gakinz.com","create_user":false}'
+  -d '{"email":"booking@kokolettbeauty.com","create_user":false}'
 ```
 
 ## Google reviews on the marketing site

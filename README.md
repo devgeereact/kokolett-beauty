@@ -4,7 +4,7 @@ The booking and operations platform for **Kokolett Beauty UK**, a single-owner s
 An offline-first Progressive Web App served as static files from cPanel, with all
 heavy lifting offloaded to managed services.
 
-Live at **https://koko.gakinz.com**
+Live at **https://www.kokolettbeauty.com**
 
 ### What it does
 

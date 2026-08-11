@@ -10,4 +10,4 @@ Disallow: /my
 Disallow: /access
 Disallow: /login
 
-Sitemap: https://koko.gakinz.com/sitemap.xml
+Sitemap: https://www.kokolettbeauty.com/sitemap.xml

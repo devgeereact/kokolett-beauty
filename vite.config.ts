@@ -12,7 +12,7 @@ export default defineConfig({
    *
    * With `base: './'` the entrypoint emits `./assets/index-*.js`. A browser
    * resolves that against the *current URL*, so it only works at depth zero.
-   * Load https://koko.gakinz.com/dashboard/appointments directly and the
+   * Load https://www.kokolettbeauty.com/dashboard/appointments directly and the
    * browser asks for /dashboard/assets/index-*.js, which does not exist, so
    * the SPA rewrite in .htaccess answers with index.html — a 200 carrying
    * text/html where a module was expected. Strict MIME checking refuses it and
@@ -20,7 +20,7 @@ export default defineConfig({
    * every /access/<token> magic link in every email.
    *
    * The cost is that the bundle can no longer be served from a subdirectory,
-   * which this app never does: koko.gakinz.com is its own document root.
+   * which this app never does: kokolettbeauty.com is its own document root.
    */
   base: '/',
 
@@ -121,7 +121,7 @@ export default defineConfig({
     // origin has no `localStorage`. The customer session lives in localStorage,
     // so without a real URL those tests fail on the storage shim rather than on
     // anything they are actually asserting.
-    environmentOptions: { jsdom: { url: 'https://koko.gakinz.com/' } },
+    environmentOptions: { jsdom: { url: 'https://www.kokolettbeauty.com/' } },
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
 
@@ -143,7 +143,7 @@ export default defineConfig({
     env: {
       VITE_SUPABASE_URL: 'https://test.supabase.co',
       VITE_SUPABASE_ANON_KEY: 'test-anon-key-not-a-real-credential',
-      VITE_APP_URL: 'https://koko.gakinz.com',
+      VITE_APP_URL: 'https://www.kokolettbeauty.com',
     },
     // The salon's own clock is the one that matters, and CI pins TZ=UTC so that
     // a Europe/London machine cannot hide an off-by-one-hour error behind BST.

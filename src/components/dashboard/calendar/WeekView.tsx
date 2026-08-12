@@ -23,6 +23,7 @@ export interface WeekViewProps {
   openSlotsByDate: Map<string, OwnerDaySlot[]>;
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
   onSelectDate: (date: string) => void;
+  onSelectOpenSlot: (date: string, slot: OwnerDaySlot) => void;
 }
 
 export function WeekView({
@@ -33,6 +34,7 @@ export function WeekView({
   openSlotsByDate,
   onSelectAppointment,
   onSelectDate,
+  onSelectOpenSlot,
 }: WeekViewProps): JSX.Element {
   const nowMinutes = useNowLine(timezone);
 
@@ -46,6 +48,10 @@ export function WeekView({
       allMinutes.push(minutesSinceMidnight(s.starts_at, timezone));
     }
   }
+  // The live "now" line needs the axis to actually cover the current time —
+  // otherwise a day with only sparse published slots can auto-fit a range
+  // that excludes "now" entirely, and the line silently never appears.
+  if (dates.includes(today)) allMinutes.push(nowMinutes);
   const range = hourRange(allMinutes);
   const labels = hourLabels(range);
   const gridHeight = labels.length * HOUR_ROW_PX;
@@ -144,12 +150,13 @@ export function WeekView({
                                 key={slot.starts_at}
                                 variant="open"
                                 time={slot.local_time}
-                                label={`Open · ${slot.local_time}`}
+                                label={`+ Add · ${slot.local_time}`}
                                 topPercent={offsetPercent(start, range)}
                                 heightPercent={
                                   offsetPercent(start + 60, range) -
                                   offsetPercent(start, range)
                                 }
+                                onClick={() => onSelectOpenSlot(date, slot)}
                               />
                             );
                           })}

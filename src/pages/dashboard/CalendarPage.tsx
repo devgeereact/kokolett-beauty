@@ -6,6 +6,7 @@ import { DayView } from '@/components/dashboard/calendar/DayView';
 import { MonthView } from '@/components/dashboard/calendar/MonthView';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
 import { MoveAppointmentPanel } from '@/components/dashboard/calendar/MoveAppointmentPanel';
+import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -66,6 +67,7 @@ export function CalendarPage(): JSX.Element {
   const [anchor, setAnchor] = useState(today);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
+  const [newBooking, setNewBooking] = useState<{ date: string; time: string } | null>(null);
 
   const [summary, setSummary] = useState<Map<string, DaySummary>>(new Map());
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
@@ -143,6 +145,7 @@ export function CalendarPage(): JSX.Element {
   useEffect(() => {
     setSelectedId(null);
     setMoving(false);
+    setNewBooking(null);
   }, [view, anchor]);
 
   const appointmentsByDate = useMemo(() => groupByDate(appointments, timezone), [appointments, timezone]);
@@ -163,6 +166,17 @@ export function CalendarPage(): JSX.Element {
   const goToDay = useCallback((date: string): void => {
     setAnchor(date);
     setView('day');
+  }, []);
+
+  const selectAppointment = useCallback((appointment: AppointmentDetailed): void => {
+    setNewBooking(null);
+    setSelectedId(appointment.id);
+  }, []);
+
+  const selectOpenSlot = useCallback((date: string, slot: OwnerDaySlot): void => {
+    setSelectedId(null);
+    setMoving(false);
+    setNewBooking({ date, time: slot.local_time });
   }, []);
 
   const heading =
@@ -224,8 +238,9 @@ export function CalendarPage(): JSX.Element {
           timezone={timezone}
           appointmentsByDate={appointmentsByDate}
           openSlotsByDate={daySlots}
-          onSelectAppointment={(a) => setSelectedId(a.id)}
+          onSelectAppointment={selectAppointment}
           onSelectDate={goToDay}
+          onSelectOpenSlot={selectOpenSlot}
         />
       )}
 
@@ -237,7 +252,8 @@ export function CalendarPage(): JSX.Element {
           appointments={appointmentsByDate.get(anchor) ?? []}
           openSlots={daySlots.get(anchor) ?? []}
           appointmentMinutes={appointmentMinutes}
-          onSelectAppointment={(a) => setSelectedId(a.id)}
+          onSelectAppointment={selectAppointment}
+          onSelectOpenSlot={(slot) => selectOpenSlot(anchor, slot)}
           onChanged={() => void load()}
         />
       )}
@@ -271,6 +287,21 @@ export function CalendarPage(): JSX.Element {
             />
           </div>
         )}
+
+      {newBooking && (
+        <div className="mt-6">
+          <NewBookingPanel
+            key={`${newBooking.date}T${newBooking.time}`}
+            initialDate={newBooking.date}
+            initialTime={newBooking.time}
+            onClose={() => setNewBooking(null)}
+            onBooked={() => {
+              setNewBooking(null);
+              void load();
+            }}
+          />
+        </div>
+      )}
     </DashboardLayout>
   );
 }

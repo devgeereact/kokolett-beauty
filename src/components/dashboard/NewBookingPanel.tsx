@@ -35,16 +35,22 @@ export interface PrefilledCustomer {
 
 export function NewBookingPanel({
   prefill,
+  initialDate,
+  initialTime,
   onBooked,
   onClose,
 }: {
   prefill?: PrefilledCustomer | null;
+  /** Pre-fills the date field, e.g. from a clicked calendar slot. Defaults to today. */
+  initialDate?: string;
+  /** Pre-fills the start time field, e.g. from a clicked calendar slot. Defaults to 10:00. */
+  initialTime?: string;
   onBooked: (reference: string) => void;
   onClose: () => void;
 }): JSX.Element {
   const { timezone } = useBusinessSettings();
-  const [date, setDate] = useState(() => toSalonDate(new Date(), timezone));
-  const [time, setTime] = useState('10:00');
+  const [date, setDate] = useState(() => initialDate ?? toSalonDate(new Date(), timezone));
+  const [time, setTime] = useState(initialTime ?? '10:00');
   const [duration, setDuration] = useState('240');
   const [fullName, setFullName] = useState(prefill?.fullName ?? '');
   const [email, setEmail] = useState(prefill?.email ?? '');

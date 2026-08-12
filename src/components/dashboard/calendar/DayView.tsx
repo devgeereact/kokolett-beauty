@@ -4,7 +4,7 @@ import {
   hourRange,
   offsetPercent,
 } from '@/lib/calendar';
-import { formatDateLong, formatTime, minutesSinceMidnight } from '@/lib/format';
+import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
@@ -21,6 +21,7 @@ export interface DayViewProps {
   openSlots: OwnerDaySlot[];
   appointmentMinutes: number;
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
+  onSelectOpenSlot: (slot: OwnerDaySlot) => void;
   onChanged: () => void;
 }
 
@@ -32,6 +33,7 @@ export function DayView({
   openSlots,
   appointmentMinutes,
   onSelectAppointment,
+  onSelectOpenSlot,
   onChanged,
 }: DayViewProps): JSX.Element {
   const nowMinutes = useNowLine(timezone);
@@ -45,6 +47,9 @@ export function DayView({
     ]),
     ...freeSlots.map((s) => minutesSinceMidnight(s.starts_at, timezone)),
   ];
+  // See WeekView's identical guard: without "now" in the fitted range, the
+  // live line can silently never show on a sparsely-published day.
+  if (isToday) allMinutes.push(nowMinutes);
   const range = hourRange(allMinutes);
   const labels = hourLabels(range);
   const gridHeight = labels.length * HOUR_ROW_PX;
@@ -61,22 +66,19 @@ export function DayView({
     ...freeSlots.map((s) => ({
       key: s.starts_at,
       time: s.local_time,
-      label: 'Open',
+      label: 'Open — add a booking',
       variant: 'open' as const,
+      onClick: () => onSelectOpenSlot(s),
     })),
   ].sort((a, b) => a.time.localeCompare(b.time));
 
   // Same real-<table> structure as WeekView (docs/DESIGN.md §7) — here with
   // exactly one day column, so row 0's single `<td>` spans every hour row.
+  // No repeated date heading here — the page header above already shows it,
+  // and duplicating it just ate into the vertical space the grid needs.
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_15rem]">
       <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="border-b border-border px-4 py-3">
-          <h2 className="font-display text-base font-semibold text-foreground">
-            {formatDateLong(`${date}T12:00:00Z`, 'UTC')}
-          </h2>
-        </div>
-
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Schedule for {date}</caption>
           <tbody>
@@ -116,11 +118,12 @@ export function DayView({
                             key={slot.starts_at}
                             variant="open"
                             time={slot.local_time}
-                            label={`Open · ${slot.local_time}`}
+                            label={`+ Add · ${slot.local_time}`}
                             topPercent={offsetPercent(start, range)}
                             heightPercent={
                               offsetPercent(start + 60, range) - offsetPercent(start, range)
                             }
+                            onClick={() => onSelectOpenSlot(slot)}
                           />
                         );
                       })}

@@ -11,6 +11,7 @@ import {
   updateMenuItem,
 } from '@/services/serviceMenuService';
 import { errorMessage } from '@/lib/errors';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { ServiceMenuItem } from '@/types';
 
@@ -153,9 +154,19 @@ export function ServiceMenuPage(): JSX.Element {
       title="Services"
       subtitle={`${liveCount} of ${items.length} showing on the website`}
       actions={
-        <Button variant="ghost" size="sm" onClick={() => void load()}>
-          Refresh
-        </Button>
+        <>
+          <a
+            href={routes.public.services}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"
+          >
+            View on website
+          </a>
+          <Button variant="ghost" size="sm" onClick={() => void load()}>
+            Refresh
+          </Button>
+        </>
       }
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
@@ -181,7 +192,10 @@ export function ServiceMenuPage(): JSX.Element {
 
                 <ul className="divide-y divide-border">
                   {rows.map((item) => (
-                    <li key={item.id} className="py-2.5">
+                    <li
+                      key={item.id}
+                      className="-mx-2 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted"
+                    >
                       {editingId === item.id ? (
                         <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
                           <Input

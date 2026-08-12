@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DayPanel } from '@/components/dashboard/DayPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input, Select } from '@/components/ui/Field';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useServices } from '@/hooks/useServices';
 import {
   applyWeeklyTemplate,
   getWeeklyTemplateStatus,
@@ -48,6 +50,9 @@ function buildTimes(from: string, to: string, everyMinutes: number): string[] {
  */
 export function WeeklyDefaultPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const { services } = useServices(true);
+  const appointmentMinutes = services[0]?.duration_min ?? 60;
+  const [dayEditorDate, setDayEditorDate] = useState(() => toSalonDate(new Date(), timezone));
   const [days, setDays] = useState<TemplateDay[]>([]);
   const [status, setStatus] = useState<WeeklyTemplateStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -395,8 +400,8 @@ export function WeeklyDefaultPage(): JSX.Element {
                 not run out of bookable days.
               </li>
               <li>
-                Editing any single day on the Calendar always wins — that day is yours
-                from then on.
+                Editing any single day below always wins over the pattern — that day is
+                yours from then on.
               </li>
             </ul>
 
@@ -412,6 +417,35 @@ export function WeeklyDefaultPage(): JSX.Element {
           </Card>
         </div>
       </div>
+
+      <Card className="mt-6 p-5">
+        <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+          Adjust a single day
+        </h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Override the pattern for one date — a day off, an extra evening, a one-time
+          change. This is the same publish/remove tool the Calendar used to show inline;
+          it lives here now, next to the pattern it overrides.
+        </p>
+
+        <label htmlFor="day-editor-date" className="mb-1 block text-xs text-muted-foreground">
+          Date
+        </label>
+        <Input
+          id="day-editor-date"
+          type="date"
+          className="mb-4 w-48"
+          value={dayEditorDate}
+          onChange={(e) => setDayEditorDate(e.target.value)}
+        />
+
+        <DayPanel
+          date={dayEditorDate}
+          timezone={timezone}
+          appointmentMinutes={appointmentMinutes}
+          onChanged={() => void load()}
+        />
+      </Card>
     </DashboardLayout>
   );
 }

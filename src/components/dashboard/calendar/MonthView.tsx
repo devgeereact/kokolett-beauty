@@ -105,14 +105,17 @@ export function MonthView({
                   {pills.map((a) => (
                     <span
                       key={a.id}
-                      className="flex w-full items-center gap-1 truncate rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground"
+                      className="flex w-full items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground"
                     >
                       <span
                         aria-hidden="true"
                         className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOTS[a.status])}
                       />
-                      <span className="truncate">
-                        {formatTime(a.starts_at, timezone)} {a.customer_name?.split(' ')[0] ?? 'Customer'}
+                      <span className="min-w-0 flex-1 truncate">
+                        {a.customer_name?.split(' ')[0] ?? 'Customer'}
+                      </span>
+                      <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
+                        {formatTime(a.starts_at, timezone)}
                       </span>
                     </span>
                   ))}

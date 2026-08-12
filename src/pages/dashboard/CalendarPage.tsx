@@ -10,7 +10,6 @@ import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useServices } from '@/hooks/useServices';
 import {
   listMonthSummary,
   listDaySlots,
@@ -59,9 +58,7 @@ function groupByDate(
  */
 export function CalendarPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
-  const { services } = useServices(true);
   const today = toSalonDate(new Date(), timezone);
-  const appointmentMinutes = services[0]?.duration_min ?? 60;
 
   const [view, setView] = useState<CalendarView>('week');
   const [anchor, setAnchor] = useState(today);
@@ -251,10 +248,8 @@ export function CalendarPage(): JSX.Element {
           timezone={timezone}
           appointments={appointmentsByDate.get(anchor) ?? []}
           openSlots={daySlots.get(anchor) ?? []}
-          appointmentMinutes={appointmentMinutes}
           onSelectAppointment={selectAppointment}
           onSelectOpenSlot={(slot) => selectOpenSlot(anchor, slot)}
-          onChanged={() => void load()}
         />
       )}
 

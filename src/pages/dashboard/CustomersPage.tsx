@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input, Textarea } from '@/components/ui/Field';
@@ -28,6 +29,7 @@ export function CustomersPage(): JSX.Element {
   const [history, setHistory] = useState<AppointmentDetailed[]>([]);
   const [note, setNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
+  const [booking, setBooking] = useState(false);
 
   const load = useCallback(async (term: string): Promise<void> => {
     setLoading(true);
@@ -50,6 +52,7 @@ export function CustomersPage(): JSX.Element {
   const open = async (customer: Customer): Promise<void> => {
     setSelected(customer);
     setNote(customer.notes ?? '');
+    setBooking(false);
     try {
       setHistory(await listForCustomer(customer.id));
     } catch (e) {
@@ -159,6 +162,23 @@ export function CustomersPage(): JSX.Element {
               </Button>
             </div>
 
+            {booking && (
+              <div className="mb-4">
+                <NewBookingPanel
+                  prefill={{
+                    fullName: selected.full_name,
+                    email: selected.email,
+                    mobile: selected.mobile ?? '',
+                  }}
+                  onClose={() => setBooking(false)}
+                  onBooked={() => {
+                    setBooking(false);
+                    void open(selected);
+                  }}
+                />
+              </div>
+            )}
+
             <Field
               label="Private note"
               hint="Only you see this. Never shown to the customer."
@@ -173,9 +193,16 @@ export function CustomersPage(): JSX.Element {
                 />
               )}
             </Field>
-            <Button size="sm" loading={savingNote} onClick={() => void saveNote()}>
-              Save note
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" loading={savingNote} onClick={() => void saveNote()}>
+                Save note
+              </Button>
+              {!booking && (
+                <Button size="sm" variant="ghost" onClick={() => setBooking(true)}>
+                  Book follow-up
+                </Button>
+              )}
+            </div>
 
             <h3 className="mb-2 mt-6 font-display text-base font-semibold text-foreground">
               History

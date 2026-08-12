@@ -22,10 +22,24 @@
 --      `p_duration_min`, and the dashboard's own booking panel defaults to
 --      240 minutes). A customer rescheduling a 4-hour appointment silently
 --      shrank it to the service default, leaving real chair time
---      unprotected by the overlap constraint.
+--      unprotected by the overlap constraint. The new row's `service_id`
+--      is preserved from the old row for the same reason (it was
+--      previously re-pointed at whatever the *current* active service is,
+--      inconsistent with duration and price both being preserved) — this
+--      also removes the function's only remaining use of
+--      `hair_appointment()`, so that lookup and its `v_service` variable
+--      are gone.
 --
 -- Nothing else about this function changes: same signature, same grants,
 -- same validation order, same error codes.
+--
+-- Known, deliberately out of scope: `available_slots()` still sizes every
+-- slot by the *current* service's default duration, so a long appointment
+-- can now be offered a slot too short for its real (preserved) length and
+-- fail `SLOT_TAKEN` on an insert that looked free — strictly better than
+-- silently shrinking to 60 minutes, but still a UX dead end for a long
+-- booking. Needs a duration-aware `available_slots()`, which is a bigger,
+-- separate change.
 -- =====================================================================
 
 create or replace function public.customer_reschedule_appointment(
@@ -42,7 +56,6 @@ declare
   v_customer   uuid := public.customer_from_session(p_session_token);
   v_old        public.appointments%rowtype;
   v_settings   public.booking_settings%rowtype;
-  v_service    public.services%rowtype;
   v_local_date date;
   v_local_time time;
   v_late       boolean;
@@ -51,7 +64,6 @@ declare
   v_deadline   timestamptz;
 begin
   select * into v_settings from public.booking_settings where id;
-  select * into v_service from public.hair_appointment();
 
   select * into v_old from public.appointments
    where id = p_appointment_id and customer_id = v_customer
@@ -132,7 +144,7 @@ begin
        customer_note, owner_note, source, status, requires_approval,
        approval_deadline, approved_at, rescheduled_from)
     values
-      (v_ref, v_customer, v_service.id, p_new_starts_at,
+      (v_ref, v_customer, v_old.service_id, p_new_starts_at,
        p_new_starts_at + (v_old.ends_at - v_old.starts_at),
        v_old.price_pence, v_old.customer_note, v_old.owner_note, v_old.source,
        v_old.status, v_old.requires_approval, v_deadline,

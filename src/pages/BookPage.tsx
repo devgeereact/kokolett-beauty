@@ -149,7 +149,7 @@ export function BookPage(): JSX.Element {
 
   return (
     <SiteShell>
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <h1 className="font-display text-3xl font-semibold text-foreground">
           Book an appointment
         </h1>
@@ -176,9 +176,10 @@ export function BookPage(): JSX.Element {
 
         {!loading && openDates.length > 0 && !slot && (
           <Card className="mb-8 overflow-hidden p-0">
-            <div className="grid sm:grid-cols-[auto_1fr]">
-              <div className="border-b border-border p-3 sm:border-b-0 sm:border-r">
+            <div className="grid sm:grid-cols-2">
+              <div className="border-b border-border sm:border-b-0 sm:border-r">
                 <Calendar
+                  size="lg"
                   mode="single"
                   selected={parseLocalDate(activeDate ?? '')}
                   defaultMonth={parseLocalDate(activeDate ?? openDates[0] ?? '')}
@@ -187,7 +188,7 @@ export function BookPage(): JSX.Element {
                 />
               </div>
 
-              <div className="min-w-0 flex-1 p-5">
+              <div className="min-w-0 flex-1 p-5 sm:p-6">
                 {activeDate ? (
                   <>
                     <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
@@ -197,7 +198,7 @@ export function BookPage(): JSX.Element {
                       {slotsByDate[activeDate]?.length ?? 0} time
                       {(slotsByDate[activeDate]?.length ?? 0) === 1 ? '' : 's'} available
                     </p>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2.5">
                       {(slotsByDate[activeDate] ?? []).map((s) => (
                         <button
                           key={s.startsAt}
@@ -206,7 +207,7 @@ export function BookPage(): JSX.Element {
                             setSlot(s);
                             setError(null);
                           }}
-                          className="min-h-11 rounded-lg border border-border bg-card font-mono text-sm text-foreground hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="min-h-12 rounded-lg border border-border bg-card font-mono text-base text-foreground hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {s.label}
                         </button>
@@ -224,7 +225,7 @@ export function BookPage(): JSX.Element {
         )}
 
         {slot && (
-          <>
+          <div className="mx-auto max-w-xl">
             <Card className="mb-6 p-4">
               <p className="font-medium text-foreground">
                 {formatDateLong(slot.startsAt, timezone)} at {slot.label}
@@ -331,7 +332,7 @@ export function BookPage(): JSX.Element {
             >
               Confirm booking
             </Button>
-          </>
+          </div>
         )}
       </div>
     </SiteShell>

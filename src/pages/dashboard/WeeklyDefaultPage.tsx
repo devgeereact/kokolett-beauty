@@ -184,11 +184,10 @@ export function WeeklyDefaultPage(): JSX.Element {
         />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <Card className="p-5">
-          <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
-            Your usual week
-          </h2>
+      <Card className="p-5">
+        <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+          Your usual week
+        </h2>
           <p className="mb-5 text-sm text-muted-foreground">
             Set the times you normally work. A day with no times is a day you are normally
             closed.
@@ -346,22 +345,26 @@ export function WeeklyDefaultPage(): JSX.Element {
           </div>
         </Card>
 
-        <Card className="h-fit p-5">
-          <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
-            Put it on the calendar
-          </h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            The pattern does nothing on its own — this is what writes it into real days.
-          </p>
-
-          <div className="mb-4 flex items-baseline justify-between rounded-md border border-border bg-muted px-3 py-2">
+      <Card className="mt-6 p-5">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+              Put it on the calendar
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              The pattern does nothing on its own — this is what writes it into real days.
+            </p>
+          </div>
+          <div className="flex items-baseline gap-2 rounded-md border border-border bg-muted px-3 py-2">
             <span className="text-xs text-muted-foreground">Times set this week</span>
             <span className="font-mono text-sm font-semibold text-foreground">
               {totalTimes}
             </span>
           </div>
+        </div>
 
-          <div className="rounded-md border border-border p-3">
+        <div className="flex flex-wrap items-end gap-4 rounded-md border border-border p-3">
+          <div>
             <label
               htmlFor="weeks-ahead"
               className="mb-1 block text-xs font-medium text-foreground"
@@ -370,7 +373,7 @@ export function WeeklyDefaultPage(): JSX.Element {
             </label>
             <Select
               id="weeks-ahead"
-              className="mb-3"
+              className="w-40"
               value={weeks}
               onChange={(e) => setWeeks(e.target.value)}
             >
@@ -379,9 +382,10 @@ export function WeeklyDefaultPage(): JSX.Element {
               <option value="8">8 weeks</option>
               <option value="12">12 weeks</option>
             </Select>
+          </div>
 
+          <div className="flex flex-wrap gap-2">
             <Button
-              className="mb-2 w-full"
               loading={busy === 'apply'}
               disabled={totalTimes === 0}
               onClick={() => void apply(false)}
@@ -390,8 +394,6 @@ export function WeeklyDefaultPage(): JSX.Element {
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="w-full"
               loading={busy === 'apply'}
               disabled={totalTimes === 0}
               onClick={() => void apply(true)}
@@ -399,34 +401,34 @@ export function WeeklyDefaultPage(): JSX.Element {
               Replace every day
             </Button>
           </div>
+        </div>
 
-          {totalTimes === 0 && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              Add some times to your week first.
-            </p>
-          )}
-          {message && (
-            <p role="status" className="mt-3 text-sm text-status-completed">
-              {message}
-            </p>
-          )}
-          {formError && (
-            <p role="alert" className="mt-3 text-sm font-medium text-destructive">
-              {formError}
-            </p>
-          )}
+        {totalTimes === 0 && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Add some times to your week first.
+          </p>
+        )}
+        {message && (
+          <p role="status" className="mt-3 text-sm text-status-completed">
+            {message}
+          </p>
+        )}
+        {formError && (
+          <p role="alert" className="mt-3 text-sm font-medium text-destructive">
+            {formError}
+          </p>
+        )}
 
-          {status?.filled_to && (
-            <p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
-              Calendar is set up to{' '}
-              <span className="font-medium text-foreground">
-                {formatDateLong(`${status.filled_to}T12:00:00Z`, 'UTC')}
-              </span>
-              .
-            </p>
-          )}
-        </Card>
-      </div>
+        {status?.filled_to && (
+          <p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
+            Calendar is set up to{' '}
+            <span className="font-medium text-foreground">
+              {formatDateLong(`${status.filled_to}T12:00:00Z`, 'UTC')}
+            </span>
+            .
+          </p>
+        )}
+      </Card>
 
       <Card className="mt-6 p-5">
         <h3 className="mb-4 font-display text-base font-semibold text-foreground">

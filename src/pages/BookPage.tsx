@@ -102,46 +102,77 @@ export function BookPage(): JSX.Element {
   if (result) {
     return (
       <SiteShell>
-        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-          <Card className="p-6 text-center">
-            <p className="font-display text-2xl font-semibold text-foreground">
-              {result.status === 'confirmed' ? 'You are booked in' : 'Your slot is held'}
-            </p>
-            <p className="mt-2 text-muted-foreground">
-              {result.status === 'confirmed'
-                ? 'We look forward to seeing you.'
-                : 'The salon will confirm shortly. Your slot is reserved until then.'}
-            </p>
+        <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+            <div className="bg-primary px-6 py-6 text-center text-primary-foreground">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em]">
+                Kokolett Beauty
+              </p>
+              <p className="mt-2 font-display text-2xl font-semibold">
+                {result.status === 'confirmed'
+                  ? 'You are booked in'
+                  : 'Your slot is held'}
+              </p>
+              <p className="mt-1 text-sm">
+                {result.status === 'confirmed'
+                  ? 'We look forward to seeing you.'
+                  : `The salon will confirm shortly, usually within ${settings?.approval_window_h ?? 'a few'} hours.`}
+              </p>
+            </div>
 
-            <dl className="mx-auto mt-6 max-w-sm space-y-2 text-left">
-              <div className="flex justify-between gap-4 border-b border-border pb-2">
-                <dt className="text-muted-foreground">Reference</dt>
-                <dd className="font-mono font-medium text-foreground">
-                  {result.reference}
-                </dd>
-              </div>
+            {/* The torn-stub line: a dashed rule with a punched circle at
+                each edge, cut from the card down to the page ground behind
+                it — a ticket, not a plain confirmation card. */}
+            <div className="relative">
+              <span
+                aria-hidden="true"
+                className="absolute -left-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full bg-background"
+              />
+              <span
+                aria-hidden="true"
+                className="absolute -right-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full bg-background"
+              />
+              <div className="border-t border-dashed border-border" />
+            </div>
+
+            <div className="p-6">
+              <p className="text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Booking reference
+              </p>
+              <p className="mt-1 text-center font-mono text-3xl font-bold tracking-[0.15em] text-foreground">
+                {result.reference}
+              </p>
+
               {slot && (
-                <div className="flex justify-between gap-4 border-b border-border pb-2">
-                  <dt className="text-muted-foreground">When</dt>
-                  <dd className="text-foreground">
-                    {formatDateLong(slot.startsAt, timezone)}, {slot.label}
-                  </dd>
-                </div>
+                <dl className="mx-auto mt-6 max-w-xs space-y-2 border-t border-border pt-4">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Date</dt>
+                    <dd className="text-right font-medium text-foreground">
+                      {formatDateLong(slot.startsAt, timezone)}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Time</dt>
+                    <dd className="text-right font-medium text-foreground">
+                      {slot.label}
+                    </dd>
+                  </div>
+                </dl>
               )}
-            </dl>
 
-            <p className="mt-6 text-sm text-muted-foreground">
-              Keep your reference somewhere safe. Your confirmation and a link to change
-              the booking are on their way by email.
-            </p>
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                Keep your reference somewhere safe. Your confirmation and a link to change
+                the booking are on their way by email.
+              </p>
 
-            <Link
-              to={routes.public.home}
-              className="mt-6 inline-flex h-11 items-center rounded-lg border border-border px-5 font-semibold text-foreground hover:bg-muted"
-            >
-              Back to the salon
-            </Link>
-          </Card>
+              <Link
+                to={routes.public.home}
+                className="mt-6 flex h-11 w-full items-center justify-center rounded-lg border border-border font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Back to the salon
+              </Link>
+            </div>
+          </div>
         </div>
       </SiteShell>
     );

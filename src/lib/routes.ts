@@ -47,6 +47,8 @@ export const routes = {
     reports: '/dashboard/reports',
     assistant: '/dashboard/assistant',
     settings: '/dashboard/settings',
+    notifications: '/dashboard/notifications',
+    profile: '/dashboard/profile',
   },
   auth: {
     login: '/login',

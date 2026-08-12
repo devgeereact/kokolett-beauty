@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   analyzeDayOfWeekTrend,
   analyzeHourOfDayTrend,
+  buildAppointmentActivity,
   findScheduleConflicts,
   forecastCancellationRisk,
   rankRepeatCustomers,
@@ -213,5 +214,49 @@ describe('forecastCancellationRisk', () => {
       new Map([['x', 3]]),
     )[0]!;
     expect(risk.score).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('buildAppointmentActivity', () => {
+  it('emits a created event using the source label', () => {
+    const events = buildAppointmentActivity([
+      appt({ id: 'web', source: 'web', created_at: '2026-08-01T09:00:00.000Z' }),
+      appt({ id: 'owner', source: 'owner', created_at: '2026-08-02T09:00:00.000Z' }),
+    ]);
+    const web = events.find((e) => e.id === 'web:created')!;
+    const owner = events.find((e) => e.id === 'owner:created')!;
+    expect(web.detail).toBe('New booking');
+    expect(owner.detail).toBe('Phone booking taken');
+  });
+
+  it('emits a rescheduled event instead of created when rescheduled_from is set', () => {
+    const events = buildAppointmentActivity([
+      appt({
+        id: 'new-row',
+        rescheduled_from: 'old-row',
+        created_at: '2026-08-05T09:00:00.000Z',
+      }),
+    ]);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.kind).toBe('rescheduled');
+  });
+
+  it('emits one event per set timestamp, most recent first', () => {
+    const events = buildAppointmentActivity([
+      appt({
+        id: 'a',
+        created_at: '2026-08-01T09:00:00.000Z',
+        completed_at: '2026-08-11T10:00:00.000Z',
+      }),
+    ]);
+    expect(events.map((e) => e.kind)).toEqual(['completed', 'created']);
+  });
+
+  it('emits a no-show event for no-show status using updated_at', () => {
+    const events = buildAppointmentActivity([
+      appt({ id: 'a', status: 'no_show', updated_at: '2026-08-11T12:00:00.000Z' }),
+    ]);
+    const noShow = events.find((e) => e.kind === 'no_show')!;
+    expect(noShow.at).toBe('2026-08-11T12:00:00.000Z');
   });
 });

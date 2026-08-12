@@ -24,6 +24,8 @@ import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
 import { ServiceMenuPage } from '@/pages/dashboard/ServiceMenuPage';
 import { AssistantPage } from '@/pages/dashboard/AssistantPage';
 import { ReportsPage } from '@/pages/dashboard/ReportsPage';
+import { NotificationsPage } from '@/pages/dashboard/NotificationsPage';
+import { ProfilePage } from '@/pages/dashboard/ProfilePage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
 
@@ -89,6 +91,11 @@ export function App(): JSX.Element {
 
             <Route path={routes.owner.assistant} element={owner(<AssistantPage />)} />
             <Route path={routes.owner.reports} element={owner(<ReportsPage />)} />
+            <Route
+              path={routes.owner.notifications}
+              element={owner(<NotificationsPage />)}
+            />
+            <Route path={routes.owner.profile} element={owner(<ProfilePage />)} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

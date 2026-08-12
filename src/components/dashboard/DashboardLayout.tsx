@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { reportError } from '@/lib/sentry';
@@ -90,9 +90,14 @@ export function DashboardLayout({
    */
   const account = (
     <div className="space-y-3 px-3">
-      <p className="truncate text-xs text-sidebar-foreground" title={user?.email ?? ''}>
+      <Link
+        to={routes.owner.profile}
+        onClick={() => setMenuOpen(false)}
+        className="block truncate text-xs text-sidebar-foreground hover:underline"
+        title={user?.email ?? ''}
+      >
         {user?.email}
-      </p>
+      </Link>
       <Button
         variant="ghost"
         size="sm"
@@ -168,6 +173,21 @@ export function DashboardLayout({
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {actions}
+              <NavLink
+                to={routes.owner.notifications}
+                aria-label="Notifications"
+                className={({ isActive }) =>
+                  cn(
+                    'inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    isActive
+                      ? 'bg-muted text-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )
+                }
+              >
+                Notifications
+              </NavLink>
               <ThemeToggle />
             </div>
           </div>

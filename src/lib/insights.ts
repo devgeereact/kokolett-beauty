@@ -1,13 +1,13 @@
 /**
- * Pure computations shared by the AI Assistant's advisory modules and the
- * Reports page.
+ * Pure computations shared by the AI Assistant's advisory modules, the
+ * Reports page, and the Notifications activity feed.
  *
  * Every function here is a scan or a ranking over appointment rows the
  * caller already fetched — nothing in this file talks to Supabase, and
  * nothing here mutates data. The assistant is advisory only (docs/PRD.md):
  * each module surfaces a finding, and a person clicks a real action
- * (reschedule, send, mark complete) to do anything about it. Reports uses
- * the same trend/ranking functions purely for display.
+ * (reschedule, send, mark complete) to do anything about it. Reports and
+ * Notifications use the same functions purely for display.
  */
 
 import { dayOfWeek } from '@/lib/calendar';
@@ -245,4 +245,105 @@ export function forecastCancellationRisk(
       return { appointment, score: Math.min(1, score), reasons };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+/* -------------------------------------------------------- activity --- */
+
+export type ActivityKind =
+  'created' | 'rescheduled' | 'cancelled' | 'rejected' | 'completed' | 'no_show';
+
+export interface ActivityEvent {
+  /** `${appointment.id}:${kind}` — unique per event, stable across reloads. */
+  id: string;
+  kind: ActivityKind;
+  /** ISO timestamp the event actually happened at. */
+  at: string;
+  customerName: string;
+  reference: string;
+  detail: string;
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  web: 'New booking',
+  owner: 'Phone booking taken',
+  availability_request: 'Booked from the waitlist',
+};
+
+/**
+ * One or more activity events per appointment, from whichever timestamp
+ * columns are actually set — a booking that was both cancelled and
+ * completed (impossible, but the point stands) would surface both. Sorted
+ * most-recent-first; the caller decides how far back to show.
+ */
+export function buildAppointmentActivity(
+  appointments: AppointmentDetailed[],
+): ActivityEvent[] {
+  const events: ActivityEvent[] = [];
+
+  for (const a of appointments) {
+    const customerName = a.customer_name ?? 'Customer';
+
+    if (a.rescheduled_from) {
+      events.push({
+        id: `${a.id}:rescheduled`,
+        kind: 'rescheduled',
+        at: a.created_at,
+        customerName,
+        reference: a.reference,
+        detail: 'Moved to a new time',
+      });
+    } else {
+      events.push({
+        id: `${a.id}:created`,
+        kind: 'created',
+        at: a.created_at,
+        customerName,
+        reference: a.reference,
+        detail: SOURCE_LABELS[a.source] ?? 'New booking',
+      });
+    }
+
+    if (a.cancelled_at) {
+      events.push({
+        id: `${a.id}:cancelled`,
+        kind: 'cancelled',
+        at: a.cancelled_at,
+        customerName,
+        reference: a.reference,
+        detail: a.cancellation_reason ?? 'Cancelled',
+      });
+    }
+    if (a.rejected_at) {
+      events.push({
+        id: `${a.id}:rejected`,
+        kind: 'rejected',
+        at: a.rejected_at,
+        customerName,
+        reference: a.reference,
+        detail: a.rejection_reason ?? 'Booking declined',
+      });
+    }
+    if (a.completed_at) {
+      events.push({
+        id: `${a.id}:completed`,
+        kind: 'completed',
+        at: a.completed_at,
+        customerName,
+        reference: a.reference,
+        detail: 'Completed',
+      });
+    }
+    if (a.status === 'no_show') {
+      events.push({
+        id: `${a.id}:no_show`,
+        kind: 'no_show',
+        at: a.updated_at ?? a.created_at,
+        customerName,
+        reference: a.reference,
+        detail: 'Marked as a no-show',
+      });
+    }
+  }
+
+  return events.sort((x, y) => y.at.localeCompare(x.at));
 }

@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
+import { Calendar } from '@/components/ui/Calendar';
 import { Card } from '@/components/ui/Card';
 import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
 import { EmptyState, LoadingState } from '@/components/ui/States';
+import { formatLocalDate, parseLocalDate } from '@/lib/localDate';
 import { useServices } from '@/hooks/useServices';
 import { useAvailability } from '@/hooks/useAvailability';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { submitBooking } from '@/services/bookingService';
 import { toAppError } from '@/lib/errors';
 import { formatDateLong } from '@/lib/format';
-import { cn } from '@/lib/utils';
 import { routes } from '@/lib/routes';
 import type { BookingResult, TimeSlot } from '@/types';
 
@@ -61,6 +62,7 @@ export function BookPage(): JSX.Element {
   const [result, setResult] = useState<BookingResult | null>(null);
 
   const activeDate = openDate ?? openDates[0] ?? null;
+  const openDateSet = useMemo(() => new Set(openDates), [openDates]);
 
   const book = async (): Promise<void> => {
     if (!slot) return;
@@ -173,59 +175,52 @@ export function BookPage(): JSX.Element {
         )}
 
         {!loading && openDates.length > 0 && !slot && (
-          <>
-            <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
-              Pick a day
-            </h2>
-            <div className="mb-8 flex flex-wrap gap-2">
-              {openDates.map((date) => (
-                <button
-                  key={date}
-                  type="button"
-                  onClick={() => setOpenDate(date)}
-                  className={cn(
-                    'min-h-11 rounded-lg border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    date === activeDate
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-border bg-card text-foreground hover:border-primary',
-                  )}
-                >
-                  {new Intl.DateTimeFormat('en-GB', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short',
-                    timeZone: 'UTC',
-                  }).format(new Date(`${date}T12:00:00Z`))}
-                  <span className="ml-1 opacity-70">
-                    ({slotsByDate[date]?.length ?? 0})
-                  </span>
-                </button>
-              ))}
-            </div>
+          <Card className="mb-8 overflow-hidden p-0">
+            <div className="grid sm:grid-cols-[auto_1fr]">
+              <div className="border-b border-border p-3 sm:border-b-0 sm:border-r">
+                <Calendar
+                  mode="single"
+                  selected={parseLocalDate(activeDate ?? '')}
+                  defaultMonth={parseLocalDate(activeDate ?? openDates[0] ?? '')}
+                  onSelect={(date) => date && setOpenDate(formatLocalDate(date))}
+                  disabled={(date) => !openDateSet.has(formatLocalDate(date))}
+                />
+              </div>
 
-            {activeDate && (
-              <>
-                <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
-                  {formatDateLong(`${activeDate}T12:00:00Z`, 'UTC')}
-                </h2>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                  {(slotsByDate[activeDate] ?? []).map((s) => (
-                    <button
-                      key={s.startsAt}
-                      type="button"
-                      onClick={() => {
-                        setSlot(s);
-                        setError(null);
-                      }}
-                      className="min-h-11 rounded-lg border border-border bg-card font-mono text-sm text-foreground hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </>
+              <div className="min-w-0 flex-1 p-5">
+                {activeDate ? (
+                  <>
+                    <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+                      {formatDateLong(`${activeDate}T12:00:00Z`, 'UTC')}
+                    </h2>
+                    <p className="mb-4 text-sm text-muted-foreground">
+                      {slotsByDate[activeDate]?.length ?? 0} time
+                      {(slotsByDate[activeDate]?.length ?? 0) === 1 ? '' : 's'} available
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {(slotsByDate[activeDate] ?? []).map((s) => (
+                        <button
+                          key={s.startsAt}
+                          type="button"
+                          onClick={() => {
+                            setSlot(s);
+                            setError(null);
+                          }}
+                          className="min-h-11 rounded-lg border border-border bg-card font-mono text-sm text-foreground hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Pick a day on the calendar to see times.
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
         )}
 
         {slot && (

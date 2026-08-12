@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Calendar } from '@/components/ui/Calendar';
+import { formatLocalDate, parseLocalDate } from '@/lib/localDate';
 import { cn } from '@/lib/utils';
 
 export interface DatePickerProps {
@@ -18,20 +19,6 @@ export interface DatePickerProps {
   'aria-invalid'?: boolean;
 }
 
-/** `yyyy-mm-dd` parsed as a local calendar date — never shifts a day at a timezone edge. */
-function parseISO(value: string): Date | undefined {
-  if (!value) return undefined;
-  const [y, m, d] = value.split('-').map(Number);
-  if (!y || !m || !d) return undefined;
-  return new Date(y, m - 1, d);
-}
-
-function toISO(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 const DISPLAY = new Intl.DateTimeFormat('en-GB', {
   weekday: 'short',
@@ -64,9 +51,9 @@ export function DatePicker({
 }: DatePickerProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const selected = parseISO(value);
-  const minDate = parseISO(min ?? '');
-  const maxDate = parseISO(max ?? '');
+  const selected = parseLocalDate(value);
+  const minDate = parseLocalDate(min ?? '');
+  const maxDate = parseLocalDate(max ?? '');
 
   useEffect(() => {
     if (!open) return undefined;
@@ -128,7 +115,7 @@ export function DatePicker({
             selected={selected}
             defaultMonth={selected}
             onSelect={(date) => {
-              if (date) onChange(toISO(date));
+              if (date) onChange(formatLocalDate(date));
               setOpen(false);
             }}
             disabled={(date) =>

@@ -10,8 +10,9 @@ import { useAppointments } from '@/hooks/useAppointments';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments';
 import { useSalonToday } from '@/hooks/useSalonToday';
+import { useLiveClock } from '@/hooks/useLiveClock';
 import { setAppointmentStatus } from '@/services/appointmentService';
-import { formatDateLong, formatMoney } from '@/lib/format';
+import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import { LIVE_STATUSES, type AppointmentStatus } from '@/types';
@@ -31,6 +32,7 @@ export function TodayPage(): JSX.Element {
   // Recomputed on rollover, not frozen at mount — this screen is left open on a
   // salon tablet overnight.
   const { start, end } = useSalonToday(timezone);
+  const now = useLiveClock();
   const statuses = useMemo<AppointmentStatus[]>(() => [...LIVE_STATUSES], []);
   const { appointments, loading, error, refresh } = useAppointments({
     from: start,
@@ -85,16 +87,24 @@ export function TodayPage(): JSX.Element {
         requests: summary?.new_request_count,
       }}
       actions={
-        <span
-          className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex"
-          title={connected ? 'Live updates connected' : 'Live updates unavailable'}
-        >
+        <div className="flex items-center gap-3">
           <span
-            className={`h-2 w-2 rounded-full ${connected ? 'bg-status-completed' : 'bg-status-cancelled'}`}
-            aria-hidden="true"
-          />
-          {connected ? 'Live' : 'Offline'}
-        </span>
+            className="hidden font-mono text-sm font-medium tabular-nums text-foreground sm:inline"
+            aria-label="Current time"
+          >
+            {formatTime(now, timezone)}
+          </span>
+          <span
+            className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex"
+            title={connected ? 'Live updates connected' : 'Live updates unavailable'}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${connected ? 'bg-status-completed' : 'bg-status-cancelled'}`}
+              aria-hidden="true"
+            />
+            {connected ? 'Live' : 'Offline'}
+          </span>
+        </div>
       }
     >
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { ErrorState, LoadingState } from '@/components/ui/States';
+import { DayOfWeekChart } from '@/components/dashboard/insights/DayOfWeekChart';
 import { getDayOfWeekTrend } from '@/services/assistantService';
 import type { DayOfWeekTrend } from '@/lib/insights';
 
@@ -27,7 +28,6 @@ export function TrendAnalysisPanel({ timezone }: { timezone: string }): JSX.Elem
   if (!trend) return <LoadingState label="Looking at the last 90 days…" />;
 
   const byDay = new Map(trend.map((t) => [t.dayOfWeek, t]));
-  const maxCount = Math.max(1, ...trend.map((t) => t.count));
   const closedDays = DISPLAY_ORDER.filter(
     (d) => !(byDay.get(d)?.templateOpen ?? false),
   ).map((d) => DAY_LABELS[DISPLAY_ORDER.indexOf(d)]);
@@ -44,31 +44,7 @@ export function TrendAnalysisPanel({ timezone }: { timezone: string }): JSX.Elem
           : 'Every day is open in your weekly template.'}
       </p>
 
-      <div className="space-y-2.5">
-        {DISPLAY_ORDER.map((dow, i) => {
-          const row = byDay.get(dow);
-          const count = row?.count ?? 0;
-          const open = row?.templateOpen ?? false;
-          return (
-            <div key={dow} className="flex items-center gap-3">
-              <span className="w-9 shrink-0 text-xs font-medium text-muted-foreground">
-                {DAY_LABELS[i]}
-              </span>
-              <div className="h-5 flex-1 overflow-hidden rounded-md bg-muted">
-                <div
-                  className={
-                    open ? 'h-full rounded-md bg-primary' : 'h-full rounded-md bg-border'
-                  }
-                  style={{ width: `${(count / maxCount) * 100}%` }}
-                />
-              </div>
-              <span className="w-6 shrink-0 text-right text-xs tabular-nums text-foreground">
-                {count}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      <DayOfWeekChart trend={trend} />
     </Card>
   );
 }

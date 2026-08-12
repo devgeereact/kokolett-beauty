@@ -1,15 +1,17 @@
 /**
- * Pure computations behind the AI Assistant's advisory modules.
+ * Pure computations shared by the AI Assistant's advisory modules and the
+ * Reports page.
  *
  * Every function here is a scan or a ranking over appointment rows the
  * caller already fetched — nothing in this file talks to Supabase, and
  * nothing here mutates data. The assistant is advisory only (docs/PRD.md):
  * each module surfaces a finding, and a person clicks a real action
- * (reschedule, send, mark complete) to do anything about it.
+ * (reschedule, send, mark complete) to do anything about it. Reports uses
+ * the same trend/ranking functions purely for display.
  */
 
 import { dayOfWeek } from '@/lib/calendar';
-import { toSalonDate } from '@/lib/format';
+import { minutesSinceMidnight, toSalonDate } from '@/lib/format';
 import type { TemplateDay } from '@/services/availabilityService';
 import type { AppointmentDetailed, Customer } from '@/types';
 
@@ -120,6 +122,28 @@ export function analyzeDayOfWeekTrend(
     dayOfWeek: dayOfWeekIndex,
     count: counts.get(dayOfWeekIndex) ?? 0,
     templateOpen: openByDay.get(dayOfWeekIndex) ?? false,
+  }));
+}
+
+export interface HourOfDayTrend {
+  /** 0–23, salon-local. */
+  hour: number;
+  count: number;
+}
+
+/** Bookings grouped by salon-local start hour — where in the day demand actually falls. */
+export function analyzeHourOfDayTrend(
+  appointments: AppointmentDetailed[],
+  timezone: string,
+): HourOfDayTrend[] {
+  const counts = new Map<number, number>();
+  for (const a of appointments) {
+    const hour = Math.floor(minutesSinceMidnight(a.starts_at, timezone) / 60);
+    counts.set(hour, (counts.get(hour) ?? 0) + 1);
+  }
+  return Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    count: counts.get(hour) ?? 0,
   }));
 }
 

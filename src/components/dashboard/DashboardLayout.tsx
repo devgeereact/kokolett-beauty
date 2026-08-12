@@ -46,6 +46,7 @@ export function DashboardLayout({
     { to: routes.owner.customers, label: 'Customers' },
     { to: routes.owner.appointmentType, label: 'Appointment' },
     { to: routes.owner.serviceMenu, label: 'Services' },
+    { to: routes.owner.reports, label: 'Reports' },
     { to: routes.owner.assistant, label: 'AI Assistant' },
     { to: routes.owner.settings, label: 'Settings' },
   ];

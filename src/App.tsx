@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -23,6 +23,7 @@ import { CustomersPage } from '@/pages/dashboard/CustomersPage';
 import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
 import { ServiceMenuPage } from '@/pages/dashboard/ServiceMenuPage';
 import { AssistantPage } from '@/pages/dashboard/AssistantPage';
+import { ReportsPage } from '@/pages/dashboard/ReportsPage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
 
@@ -87,13 +88,7 @@ export function App(): JSX.Element {
             />
 
             <Route path={routes.owner.assistant} element={owner(<AssistantPage />)} />
-
-            {/* Not built yet — send this to the dashboard rather than a 404,
-                so a stale bookmark does not look like a broken app. */}
-            <Route
-              path={routes.owner.reports}
-              element={<Navigate to={routes.owner.dashboard} replace />}
-            />
+            <Route path={routes.owner.reports} element={owner(<ReportsPage />)} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

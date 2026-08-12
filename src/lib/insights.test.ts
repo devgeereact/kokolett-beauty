@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   analyzeDayOfWeekTrend,
+  analyzeHourOfDayTrend,
   findScheduleConflicts,
   forecastCancellationRisk,
   rankRepeatCustomers,
@@ -126,6 +127,21 @@ describe('analyzeDayOfWeekTrend', () => {
     expect(trend[0]!).toEqual({ dayOfWeek: 0, count: 1, templateOpen: false });
     expect(trend[2]!).toEqual({ dayOfWeek: 2, count: 2, templateOpen: true });
     expect(trend[1]!).toEqual({ dayOfWeek: 1, count: 0, templateOpen: false });
+  });
+});
+
+describe('analyzeHourOfDayTrend', () => {
+  it('groups by salon-local start hour', () => {
+    const appointments = [
+      appt({ starts_at: '2026-08-11T09:15:00.000Z' }),
+      appt({ starts_at: '2026-08-11T09:45:00.000Z' }),
+      appt({ starts_at: '2026-08-11T14:00:00.000Z' }),
+    ];
+    const trend = analyzeHourOfDayTrend(appointments, 'UTC');
+    expect(trend).toHaveLength(24);
+    expect(trend[9]!).toEqual({ hour: 9, count: 2 });
+    expect(trend[14]!).toEqual({ hour: 14, count: 1 });
+    expect(trend[10]!).toEqual({ hour: 10, count: 0 });
   });
 });
 

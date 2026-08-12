@@ -134,6 +134,25 @@ export function offsetPercent(minutesOfDay: number, range: HourRange): number {
   return Math.min(100, Math.max(0, pct));
 }
 
+/** The snap increment for dragging an appointment, in minutes. */
+export const DRAG_SNAP_MIN = 15;
+
+/**
+ * The inverse of `offsetPercent`: given a vertical position on the axis (0-100,
+ * clamped) hand back the minutes-since-midnight it represents. Used while
+ * dragging, where the pointer gives a percentage of the grid's height and the
+ * drop needs a real time.
+ */
+export function minutesFromPercent(percent: number, range: HourRange): number {
+  const clamped = Math.min(100, Math.max(0, percent));
+  return range.startMin + (clamped / 100) * (range.endMin - range.startMin);
+}
+
+/** Rounds to the nearest `DRAG_SNAP_MIN`, so a drop always lands on a real slot boundary. */
+export function snapMinutes(minutesOfDay: number): number {
+  return Math.round(minutesOfDay / DRAG_SNAP_MIN) * DRAG_SNAP_MIN;
+}
+
 /** One label per hour row, e.g. `["09:00", "10:00", …]`. */
 export function hourLabels(range: HourRange): string[] {
   const labels: string[] = [];

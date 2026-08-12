@@ -11,6 +11,14 @@ export interface EventBlockProps {
   time: string;
   label: string;
   onClick?: () => void;
+  /**
+   * Wired up only for `confirmed`/`pending_approval` blocks — dragging them
+   * reschedules via `useAppointmentDrag`. When set, this replaces `onClick`
+   * as the block's interaction: the hook decides whether a press turns out
+   * to be a tap (and calls `onClick` itself) or an actual drag.
+   */
+  onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  draggable?: boolean;
 }
 
 /**
@@ -33,6 +41,8 @@ export function EventBlock({
   time,
   label,
   onClick,
+  onPointerDown,
+  draggable,
 }: EventBlockProps): JSX.Element {
   const style = { top: `${topPercent}%`, height: `${heightPercent}%` };
 
@@ -47,7 +57,9 @@ export function EventBlock({
           'absolute inset-x-1 flex items-center justify-center rounded-md border-2 border-dashed',
           'border-border text-xs text-muted-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          onClick ? 'hover:border-primary hover:text-primary' : 'cursor-not-allowed opacity-50',
+          onClick
+            ? 'hover:border-primary hover:text-primary'
+            : 'cursor-not-allowed opacity-50',
         )}
       >
         {label}
@@ -58,19 +70,24 @@ export function EventBlock({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={onPointerDown ? undefined : onClick}
+      onPointerDown={onPointerDown}
       style={style}
       className={cn(
         'absolute inset-x-1 overflow-hidden rounded-md border border-border border-l-4 bg-card px-2 py-1',
         'text-left text-xs text-foreground',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         status ? STATUS_BORDERS[status] : 'border-l-muted-foreground',
+        draggable && 'cursor-grab touch-none active:cursor-grabbing',
       )}
     >
       <span className="flex items-center gap-1 font-mono text-[11px] font-semibold">
         <span
           aria-hidden="true"
-          className={cn('h-1.5 w-1.5 shrink-0 rounded-full', status ? STATUS_DOTS[status] : 'bg-muted-foreground')}
+          className={cn(
+            'h-1.5 w-1.5 shrink-0 rounded-full',
+            status ? STATUS_DOTS[status] : 'bg-muted-foreground',
+          )}
         />
         {time}
       </span>

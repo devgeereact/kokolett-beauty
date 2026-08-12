@@ -5,6 +5,8 @@ import {
   hourLabels,
   weekDates,
   shiftAnchor,
+  minutesFromPercent,
+  snapMinutes,
 } from '@/lib/calendar';
 
 describe('hourRange', () => {
@@ -44,6 +46,34 @@ describe('offsetPercent', () => {
   it('clamps outside the range instead of overflowing', () => {
     expect(offsetPercent(0, range)).toBe(0);
     expect(offsetPercent(2000, range)).toBe(100);
+  });
+});
+
+describe('minutesFromPercent', () => {
+  const range = { startMin: 480, endMin: 720 }; // 08:00-12:00, 240 min span
+
+  it('is the exact inverse of offsetPercent', () => {
+    expect(minutesFromPercent(0, range)).toBe(480);
+    expect(minutesFromPercent(100, range)).toBe(720);
+    expect(minutesFromPercent(50, range)).toBe(600);
+    expect(minutesFromPercent(offsetPercent(633, range), range)).toBeCloseTo(633, 5);
+  });
+
+  it('clamps outside 0-100 instead of extrapolating past the axis', () => {
+    expect(minutesFromPercent(-20, range)).toBe(480);
+    expect(minutesFromPercent(150, range)).toBe(720);
+  });
+});
+
+describe('snapMinutes', () => {
+  it('rounds to the nearest 15-minute mark', () => {
+    expect(snapMinutes(603)).toBe(600); // 10:03 -> 10:00
+    expect(snapMinutes(608)).toBe(615); // 10:08 -> 10:15
+    expect(snapMinutes(600)).toBe(600); // already on the grid
+  });
+
+  it('rounds a value exactly halfway up, matching Math.round', () => {
+    expect(snapMinutes(607.5)).toBe(615);
   });
 });
 

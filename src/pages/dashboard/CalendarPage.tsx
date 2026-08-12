@@ -16,8 +16,17 @@ import {
   type DaySummary,
   type OwnerDaySlot,
 } from '@/services/availabilityService';
-import { listAppointments, setAppointmentStatus, setOwnerNote } from '@/services/appointmentService';
-import { formatDateLong, formatDateShort, salonDayRange, toSalonDate } from '@/lib/format';
+import {
+  listAppointments,
+  setAppointmentStatus,
+  setOwnerNote,
+} from '@/services/appointmentService';
+import {
+  formatDateLong,
+  formatDateShort,
+  salonDayRange,
+  toSalonDate,
+} from '@/lib/format';
 import {
   monthGrid,
   monthLabel,
@@ -64,7 +73,9 @@ export function CalendarPage(): JSX.Element {
   const [anchor, setAnchor] = useState(today);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
-  const [newBooking, setNewBooking] = useState<{ date: string; time: string } | null>(null);
+  const [newBooking, setNewBooking] = useState<{ date: string; time: string } | null>(
+    null,
+  );
 
   const [summary, setSummary] = useState<Map<string, DaySummary>>(new Map());
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
@@ -112,7 +123,9 @@ export function CalendarPage(): JSX.Element {
           to: salonDayRange(range.to, timezone).end,
           statuses: [...LIVE_STATUSES],
         }),
-        needsSlots ? Promise.all(visibleDates.map((d) => listDaySlots(d))) : Promise.resolve([]),
+        needsSlots
+          ? Promise.all(visibleDates.map((d) => listDaySlots(d)))
+          : Promise.resolve([]),
       ]);
 
       if (id !== requestId.current) return;
@@ -120,7 +133,9 @@ export function CalendarPage(): JSX.Element {
       setSummary(new Map(summaryRows.map((r) => [r.on_date, r])));
       setAppointments(appts);
       setDaySlots(
-        needsSlots ? new Map(visibleDates.map((d, i) => [d, slotRows[i] ?? []])) : new Map(),
+        needsSlots
+          ? new Map(visibleDates.map((d, i) => [d, slotRows[i] ?? []]))
+          : new Map(),
       );
       setError(null);
     } catch (e) {
@@ -145,7 +160,10 @@ export function CalendarPage(): JSX.Element {
     setNewBooking(null);
   }, [view, anchor]);
 
-  const appointmentsByDate = useMemo(() => groupByDate(appointments, timezone), [appointments, timezone]);
+  const appointmentsByDate = useMemo(
+    () => groupByDate(appointments, timezone),
+    [appointments, timezone],
+  );
   const selected = appointments.find((a) => a.id === selectedId) ?? null;
 
   const changeStatus = useCallback(
@@ -238,6 +256,7 @@ export function CalendarPage(): JSX.Element {
           onSelectAppointment={selectAppointment}
           onSelectDate={goToDay}
           onSelectOpenSlot={selectOpenSlot}
+          onChanged={() => void load()}
         />
       )}
 
@@ -250,6 +269,7 @@ export function CalendarPage(): JSX.Element {
           openSlots={daySlots.get(anchor) ?? []}
           onSelectAppointment={selectAppointment}
           onSelectOpenSlot={(slot) => selectOpenSlot(anchor, slot)}
+          onChanged={() => void load()}
         />
       )}
 

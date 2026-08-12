@@ -1,12 +1,9 @@
-import {
-  HOUR_ROW_PX,
-  hourLabels,
-  hourRange,
-  offsetPercent,
-} from '@/lib/calendar';
+import { HOUR_ROW_PX, hourLabels, hourRange, offsetPercent } from '@/lib/calendar';
 import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
+import { useAppointmentDrag } from '@/hooks/useAppointmentDrag';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
+import { DragGhost } from '@/components/dashboard/calendar/DragGhost';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
 import type { OwnerDaySlot } from '@/services/availabilityService';
 import type { AppointmentDetailed } from '@/types';
@@ -19,7 +16,11 @@ export interface DayViewProps {
   openSlots: OwnerDaySlot[];
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
   onSelectOpenSlot: (slot: OwnerDaySlot) => void;
+  /** Reload after a drag successfully reschedules an appointment. */
+  onChanged: () => void;
 }
+
+const DRAGGABLE_STATUSES = new Set(['confirmed', 'pending_approval']);
 
 export function DayView({
   date,
@@ -29,6 +30,7 @@ export function DayView({
   openSlots,
   onSelectAppointment,
   onSelectOpenSlot,
+  onChanged,
 }: DayViewProps): JSX.Element {
   const nowMinutes = useNowLine(timezone);
   const isToday = date === today;
@@ -48,6 +50,8 @@ export function DayView({
   const labels = hourLabels(range);
   const gridHeight = labels.length * HOUR_ROW_PX;
 
+  const drag = useAppointmentDrag(range, timezone, onChanged);
+
   // Same real-<table> structure as WeekView (docs/DESIGN.md §7's table +
   // agenda requirement stood for the standalone Day view; the owner asked
   // for the Agenda panel removed now that it sits directly beside a full
@@ -58,83 +62,129 @@ export function DayView({
   // hour row. No repeated date heading either — the page header above
   // already shows it.
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <table className="w-full border-collapse text-sm">
-        <caption className="sr-only">Schedule for {date}</caption>
-        <tbody>
-          {labels.map((label, i) => (
-            <tr key={label}>
-              <th
-                scope="row"
-                style={{ height: HOUR_ROW_PX }}
-                className="w-[52px] pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
-              >
-                {label}
-              </th>
-              {i === 0 && (
-                <td
-                  rowSpan={labels.length}
-                  className="relative align-top"
-                  style={
-                    isToday
-                      ? {
-                          backgroundColor:
-                            'color-mix(in srgb, var(--primary) 4%, transparent)',
-                        }
-                      : undefined
-                  }
+    <div>
+      {drag.error && (
+        <p role="alert" className="mb-3 text-sm font-medium text-destructive">
+          {drag.error}{' '}
+          <button type="button" onClick={drag.dismissError} className="underline">
+            Dismiss
+          </button>
+        </p>
+      )}
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <table className="w-full border-collapse text-sm">
+          <caption className="sr-only">Schedule for {date}</caption>
+          <tbody>
+            {labels.map((label, i) => (
+              <tr key={label}>
+                <th
+                  scope="row"
+                  style={{ height: HOUR_ROW_PX }}
+                  className="w-[52px] pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
                 >
-                  <div
-                    className="relative"
-                    style={{
-                      height: gridHeight,
-                      backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
-                    }}
-                  >
-                    {freeSlots.map((slot) => {
-                      const start = minutesSinceMidnight(slot.starts_at, timezone);
-                      return (
-                        <EventBlock
-                          key={slot.starts_at}
-                          variant="open"
-                          time={slot.local_time}
-                          label={`+ Add · ${slot.local_time}`}
-                          topPercent={offsetPercent(start, range)}
-                          heightPercent={
-                            offsetPercent(start + 60, range) - offsetPercent(start, range)
+                  {label}
+                </th>
+                {i === 0 && (
+                  <td
+                    data-day-date={date}
+                    rowSpan={labels.length}
+                    className="relative align-top"
+                    style={
+                      isToday
+                        ? {
+                            backgroundColor:
+                              'color-mix(in srgb, var(--primary) 4%, transparent)',
                           }
-                          onClick={() => onSelectOpenSlot(slot)}
-                        />
-                      );
-                    })}
+                        : undefined
+                    }
+                  >
+                    <div
+                      className="relative"
+                      style={{
+                        height: gridHeight,
+                        backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
+                      }}
+                    >
+                      {freeSlots.map((slot) => {
+                        const start = minutesSinceMidnight(slot.starts_at, timezone);
+                        return (
+                          <EventBlock
+                            key={slot.starts_at}
+                            variant="open"
+                            time={slot.local_time}
+                            label={`+ Add · ${slot.local_time}`}
+                            topPercent={offsetPercent(start, range)}
+                            heightPercent={
+                              offsetPercent(start + 60, range) -
+                              offsetPercent(start, range)
+                            }
+                            onClick={() => onSelectOpenSlot(slot)}
+                          />
+                        );
+                      })}
 
-                    {appointments.map((appointment) => {
-                      const start = minutesSinceMidnight(appointment.starts_at, timezone);
-                      const end = minutesSinceMidnight(appointment.ends_at, timezone);
-                      return (
-                        <EventBlock
-                          key={appointment.id}
-                          variant="booked"
-                          status={appointment.status}
-                          time={formatTime(appointment.starts_at, timezone)}
-                          label={appointment.customer_name ?? 'Customer'}
-                          topPercent={offsetPercent(start, range)}
-                          heightPercent={offsetPercent(end, range) - offsetPercent(start, range)}
-                          onClick={() => onSelectAppointment(appointment)}
-                        />
-                      );
-                    })}
+                      {appointments.map((appointment) => {
+                        const start = minutesSinceMidnight(
+                          appointment.starts_at,
+                          timezone,
+                        );
+                        const end = minutesSinceMidnight(appointment.ends_at, timezone);
+                        const draggable = DRAGGABLE_STATUSES.has(appointment.status);
+                        return (
+                          <EventBlock
+                            key={appointment.id}
+                            variant="booked"
+                            status={appointment.status}
+                            time={formatTime(appointment.starts_at, timezone)}
+                            label={appointment.customer_name ?? 'Customer'}
+                            topPercent={offsetPercent(start, range)}
+                            heightPercent={
+                              offsetPercent(end, range) - offsetPercent(start, range)
+                            }
+                            onClick={() => onSelectAppointment(appointment)}
+                            draggable={draggable}
+                            onPointerDown={
+                              draggable
+                                ? (e) => {
+                                    const columnEl = e.currentTarget.closest('td');
+                                    if (columnEl) {
+                                      drag.beginDrag(e, appointment, date, columnEl, () =>
+                                        onSelectAppointment(appointment),
+                                      );
+                                    }
+                                  }
+                                : undefined
+                            }
+                          />
+                        );
+                      })}
 
-                    {isToday && nowMinutes >= range.startMin && nowMinutes <= range.endMin && (
-                      <NowLine topPercent={offsetPercent(nowMinutes, range)} />
-                    )}
-                  </div>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                      {drag.preview && drag.preview.date === date && (
+                        <DragGhost
+                          label={`Move here · ${String(Math.floor(drag.preview.minutes / 60)).padStart(2, '0')}:${String(drag.preview.minutes % 60).padStart(2, '0')}`}
+                          topPercent={offsetPercent(drag.preview.minutes, range)}
+                          heightPercent={
+                            offsetPercent(
+                              drag.preview.minutes + drag.preview.durationMin,
+                              range,
+                            ) - offsetPercent(drag.preview.minutes, range)
+                          }
+                        />
+                      )}
+
+                      {isToday &&
+                        nowMinutes >= range.startMin &&
+                        nowMinutes <= range.endMin && (
+                          <NowLine topPercent={offsetPercent(nowMinutes, range)} />
+                        )}
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

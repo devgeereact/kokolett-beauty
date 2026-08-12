@@ -9,7 +9,9 @@ import {
 } from '@/lib/calendar';
 import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
+import { useAppointmentDrag } from '@/hooks/useAppointmentDrag';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
+import { DragGhost } from '@/components/dashboard/calendar/DragGhost';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
 import { cn } from '@/lib/utils';
 import type { OwnerDaySlot } from '@/services/availabilityService';
@@ -24,7 +26,11 @@ export interface WeekViewProps {
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
   onSelectDate: (date: string) => void;
   onSelectOpenSlot: (date: string, slot: OwnerDaySlot) => void;
+  /** Reload after a drag successfully reschedules an appointment. */
+  onChanged: () => void;
 }
+
+const DRAGGABLE_STATUSES = new Set(['confirmed', 'pending_approval']);
 
 export function WeekView({
   dates,
@@ -35,6 +41,7 @@ export function WeekView({
   onSelectAppointment,
   onSelectDate,
   onSelectOpenSlot,
+  onChanged,
 }: WeekViewProps): JSX.Element {
   const nowMinutes = useNowLine(timezone);
 
@@ -56,6 +63,8 @@ export function WeekView({
   const labels = hourLabels(range);
   const gridHeight = labels.length * HOUR_ROW_PX;
 
+  const drag = useAppointmentDrag(range, timezone, onChanged);
+
   /**
    * A real `<table>`, not a `<div>` grid — docs/DESIGN.md §7 requires proper
    * headers on the calendar, not ARIA bolted onto generic elements. Row 0's
@@ -64,138 +73,186 @@ export function WeekView({
    * later rows contribute only their `<th scope="row">` time label.
    */
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <table className="w-full border-collapse text-sm">
-        <caption className="sr-only">
-          Week of {dates[0]} to {dates[6]}. Select a day heading, or switch to Day view, for a
-          full list of that day&apos;s times.
-        </caption>
-        <thead>
-          <tr className="border-b border-border">
-            <th scope="col" className="w-[52px]">
-              <span className="sr-only">Time</span>
-            </th>
-            {dates.map((date) => (
-              <th
-                key={date}
-                scope="col"
-                className="border-l border-border py-2.5 text-center font-medium"
-              >
-                <button
-                  type="button"
-                  onClick={() => onSelectDate(date)}
-                  className={cn(
-                    'flex w-full flex-col items-center gap-0.5',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  )}
+    <div>
+      {drag.error && (
+        <p role="alert" className="mb-3 text-sm font-medium text-destructive">
+          {drag.error}{' '}
+          <button type="button" onClick={drag.dismissError} className="underline">
+            Dismiss
+          </button>
+        </p>
+      )}
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <table className="w-full border-collapse text-sm">
+          <caption className="sr-only">
+            Week of {dates[0]} to {dates[6]}. Select a day heading, or switch to Day view,
+            for a full list of that day&apos;s times.
+          </caption>
+          <thead>
+            <tr className="border-b border-border">
+              <th scope="col" className="w-[52px]">
+                <span className="sr-only">Time</span>
+              </th>
+              {dates.map((date) => (
+                <th
+                  key={date}
+                  scope="col"
+                  className="border-l border-border py-2.5 text-center font-medium"
                 >
-                  <span className="text-[11px] font-medium text-muted-foreground">
-                    {WEEKDAY_HEADINGS[(dayOfWeek(date) + 6) % 7]}
-                  </span>
-                  <span
+                  <button
+                    type="button"
+                    onClick={() => onSelectDate(date)}
                     className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded-full text-[15px]',
-                      date === today
-                        ? 'bg-primary font-semibold text-primary-foreground'
-                        : 'text-foreground',
+                      'flex w-full flex-col items-center gap-0.5',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     )}
                   >
-                    {dayNumber(date)}
-                  </span>
-                </button>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {labels.map((label, i) => (
-            <tr key={label}>
-              <th
-                scope="row"
-                style={{ height: HOUR_ROW_PX }}
-                className="pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
-              >
-                {label}
-              </th>
-              {i === 0 &&
-                dates.map((date) => {
-                  const isToday = date === today;
-                  return (
-                    <td
-                      key={date}
-                      rowSpan={labels.length}
-                      className="relative border-l border-border align-top"
-                      style={
-                        isToday
-                          ? {
-                              backgroundColor:
-                                'color-mix(in srgb, var(--primary) 4%, transparent)',
-                            }
-                          : undefined
-                      }
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                      {WEEKDAY_HEADINGS[(dayOfWeek(date) + 6) % 7]}
+                    </span>
+                    <span
+                      className={cn(
+                        'flex h-7 w-7 items-center justify-center rounded-full text-[15px]',
+                        date === today
+                          ? 'bg-primary font-semibold text-primary-foreground'
+                          : 'text-foreground',
+                      )}
                     >
-                      <div
-                        className="relative"
-                        style={{
-                          height: gridHeight,
-                          backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
-                        }}
+                      {dayNumber(date)}
+                    </span>
+                  </button>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {labels.map((label, i) => (
+              <tr key={label}>
+                <th
+                  scope="row"
+                  style={{ height: HOUR_ROW_PX }}
+                  className="pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
+                >
+                  {label}
+                </th>
+                {i === 0 &&
+                  dates.map((date) => {
+                    const isToday = date === today;
+                    return (
+                      <td
+                        key={date}
+                        data-day-date={date}
+                        rowSpan={labels.length}
+                        className="relative border-l border-border align-top"
+                        style={
+                          isToday
+                            ? {
+                                backgroundColor:
+                                  'color-mix(in srgb, var(--primary) 4%, transparent)',
+                              }
+                            : undefined
+                        }
                       >
-                        {(openSlotsByDate.get(date) ?? [])
-                          .filter((s) => !s.is_booked && !s.is_past)
-                          .map((slot) => {
-                            const start = minutesSinceMidnight(slot.starts_at, timezone);
+                        <div
+                          className="relative"
+                          style={{
+                            height: gridHeight,
+                            backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
+                          }}
+                        >
+                          {(openSlotsByDate.get(date) ?? [])
+                            .filter((s) => !s.is_booked && !s.is_past)
+                            .map((slot) => {
+                              const start = minutesSinceMidnight(
+                                slot.starts_at,
+                                timezone,
+                              );
+                              return (
+                                <EventBlock
+                                  key={slot.starts_at}
+                                  variant="open"
+                                  time={slot.local_time}
+                                  label={`+ Add · ${slot.local_time}`}
+                                  topPercent={offsetPercent(start, range)}
+                                  heightPercent={
+                                    offsetPercent(start + 60, range) -
+                                    offsetPercent(start, range)
+                                  }
+                                  onClick={() => onSelectOpenSlot(date, slot)}
+                                />
+                              );
+                            })}
+
+                          {(appointmentsByDate.get(date) ?? []).map((appointment) => {
+                            const start = minutesSinceMidnight(
+                              appointment.starts_at,
+                              timezone,
+                            );
+                            const end = minutesSinceMidnight(
+                              appointment.ends_at,
+                              timezone,
+                            );
+                            const draggable = DRAGGABLE_STATUSES.has(appointment.status);
                             return (
                               <EventBlock
-                                key={slot.starts_at}
-                                variant="open"
-                                time={slot.local_time}
-                                label={`+ Add · ${slot.local_time}`}
+                                key={appointment.id}
+                                variant="booked"
+                                status={appointment.status}
+                                time={formatTime(appointment.starts_at, timezone)}
+                                label={appointment.customer_name ?? 'Customer'}
                                 topPercent={offsetPercent(start, range)}
                                 heightPercent={
-                                  offsetPercent(start + 60, range) -
-                                  offsetPercent(start, range)
+                                  offsetPercent(end, range) - offsetPercent(start, range)
                                 }
-                                onClick={() => onSelectOpenSlot(date, slot)}
+                                onClick={() => onSelectAppointment(appointment)}
+                                draggable={draggable}
+                                onPointerDown={
+                                  draggable
+                                    ? (e) => {
+                                        const columnEl = e.currentTarget.closest('td');
+                                        if (columnEl) {
+                                          drag.beginDrag(
+                                            e,
+                                            appointment,
+                                            date,
+                                            columnEl,
+                                            () => onSelectAppointment(appointment),
+                                          );
+                                        }
+                                      }
+                                    : undefined
+                                }
                               />
                             );
                           })}
 
-                        {(appointmentsByDate.get(date) ?? []).map((appointment) => {
-                          const start = minutesSinceMidnight(
-                            appointment.starts_at,
-                            timezone,
-                          );
-                          const end = minutesSinceMidnight(appointment.ends_at, timezone);
-                          return (
-                            <EventBlock
-                              key={appointment.id}
-                              variant="booked"
-                              status={appointment.status}
-                              time={formatTime(appointment.starts_at, timezone)}
-                              label={appointment.customer_name ?? 'Customer'}
-                              topPercent={offsetPercent(start, range)}
+                          {drag.preview && drag.preview.date === date && (
+                            <DragGhost
+                              label={`Move here · ${String(Math.floor(drag.preview.minutes / 60)).padStart(2, '0')}:${String(drag.preview.minutes % 60).padStart(2, '0')}`}
+                              topPercent={offsetPercent(drag.preview.minutes, range)}
                               heightPercent={
-                                offsetPercent(end, range) - offsetPercent(start, range)
+                                offsetPercent(
+                                  drag.preview.minutes + drag.preview.durationMin,
+                                  range,
+                                ) - offsetPercent(drag.preview.minutes, range)
                               }
-                              onClick={() => onSelectAppointment(appointment)}
                             />
-                          );
-                        })}
-
-                        {isToday &&
-                          nowMinutes >= range.startMin &&
-                          nowMinutes <= range.endMin && (
-                            <NowLine topPercent={offsetPercent(nowMinutes, range)} />
                           )}
-                      </div>
-                    </td>
-                  );
-                })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+                          {isToday &&
+                            nowMinutes >= range.startMin &&
+                            nowMinutes <= range.endMin && (
+                              <NowLine topPercent={offsetPercent(nowMinutes, range)} />
+                            )}
+                        </div>
+                      </td>
+                    );
+                  })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

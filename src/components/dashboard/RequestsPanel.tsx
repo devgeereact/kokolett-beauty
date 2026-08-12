@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DatePicker } from '@/components/ui/DatePicker';
@@ -23,6 +22,10 @@ const FLEXIBILITY_LABELS: Record<string, string> = {
   evening: 'Evenings',
 };
 
+export interface RequestsPanelHandle {
+  reload: () => Promise<void>;
+}
+
 /**
  * The request queue — the only place approval happens under the current policy.
  *
@@ -34,8 +37,17 @@ const FLEXIBILITY_LABELS: Record<string, string> = {
  * The order is enforced in the database, not here. `offer_slot_to_request`
  * refuses to book a later request into a date an earlier one also wanted,
  * unless the owner gives a reason — which is then recorded on the request.
+ *
+ * Lives as a tab inside `AppointmentsPage` rather than its own screen, so
+ * checking bookings and answering a request no longer costs a full page
+ * navigation each way. `onCountChange` lets the parent show a live count on
+ * the tab and the sidebar badge; `reload` is exposed so the parent's single
+ * Refresh button can drive whichever tab is showing.
  */
-export function RequestsPage(): JSX.Element {
+export const RequestsPanel = forwardRef<
+  RequestsPanelHandle,
+  { onCountChange?: (n: number) => void }
+>(function RequestsPanel({ onCountChange }, ref) {
   const { timezone } = useBusinessSettings();
 
   const [requests, setRequests] = useState<QueuedRequest[]>([]);
@@ -53,18 +65,22 @@ export function RequestsPage(): JSX.Element {
   const load = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      setRequests(await listQueuedRequests());
+      const rows = await listQueuedRequests();
+      setRequests(rows);
+      onCountChange?.(rows.length);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onCountChange]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useImperativeHandle(ref, () => ({ reload: load }), [load]);
 
   const openFor = (request: QueuedRequest): void => {
     setOpenId(request.id);
@@ -116,16 +132,7 @@ export function RequestsPage(): JSX.Element {
   };
 
   return (
-    <DashboardLayout
-      title="Requests"
-      subtitle="Answered oldest first — whoever asked first is served first"
-      badges={{ requests: requests.length }}
-      actions={
-        <Button variant="ghost" size="sm" onClick={() => void load()}>
-          Refresh
-        </Button>
-      }
-    >
+    <>
       {loading && <LoadingState label="Loading the queue…" />}
       {error && <ErrorState error={error} onRetry={() => void load()} />}
 
@@ -243,7 +250,7 @@ export function RequestsPage(): JSX.Element {
                       {aheadWarning} also wanted that date. Serve them first, or say why
                       you are skipping ahead — the reason is recorded on the request.
                     </p>
-                    <Field label="Reason for going out of order" className="mt-3 mb-2">
+                    <Field label="Reason for going out of order" className="mb-2 mt-3">
                       {({ id }) => (
                         <Input
                           id={id}
@@ -325,6 +332,6 @@ export function RequestsPage(): JSX.Element {
           </Card>
         ))}
       </div>
-    </DashboardLayout>
+    </>
   );
-}
+});

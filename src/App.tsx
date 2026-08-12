@@ -19,7 +19,6 @@ import { CalendarPage } from '@/pages/dashboard/CalendarPage';
 import { WeeklyDefaultPage } from '@/pages/dashboard/WeeklyDefaultPage';
 import { ApprovalsPage } from '@/pages/dashboard/ApprovalsPage';
 import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
-import { RequestsPage } from '@/pages/dashboard/RequestsPage';
 import { CustomersPage } from '@/pages/dashboard/CustomersPage';
 import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
 import { ServiceMenuPage } from '@/pages/dashboard/ServiceMenuPage';
@@ -68,7 +67,10 @@ export function App(): JSX.Element {
               path={routes.owner.appointments}
               element={owner(<AppointmentsPage />)}
             />
-            <Route path={routes.owner.requests} element={owner(<RequestsPage />)} />
+            {/* Requests is a tab inside AppointmentsPage, not its own page —
+                the route stays so `routes.owner.requests` links (Today's
+                "New enquiries" stat) still land on the right tab. */}
+            <Route path={routes.owner.requests} element={owner(<AppointmentsPage />)} />
             <Route path={routes.owner.customers} element={owner(<CustomersPage />)} />
             <Route
               path={routes.owner.appointmentType}

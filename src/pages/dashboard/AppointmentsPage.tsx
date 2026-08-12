@@ -1,10 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
 import {
   NewBookingPanel,
   type PrefilledCustomer,
 } from '@/components/dashboard/NewBookingPanel';
+import {
+  RequestsPanel,
+  type RequestsPanelHandle,
+} from '@/components/dashboard/RequestsPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input, Select } from '@/components/ui/Field';
@@ -14,7 +19,11 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { setAppointmentStatus, setOwnerNote } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
 import { addDays, formatDateShort, salonDayRange, toSalonDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 import { LIVE_STATUSES, type AppointmentDetailed, type AppointmentStatus } from '@/types';
+
+type Tab = 'bookings' | 'requests';
 
 /**
  * Every booking in a window, and the two things the owner actually does here:
@@ -36,6 +45,12 @@ const RANGES = [
 
 export function AppointmentsPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tab: Tab = location.pathname === routes.owner.requests ? 'requests' : 'bookings';
+  const [requestsCount, setRequestsCount] = useState(0);
+  const requestsRef = useRef<RequestsPanelHandle>(null);
+
   const [rangeKey, setRangeKey] = useState<string>('7');
   const [statusFilter, setStatusFilter] = useState<string>('live');
   const [search, setSearch] = useState('');
@@ -129,25 +144,74 @@ export function AppointmentsPage(): JSX.Element {
   return (
     <DashboardLayout
       title="Appointments"
-      subtitle="Mark them complete and keep your notes"
+      subtitle={
+        tab === 'requests'
+          ? 'Answered oldest first — whoever asked first is served first'
+          : 'Mark them complete and keep your notes'
+      }
+      badges={{ requests: requestsCount }}
       actions={
         <>
-          <Button variant="ghost" size="sm" onClick={() => void refresh()}>
+          <div className="inline-flex rounded-lg border border-border p-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                void navigate(routes.owner.appointments);
+              }}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm font-medium',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                tab === 'bookings'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Bookings
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void navigate(routes.owner.requests);
+              }}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm font-medium',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                tab === 'requests'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Requests{requestsCount > 0 ? ` (${requestsCount})` : ''}
+            </button>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              tab === 'requests' ? void requestsRef.current?.reload() : void refresh()
+            }
+          >
             Refresh
           </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setPrefill(null);
-              setBooking(true);
-            }}
-          >
-            New booking
-          </Button>
+          {tab === 'bookings' && (
+            <Button
+              size="sm"
+              onClick={() => {
+                setPrefill(null);
+                setBooking(true);
+              }}
+            >
+              New booking
+            </Button>
+          )}
         </>
       }
     >
-      {booking && (
+      {tab === 'requests' && (
+        <RequestsPanel ref={requestsRef} onCountChange={setRequestsCount} />
+      )}
+
+      {tab === 'bookings' && booking && (
         <NewBookingPanel
           prefill={prefill}
           onClose={() => setBooking(false)}
@@ -160,140 +224,146 @@ export function AppointmentsPage(): JSX.Element {
         />
       )}
 
-      {justBooked && (
-        <div className="mb-6 rounded-lg border border-status-completed p-4 text-sm">
-          <p className="font-medium text-foreground">Booked. Reference {justBooked}.</p>
-          <p className="mt-1 text-muted-foreground">
-            Their confirmation email is on its way, with a link they can use to change or
-            cancel it themselves.
-          </p>
-        </div>
-      )}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label} className="p-4">
-            <p
-              className={
-                s.tone === 'warn' && s.value > 0
-                  ? 'font-display text-2xl font-semibold text-status-pending'
-                  : 'font-display text-2xl font-semibold text-foreground'
+      {tab === 'bookings' && (
+        <>
+          {justBooked && (
+            <div className="mb-6 rounded-lg border border-status-completed p-4 text-sm">
+              <p className="font-medium text-foreground">
+                Booked. Reference {justBooked}.
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Their confirmation email is on its way, with a link they can use to change
+                or cancel it themselves.
+              </p>
+            </div>
+          )}
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {stats.map((s) => (
+              <Card key={s.label} className="p-4">
+                <p
+                  className={
+                    s.tone === 'warn' && s.value > 0
+                      ? 'font-display text-2xl font-semibold text-status-pending'
+                      : 'font-display text-2xl font-semibold text-foreground'
+                  }
+                >
+                  {s.value}
+                </p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </Card>
+            ))}
+          </div>
+
+          {counts.unclosed > 0 && (
+            <div className="mb-6 rounded-lg border border-border bg-muted p-4 text-sm">
+              <p className="text-foreground">
+                {counts.unclosed}{' '}
+                {counts.unclosed === 1 ? 'appointment has' : 'appointments have'} passed
+                without being marked complete.
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Completing one sends the customer their thank-you email and counts them as
+                a returning customer, so their next booking is confirmed instantly.
+              </p>
+            </div>
+          )}
+
+          <div className="mb-6 grid gap-x-4 sm:grid-cols-3">
+            <Field label="Period">
+              {({ id }) => (
+                <Select
+                  id={id}
+                  value={rangeKey}
+                  onChange={(e) => setRangeKey(e.target.value)}
+                >
+                  {RANGES.map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.label}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            <Field label="Status">
+              {({ id }) => (
+                <Select
+                  id={id}
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="live">Live bookings</option>
+                  <option value="all">Everything</option>
+                  <option value="pending_approval">Awaiting approval</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="no_show">No shows</option>
+                </Select>
+              )}
+            </Field>
+            <Field label="Find someone" hint="Name, email, mobile or reference.">
+              {({ id, describedBy }) => (
+                <Input
+                  id={id}
+                  aria-describedby={describedBy}
+                  type="search"
+                  placeholder="Koko, KB-XXXX…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              )}
+            </Field>
+          </div>
+
+          {loading && <LoadingState label="Loading appointments…" />}
+          {error && <ErrorState error={error} onRetry={() => void refresh()} />}
+
+          {!loading && !error && visible.length === 0 && (
+            <EmptyState
+              title={search ? 'Nobody matches that' : 'Nothing in this period'}
+              description={
+                search
+                  ? 'Try part of a name, or the booking reference.'
+                  : 'Try a wider period, or a different status filter.'
               }
-            >
-              {s.value}
-            </p>
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-          </Card>
-        ))}
-      </div>
-
-      {counts.unclosed > 0 && (
-        <div className="mb-6 rounded-lg border border-border bg-muted p-4 text-sm">
-          <p className="text-foreground">
-            {counts.unclosed}{' '}
-            {counts.unclosed === 1 ? 'appointment has' : 'appointments have'} passed
-            without being marked complete.
-          </p>
-          <p className="mt-1 text-muted-foreground">
-            Completing one sends the customer their thank-you email and counts them as a
-            returning customer, so their next booking is confirmed instantly.
-          </p>
-        </div>
-      )}
-
-      <div className="mb-6 grid gap-x-4 sm:grid-cols-3">
-        <Field label="Period">
-          {({ id }) => (
-            <Select
-              id={id}
-              value={rangeKey}
-              onChange={(e) => setRangeKey(e.target.value)}
-            >
-              {RANGES.map((r) => (
-                <option key={r.key} value={r.key}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label="Status">
-          {({ id }) => (
-            <Select
-              id={id}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="live">Live bookings</option>
-              <option value="all">Everything</option>
-              <option value="pending_approval">Awaiting approval</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="no_show">No shows</option>
-            </Select>
-          )}
-        </Field>
-        <Field label="Find someone" hint="Name, email, mobile or reference.">
-          {({ id, describedBy }) => (
-            <Input
-              id={id}
-              aria-describedby={describedBy}
-              type="search"
-              placeholder="Koko, KB-XXXX…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
             />
           )}
-        </Field>
-      </div>
 
-      {loading && <LoadingState label="Loading appointments…" />}
-      {error && <ErrorState error={error} onRetry={() => void refresh()} />}
-
-      {!loading && !error && visible.length === 0 && (
-        <EmptyState
-          title={search ? 'Nobody matches that' : 'Nothing in this period'}
-          description={
-            search
-              ? 'Try part of a name, or the booking reference.'
-              : 'Try a wider period, or a different status filter.'
-          }
-        />
+          <div className="space-y-8">
+            {grouped.map(([date, rows]) => (
+              <section key={date}>
+                <h2 className="mb-3 font-display text-base font-semibold text-foreground">
+                  {formatDateShort(`${date}T12:00:00Z`, timezone)}
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    {rows.length} {rows.length === 1 ? 'booking' : 'bookings'}
+                  </span>
+                </h2>
+                <div className="space-y-3">
+                  {rows.map((appointment) => (
+                    <AppointmentCard
+                      key={appointment.id}
+                      appointment={appointment}
+                      timezone={timezone}
+                      onStatusChange={changeStatus}
+                      onNoteSave={saveNote}
+                      onBookFollowUp={(a) => {
+                        setPrefill({
+                          fullName: a.customer_name ?? '',
+                          email: a.customer_email ?? '',
+                          mobile: a.customer_mobile ?? '',
+                        });
+                        setJustBooked(null);
+                        setBooking(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </>
       )}
-
-      <div className="space-y-8">
-        {grouped.map(([date, rows]) => (
-          <section key={date}>
-            <h2 className="mb-3 font-display text-base font-semibold text-foreground">
-              {formatDateShort(`${date}T12:00:00Z`, timezone)}
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                {rows.length} {rows.length === 1 ? 'booking' : 'bookings'}
-              </span>
-            </h2>
-            <div className="space-y-3">
-              {rows.map((appointment) => (
-                <AppointmentCard
-                  key={appointment.id}
-                  appointment={appointment}
-                  timezone={timezone}
-                  onStatusChange={changeStatus}
-                  onNoteSave={saveNote}
-                  onBookFollowUp={(a) => {
-                    setPrefill({
-                      fullName: a.customer_name ?? '',
-                      email: a.customer_email ?? '',
-                      mobile: a.customer_mobile ?? '',
-                    });
-                    setJustBooked(null);
-                    setBooking(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
     </DashboardLayout>
   );
 }

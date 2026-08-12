@@ -22,6 +22,7 @@ import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
 import { CustomersPage } from '@/pages/dashboard/CustomersPage';
 import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
 import { ServiceMenuPage } from '@/pages/dashboard/ServiceMenuPage';
+import { AssistantPage } from '@/pages/dashboard/AssistantPage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
 
@@ -85,14 +86,12 @@ export function App(): JSX.Element {
               element={owner(<WeeklyDefaultPage />)}
             />
 
-            {/* Not built yet — send these to the dashboard rather than a 404,
+            <Route path={routes.owner.assistant} element={owner(<AssistantPage />)} />
+
+            {/* Not built yet — send this to the dashboard rather than a 404,
                 so a stale bookmark does not look like a broken app. */}
             <Route
               path={routes.owner.reports}
-              element={<Navigate to={routes.owner.dashboard} replace />}
-            />
-            <Route
-              path={routes.owner.assistant}
               element={<Navigate to={routes.owner.dashboard} replace />}
             />
 

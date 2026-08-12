@@ -19,9 +19,9 @@ import type { AppointmentDetailed, AppointmentStatus } from '@/types';
  * front of the owner that she cannot rely on.
  */
 const NEXT_ACTIONS: Partial<Record<AppointmentStatus, AppointmentStatus[]>> = {
-  confirmed: ['completed', 'checked_in', 'no_show'],
-  checked_in: ['completed', 'in_service'],
-  in_service: ['completed'],
+  confirmed: ['completed', 'checked_in', 'no_show', 'cancelled'],
+  checked_in: ['completed', 'in_service', 'cancelled'],
+  in_service: ['completed', 'cancelled'],
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -67,6 +67,12 @@ export function AppointmentCard({
   const run = async (status: AppointmentStatus): Promise<void> => {
     if (!onStatusChange) return;
     if (status === 'no_show' && !window.confirm('Mark this customer as a no show?')) {
+      return;
+    }
+    if (
+      status === 'cancelled' &&
+      !window.confirm('Cancel this appointment? The customer will be emailed.')
+    ) {
       return;
     }
     setBusy(status);
@@ -159,9 +165,11 @@ export function AppointmentCard({
                 variant={
                   status === 'completed'
                     ? 'primary'
-                    : status === 'no_show'
-                      ? 'ghost'
-                      : 'secondary'
+                    : status === 'cancelled'
+                      ? 'destructive'
+                      : status === 'no_show'
+                        ? 'ghost'
+                        : 'secondary'
                 }
                 loading={busy === status}
                 onClick={() => void run(status)}

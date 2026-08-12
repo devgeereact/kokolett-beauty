@@ -51,8 +51,16 @@ begin
 
   select * into v_settings from public.booking_settings where id;
   select * into v_service  from public.hair_appointment();
+  if v_service.id is null then
+    raise exception 'SERVICE_UNAVAILABLE' using errcode = 'P0001';
+  end if;
 
-  select * into v_old from public.appointments where id = p_appointment_id;
+  -- Row lock: two concurrent reschedules of the same appointment (owner on
+  -- two devices, or a retried request) must not both pass the status check
+  -- and both retire-and-insert. `for update` makes the second caller block
+  -- until the first commits, then re-read the now-'rescheduled' row and
+  -- correctly fail NOT_RESCHEDULABLE below, instead of "succeeding" twice.
+  select * into v_old from public.appointments where id = p_appointment_id for update;
   if v_old.id is null then
     raise exception 'NOT_FOUND' using errcode = 'P0001';
   end if;
@@ -115,9 +123,14 @@ begin
     insert into public.appointments
       (reference, customer_id, service_id, starts_at, ends_at, price_pence,
        customer_note, owner_note, source, status, requires_approval,
-       approval_deadline, approved_at, rescheduled_from)
+       approval_deadline, approved_at, approved_by, rescheduled_from)
     values
-      (v_ref, v_old.customer_id, v_service.id, p_new_starts_at,
+      -- service_id carries forward from the OLD row, not the currently
+      -- active service (v_service.id) — consistent with price_pence and
+      -- duration already being preserved from v_old below. If the active
+      -- service ever changes between bookings, moving an old appointment
+      -- must not silently change what the confirmation email describes.
+      (v_ref, v_old.customer_id, v_old.service_id, p_new_starts_at,
        -- Preserve the OLD appointment's actual duration rather than
        -- recomputing it from the currently active service's default length.
        -- Appointments have no duration column — length lives only in
@@ -128,7 +141,7 @@ begin
        p_new_starts_at + (v_old.ends_at - v_old.starts_at),
        v_old.price_pence, v_old.customer_note, v_old.owner_note, v_old.source,
        v_old.status, v_old.requires_approval, v_deadline,
-       v_old.approved_at, p_appointment_id)
+       v_old.approved_at, v_old.approved_by, p_appointment_id)
     returning id into v_id;
   exception when exclusion_violation then
     -- Somebody else's slot appeared in the gap. Put the old booking back —

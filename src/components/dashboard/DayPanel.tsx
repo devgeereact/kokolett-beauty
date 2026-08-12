@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Input, Select } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/States';
 import {
@@ -338,12 +339,7 @@ export function DayPanel({
           Copy times from another day
         </label>
         <div className="flex items-center gap-2">
-          <Input
-            id="copy-from"
-            type="date"
-            value={copyFrom}
-            onChange={(e) => setCopyFrom(e.target.value)}
-          />
+          <DatePicker id="copy-from" value={copyFrom} onChange={setCopyFrom} />
           <Button variant="ghost" size="sm" loading={busy} onClick={() => void copy()}>
             Copy
           </Button>

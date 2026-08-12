@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -206,11 +207,10 @@ export function RequestsPage(): JSX.Element {
                 <div className="grid gap-x-3 sm:grid-cols-2">
                   <Field label="Date">
                     {({ id }) => (
-                      <Input
+                      <DatePicker
                         id={id}
-                        type="date"
                         value={offer.date}
-                        onChange={(e) => setOffer({ ...offer, date: e.target.value })}
+                        onChange={(value) => setOffer({ ...offer, date: value })}
                       />
                     )}
                   </Field>

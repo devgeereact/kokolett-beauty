@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { createAppointmentAsOwner } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
@@ -127,14 +128,7 @@ export function NewBookingPanel({
 
       <div className="grid gap-x-4 sm:grid-cols-3">
         <Field label="Date" required>
-          {({ id }) => (
-            <Input
-              id={id}
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          )}
+          {({ id }) => <DatePicker id={id} value={date} onChange={setDate} />}
         </Field>
         <Field label="Start time" required>
           {({ id }) => (

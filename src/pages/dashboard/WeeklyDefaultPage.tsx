@@ -3,6 +3,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DayPanel } from '@/components/dashboard/DayPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Input, Select } from '@/components/ui/Field';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -154,6 +155,34 @@ export function WeeklyDefaultPage(): JSX.Element {
       subtitle="A repeating week, so you are not typing times every day"
     >
       {error && <ErrorState error={error} onRetry={() => void load()} />}
+
+      <Card className="mb-6 p-5">
+        <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+          Adjust a single day
+        </h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Override the pattern for one date — a day off, an extra evening, a one-time
+          change. This is the same publish/remove tool the Calendar used to show inline;
+          it lives here now, next to the pattern it overrides.
+        </p>
+
+        <label htmlFor="day-editor-date" className="mb-1 block text-xs text-muted-foreground">
+          Date
+        </label>
+        <DatePicker
+          id="day-editor-date"
+          className="mb-4 w-56"
+          value={dayEditorDate}
+          onChange={setDayEditorDate}
+        />
+
+        <DayPanel
+          date={dayEditorDate}
+          timezone={timezone}
+          appointmentMinutes={appointmentMinutes}
+          onChanged={() => void load()}
+        />
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Card className="p-5">
@@ -317,18 +346,25 @@ export function WeeklyDefaultPage(): JSX.Element {
           </div>
         </Card>
 
-        <div className="space-y-4">
-          <Card className="p-5">
-            <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
-              Put it on the calendar
-            </h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              The pattern does nothing on its own — this is what writes it into real days.
-            </p>
+        <Card className="h-fit p-5">
+          <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+            Put it on the calendar
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            The pattern does nothing on its own — this is what writes it into real days.
+          </p>
 
+          <div className="mb-4 flex items-baseline justify-between rounded-md border border-border bg-muted px-3 py-2">
+            <span className="text-xs text-muted-foreground">Times set this week</span>
+            <span className="font-mono text-sm font-semibold text-foreground">
+              {totalTimes}
+            </span>
+          </div>
+
+          <div className="rounded-md border border-border p-3">
             <label
               htmlFor="weeks-ahead"
-              className="mb-1 block text-xs text-muted-foreground"
+              className="mb-1 block text-xs font-medium text-foreground"
             >
               How far ahead
             </label>
@@ -362,89 +398,68 @@ export function WeeklyDefaultPage(): JSX.Element {
             >
               Replace every day
             </Button>
+          </div>
 
-            {totalTimes === 0 && (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Add some times to your week first.
-              </p>
-            )}
+          {totalTimes === 0 && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Add some times to your week first.
+            </p>
+          )}
+          {message && (
+            <p role="status" className="mt-3 text-sm text-status-completed">
+              {message}
+            </p>
+          )}
+          {formError && (
+            <p role="alert" className="mt-3 text-sm font-medium text-destructive">
+              {formError}
+            </p>
+          )}
 
-            {message && (
-              <p role="status" className="mt-3 text-sm text-status-completed">
-                {message}
-              </p>
-            )}
-            {formError && (
-              <p role="alert" className="mt-3 text-sm font-medium text-destructive">
-                {formError}
-              </p>
-            )}
-          </Card>
-
-          <Card className="p-5">
-            <h3 className="mb-2 font-display text-base font-semibold text-foreground">
-              How this behaves
-            </h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <span className="font-medium text-foreground">Fill empty days</span> only
-                touches days you have never set. A day you cleared stays cleared.
-              </li>
-              <li>
-                <span className="font-medium text-foreground">Replace every day</span>{' '}
-                lays the week over the top, including days you have changed. Times with
-                bookings against them are always kept.
-              </li>
-              <li>
-                Each night the calendar quietly fills forward from this pattern, so you do
-                not run out of bookable days.
-              </li>
-              <li>
-                Editing any single day below always wins over the pattern — that day is
-                yours from then on.
-              </li>
-            </ul>
-
-            {status?.filled_to && (
-              <p className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
-                Calendar is set up to{' '}
-                <span className="font-medium text-foreground">
-                  {formatDateLong(`${status.filled_to}T12:00:00Z`, 'UTC')}
-                </span>
-                .
-              </p>
-            )}
-          </Card>
-        </div>
+          {status?.filled_to && (
+            <p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
+              Calendar is set up to{' '}
+              <span className="font-medium text-foreground">
+                {formatDateLong(`${status.filled_to}T12:00:00Z`, 'UTC')}
+              </span>
+              .
+            </p>
+          )}
+        </Card>
       </div>
 
       <Card className="mt-6 p-5">
-        <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
-          Adjust a single day
-        </h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Override the pattern for one date — a day off, an extra evening, a one-time
-          change. This is the same publish/remove tool the Calendar used to show inline;
-          it lives here now, next to the pattern it overrides.
-        </p>
-
-        <label htmlFor="day-editor-date" className="mb-1 block text-xs text-muted-foreground">
-          Date
-        </label>
-        <Input
-          id="day-editor-date"
-          type="date"
-          className="mb-4 w-48"
-          value={dayEditorDate}
-          onChange={(e) => setDayEditorDate(e.target.value)}
-        />
-
-        <DayPanel
-          date={dayEditorDate}
-          timezone={timezone}
-          appointmentMinutes={appointmentMinutes}
-          onChanged={() => void load()}
-        />
+        <h3 className="mb-4 font-display text-base font-semibold text-foreground">
+          How this behaves
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg border border-border bg-muted p-3">
+            <p className="mb-1 text-sm font-medium text-foreground">Fill empty days</p>
+            <p className="text-xs text-muted-foreground">
+              Only touches days you have never set. A day you cleared stays cleared.
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted p-3">
+            <p className="mb-1 text-sm font-medium text-foreground">Replace every day</p>
+            <p className="text-xs text-muted-foreground">
+              Lays the week over the top, including days you have changed. Times with
+              bookings against them are always kept.
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted p-3">
+            <p className="mb-1 text-sm font-medium text-foreground">Fills forward nightly</p>
+            <p className="text-xs text-muted-foreground">
+              The calendar quietly extends from this pattern each night, so you never run
+              out of bookable days.
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted p-3">
+            <p className="mb-1 text-sm font-medium text-foreground">A single day always wins</p>
+            <p className="text-xs text-muted-foreground">
+              Editing any date above overrides the pattern for that date from then on.
+            </p>
+          </div>
+        </div>
       </Card>
     </DashboardLayout>
   );

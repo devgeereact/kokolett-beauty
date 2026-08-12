@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Field';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Spinner } from '@/components/ui/States';
 import { listDaySlots, type OwnerDaySlot } from '@/services/availabilityService';
 import { rescheduleAppointmentAsOwner } from '@/services/appointmentService';
@@ -82,13 +82,7 @@ export function MoveAppointmentPanel({
       <label htmlFor="move-date" className="mb-1 block text-xs text-muted-foreground">
         New date
       </label>
-      <Input
-        id="move-date"
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className="mb-4"
-      />
+      <DatePicker id="move-date" value={date} onChange={setDate} className="mb-4" />
 
       {loading && <Spinner className="h-4 w-4" />}
 

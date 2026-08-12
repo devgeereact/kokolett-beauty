@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { submitAvailabilityRequest } from '@/services/bookingService';
 import { errorMessage } from '@/lib/errors';
@@ -149,21 +150,19 @@ export function RequestAvailabilityPage(): JSX.Element {
           <div className="grid gap-x-4 sm:grid-cols-2">
             <Field label="Preferred date">
               {({ id }) => (
-                <Input
+                <DatePicker
                   id={id}
-                  type="date"
                   value={form.firstChoice}
-                  onChange={(e) => setForm({ ...form, firstChoice: e.target.value })}
+                  onChange={(value) => setForm({ ...form, firstChoice: value })}
                 />
               )}
             </Field>
             <Field label="Second choice">
               {({ id }) => (
-                <Input
+                <DatePicker
                   id={id}
-                  type="date"
                   value={form.secondChoice}
-                  onChange={(e) => setForm({ ...form, secondChoice: e.target.value })}
+                  onChange={(value) => setForm({ ...form, secondChoice: value })}
                 />
               )}
             </Field>

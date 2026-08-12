@@ -10,6 +10,8 @@ import {
   listCustomers,
   setCustomerNote,
   softDeleteCustomer,
+  updateCustomerDetails,
+  type CustomerContactDraft,
 } from '@/services/customerService';
 import { listForCustomer } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
@@ -30,6 +32,14 @@ export function CustomersPage(): JSX.Element {
   const [note, setNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactDraft, setContactDraft] = useState<CustomerContactDraft>({
+    fullName: '',
+    email: '',
+    mobile: '',
+  });
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
 
   const load = useCallback(async (term: string): Promise<void> => {
     setLoading(true);
@@ -53,10 +63,53 @@ export function CustomersPage(): JSX.Element {
     setSelected(customer);
     setNote(customer.notes ?? '');
     setBooking(false);
+    setEditingContact(false);
+    setContactError(null);
     try {
       setHistory(await listForCustomer(customer.id));
     } catch (e) {
       window.alert(errorMessage(e));
+    }
+  };
+
+  const startEditingContact = (customer: Customer): void => {
+    setContactDraft({
+      fullName: customer.full_name,
+      email: customer.email,
+      mobile: customer.mobile ?? '',
+    });
+    setContactError(null);
+    setEditingContact(true);
+  };
+
+  const saveContact = async (): Promise<void> => {
+    if (!selected) return;
+    const nameParts = contactDraft.fullName.trim().split(/\s+/).filter(Boolean);
+    if (nameParts.length < 2) {
+      setContactError('Give a full name, first name and surname.');
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contactDraft.email.trim())) {
+      setContactError('Give a valid email address.');
+      return;
+    }
+
+    setSavingContact(true);
+    setContactError(null);
+    try {
+      await updateCustomerDetails(selected.id, contactDraft);
+      setEditingContact(false);
+      await load(search);
+      await open({
+        ...selected,
+        full_name: contactDraft.fullName.trim(),
+        email: contactDraft.email.trim(),
+        mobile: contactDraft.mobile.trim() || null,
+      });
+    } catch (e) {
+      setContactError(errorMessage(e));
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -150,17 +203,93 @@ export function CustomersPage(): JSX.Element {
 
         {selected && (
           <Card className="h-fit p-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-display text-lg font-semibold text-foreground">
-                  {selected.full_name}
-                </h2>
-                <p className="text-sm text-muted-foreground">{selected.email}</p>
+            {editingContact ? (
+              <div className="mb-4 border-b border-border pb-4">
+                <Field label="Full name">
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      value={contactDraft.fullName}
+                      onChange={(e) =>
+                        setContactDraft({ ...contactDraft, fullName: e.target.value })
+                      }
+                    />
+                  )}
+                </Field>
+                <Field label="Email">
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      type="email"
+                      value={contactDraft.email}
+                      onChange={(e) =>
+                        setContactDraft({ ...contactDraft, email: e.target.value })
+                      }
+                    />
+                  )}
+                </Field>
+                <Field label="Mobile">
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      type="tel"
+                      value={contactDraft.mobile}
+                      onChange={(e) =>
+                        setContactDraft({ ...contactDraft, mobile: e.target.value })
+                      }
+                    />
+                  )}
+                </Field>
+                {contactError && (
+                  <p role="alert" className="mb-3 text-sm font-medium text-destructive">
+                    {contactError}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    loading={savingContact}
+                    onClick={() => void saveContact()}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingContact(false);
+                      setContactError(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
-                Close
-              </Button>
-            </div>
+            ) : (
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg font-semibold text-foreground">
+                    {selected.full_name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {selected.email}
+                    {selected.mobile ? ` · ${selected.mobile}` : ''}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => startEditingContact(selected)}
+                  >
+                    Edit
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {booking && (
               <div className="mb-4">

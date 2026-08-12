@@ -53,6 +53,34 @@ export async function setCustomerNote(id: string, notes: string): Promise<void> 
   if (error) throw error;
 }
 
+export interface CustomerContactDraft {
+  fullName: string;
+  email: string;
+  mobile: string;
+}
+
+/**
+ * Correcting a typo'd contact detail, or updating one that changed. The
+ * partial unique index on `lower(email)` (migration 0002) means an email
+ * collision with another active customer surfaces as a Postgres error here —
+ * the caller shows it as-is, same as every other write on this page.
+ */
+export async function updateCustomerDetails(
+  id: string,
+  { fullName, email, mobile }: CustomerContactDraft,
+): Promise<void> {
+  const { error } = await supabase
+    .from('customers')
+    .update({
+      full_name: fullName.trim(),
+      email: email.trim(),
+      mobile: mobile.trim() || null,
+    })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
 /**
  * UK GDPR erasure. Soft delete, because `appointments.customer_id` is
  * `on delete restrict` — a hard delete would either fail or take the salon's

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Input, Select } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/States';
@@ -69,6 +70,7 @@ export function DayPanel({
   const [copyFrom, setCopyFrom] = useState('');
   const [fill, setFill] = useState({ from: '09:00', to: '17:00', every: '60' });
   const [showFill, setShowFill] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -126,13 +128,15 @@ export function DayPanel({
     void commit(times.filter((t) => t !== slot.local_time));
   };
 
-  const clearDay = (): void => {
+  const clearDayMessage = (): string => {
     const keeping = bookedTimes.size;
-    const message = keeping
+    return keeping
       ? `Remove the ${times.length - keeping} free times? The ${keeping} booked one${keeping === 1 ? '' : 's'} stay.`
       : 'Remove every time on this day?';
-    if (!window.confirm(message)) return;
-    void commit([]);
+  };
+
+  const clearDay = (): void => {
+    setConfirmingClear(true);
   };
 
   const applyFill = (from: string, to: string, every: number): void => {
@@ -348,6 +352,19 @@ export function DayPanel({
           Replaces this day&rsquo;s times. All times shown in {timezone}.
         </p>
       </div>
+
+      <ConfirmDialog
+        open={confirmingClear}
+        title="Clear this day?"
+        message={clearDayMessage()}
+        tone="destructive"
+        confirmLabel="Clear day"
+        onConfirm={() => {
+          setConfirmingClear(false);
+          void commit([]);
+        }}
+        onCancel={() => setConfirmingClear(false)}
+      />
     </Card>
   );
 }

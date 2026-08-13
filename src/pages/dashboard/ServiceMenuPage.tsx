@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { useToast } from '@/context/ToastContext';
 import {
   createMenuItem,
   deleteMenuItem,
@@ -37,6 +39,7 @@ interface Draft {
 const EMPTY: Draft = { groupName: '', name: '', note: '' };
 
 export function ServiceMenuPage(): JSX.Element {
+  const { showToast } = useToast();
   const [items, setItems] = useState<ServiceMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -45,6 +48,7 @@ export function ServiceMenuPage(): JSX.Element {
   const [formError, setFormError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Draft>(EMPTY);
+  const [pendingDelete, setPendingDelete] = useState<ServiceMenuItem | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -114,7 +118,7 @@ export function ServiceMenuPage(): JSX.Element {
       await updateMenuItem(item.id, { active: !item.active });
       await load();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
@@ -129,23 +133,16 @@ export function ServiceMenuPage(): JSX.Element {
       setEditingId(null);
       await load();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
   const remove = async (item: ServiceMenuItem): Promise<void> => {
-    if (
-      !window.confirm(
-        `Delete "${item.name}" from the menu? To take it off the website temporarily, switch it off instead.`,
-      )
-    ) {
-      return;
-    }
     try {
       await deleteMenuItem(item.id);
       await load();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
@@ -273,7 +270,7 @@ export function ServiceMenuPage(): JSX.Element {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => void remove(item)}
+                            onClick={() => setPendingDelete(item)}
                           >
                             Delete
                           </Button>
@@ -363,6 +360,21 @@ export function ServiceMenuPage(): JSX.Element {
           </Button>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={pendingDelete ? `Delete "${pendingDelete.name}" from the menu?` : ''}
+        message="To take it off the website temporarily, switch it off instead."
+        tone="destructive"
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (!pendingDelete) return;
+          const item = pendingDelete;
+          setPendingDelete(null);
+          void remove(item);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </DashboardLayout>
   );
 }

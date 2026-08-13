@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { useToast } from '@/context/ToastContext';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { setAppointmentStatus, setOwnerNote } from '@/services/appointmentService';
@@ -42,6 +43,7 @@ const RANGES = [
 
 export function AppointmentsPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const { showToast } = useToast();
 
   const [rangeKey, setRangeKey] = useState<string>('7');
   const [statusFilter, setStatusFilter] = useState<string>('live');
@@ -124,7 +126,7 @@ export function AppointmentsPage(): JSX.Element {
       await setAppointmentStatus(id, status);
       await refresh();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
@@ -133,7 +135,7 @@ export function AppointmentsPage(): JSX.Element {
       await setOwnerNote(id, note);
       await refresh();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
@@ -180,12 +182,10 @@ export function AppointmentsPage(): JSX.Element {
 
       {justBooked && (
         <div className="mb-6 rounded-lg border border-status-completed p-4 text-sm">
-          <p className="font-medium text-foreground">
-            Booked. Reference {justBooked}.
-          </p>
+          <p className="font-medium text-foreground">Booked. Reference {justBooked}.</p>
           <p className="mt-1 text-muted-foreground">
-            Their confirmation email is on its way, with a link they can use to change
-            or cancel it themselves.
+            Their confirmation email is on its way, with a link they can use to change or
+            cancel it themselves.
           </p>
         </div>
       )}
@@ -214,8 +214,8 @@ export function AppointmentsPage(): JSX.Element {
             without being marked complete.
           </p>
           <p className="mt-1 text-muted-foreground">
-            Completing one sends the customer their thank-you email and counts them as
-            a returning customer, so their next booking is confirmed instantly.
+            Completing one sends the customer their thank-you email and counts them as a
+            returning customer, so their next booking is confirmed instantly.
           </p>
         </div>
       )}

@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { RequestsPanel, type RequestsPanelHandle } from '@/components/dashboard/RequestsPanel';
+import {
+  RequestsPanel,
+  type RequestsPanelHandle,
+} from '@/components/dashboard/RequestsPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useOwnerSummary } from '@/hooks/useOwnerSummary';
 import {
@@ -40,6 +44,7 @@ type Tab = 'approvals' | 'requests';
  */
 export function InboxPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const { showToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -111,7 +116,7 @@ export function InboxPage(): JSX.Element {
       await approveAppointment(id);
       await loadApprovals();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     } finally {
       setBusyId(null);
     }
@@ -125,7 +130,7 @@ export function InboxPage(): JSX.Element {
       setReason('');
       await loadApprovals();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     } finally {
       setBusyId(null);
     }
@@ -161,9 +166,13 @@ export function InboxPage(): JSX.Element {
   // that disagrees with what either tab is about to show.
   const approvalsLoaded = !loading;
   const effectiveApprovalsCount =
-    tab === 'approvals' && approvalsLoaded ? rows.length : (summary?.pending_approval_count ?? 0);
+    tab === 'approvals' && approvalsLoaded
+      ? rows.length
+      : (summary?.pending_approval_count ?? 0);
   const effectiveRequestsCount =
-    tab === 'requests' && requestsLoaded ? requestsCount : (summary?.new_request_count ?? 0);
+    tab === 'requests' && requestsLoaded
+      ? requestsCount
+      : (summary?.new_request_count ?? 0);
 
   return (
     <DashboardLayout

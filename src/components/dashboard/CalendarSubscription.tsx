@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field, Input } from '@/components/ui/Field';
 import { ShareLink } from '@/components/dashboard/ShareLink';
+import { useToast } from '@/context/ToastContext';
 import {
   createCalendarFeed,
   listCalendarFeeds,
@@ -29,11 +31,13 @@ import type { CalendarFeed } from '@/types';
  *     to open the dashboard when it matters.
  */
 export function CalendarSubscription(): JSX.Element {
+  const { showToast } = useToast();
   const [feeds, setFeeds] = useState<CalendarFeed[]>([]);
   const [label, setLabel] = useState('My phone');
   const [creating, setCreating] = useState(false);
   const [fresh, setFresh] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingRevoke, setPendingRevoke] = useState<CalendarFeed | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
     try {
@@ -62,19 +66,12 @@ export function CalendarSubscription(): JSX.Element {
   };
 
   const revoke = async (feed: CalendarFeed): Promise<void> => {
-    if (
-      !window.confirm(
-        `Stop "${feed.label}" from working? Any calendar using this link will stop updating, and you cannot switch it back on.`,
-      )
-    ) {
-      return;
-    }
     try {
       await revokeCalendarFeed(feed.id);
       if (fresh) setFresh(null);
       await load();
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
@@ -127,7 +124,7 @@ export function CalendarSubscription(): JSX.Element {
                     : 'Not checked yet. Your calendar app will fetch it shortly after you subscribe.'}
                 </p>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => void revoke(feed)}>
+              <Button size="sm" variant="ghost" onClick={() => setPendingRevoke(feed)}>
                 Stop it working
               </Button>
             </li>
@@ -174,6 +171,21 @@ export function CalendarSubscription(): JSX.Element {
           For anything time-critical, this dashboard is the truth.
         </p>
       </div>
+
+      <ConfirmDialog
+        open={pendingRevoke !== null}
+        title={pendingRevoke ? `Stop "${pendingRevoke.label}" from working?` : ''}
+        message="Any calendar using this link will stop updating, and you cannot switch it back on."
+        tone="destructive"
+        confirmLabel="Stop it working"
+        onConfirm={() => {
+          if (!pendingRevoke) return;
+          const feed = pendingRevoke;
+          setPendingRevoke(null);
+          void revoke(feed);
+        }}
+        onCancel={() => setPendingRevoke(null)}
+      />
     </>
   );
 }

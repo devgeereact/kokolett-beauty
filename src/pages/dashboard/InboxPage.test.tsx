@@ -4,6 +4,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { ToastProvider } from '@/context/ToastContext';
 
 interface FakeSummary {
   pending_approval_count: number;
@@ -135,9 +136,11 @@ function activeTabLabel(): string | null {
 function renderInbox(initialPath: string): void {
   render(
     <ThemeProvider>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <InboxPage />
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <InboxPage />
+        </MemoryRouter>
+      </ToastProvider>
     </ThemeProvider>,
   );
 }

@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
   declineRequest,
@@ -48,6 +49,7 @@ export const RequestsPanel = forwardRef<
   { onCountChange?: (n: number) => void }
 >(function RequestsPanel({ onCountChange }, ref) {
   const { timezone } = useBusinessSettings();
+  const { showToast } = useToast();
 
   const [requests, setRequests] = useState<QueuedRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,9 @@ export const RequestsPanel = forwardRef<
       const when = salonInstant(offer.date, offer.time, timezone);
 
       const result = await offerSlotToRequest(request.id, when.toISOString(), override);
-      window.alert(`Booked in — reference ${result.reference}. They have been emailed.`);
+      showToast({
+        message: `Booked in — reference ${result.reference}. They have been emailed.`,
+      });
       setOpenId(null);
       await load();
     } catch (e) {

@@ -3,8 +3,10 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
   listCustomers,
@@ -22,6 +24,7 @@ import type { AppointmentDetailed, Customer } from '@/types';
 /** The customer book. Owner-only — RLS gives anon nothing from this table. */
 export function CustomersPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const { showToast } = useToast();
   const [search, setSearch] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +43,7 @@ export function CustomersPage(): JSX.Element {
   });
   const [savingContact, setSavingContact] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
+  const [pendingErase, setPendingErase] = useState<Customer | null>(null);
 
   const load = useCallback(async (term: string): Promise<void> => {
     setLoading(true);
@@ -68,7 +72,7 @@ export function CustomersPage(): JSX.Element {
     try {
       setHistory(await listForCustomer(customer.id));
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
@@ -120,26 +124,19 @@ export function CustomersPage(): JSX.Element {
       await setCustomerNote(selected.id, note);
       await load(search);
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     } finally {
       setSavingNote(false);
     }
   };
 
   const erase = async (customer: Customer): Promise<void> => {
-    if (
-      !window.confirm(
-        `Erase ${customer.full_name}'s personal details?\n\nThis is the UK GDPR deletion path. Their appointment history stays for your records, but their contact details and notes are removed and they will arrive as a new customer if they book again.`,
-      )
-    ) {
-      return;
-    }
     try {
       await softDeleteCustomer(customer.id);
       setSelected(null);
       await load(search);
     } catch (e) {
-      window.alert(errorMessage(e));
+      showToast({ message: errorMessage(e) });
     }
   };
 
@@ -407,13 +404,32 @@ export function CustomersPage(): JSX.Element {
             )}
 
             <div className="mt-6 border-t border-border pt-4">
-              <Button variant="ghost" size="sm" onClick={() => void erase(selected)}>
+              <Button variant="ghost" size="sm" onClick={() => setPendingErase(selected)}>
                 Erase personal details
               </Button>
             </div>
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingErase !== null}
+        title="Erase personal details?"
+        message={
+          pendingErase
+            ? `Erase ${pendingErase.full_name}'s personal details?\n\nThis is the UK GDPR deletion path. Their appointment history stays for your records, but their contact details and notes are removed and they will arrive as a new customer if they book again.`
+            : ''
+        }
+        tone="destructive"
+        confirmLabel="Erase details"
+        onConfirm={() => {
+          if (!pendingErase) return;
+          const customer = pendingErase;
+          setPendingErase(null);
+          void erase(customer);
+        }}
+        onCancel={() => setPendingErase(null)}
+      />
     </DashboardLayout>
   );
 }

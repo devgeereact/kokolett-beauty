@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { useToast } from '@/context/ToastContext';
 
 /**
  * A link the owner is meant to paste somewhere else.
@@ -20,11 +21,17 @@ export function ShareLink({
   url: string;
 }): JSX.Element {
   const [copied, setCopied] = useState(false);
+  const { showToast } = useToast();
 
+  // The Clipboard API path is the norm and gets a Toast; `window.prompt` is
+  // kept only as the fallback for contexts where that API genuinely is not
+  // available (an insecure origin, or an older mobile browser) — it is not a
+  // confirmation, so it does not go through `ConfirmDialog`.
   const copy = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      showToast({ message: 'Link copied.' });
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       window.prompt('Copy this link', url);

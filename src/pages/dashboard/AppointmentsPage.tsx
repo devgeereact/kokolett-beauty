@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
+import { MoveAppointmentPanel } from '@/components/dashboard/calendar/MoveAppointmentPanel';
 import {
   NewBookingPanel,
   type PrefilledCustomer,
@@ -32,6 +33,11 @@ const RANGES = [
   { key: '30', label: 'Next 30 days', from: 0, to: 30 },
   { key: '-7', label: 'Last 7 days', from: -7, to: 0 },
   { key: '-30', label: 'Last 30 days', from: -30, to: 0 },
+  // Wide, not unbounded: appointments_detailed only grows and listAppointments()
+  // has no .limit(), so a genuinely-infinite query here is a real future
+  // performance/cost risk. 2 years back / 1 year forward is more headroom than
+  // a salon live since August 2026 needs — don't "fix" this into unbounded.
+  { key: 'all', label: 'All time', from: -730, to: 366 },
 ] as const;
 
 export function AppointmentsPage(): JSX.Element {
@@ -43,6 +49,17 @@ export function AppointmentsPage(): JSX.Element {
   const [booking, setBooking] = useState(false);
   const [prefill, setPrefill] = useState<PrefilledCustomer | null>(null);
   const [justBooked, setJustBooked] = useState<string | null>(null);
+  // Whichever card's Move button was clicked — this page renders one card per
+  // appointment rather than Calendar's day-view selection, so the moving
+  // appointment itself (not a separate id/selection concept) is the state.
+  const [moving, setMoving] = useState<AppointmentDetailed | null>(null);
+
+  // A different range or status filter can drop the appointment being moved
+  // out of the list entirely; don't leave its panel open against a card that
+  // no longer renders.
+  useEffect(() => {
+    setMoving(null);
+  }, [rangeKey, statusFilter]);
 
   const { from, to } = useMemo(() => {
     const range = RANGES.find((r) => r.key === rangeKey) ?? RANGES[1];
@@ -275,23 +292,38 @@ export function AppointmentsPage(): JSX.Element {
             </h2>
             <div className="space-y-3">
               {rows.map((appointment) => (
-                <AppointmentCard
-                  key={appointment.id}
-                  appointment={appointment}
-                  timezone={timezone}
-                  onStatusChange={changeStatus}
-                  onNoteSave={saveNote}
-                  onBookFollowUp={(a) => {
-                    setPrefill({
-                      fullName: a.customer_name ?? '',
-                      email: a.customer_email ?? '',
-                      mobile: a.customer_mobile ?? '',
-                    });
-                    setJustBooked(null);
-                    setBooking(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
+                <div key={appointment.id} className="space-y-3">
+                  <AppointmentCard
+                    appointment={appointment}
+                    timezone={timezone}
+                    onStatusChange={changeStatus}
+                    onNoteSave={saveNote}
+                    onBookFollowUp={(a) => {
+                      setPrefill({
+                        fullName: a.customer_name ?? '',
+                        email: a.customer_email ?? '',
+                        mobile: a.customer_mobile ?? '',
+                      });
+                      setJustBooked(null);
+                      setBooking(true);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    onMove={(a) => setMoving(a)}
+                  />
+                  {moving?.id === appointment.id &&
+                    (appointment.status === 'confirmed' ||
+                      appointment.status === 'pending_approval') && (
+                      <MoveAppointmentPanel
+                        appointment={appointment}
+                        timezone={timezone}
+                        onClose={() => setMoving(null)}
+                        onMoved={() => {
+                          setMoving(null);
+                          void refresh();
+                        }}
+                      />
+                    )}
+                </div>
               ))}
             </div>
           </section>

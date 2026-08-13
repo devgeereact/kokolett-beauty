@@ -161,11 +161,11 @@ export function TodayPage(): JSX.Element {
       title="Today"
       subtitle={formatDateLong(start, timezone)}
       badges={{
-        // Combined count for the sidebar's single Inbox entry — urgent
-        // approvals (expiring within 2h) plus every open request, not every
-        // pending approval, since a non-urgent hold isn't yet something that
-        // needs the owner's attention this minute.
-        inbox: (summary?.urgent_approval_count ?? 0) + (summary?.new_request_count ?? 0),
+        // Combined count for the sidebar's single Inbox entry — every
+        // pending approval plus every open request, matching both the
+        // "Awaiting approval" stat card directly below and InboxPage's own
+        // badge (rows.length + requestsCount).
+        inbox: (summary?.pending_approval_count ?? 0) + (summary?.new_request_count ?? 0),
       }}
       actions={
         <div className="flex items-center gap-3">

@@ -82,10 +82,23 @@ export function DashboardLayout({
   const renderEntry = (entry: NavEntry, primary: boolean): JSX.Element => {
     const active = isEntryActive(entry, location.pathname);
     return (
-      <NavLink
+      <Link
+        // Plain `Link`, not `NavLink`: `NavLink`'s own prefix-based matching
+        // computes `aria-current` from its *own* `isActive` (driven only by
+        // `to`), which either double-marks "Today" (`/dashboard`) as current
+        // on every dashboard sub-route, or — passing `aria-current` through
+        // as a prop merely supplies the *value* NavLink uses when its own
+        // `isActive` is true, so it still misses grouped paths like
+        // Calendar & Capacity's `appointmentType`/`weeklyDefault`, which
+        // never match `to="/dashboard/calendar"` under NavLink's own rules.
+        // A plain `Link` with `aria-current` set directly from the same
+        // `active`/`isEntryActive` boolean the styling below uses gives
+        // exactly one correct current entry on every path, including the
+        // grouped ones.
         key={entry.to}
         to={entry.to}
         onClick={() => setMenuOpen(false)}
+        aria-current={active ? 'page' : undefined}
         className={cn(
           'flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
@@ -103,7 +116,7 @@ export function DashboardLayout({
             {entry.badge}
           </span>
         ) : null}
-      </NavLink>
+      </Link>
     );
   };
 

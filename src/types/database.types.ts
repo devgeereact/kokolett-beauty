@@ -656,6 +656,55 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount_pence: number
+          appointment_id: string
+          created_at: string
+          id: string
+          note: string | null
+          recorded_by: string
+        }
+        Insert: {
+          amount_pence: number
+          appointment_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          recorded_by: string
+        }
+        Update: {
+          amount_pence?: number
+          appointment_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments_detailed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -901,6 +950,7 @@ export type Database = {
           ends_at: string | null
           id: string | null
           owner_note: string | null
+          paid_pence: number | null
           price_pence: number | null
           reference: string | null
           rejected_at: string | null
@@ -1144,6 +1194,10 @@ export type Database = {
         }
       }
       is_owner: { Args: never; Returns: boolean }
+      log_payment: {
+        Args: { p_amount_pence: number; p_appointment_id: string; p_note?: string }
+        Returns: string
+      }
       month_slot_summary: {
         Args: { p_from: string; p_to: string }
         Returns: {

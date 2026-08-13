@@ -30,6 +30,7 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   NOT_RESCHEDULABLE: 'That booking can no longer be moved.',
   ALREADY_PASSED: 'That appointment has already passed.',
   SAME_TIME: 'That is the time you are already booked in for.',
+  INVALID_AMOUNT: 'Enter an amount greater than £0.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

@@ -111,7 +111,7 @@ export interface OwnerSummary {
   today: string;
   timezone: string;
   today_count: number;
-  today_revenue_pence: number;
+  today_collected_pence: number;
   pending_approval_count: number;
   /** Holds inside their final two hours — the ones that need answering now. */
   urgent_approval_count: number;
@@ -175,4 +175,5 @@ export type BookingErrorCode =
   | 'MOBILE_REQUIRED'
   | 'NOT_RESCHEDULABLE'
   | 'ALREADY_PASSED'
-  | 'SAME_TIME';
+  | 'SAME_TIME'
+  | 'INVALID_AMOUNT';

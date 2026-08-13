@@ -137,7 +137,7 @@ export function TodayPage(): JSX.Element {
     { label: 'Booked today', value: summary ? String(summary.today_count) : '—' },
     {
       label: 'Expected takings',
-      value: summary ? formatMoney(summary.today_revenue_pence) : '—',
+      value: summary ? formatMoney(summary.today_collected_pence) : '—',
     },
     {
       label: 'Awaiting approval',

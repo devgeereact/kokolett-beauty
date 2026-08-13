@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { reportError } from '@/lib/sentry';
@@ -12,6 +12,20 @@ interface NavEntry {
   label: string;
   /** Rendered as a count beside the label; omitted when zero. */
   badge?: number;
+  /**
+   * Extra paths that also count as "active" for this entry, for a single nav
+   * item that fronts more than one route — Calendar & Capacity groups
+   * `calendar`, `appointmentType` and `weeklyDefault` (docs/plan.md Phase 1
+   * step 6). When omitted, only `to` (and its sub-paths) count.
+   */
+  activePaths?: string[];
+}
+
+/** Mirrors `NavLink`'s own non-`end` matching: exact, or a path segment below. */
+function isEntryActive(entry: NavEntry, pathname: string): boolean {
+  if (entry.activePaths) return entry.activePaths.includes(pathname);
+  if (entry.to === routes.owner.dashboard) return pathname === entry.to;
+  return pathname === entry.to || pathname.startsWith(`${entry.to}/`);
 }
 
 /**
@@ -31,50 +45,73 @@ export function DashboardLayout({
   title: string;
   subtitle?: string;
   actions?: ReactNode;
-  badges?: { approvals?: number; requests?: number };
+  badges?: { inbox?: number };
 }): JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, signOut } = useSupabaseAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // The seven core owner workflows (docs/plan.md Phase 1 step 3).
   const entries: NavEntry[] = [
     { to: routes.owner.dashboard, label: 'Today' },
-    { to: routes.owner.calendar, label: 'Calendar' },
-    { to: routes.owner.appointments, label: 'Appointments' },
-    { to: routes.owner.requests, label: 'Requests', badge: badges?.requests },
+    { to: routes.owner.inbox, label: 'Inbox', badge: badges?.inbox },
+    {
+      to: routes.owner.calendar,
+      label: 'Calendar & Capacity',
+      activePaths: [
+        routes.owner.calendar,
+        routes.owner.appointmentType,
+        routes.owner.weeklyDefault,
+      ],
+    },
+    { to: routes.owner.appointments, label: 'Bookings' },
     { to: routes.owner.customers, label: 'Customers' },
-    { to: routes.owner.serviceMenu, label: 'Services' },
-    { to: routes.owner.reports, label: 'Reports' },
-    { to: routes.owner.assistant, label: 'AI Assistant' },
+    { to: routes.owner.serviceMenu, label: 'Growth' },
     { to: routes.owner.settings, label: 'Settings' },
   ];
 
+  // Real, shipped pages that sit outside the plan's 7-nav model — kept
+  // reachable, visually secondary rather than hidden or relabelled (see
+  // docs/BASELINE-AUDIT.md: neither is a stub or redirect).
+  const secondaryEntries: NavEntry[] = [
+    { to: routes.owner.reports, label: 'Reports' },
+    { to: routes.owner.assistant, label: 'AI Assistant' },
+  ];
+
+  const renderEntry = (entry: NavEntry, primary: boolean): JSX.Element => {
+    const active = isEntryActive(entry, location.pathname);
+    return (
+      <NavLink
+        key={entry.to}
+        to={entry.to}
+        onClick={() => setMenuOpen(false)}
+        className={cn(
+          'flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+          !primary && 'py-2 text-[13px] font-normal',
+          active
+            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+            : primary
+              ? 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+        )}
+      >
+        <span>{entry.label}</span>
+        {entry.badge ? (
+          <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
+            {entry.badge}
+          </span>
+        ) : null}
+      </NavLink>
+    );
+  };
+
   const nav = (
     <nav className="flex flex-col gap-1" aria-label="Dashboard">
-      {entries.map((entry) => (
-        <NavLink
-          key={entry.to}
-          to={entry.to}
-          end={entry.to === routes.owner.dashboard}
-          onClick={() => setMenuOpen(false)}
-          className={({ isActive }) =>
-            cn(
-              'flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-              isActive
-                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-            )
-          }
-        >
-          <span>{entry.label}</span>
-          {entry.badge ? (
-            <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
-              {entry.badge}
-            </span>
-          ) : null}
-        </NavLink>
-      ))}
+      {entries.map((entry) => renderEntry(entry, true))}
+      <div className="my-2 border-t border-sidebar-border" aria-hidden="true" />
+      {secondaryEntries.map((entry) => renderEntry(entry, false))}
     </nav>
   );
 

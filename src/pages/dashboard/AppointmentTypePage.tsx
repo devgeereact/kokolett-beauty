@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { CalendarCapacityTabs } from '@/components/dashboard/CalendarCapacityTabs';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input, Textarea } from '@/components/ui/Field';
@@ -51,6 +52,7 @@ export function AppointmentTypePage(): JSX.Element {
   if (loading) {
     return (
       <DashboardLayout title="Appointment">
+        <CalendarCapacityTabs />
         <LoadingState />
       </DashboardLayout>
     );
@@ -59,6 +61,7 @@ export function AppointmentTypePage(): JSX.Element {
   if (error || !appointment) {
     return (
       <DashboardLayout title="Appointment">
+        <CalendarCapacityTabs />
         <ErrorState
           error={error ?? new Error('No appointment type found.')}
           onRetry={() => void refresh()}
@@ -105,6 +108,8 @@ export function AppointmentTypePage(): JSX.Element {
       title="Appointment"
       subtitle="One appointment type — every time you publish is one of these"
     >
+      <CalendarCapacityTabs />
+
       <div className="max-w-xl">
         <Card className="p-5">
           <Field label="What it is called" required>

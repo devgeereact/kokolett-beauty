@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { CalendarCapacityTabs } from '@/components/dashboard/CalendarCapacityTabs';
 import { DayPanel } from '@/components/dashboard/DayPanel';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -142,6 +143,7 @@ export function WeeklyDefaultPage(): JSX.Element {
   if (loading) {
     return (
       <DashboardLayout title="Weekly default">
+        <CalendarCapacityTabs />
         <LoadingState />
       </DashboardLayout>
     );
@@ -154,6 +156,8 @@ export function WeeklyDefaultPage(): JSX.Element {
       title="Weekly default"
       subtitle="A repeating week, so you are not typing times every day"
     >
+      <CalendarCapacityTabs />
+
       {error && <ErrorState error={error} onRetry={() => void load()} />}
 
       <Card className="mb-6 p-5">

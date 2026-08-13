@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { CalendarCapacityTabs } from '@/components/dashboard/CalendarCapacityTabs';
 import { CalendarShell } from '@/components/dashboard/calendar/CalendarShell';
 import { WeekView } from '@/components/dashboard/calendar/WeekView';
 import { DayView } from '@/components/dashboard/calendar/DayView';
@@ -232,6 +233,8 @@ export function CalendarPage(): JSX.Element {
         </div>
       }
     >
+      <CalendarCapacityTabs />
+
       {error && <ErrorState error={error} onRetry={() => void load()} />}
 
       {view === 'month' && (

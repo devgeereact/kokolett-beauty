@@ -161,8 +161,11 @@ export function TodayPage(): JSX.Element {
       title="Today"
       subtitle={formatDateLong(start, timezone)}
       badges={{
-        approvals: summary?.pending_approval_count,
-        requests: summary?.new_request_count,
+        // Combined count for the sidebar's single Inbox entry — urgent
+        // approvals (expiring within 2h) plus every open request, not every
+        // pending approval, since a non-urgent hold isn't yet something that
+        // needs the owner's attention this minute.
+        inbox: (summary?.urgent_approval_count ?? 0) + (summary?.new_request_count ?? 0),
       }}
       actions={
         <div className="flex items-center gap-3">

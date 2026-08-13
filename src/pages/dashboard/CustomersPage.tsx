@@ -177,11 +177,22 @@ export function CustomersPage(): JSX.Element {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-2">
           {customers.map((customer) => (
-            <button
+            <div
               key={customer.id}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={() => void open(customer)}
-              className={`w-full rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              onKeyDown={(e) => {
+                // Mirrors a native <button>'s activation keys. A real
+                // <button> can't be used here — it would wrap the mailto/tel
+                // links below, and a button's content model forbids
+                // interactive-content descendants.
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  void open(customer);
+                }
+              }}
+              className={`w-full cursor-pointer rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 selected?.id === customer.id
                   ? 'border-primary bg-card'
                   : 'border-border bg-card hover:bg-muted'
@@ -216,7 +227,7 @@ export function CustomersPage(): JSX.Element {
                   Consented to marketing
                 </p>
               )}
-            </button>
+            </div>
           ))}
         </div>
 

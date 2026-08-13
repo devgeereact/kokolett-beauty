@@ -50,14 +50,84 @@ export function HomePage(): JSX.Element {
 
   const nextDays = openDates.slice(0, 3);
 
-  // The Services section only exists once the menu has loaded, so a plain
-  // browser anchor-scroll on first paint finds nothing there yet — retry once
-  // the section has actually mounted (e.g. arriving via the dashboard's
-  // "View on website" link, opened fresh in a new tab).
+  // The Services section only exists once the menu has loaded (and the page
+  // keeps reflowing after that — e.g. the "Next available" cards from
+  // `useAvailability` resolving a beat later, or the display font swapping
+  // in), so a single scroll-into-view fired once on mount reliably lands
+  // short: it targets whatever the layout looked like at that instant, then
+  // has no way to react to what shifts under it a moment later. Poll instead:
+  // wait for the section to exist, wait for whatever scroll is currently
+  // animating (ours or the browser's own hash-scroll) to settle, then
+  // re-correct if it didn't land at the top — arriving via the dashboard's
+  // "View on website" link, opened fresh in a new tab, is exactly this case.
   useEffect(() => {
-    if (location.hash !== '#services' || menu.length === 0) return;
-    document.getElementById('services')?.scrollIntoView({ block: 'start' });
-  }, [location.hash, menu.length]);
+    if (location.hash !== '#services') return;
+
+    let cancelled = false;
+    let rafId = 0;
+    let frame = 0;
+    let corrections = 0;
+    let lastScrollY = -1;
+    let settledFrames = 0;
+
+    const MAX_FRAMES = 300; // ~5s at 60fps — generous, but bounded
+    const MAX_CORRECTIONS = 5;
+
+    const stop = (): void => {
+      if (cancelled) return;
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchstart', stop);
+    };
+
+    const tick = (): void => {
+      if (cancelled) return;
+      frame += 1;
+
+      const el = document.getElementById('services');
+      if (!el) {
+        if (frame < MAX_FRAMES) rafId = requestAnimationFrame(tick);
+        else stop();
+        return;
+      }
+
+      // A scroll (ours or the browser's) is still moving — a mid-animation
+      // read of the target's position is meaningless, so wait for it to stop.
+      if (window.scrollY !== lastScrollY) {
+        lastScrollY = window.scrollY;
+        settledFrames = 0;
+        if (frame < MAX_FRAMES) rafId = requestAnimationFrame(tick);
+        else stop();
+        return;
+      }
+      settledFrames += 1;
+      if (settledFrames < 2) {
+        if (frame < MAX_FRAMES) rafId = requestAnimationFrame(tick);
+        else stop();
+        return;
+      }
+
+      const top = el.getBoundingClientRect().top;
+      if (Math.abs(top) > 2 && corrections < MAX_CORRECTIONS) {
+        corrections += 1;
+        el.scrollIntoView({ block: 'start' });
+        settledFrames = 0;
+        if (frame < MAX_FRAMES) rafId = requestAnimationFrame(tick);
+        else stop();
+        return;
+      }
+
+      stop();
+    };
+
+    rafId = requestAnimationFrame(tick);
+    // Never fight a visitor who has taken over scrolling themselves.
+    window.addEventListener('wheel', stop, { passive: true, once: true });
+    window.addEventListener('touchstart', stop, { passive: true, once: true });
+
+    return stop;
+  }, [location.hash]);
 
   return (
     <SiteShell>

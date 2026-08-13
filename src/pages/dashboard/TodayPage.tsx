@@ -19,7 +19,7 @@ import { useSalonToday } from '@/hooks/useSalonToday';
 import { useLiveClock } from '@/hooks/useLiveClock';
 import {
   setAppointmentStatus,
-  createAppointmentAsOwner,
+  rescheduleAppointmentAsOwner,
 } from '@/services/appointmentService';
 import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
@@ -70,7 +70,6 @@ export function TodayPage(): JSX.Element {
   const [movingId, setMovingId] = useState<string | null>(null);
   const [moveBusy, setMoveBusy] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
-  const [movedReference, setMovedReference] = useState<string | null>(null);
 
   const { showToast } = useToast();
 
@@ -121,21 +120,9 @@ export function TodayPage(): JSX.Element {
       setMoveBusy(true);
       setMoveError(null);
       try {
-        const app = appointments.find((a) => a.id === id);
-        if (!app) throw new Error('Original appointment not found');
-        const durationMin = Math.round(
-          (new Date(app.ends_at).getTime() - new Date(app.starts_at).getTime()) / 60000,
-        );
-        const ownerBooking = await createAppointmentAsOwner({
-          startsAt: new Date(startsAt),
-          fullName: app.customer_name ?? '',
-          email: app.customer_email ?? '',
-          mobile: app.customer_mobile ?? undefined,
-          durationMin,
-          note: `Reschedule of ${app.reference}`,
-        });
-        setMovedReference(ownerBooking.reference ?? null);
+        await rescheduleAppointmentAsOwner(id, new Date(startsAt));
         setMovingId(null);
+        showToast({ message: 'Appointment rescheduled.' });
         await Promise.all([refresh(), refreshSummary()]);
       } catch (e) {
         setMoveError(errorMessage(e));
@@ -143,7 +130,7 @@ export function TodayPage(): JSX.Element {
         setMoveBusy(false);
       }
     },
-    [appointments, refresh, refreshSummary],
+    [refresh, refreshSummary, showToast],
   );
 
   const stats = [
@@ -313,7 +300,6 @@ export function TodayPage(): JSX.Element {
                 // Open the compact reschedule picker inline for quick owner reschedules.
                 setMovingId(a.id);
                 setMoveError(null);
-                setMovedReference(null);
               }}
             />
 
@@ -331,17 +317,6 @@ export function TodayPage(): JSX.Element {
                     void doOwnerReschedule(appointment.id, startsAt)
                   }
                 />
-              </div>
-            )}
-
-            {movedReference && (
-              <div className="mt-2 rounded-md border border-status-completed p-3 text-sm">
-                <p className="font-medium text-foreground">
-                  Replacement booked — reference {movedReference}.
-                </p>
-                <p className="mt-1 text-muted-foreground">
-                  The original booking is left intact; cancel or mark it as appropriate.
-                </p>
               </div>
             )}
           </div>

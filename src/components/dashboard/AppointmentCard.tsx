@@ -211,11 +211,13 @@ export function AppointmentCard({
               </Button>
             )}
 
-            {onReschedule && (
-              <Button size="sm" variant="ghost" onClick={() => onReschedule(appointment)}>
-                Reschedule
-              </Button>
-            )}
+            {onReschedule &&
+              (appointment.status === 'confirmed' ||
+                appointment.status === 'pending_approval') && (
+                <Button size="sm" variant="ghost" onClick={() => onReschedule(appointment)}>
+                  Reschedule
+                </Button>
+              )}
           </div>
         </div>
 

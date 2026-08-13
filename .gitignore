@@ -65,3 +65,4 @@ CLAUDE.md.pre-ruflo
 # hookify's required naming, not a statement about version control.
 !.claude/hookify.*.local.md
 
+.gstack/

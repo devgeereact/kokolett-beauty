@@ -3,7 +3,10 @@ import { Field, Input } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { StepHeader } from '@/components/dashboard/quickActions/StepHeader';
-import { ITEM_BUTTON_CLASS, MAX_RESULTS } from '@/components/dashboard/quickActions/shared';
+import {
+  ITEM_BUTTON_CLASS,
+  MAX_RESULTS,
+} from '@/components/dashboard/quickActions/shared';
 import { listAppointments } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
 import { addDays, formatDateTime, salonDayRange, toSalonDate } from '@/lib/format';
@@ -12,7 +15,11 @@ import type { AppointmentDetailed, AppointmentStatus } from '@/types';
 /** Statuses `set_appointment_status` will actually move to 'completed' from
  * — mirrors `AppointmentCard.tsx`'s `NEXT_ACTIONS` map, not re-exported from
  * there since that map is a private implementation detail of that file. */
-const COMPLETABLE_STATUSES: AppointmentStatus[] = ['confirmed', 'checked_in', 'in_service'];
+const COMPLETABLE_STATUSES: AppointmentStatus[] = [
+  'confirmed',
+  'checked_in',
+  'in_service',
+];
 
 /**
  * Action 2: "Mark completed". Owns its own search (fetch once on mount,

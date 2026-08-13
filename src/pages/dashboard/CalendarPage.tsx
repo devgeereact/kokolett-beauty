@@ -10,6 +10,7 @@ import { MoveAppointmentPanel } from '@/components/dashboard/calendar/MoveAppoin
 import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/States';
+import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
   listMonthSummary,
@@ -22,6 +23,7 @@ import {
   setAppointmentStatus,
   setOwnerNote,
 } from '@/services/appointmentService';
+import { errorMessage } from '@/lib/errors';
 import {
   formatDateLong,
   formatDateShort,
@@ -68,6 +70,7 @@ function groupByDate(
  */
 export function CalendarPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const { showToast } = useToast();
   const today = toSalonDate(new Date(), timezone);
 
   const [view, setView] = useState<CalendarView>('week');
@@ -169,10 +172,14 @@ export function CalendarPage(): JSX.Element {
 
   const changeStatus = useCallback(
     async (id: string, status: AppointmentStatus): Promise<void> => {
-      await setAppointmentStatus(id, status);
-      await load();
+      try {
+        await setAppointmentStatus(id, status);
+        await load();
+      } catch (e) {
+        showToast({ message: errorMessage(e) });
+      }
     },
-    [load],
+    [load, showToast],
   );
 
   const saveNote = useCallback(async (id: string, note: string): Promise<void> => {

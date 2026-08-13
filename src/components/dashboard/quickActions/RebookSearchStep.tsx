@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState, type RefObject } from 'react';
 import { Field, Input } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { StepHeader } from '@/components/dashboard/quickActions/StepHeader';
-import { ITEM_BUTTON_CLASS, MAX_RESULTS } from '@/components/dashboard/quickActions/shared';
+import {
+  ITEM_BUTTON_CLASS,
+  MAX_RESULTS,
+} from '@/components/dashboard/quickActions/shared';
 import { listCustomers } from '@/services/customerService';
 import { errorMessage } from '@/lib/errors';
 import type { Customer } from '@/types';

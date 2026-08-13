@@ -64,7 +64,9 @@ export function NewBookingPanel({
   const [time, setTime] = useState(() =>
     initialStartsAt ? formatTime(initialStartsAt, timezone) : (initialTime ?? '10:00'),
   );
-  const [duration, setDuration] = useState(() => (initialDurationMin ? String(initialDurationMin) : '240'));
+  const [duration, setDuration] = useState(() =>
+    initialDurationMin ? String(initialDurationMin) : '240',
+  );
   const [fullName, setFullName] = useState(prefill?.fullName ?? '');
   const [email, setEmail] = useState(prefill?.email ?? '');
   const [mobile, setMobile] = useState(prefill?.mobile ?? '');

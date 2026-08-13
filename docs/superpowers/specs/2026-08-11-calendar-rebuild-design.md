@@ -28,7 +28,7 @@ motion. Accessibility parity with drag is existing policy, not new scope.
 
 - No change to the availability data model. A day is still exactly its
   list of published `availability_slots` start times (migration `0011`'s
-  model). This spec adds a *visualisation* layer and one new *write* path
+  model). This spec adds a _visualisation_ layer and one new _write_ path
   (owner drag), not a new availability concept.
 - No multi-service / multi-duration calendar. One active `Hair Appointment`
   service, one fixed duration, as today.
@@ -77,22 +77,22 @@ same pattern as the other `0003` owner RPCs.
 specified here. Reasoning for the reversal:
 
 - `notify_appointment_status_changed` only fires logic `if new.status <>
-  old.status` — an in-place `starts_at`-only update wouldn't fire it at
+old.status` — an in-place `starts_at`-only update wouldn't fire it at
   all, so reminders and the customer notification would need to be
   hand-rolled a second time, duplicating logic that already exists,
   already handles the "no reminders in the past" guard (migration `0010`),
   and is already proven correct by `customer_reschedule_appointment`.
 - The `booking_rescheduled` email template already exists in
   `supabase/functions/_shared/templates.ts` and is written for exactly
-  the retire-and-recreate shape — it says *"this replaces your booking on
-  [old date], which has been released"* and *"your reference has changed
-  to [new ref]"*. Nothing currently calls it with that template name
+  the retire-and-recreate shape — it says _"this replaces your booking on
+  [old date], which has been released"_ and _"your reference has changed
+  to [new ref]"_. Nothing currently calls it with that template name
   (`notify_appointment_status_changed`'s `rescheduled` branch emails the
   **owner**, for the customer-initiated path — `owner_booking_moved`), but
   the copy is already right for the owner-initiated case once the
   notification target is the customer instead.
 - Reusing the same shape means reusing the same proven safety property:
-  the old row is retired *before* the new one is inserted, and if the
+  the old row is retired _before_ the new one is inserted, and if the
   insert then fails on `exclusion_violation` (someone else's slot appeared
   in the gap), **the old booking is restored** rather than left cancelled
   with nothing in its place.
@@ -105,14 +105,14 @@ Differences from `customer_reschedule_appointment`:
   one open product decision in the brainstorm — going with auto-publish
   because it matches the existing precedent that
   `create_appointment_as_owner` already bypasses the approval gate: the
-  owner looking at her own calendar and moving a card *is* the owner
+  owner looking at her own calendar and moving a card _is_ the owner
   declaring her availability, the same way typing in a new booking is.
 - **Only `confirmed` and `pending_approval`** are reschedulable this way
   (same restriction `customer_reschedule_appointment` already enforces);
   anything else raises `NOT_RESCHEDULABLE` (reusing that exact error code,
   not inventing a new one).
 - **Notifies the customer, not the owner** — `queue_email('booking_rescheduled',
-  v_customer.email, …)` where `customer_reschedule_appointment`'s shared
+v_customer.email, …)` where `customer_reschedule_appointment`'s shared
   status-change trigger would instead have emailed the owner. The owner
   doesn't need telling; she just did it.
 - No session token — takes `is_owner()` instead of resolving a customer
@@ -140,7 +140,7 @@ silently no-op) rather than being customer-only courtesies.
 cleanup.** `notify_appointment_created` (fires on `INSERT`) unconditionally
 queues an owner-facing `owner_new_booking` or `owner_approval_needed`
 email whenever a live appointment row is inserted — correct when a
-*customer* reschedules (the owner should hear about it), wrong here (the
+_customer_ reschedules (the owner should hear about it), wrong here (the
 owner doesn't need to be told about her own action). After the insert,
 this function marks that specific just-queued row `failed` (`template in
 ('owner_new_booking', 'owner_approval_needed') and status = 'queued' and
@@ -165,15 +165,15 @@ against a local/empty schema.
 
 New directory `src/components/dashboard/calendar/`:
 
-| File              | Purpose                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------ |
+| File                | Purpose                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------- |
 | `CalendarShell.tsx` | View-mode tabs (Week/Day/Month) + shared header/nav, replaces the top of `CalendarPage.tsx` |
-| `MonthView.tsx`     | The current month-grid JSX, moved here unchanged in behaviour, pills added (§6)            |
-| `WeekView.tsx`      | New — 7-day hour-axis grid                                                                 |
-| `DayView.tsx`       | New — single-day hour-axis grid + `AgendaList` + relocated `DayPanel`                      |
-| `EventBlock.tsx`    | One appointment or one open-slot ghost, positioned by time                                 |
-| `NowLine.tsx`       | The live red time indicator                                                                |
-| `AgendaList.tsx`    | Accessible list view — every action available with zero drag, zero mouse                   |
+| `MonthView.tsx`     | The current month-grid JSX, moved here unchanged in behaviour, pills added (§6)             |
+| `WeekView.tsx`      | New — 7-day hour-axis grid                                                                  |
+| `DayView.tsx`       | New — single-day hour-axis grid + `AgendaList` + relocated `DayPanel`                       |
+| `EventBlock.tsx`    | One appointment or one open-slot ghost, positioned by time                                  |
+| `NowLine.tsx`       | The live red time indicator                                                                 |
+| `AgendaList.tsx`    | Accessible list view — every action available with zero drag, zero mouse                    |
 
 `lib/calendar.ts` gains the hour-axis math as pure functions (same style as
 the existing `monthGrid`/`gridRange`):
@@ -242,13 +242,13 @@ Non-negotiable per `DESIGN.md` §7, not extra scope:
 
 ## 8. Error handling & edge cases
 
-| Case                                             | Behaviour                                                                 |
-| ------------------------------------------------- | --------------------------------------------------------------------------- |
-| Drop onto a time already taken                    | RPC returns `SLOT_TAKEN`; block snaps back; toast, same copy pattern as `book_appointment`'s error mapping |
-| Drag a non-draggable status                       | Block isn't draggable at all (no drag handle rendered)                     |
-| Drag to a past time                                | Rejected client-side before the RPC call; block snaps back                 |
-| Realtime update arrives mid-drag                   | Drag is authoritative until drop; a concurrent external change is caught by the same exclusion constraint at commit time (existing pattern, `book_appointment` already races this way) |
-| Owner has published nothing for the visible range | Grid renders with the 08:00–20:00 fallback range, empty of ghosts, no error |
+| Case                                              | Behaviour                                                                                                                                                                              |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Drop onto a time already taken                    | RPC returns `SLOT_TAKEN`; block snaps back; toast, same copy pattern as `book_appointment`'s error mapping                                                                             |
+| Drag a non-draggable status                       | Block isn't draggable at all (no drag handle rendered)                                                                                                                                 |
+| Drag to a past time                               | Rejected client-side before the RPC call; block snaps back                                                                                                                             |
+| Realtime update arrives mid-drag                  | Drag is authoritative until drop; a concurrent external change is caught by the same exclusion constraint at commit time (existing pattern, `book_appointment` already races this way) |
+| Owner has published nothing for the visible range | Grid renders with the 08:00–20:00 fallback range, empty of ghosts, no error                                                                                                            |
 
 ## 9. Testing
 

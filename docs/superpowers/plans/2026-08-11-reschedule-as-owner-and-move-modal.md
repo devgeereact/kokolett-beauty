@@ -60,22 +60,24 @@ TypeScript strict.
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `supabase/migrations/0024_reschedule_appointment_as_owner.sql` (new) | The `reschedule_appointment_as_owner` DB function |
-| `src/services/appointmentService.ts` (modify) | Add `rescheduleAppointmentAsOwner` wrapper |
-| `src/components/dashboard/AppointmentCard.tsx` (modify) | Add optional `onMove` prop + "Move" button, mirroring the existing `onBookFollowUp` pattern |
-| `src/components/dashboard/calendar/MoveAppointmentPanel.tsx` (new) | Date picker + that date's free times + confirm/cancel |
-| `src/pages/dashboard/CalendarPage.tsx` (modify) | Wire `onMove` → open the panel; `onMoved` → reload + close |
+| File                                                                 | Responsibility                                                                              |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `supabase/migrations/0024_reschedule_appointment_as_owner.sql` (new) | The `reschedule_appointment_as_owner` DB function                                           |
+| `src/services/appointmentService.ts` (modify)                        | Add `rescheduleAppointmentAsOwner` wrapper                                                  |
+| `src/components/dashboard/AppointmentCard.tsx` (modify)              | Add optional `onMove` prop + "Move" button, mirroring the existing `onBookFollowUp` pattern |
+| `src/components/dashboard/calendar/MoveAppointmentPanel.tsx` (new)   | Date picker + that date's free times + confirm/cancel                                       |
+| `src/pages/dashboard/CalendarPage.tsx` (modify)                      | Wire `onMove` → open the panel; `onMoved` → reload + close                                  |
 
 ---
 
 ### Task 1: Migration `0024` — `reschedule_appointment_as_owner`, written and validated live
 
 **Files:**
+
 - Create: `supabase/migrations/0024_reschedule_appointment_as_owner.sql`
 
 **Interfaces:**
+
 - Produces: `public.reschedule_appointment_as_owner(p_appointment_id uuid, p_new_starts_at timestamptz) returns table (appointment_id uuid, reference text)`, `security definer`, callable by `authenticated` only. Task 2's service wrapper calls this by name with these exact parameter names.
 - Consumes (all pre-existing, read-only from this migration's perspective): `public.is_owner()`, `public.hair_appointment()`, `public.generate_booking_reference()`, `public.booking_settings`, `public.availability_slots` (`on_date date`, `starts_at time`, unique on `(on_date, starts_at)`), `public.appointments`, `public.email_messages`, and the existing triggers `notify_appointment_created`/`rescheduled_mail`/`appointments_no_overlap` (fire automatically on the `insert` this function performs — not called directly).
 
@@ -383,9 +385,11 @@ step outside this task — see Global Constraints.
 ### Task 2: `rescheduleAppointmentAsOwner` service wrapper
 
 **Files:**
+
 - Modify: `src/services/appointmentService.ts`
 
 **Interfaces:**
+
 - Consumes: `BookingResult` type from `@/types` (existing).
 - Produces: `export async function rescheduleAppointmentAsOwner(id: string, newStartsAt: Date): Promise<Pick<BookingResult, 'appointment_id' | 'reference'>>`. Task 4's `MoveAppointmentPanel` calls this exact signature.
 
@@ -441,9 +445,11 @@ git commit -m "feat(calendar): add rescheduleAppointmentAsOwner service wrapper"
 ### Task 3: `AppointmentCard` gains a "Move" action
 
 **Files:**
+
 - Modify: `src/components/dashboard/AppointmentCard.tsx`
 
 **Interfaces:**
+
 - Produces: new optional prop `onMove?: (appointment: AppointmentDetailed) => void` on `AppointmentCard`. Task 5's `CalendarPage` passes this to open `MoveAppointmentPanel`.
 
 - [ ] **Step 1: Implement**
@@ -480,23 +486,31 @@ renders the note/follow-up buttons), right after the note button and before
 "Book follow-up":
 
 ```tsx
-{onNoteSave && (
-  <Button size="sm" variant="ghost" onClick={() => setNoteOpen((v) => !v)}>
-    {appointment.owner_note ? 'Note ✓' : 'Add note'}
-  </Button>
-)}
-{onMove && (
-  <Button size="sm" variant="ghost" onClick={() => onMove(appointment)}>
-    Move
-  </Button>
-)}
-{/* The best moment to book the next one is while this one is still
-    in front of her, so the action lives on the booking itself. */}
-{onBookFollowUp && (
-  <Button size="sm" variant="ghost" onClick={() => onBookFollowUp(appointment)}>
-    Book follow-up
-  </Button>
-)}
+{
+  onNoteSave && (
+    <Button size="sm" variant="ghost" onClick={() => setNoteOpen((v) => !v)}>
+      {appointment.owner_note ? 'Note ✓' : 'Add note'}
+    </Button>
+  );
+}
+{
+  onMove && (
+    <Button size="sm" variant="ghost" onClick={() => onMove(appointment)}>
+      Move
+    </Button>
+  );
+}
+{
+  /* The best moment to book the next one is while this one is still
+    in front of her, so the action lives on the booking itself. */
+}
+{
+  onBookFollowUp && (
+    <Button size="sm" variant="ghost" onClick={() => onBookFollowUp(appointment)}>
+      Book follow-up
+    </Button>
+  );
+}
 ```
 
 Only offer Move for a status that's actually reschedulable — reuse the
@@ -504,11 +518,14 @@ file's existing `actions` derivation pattern rather than inventing a second
 one. Change the button's guard to also check status:
 
 ```tsx
-{onMove && (appointment.status === 'confirmed' || appointment.status === 'pending_approval') && (
-  <Button size="sm" variant="ghost" onClick={() => onMove(appointment)}>
-    Move
-  </Button>
-)}
+{
+  onMove &&
+    (appointment.status === 'confirmed' || appointment.status === 'pending_approval') && (
+      <Button size="sm" variant="ghost" onClick={() => onMove(appointment)}>
+        Move
+      </Button>
+    );
+}
 ```
 
 - [ ] **Step 2: Typecheck**
@@ -531,11 +548,14 @@ git commit -m "feat(calendar): add Move action to AppointmentCard"
 ### Task 4: `MoveAppointmentPanel`
 
 **Files:**
+
 - Create: `src/components/dashboard/calendar/MoveAppointmentPanel.tsx`
 
 **Interfaces:**
+
 - Consumes: `listDaySlots` and `OwnerDaySlot` from `@/services/availabilityService` (existing); `rescheduleAppointmentAsOwner` from `@/services/appointmentService` (Task 2); `errorMessage` from `@/lib/errors` (existing — already maps every error code this RPC can raise, see Task 1); `toSalonDate` from `@/lib/format` (existing); `Input`, `Button`, `Card` from `@/components/ui/*` (existing).
 - Produces:
+
   ```ts
   export interface MoveAppointmentPanelProps {
     appointment: AppointmentDetailed;
@@ -543,8 +563,9 @@ git commit -m "feat(calendar): add Move action to AppointmentCard"
     onClose: () => void;
     onMoved: () => void;
   }
-  export function MoveAppointmentPanel(props: MoveAppointmentPanelProps): JSX.Element
+  export function MoveAppointmentPanel(props: MoveAppointmentPanelProps): JSX.Element;
   ```
+
   Task 5's `CalendarPage` renders this exact component with these exact props.
 
 - [ ] **Step 1: Implement**
@@ -680,7 +701,12 @@ export function MoveAppointmentPanel({
         </p>
       )}
 
-      <Button size="sm" loading={busy} disabled={!selected} onClick={() => void confirm()}>
+      <Button
+        size="sm"
+        loading={busy}
+        disabled={!selected}
+        onClick={() => void confirm()}
+      >
         Confirm move
       </Button>
     </Card>
@@ -708,9 +734,11 @@ git commit -m "feat(calendar): add MoveAppointmentPanel"
 ### Task 5: Wire into `CalendarPage`
 
 **Files:**
+
 - Modify: `src/pages/dashboard/CalendarPage.tsx`
 
 **Interfaces:**
+
 - Consumes: `MoveAppointmentPanel`/`MoveAppointmentPanelProps` (Task 4), the updated `AppointmentCard` `onMove` prop (Task 3).
 
 - [ ] **Step 1: Implement**
@@ -745,20 +773,22 @@ useEffect(() => {
    a selection exists and Move was opened:
 
 ```tsx
-{selected && moving && (
-  <div className="mt-4">
-    <MoveAppointmentPanel
-      appointment={selected}
-      timezone={timezone}
-      onClose={() => setMoving(false)}
-      onMoved={() => {
-        setMoving(false);
-        setSelectedId(null);
-        void load();
-      }}
-    />
-  </div>
-)}
+{
+  selected && moving && (
+    <div className="mt-4">
+      <MoveAppointmentPanel
+        appointment={selected}
+        timezone={timezone}
+        onClose={() => setMoving(false)}
+        onMoved={() => {
+          setMoving(false);
+          setSelectedId(null);
+          void load();
+        }}
+      />
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 2: Typecheck**

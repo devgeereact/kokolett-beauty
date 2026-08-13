@@ -17,49 +17,59 @@
 - Keep files under 500 lines (project `CLAUDE.md`).
 - This codebase only unit-tests pure logic and hooks (`src/lib/*.test.ts`, `src/hooks/*.test.ts`) — it does **not** unit-test presentational components (nothing under `src/components/dashboard` has a `.test.tsx`). Follow that convention: write tests for Tasks 1–3, skip inventing component tests for Tasks 4–10.
 - Tests must pass with no `.env` present (`vite.config.ts` `test.env` supplies placeholder Supabase credentials) — don't add a new module-scope Supabase call outside `src/services`.
-- Comments only where the *why* isn't obvious from the code — match the existing terse-JSDoc style visible in `src/lib/calendar.ts` and `src/lib/format.ts`, don't restate what a line does.
+- Comments only where the _why_ isn't obvious from the code — match the existing terse-JSDoc style visible in `src/lib/calendar.ts` and `src/lib/format.ts`, don't restate what a line does.
 
 ---
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `src/lib/calendar.ts` (modify) | Add hour-axis math: `HourRange`, `hourRange`, `offsetPercent`, `hourLabels`, `weekDates`, `CalendarView`, `shiftAnchor` |
-| `src/lib/calendar.test.ts` (new) | Unit tests for the above |
-| `src/lib/format.ts` (modify) | Add `minutesSinceMidnight` |
-| `src/lib/format.test.ts` (modify) | Tests for `minutesSinceMidnight` |
-| `src/hooks/useNowLine.ts` (new) | Live minutes-since-midnight, refreshed on an interval |
-| `src/hooks/useNowLine.test.ts` (new) | Fake-timer tests, same style as `useSalonToday.test.ts` |
-| `src/components/dashboard/calendar/EventBlock.tsx` (new) | One positioned appointment or open-slot block |
-| `src/components/dashboard/calendar/NowLine.tsx` (new) | The live time indicator line |
-| `src/components/dashboard/calendar/AgendaList.tsx` (new) | Accessible chronological list — the non-visual alternative required by `docs/DESIGN.md` §7 |
-| `src/components/dashboard/calendar/WeekView.tsx` (new) | 7-day hour-axis grid |
-| `src/components/dashboard/calendar/DayView.tsx` (new) | Single-day hour-axis grid + `AgendaList` + relocated `DayPanel` |
-| `src/components/dashboard/calendar/MonthView.tsx` (new) | Month grid, extracted from `CalendarPage`, with event pills added |
-| `src/components/dashboard/calendar/CalendarShell.tsx` (new) | Week/Day/Month tab switcher |
-| `src/pages/dashboard/CalendarPage.tsx` (rewrite) | Owns view/anchor state, data loading, wires everything together |
+| File                                                        | Responsibility                                                                                                          |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/calendar.ts` (modify)                              | Add hour-axis math: `HourRange`, `hourRange`, `offsetPercent`, `hourLabels`, `weekDates`, `CalendarView`, `shiftAnchor` |
+| `src/lib/calendar.test.ts` (new)                            | Unit tests for the above                                                                                                |
+| `src/lib/format.ts` (modify)                                | Add `minutesSinceMidnight`                                                                                              |
+| `src/lib/format.test.ts` (modify)                           | Tests for `minutesSinceMidnight`                                                                                        |
+| `src/hooks/useNowLine.ts` (new)                             | Live minutes-since-midnight, refreshed on an interval                                                                   |
+| `src/hooks/useNowLine.test.ts` (new)                        | Fake-timer tests, same style as `useSalonToday.test.ts`                                                                 |
+| `src/components/dashboard/calendar/EventBlock.tsx` (new)    | One positioned appointment or open-slot block                                                                           |
+| `src/components/dashboard/calendar/NowLine.tsx` (new)       | The live time indicator line                                                                                            |
+| `src/components/dashboard/calendar/AgendaList.tsx` (new)    | Accessible chronological list — the non-visual alternative required by `docs/DESIGN.md` §7                              |
+| `src/components/dashboard/calendar/WeekView.tsx` (new)      | 7-day hour-axis grid                                                                                                    |
+| `src/components/dashboard/calendar/DayView.tsx` (new)       | Single-day hour-axis grid + `AgendaList` + relocated `DayPanel`                                                         |
+| `src/components/dashboard/calendar/MonthView.tsx` (new)     | Month grid, extracted from `CalendarPage`, with event pills added                                                       |
+| `src/components/dashboard/calendar/CalendarShell.tsx` (new) | Week/Day/Month tab switcher                                                                                             |
+| `src/pages/dashboard/CalendarPage.tsx` (rewrite)            | Owns view/anchor state, data loading, wires everything together                                                         |
 
 ---
 
 ### Task 1: Hour-axis grid math
 
 **Files:**
+
 - Modify: `src/lib/calendar.ts`
 - Test: `src/lib/calendar.test.ts` (new)
 
 **Interfaces:**
+
 - Consumes: `addDays` from `@/lib/format` (already exported); `dayOfWeek`, `parseDate` already defined in this file.
 - Produces:
+
   ```ts
-  export interface HourRange { startMin: number; endMin: number }
+  export interface HourRange {
+    startMin: number;
+    endMin: number;
+  }
   export const HOUR_ROW_PX = 64;
-  export function hourRange(minutesOfDay: number[]): HourRange
-  export function offsetPercent(minutesOfDay: number, range: HourRange): number
-  export function hourLabels(range: HourRange): string[]
-  export function weekDates(anchorDate: string): string[]
+  export function hourRange(minutesOfDay: number[]): HourRange;
+  export function offsetPercent(minutesOfDay: number, range: HourRange): number;
+  export function hourLabels(range: HourRange): string[];
+  export function weekDates(anchorDate: string): string[];
   export type CalendarView = 'month' | 'week' | 'day';
-  export function shiftAnchor(view: CalendarView, anchor: string, direction: 1 | -1): string
+  export function shiftAnchor(
+    view: CalendarView,
+    anchor: string,
+    direction: 1 | -1,
+  ): string;
   ```
 
 - [ ] **Step 1: Write the failing tests**
@@ -273,10 +283,12 @@ git commit -m "feat(calendar): add hour-axis grid math"
 ### Task 2: `minutesSinceMidnight`
 
 **Files:**
+
 - Modify: `src/lib/format.ts`
 - Modify: `src/lib/format.test.ts`
 
 **Interfaces:**
+
 - Produces: `export function minutesSinceMidnight(iso: string | Date, timeZone = DEFAULT_TIMEZONE): number`
 
 - [ ] **Step 1: Write the failing test**
@@ -354,10 +366,12 @@ git commit -m "feat(format): add minutesSinceMidnight for the calendar time axis
 ### Task 3: `useNowLine`
 
 **Files:**
+
 - Create: `src/hooks/useNowLine.ts`
 - Test: `src/hooks/useNowLine.test.ts`
 
 **Interfaces:**
+
 - Consumes: `minutesSinceMidnight` from `@/lib/format` (Task 2).
 - Produces: `export function useNowLine(timezone: string): number`
 
@@ -416,7 +430,9 @@ import { minutesSinceMidnight } from '@/lib/format';
  * salon tablet for hours.
  */
 export function useNowLine(timezone: string): number {
-  const [minutes, setMinutes] = useState(() => minutesSinceMidnight(new Date(), timezone));
+  const [minutes, setMinutes] = useState(() =>
+    minutesSinceMidnight(new Date(), timezone),
+  );
 
   useEffect(() => {
     const sync = (): void => setMinutes(minutesSinceMidnight(new Date(), timezone));
@@ -447,11 +463,14 @@ git commit -m "feat(calendar): add useNowLine hook"
 ### Task 4: `EventBlock`
 
 **Files:**
+
 - Create: `src/components/dashboard/calendar/EventBlock.tsx`
 
 **Interfaces:**
+
 - Consumes: `STATUS_DOTS` from `@/lib/status` (existing — these are already solid `bg-status-*` classes); `cn` from `@/lib/utils`; `AppointmentStatus` from `@/types`.
 - Produces:
+
   ```ts
   export interface EventBlockProps {
     topPercent: number;
@@ -462,7 +481,7 @@ git commit -m "feat(calendar): add useNowLine hook"
     label: string;
     onClick?: () => void;
   }
-  export function EventBlock(props: EventBlockProps): JSX.Element
+  export function EventBlock(props: EventBlockProps): JSX.Element;
   ```
 
 - [ ] **Step 1: Implement**
@@ -550,13 +569,16 @@ git commit -m "feat(calendar): add EventBlock"
 ### Task 5: `NowLine` and `AgendaList`
 
 **Files:**
+
 - Create: `src/components/dashboard/calendar/NowLine.tsx`
 - Create: `src/components/dashboard/calendar/AgendaList.tsx`
 
 **Interfaces:**
+
 - Produces:
+
   ```ts
-  export function NowLine({ topPercent }: { topPercent: number }): JSX.Element
+  export function NowLine({ topPercent }: { topPercent: number }): JSX.Element;
 
   export interface AgendaEntry {
     key: string;
@@ -572,7 +594,7 @@ git commit -m "feat(calendar): add EventBlock"
   }: {
     entries: AgendaEntry[];
     emptyLabel: string;
-  }): JSX.Element
+  }): JSX.Element;
   ```
 
 - [ ] **Step 1: Implement `NowLine`**
@@ -680,11 +702,14 @@ git commit -m "feat(calendar): add NowLine and AgendaList"
 ### Task 6: `WeekView`
 
 **Files:**
+
 - Create: `src/components/dashboard/calendar/WeekView.tsx`
 
 **Interfaces:**
+
 - Consumes: `HourRange`, `hourRange`, `offsetPercent`, `hourLabels`, `HOUR_ROW_PX` from `@/lib/calendar` (Task 1); `minutesSinceMidnight` from `@/lib/format`; `useNowLine` (Task 3); `EventBlock` (Task 4); `NowLine` (Task 5); `formatDateShort`, `dayNumber`-equivalent formatting; `OwnerDaySlot` from `@/services/availabilityService`; `AppointmentDetailed` from `@/types`.
 - Produces:
+
   ```ts
   export interface WeekViewProps {
     dates: string[]; // 7 entries, Monday-first
@@ -695,7 +720,7 @@ git commit -m "feat(calendar): add NowLine and AgendaList"
     onSelectAppointment: (appointment: AppointmentDetailed) => void;
     onSelectDate: (date: string) => void;
   }
-  export function WeekView(props: WeekViewProps): JSX.Element
+  export function WeekView(props: WeekViewProps): JSX.Element;
   ```
 
 - [ ] **Step 1: Implement**
@@ -786,7 +811,11 @@ export function WeekView({
                   )}
                 >
                   <span className="text-[11px] font-medium text-muted-foreground">
-                    {WEEKDAY_HEADINGS[(new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7]}
+                    {
+                      WEEKDAY_HEADINGS[
+                        (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7
+                      ]
+                    }
                   </span>
                   <span
                     className={cn(
@@ -844,14 +873,18 @@ export function WeekView({
                                 label={`Open · ${slot.local_time}`}
                                 topPercent={offsetPercent(start, range)}
                                 heightPercent={
-                                  offsetPercent(start + 60, range) - offsetPercent(start, range)
+                                  offsetPercent(start + 60, range) -
+                                  offsetPercent(start, range)
                                 }
                               />
                             );
                           })}
 
                         {(appointmentsByDate.get(date) ?? []).map((appointment) => {
-                          const start = minutesSinceMidnight(appointment.starts_at, timezone);
+                          const start = minutesSinceMidnight(
+                            appointment.starts_at,
+                            timezone,
+                          );
                           const end = minutesSinceMidnight(appointment.ends_at, timezone);
                           return (
                             <EventBlock
@@ -861,15 +894,19 @@ export function WeekView({
                               time={appointment.starts_at.slice(11, 16)}
                               label={appointment.customer_name}
                               topPercent={offsetPercent(start, range)}
-                              heightPercent={offsetPercent(end, range) - offsetPercent(start, range)}
+                              heightPercent={
+                                offsetPercent(end, range) - offsetPercent(start, range)
+                              }
                               onClick={() => onSelectAppointment(appointment)}
                             />
                           );
                         })}
 
-                        {isToday && nowMinutes >= range.startMin && nowMinutes <= range.endMin && (
-                          <NowLine topPercent={offsetPercent(nowMinutes, range)} />
-                        )}
+                        {isToday &&
+                          nowMinutes >= range.startMin &&
+                          nowMinutes <= range.endMin && (
+                            <NowLine topPercent={offsetPercent(nowMinutes, range)} />
+                          )}
                       </div>
                     </td>
                   );
@@ -898,11 +935,14 @@ git commit -m "feat(calendar): add WeekView"
 ### Task 7: `DayView`
 
 **Files:**
+
 - Create: `src/components/dashboard/calendar/DayView.tsx`
 
 **Interfaces:**
+
 - Consumes: everything `WeekView` consumes (Task 6), plus `AgendaList`/`AgendaEntry` (Task 5) and the existing `DayPanel` (`@/components/dashboard/DayPanel`, unmodified).
 - Produces:
+
   ```ts
   export interface DayViewProps {
     date: string;
@@ -914,19 +954,14 @@ git commit -m "feat(calendar): add WeekView"
     onSelectAppointment: (appointment: AppointmentDetailed) => void;
     onChanged: () => void;
   }
-  export function DayView(props: DayViewProps): JSX.Element
+  export function DayView(props: DayViewProps): JSX.Element;
   ```
 
 - [ ] **Step 1: Implement**
 
 ```tsx
 // src/components/dashboard/calendar/DayView.tsx
-import {
-  HOUR_ROW_PX,
-  hourLabels,
-  hourRange,
-  offsetPercent,
-} from '@/lib/calendar';
+import { HOUR_ROW_PX, hourLabels, hourRange, offsetPercent } from '@/lib/calendar';
 import { formatDateLong, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
@@ -1035,14 +1070,18 @@ export function DayView({
                             label={`Open · ${slot.local_time}`}
                             topPercent={offsetPercent(start, range)}
                             heightPercent={
-                              offsetPercent(start + 60, range) - offsetPercent(start, range)
+                              offsetPercent(start + 60, range) -
+                              offsetPercent(start, range)
                             }
                           />
                         );
                       })}
 
                       {appointments.map((appointment) => {
-                        const start = minutesSinceMidnight(appointment.starts_at, timezone);
+                        const start = minutesSinceMidnight(
+                          appointment.starts_at,
+                          timezone,
+                        );
                         const end = minutesSinceMidnight(appointment.ends_at, timezone);
                         return (
                           <EventBlock
@@ -1052,15 +1091,19 @@ export function DayView({
                             time={appointment.starts_at.slice(11, 16)}
                             label={appointment.customer_name}
                             topPercent={offsetPercent(start, range)}
-                            heightPercent={offsetPercent(end, range) - offsetPercent(start, range)}
+                            heightPercent={
+                              offsetPercent(end, range) - offsetPercent(start, range)
+                            }
                             onClick={() => onSelectAppointment(appointment)}
                           />
                         );
                       })}
 
-                      {isToday && nowMinutes >= range.startMin && nowMinutes <= range.endMin && (
-                        <NowLine topPercent={offsetPercent(nowMinutes, range)} />
-                      )}
+                      {isToday &&
+                        nowMinutes >= range.startMin &&
+                        nowMinutes <= range.endMin && (
+                          <NowLine topPercent={offsetPercent(nowMinutes, range)} />
+                        )}
                     </div>
                   </td>
                 )}
@@ -1110,10 +1153,12 @@ git commit -m "feat(calendar): add DayView"
 ### Task 8: `MonthView`
 
 **Files:**
+
 - Create: `src/components/dashboard/calendar/MonthView.tsx`
 - Modify: `src/pages/dashboard/CalendarPage.tsx` — only to remove the month-grid JSX being extracted (the full rewrite happens in Task 10; this step just deletes what moved so the file isn't left with dead duplicate JSX mid-plan). If that removal makes `CalendarPage.tsx` fail to typecheck before Task 10 replaces its data logic too, that's expected — Task 10 finishes the file. Skip this deletion if it would leave the page in a broken intermediate state; simplest is to leave `CalendarPage.tsx` untouched here and let Task 10 replace it wholesale.
 
 **Interfaces:**
+
 - Consumes: `monthGrid`, `dayNumber`, `isSameMonth`, `WEEKDAY_HEADINGS` from `@/lib/calendar` (unchanged, pre-existing exports); `DaySummary` from `@/services/availabilityService`; `AppointmentDetailed` from `@/types`; `cn` from `@/lib/utils`.
 - Produces:
   ```ts
@@ -1125,7 +1170,7 @@ git commit -m "feat(calendar): add DayView"
     appointmentsByDate: Map<string, AppointmentDetailed[]>;
     onSelectDate: (date: string) => void;
   }
-  export function MonthView(props: MonthViewProps): JSX.Element
+  export function MonthView(props: MonthViewProps): JSX.Element;
   ```
 
 **Decision worth flagging to the reviewer:** clicking any day cell (not just "+N more") now switches straight to `DayView` for that date. The old month page kept `DayPanel` permanently visible beside the grid; that quick-publish path now costs one extra click (cell → Day view → expand "Manage published times"). Traded for a much better month-at-a-glance view. If this turns out to slow down the owner's actual daily workflow, a fast follow-up is a small "publish" affordance directly on hover/long-press of a month cell — not part of this plan.
@@ -1134,12 +1179,7 @@ git commit -m "feat(calendar): add DayView"
 
 ```tsx
 // src/components/dashboard/calendar/MonthView.tsx
-import {
-  WEEKDAY_HEADINGS,
-  dayNumber,
-  isSameMonth,
-  monthGrid,
-} from '@/lib/calendar';
+import { WEEKDAY_HEADINGS, dayNumber, isSameMonth, monthGrid } from '@/lib/calendar';
 import { STATUS_DOTS } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { DaySummary } from '@/services/availabilityService';
@@ -1226,7 +1266,9 @@ export function MonthView({
                   </span>
                 ))}
               {overflow > 0 && (
-                <span className="text-[10px] text-muted-foreground">+{overflow} more</span>
+                <span className="text-[10px] text-muted-foreground">
+                  +{overflow} more
+                </span>
               )}
             </button>
           );
@@ -1250,17 +1292,20 @@ git commit -m "feat(calendar): add MonthView with event pills"
 ### Task 9: `CalendarShell`
 
 **Files:**
+
 - Create: `src/components/dashboard/calendar/CalendarShell.tsx`
 
 **Interfaces:**
+
 - Consumes: `CalendarView` type from `@/lib/calendar` (Task 1).
 - Produces:
+
   ```ts
   export interface CalendarShellProps {
     view: CalendarView;
     onViewChange: (view: CalendarView) => void;
   }
-  export function CalendarShell(props: CalendarShellProps): JSX.Element
+  export function CalendarShell(props: CalendarShellProps): JSX.Element;
   ```
 
 - [ ] **Step 1: Implement**
@@ -1325,9 +1370,11 @@ git commit -m "feat(calendar): add CalendarShell view tabs"
 ### Task 10: Rewrite `CalendarPage`
 
 **Files:**
+
 - Modify (rewrite): `src/pages/dashboard/CalendarPage.tsx`
 
 **Interfaces:**
+
 - Consumes everything from Tasks 1–9, plus existing: `DashboardLayout`, `Button`, `Card`, `ErrorState`, `useBusinessSettings`, `useServices`, `listMonthSummary`/`listDaySlots` (`@/services/availabilityService`), `listAppointments` (`@/services/appointmentService`), `AppointmentCard` (`@/components/dashboard/AppointmentCard`), `setAppointmentStatus`/`setOwnerNote`, `salonDayRange`, `toSalonDate`, `parseDate`/`monthGrid`/`gridRange`/`weekDates`/`shiftAnchor` from `@/lib/calendar`, `LIVE_STATUSES` from `@/types`.
 - Produces: default-exported `CalendarPage` page component (route unchanged, still `routes.owner.calendar`).
 
@@ -1353,7 +1400,11 @@ import {
   type DaySummary,
   type OwnerDaySlot,
 } from '@/services/availabilityService';
-import { listAppointments, setAppointmentStatus, setOwnerNote } from '@/services/appointmentService';
+import {
+  listAppointments,
+  setAppointmentStatus,
+  setOwnerNote,
+} from '@/services/appointmentService';
 import { salonDayRange, toSalonDate } from '@/lib/format';
 import {
   gridRange,
@@ -1397,7 +1448,10 @@ export function CalendarPage(): JSX.Element {
   const [error, setError] = useState<Error | null>(null);
 
   const cursor = useMemo(
-    () => ({ year: parseDate(anchor).getUTCFullYear(), month: parseDate(anchor).getUTCMonth() }),
+    () => ({
+      year: parseDate(anchor).getUTCFullYear(),
+      month: parseDate(anchor).getUTCMonth(),
+    }),
     [anchor],
   );
 
@@ -1423,7 +1477,10 @@ export function CalendarPage(): JSX.Element {
     try {
       const needsSummary = view === 'month';
       const needsSlots = view === 'week' || view === 'day';
-      const dates = view === 'month' ? monthGrid(cursor.year, cursor.month).flat() : (visibleDates as string[]);
+      const dates =
+        view === 'month'
+          ? monthGrid(cursor.year, cursor.month).flat()
+          : (visibleDates as string[]);
 
       const [summaryRows, appts, slotRows] = await Promise.all([
         needsSummary ? listMonthSummary(range.from, range.to) : Promise.resolve([]),
@@ -1455,7 +1512,10 @@ export function CalendarPage(): JSX.Element {
     void load();
   }, [load]);
 
-  const appointmentsByDate = useMemo(() => groupByDate(appointments, timezone), [appointments, timezone]);
+  const appointmentsByDate = useMemo(
+    () => groupByDate(appointments, timezone),
+    [appointments, timezone],
+  );
   const selected = appointments.find((a) => a.id === selectedId) ?? null;
 
   const changeStatus = useCallback(
@@ -1604,6 +1664,7 @@ git commit -m "feat(calendar): wire Week/Day/Month views into CalendarPage"
 ## Explicitly out of scope for this plan
 
 Per the design spec's suggested build order, these are separate follow-on plans:
+
 - Migration `0024` and `reschedule_appointment_as_owner`.
 - Pointer-based drag-to-reschedule.
 - The `AgendaList` "Move" modal (needs the RPC above — `AgendaList` in this plan is read-only for the `open` variant, and booked entries only open the detail card).

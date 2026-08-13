@@ -18,7 +18,9 @@ vi.mock('@/components/dashboard/NewBookingPanel', () => ({
     onClose: () => void;
   }) => (
     <div data-testid="new-booking-panel">
-      <p data-testid="prefill">{props.prefill ? JSON.stringify(props.prefill) : 'none'}</p>
+      <p data-testid="prefill">
+        {props.prefill ? JSON.stringify(props.prefill) : 'none'}
+      </p>
       <button onClick={() => props.onBooked('KB-TEST1')}>Fire onBooked</button>
       <button onClick={props.onClose}>Fire onClose (panel)</button>
     </div>
@@ -41,9 +43,8 @@ vi.mock('@/hooks/useBusinessSettings', () => ({
   useBusinessSettings: () => ({ timezone: 'Europe/London', settings: null }),
 }));
 
-const { QuickActionLauncher } = await import(
-  '@/components/dashboard/QuickActionLauncher'
-);
+const { QuickActionLauncher } =
+  await import('@/components/dashboard/QuickActionLauncher');
 
 function LocationProbe(): JSX.Element {
   const location = useLocation();
@@ -99,7 +100,9 @@ const sampleRequest = {
 
 describe('QuickActionLauncher', () => {
   beforeEach(() => {
-    appointmentService.listAppointments.mockReset().mockResolvedValue([sampleAppointment]);
+    appointmentService.listAppointments
+      .mockReset()
+      .mockResolvedValue([sampleAppointment]);
     appointmentService.setAppointmentStatus.mockReset().mockResolvedValue({});
     customerService.listCustomers.mockReset().mockResolvedValue([sampleCustomer]);
     requestService.listQueuedRequests.mockReset().mockResolvedValue([sampleRequest]);
@@ -236,7 +239,9 @@ describe('QuickActionLauncher', () => {
     renderLauncher();
     await user.click(screen.getByRole('button', { name: /Quick actions/ }));
     await user.click(screen.getByRole('button', { name: /Mark completed/ }));
-    expect(await screen.findByRole('heading', { name: 'Mark completed' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Mark completed' }),
+    ).toBeInTheDocument();
 
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -265,7 +270,7 @@ describe('QuickActionLauncher', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    it("onClose closes the launcher entirely, not just back to the menu", async () => {
+    it('onClose closes the launcher entirely, not just back to the menu', async () => {
       const user = userEvent.setup();
       renderLauncher();
       await user.click(screen.getByRole('button', { name: /Quick actions/ }));
@@ -348,7 +353,9 @@ describe('QuickActionLauncher', () => {
       await user.type(screen.getByLabelText('Find the appointment'), 'Jane');
 
       expect(screen.getByRole('button', { name: /Jane Doe/ })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /Someone Else/ })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Someone Else/ }),
+      ).not.toBeInTheDocument();
     });
   });
 

@@ -7,12 +7,12 @@ and only the built artifacts are shipped.
 
 **This app's deploy target**
 
-|           |                                                           |
-| --------- | --------------------------------------------------------- |
-| Domain    | `www.kokolettbeauty.com`                                  |
+|           |                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------ |
+| Domain    | `www.kokolettbeauty.com`                                                                   |
 | Docroot   | `~/kokolettbeauty.com/` (dedicated — never a shared docroot; confirm exact path in cPanel) |
-| Artifacts | `dist/*` plus the repo-root `.htaccess`                   |
-| Timezone  | `Europe/London`                                           |
+| Artifacts | `dist/*` plus the repo-root `.htaccess`                                                    |
+| Timezone  | `Europe/London`                                                                            |
 
 If you deploy through a personal wrapper or CI, that tooling still has to obey the
 safety rules below — they exist because breaking them has caused real outages and

@@ -9,7 +9,9 @@ import { minutesSinceMidnight } from '@/lib/format';
  * salon tablet for hours.
  */
 export function useNowLine(timezone: string): number {
-  const [minutes, setMinutes] = useState(() => minutesSinceMidnight(new Date(), timezone));
+  const [minutes, setMinutes] = useState(() =>
+    minutesSinceMidnight(new Date(), timezone),
+  );
 
   useEffect(() => {
     const sync = (): void => setMinutes(minutesSinceMidnight(new Date(), timezone));

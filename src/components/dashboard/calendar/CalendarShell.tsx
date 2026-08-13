@@ -25,7 +25,10 @@ const VIEWS: { key: CalendarView; label: string }[] = [
  */
 export function CalendarShell({ view, onViewChange }: CalendarShellProps): JSX.Element {
   return (
-    <div aria-label="Calendar view" className="inline-flex gap-0.5 rounded-lg bg-muted p-1">
+    <div
+      aria-label="Calendar view"
+      className="inline-flex gap-0.5 rounded-lg bg-muted p-1"
+    >
       {VIEWS.map((v) => (
         <button
           key={v.key}

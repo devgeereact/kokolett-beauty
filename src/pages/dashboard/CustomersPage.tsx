@@ -184,6 +184,15 @@ export function CustomersPage(): JSX.Element {
                 // <button> can't be used here — it would wrap the mailto/tel
                 // links below, and a button's content model forbids
                 // interactive-content descendants.
+                //
+                // Guarded to the row itself, not bubbled children: this
+                // handler also receives keydowns that bubble up from the
+                // nested mailto:/tel: links below. Without the guard,
+                // pressing Enter on a focused link would preventDefault()
+                // here and open the customer instead of letting the link
+                // activate — breaking keyboard access to the very links
+                // this row renders.
+                if (e.target !== e.currentTarget) return;
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   void open(customer);
@@ -417,7 +426,7 @@ export function CustomersPage(): JSX.Element {
         title="Erase personal details?"
         message={
           pendingErase
-            ? `Erase ${pendingErase.full_name}'s personal details?\n\nThis is the UK GDPR deletion path. Their appointment history stays for your records, but their contact details and notes are removed and they will arrive as a new customer if they book again.`
+            ? `This is the UK GDPR deletion path for ${pendingErase.full_name}. Their appointment history stays for your records, but their contact details and notes are removed and they will arrive as a new customer if they book again.`
             : ''
         }
         tone="destructive"

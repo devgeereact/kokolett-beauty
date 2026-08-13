@@ -39,7 +39,8 @@ export function Calendar({
             'hover:bg-muted hover:text-foreground',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           ),
-          weekday: 'flex-1 text-center text-xs font-medium uppercase text-muted-foreground sm:text-sm',
+          weekday:
+            'flex-1 text-center text-xs font-medium uppercase text-muted-foreground sm:text-sm',
           day: 'flex-1 aspect-square p-0.5 text-center text-sm relative sm:text-base',
           day_button: cn(
             'flex h-full w-full items-center justify-center rounded-lg font-normal text-foreground',
@@ -60,7 +61,8 @@ export function Calendar({
             'hover:bg-muted hover:text-foreground',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           ),
-          weekday: 'w-9 text-center text-[11px] font-medium uppercase text-muted-foreground',
+          weekday:
+            'w-9 text-center text-[11px] font-medium uppercase text-muted-foreground',
           day: 'h-9 w-9 p-0 text-center text-sm relative',
           day_button: cn(
             'h-9 w-9 rounded-md font-normal text-foreground',
@@ -95,7 +97,11 @@ export function Calendar({
         Chevron: ({ orientation, className: chevronClassName }) => (
           <span
             aria-hidden="true"
-            className={cn(size === 'lg' ? 'text-xl' : 'text-base', 'leading-none', chevronClassName)}
+            className={cn(
+              size === 'lg' ? 'text-xl' : 'text-base',
+              'leading-none',
+              chevronClassName,
+            )}
           >
             {orientation === 'left' ? '‹' : '›'}
           </span>

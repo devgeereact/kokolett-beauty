@@ -19,7 +19,6 @@ export interface DatePickerProps {
   'aria-invalid'?: boolean;
 }
 
-
 const DISPLAY = new Intl.DateTimeFormat('en-GB', {
   weekday: 'short',
   day: 'numeric',
@@ -64,14 +63,32 @@ export function DatePicker({
       }
     };
     const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      // Stops this Escape from also reaching another document-level Escape
+      // handler further up the tree — e.g. QuickActionLauncher's own
+      // "Escape closes everything" handler, when this picker renders inside
+      // its booking form. Without this, that handler would discard the
+      // whole in-progress form instead of just this popover closing.
+      //
+      // Registered on the capture phase deliberately, not just calling
+      // stopPropagation() from a bubble-phase listener: this listener and
+      // an ancestor's Escape listener are both bound directly to
+      // `document`, so for two bubble-phase listeners on the same node,
+      // dispatch order is registration order — and an ancestor that opened
+      // first (e.g. the launcher) always registers its listener before
+      // this popover even exists, so it would fire first regardless of
+      // stopPropagation() called here. Capture-phase listeners on
+      // `document` run before any bubble-phase listener on that same node,
+      // so this reliably wins the race no matter which mounted first.
+      e.stopPropagation();
+      setOpen(false);
     };
 
     document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', onKeyDown, true);
     return () => {
       document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keydown', onKeyDown, true);
     };
   }, [open]);
 
@@ -119,7 +136,8 @@ export function DatePicker({
               setOpen(false);
             }}
             disabled={(date) =>
-              (minDate !== undefined && date < minDate) || (maxDate !== undefined && date > maxDate)
+              (minDate !== undefined && date < minDate) ||
+              (maxDate !== undefined && date > maxDate)
             }
           />
         </div>

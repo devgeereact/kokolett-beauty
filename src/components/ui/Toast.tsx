@@ -109,7 +109,11 @@ export function ToastStack({
   return (
     <div
       className={cn(
-        'pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col gap-2',
+        // z-[60], not z-50: QuickActionLauncher's portal is also z-50, and
+        // when its panel is open the toast stack must render above it (e.g.
+        // an error toast fired by a launcher action) — otherwise it's
+        // painted behind the launcher's backdrop and invisible.
+        'pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col gap-2',
         'sm:inset-x-auto sm:right-4',
       )}
     >

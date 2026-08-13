@@ -1,9 +1,4 @@
-import {
-  WEEKDAY_HEADINGS,
-  dayNumber,
-  isSameMonth,
-  monthGrid,
-} from '@/lib/calendar';
+import { WEEKDAY_HEADINGS, dayNumber, isSameMonth, monthGrid } from '@/lib/calendar';
 import { formatTime } from '@/lib/format';
 import { STATUS_DOTS } from '@/lib/status';
 import { cn } from '@/lib/utils';
@@ -109,7 +104,10 @@ export function MonthView({
                     >
                       <span
                         aria-hidden="true"
-                        className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOTS[a.status])}
+                        className={cn(
+                          'h-1.5 w-1.5 shrink-0 rounded-full',
+                          STATUS_DOTS[a.status],
+                        )}
                       />
                       <span className="min-w-0 flex-1 truncate">
                         {a.customer_name?.split(' ')[0] ?? 'Customer'}
@@ -120,7 +118,9 @@ export function MonthView({
                     </span>
                   ))}
                   {overflow > 0 && (
-                    <span className="text-[10px] text-muted-foreground">+{overflow} more</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      +{overflow} more
+                    </span>
                   )}
                 </>
               )}

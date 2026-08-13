@@ -24,6 +24,7 @@ import {
 import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
+import { statusLabel } from '@/lib/status';
 import { LIVE_STATUSES, type AppointmentStatus } from '@/types';
 
 /**
@@ -93,7 +94,7 @@ export function TodayPage(): JSX.Element {
         await Promise.all([refresh(), refreshSummary()]);
 
         showToast({
-          message: `Action applied — ${status}.`,
+          message: `Action applied — ${statusLabel(status)}.`,
           action: {
             label: 'Undo',
             onClick: () => {
@@ -102,14 +103,14 @@ export function TodayPage(): JSX.Element {
                   await setAppointmentStatus(id, prevStatus);
                   await Promise.all([refresh(), refreshSummary()]);
                 } catch (e) {
-                  window.alert(errorMessage(e));
+                  showToast({ message: errorMessage(e) });
                 }
               })();
             },
           },
         });
       } catch (e) {
-        window.alert(errorMessage(e));
+        showToast({ message: errorMessage(e) });
       }
     },
     [appointments, refresh, refreshSummary, showToast],

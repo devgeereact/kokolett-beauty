@@ -86,18 +86,18 @@ path is declared once in `src/lib/routes.ts` — nothing hard-codes a path strin
 
 **Owner (Supabase session + `staff` membership)**
 
-| Route                           | Purpose                                         |
-| ------------------------------- | ----------------------------------------------- |
-| `/dashboard`                    | Today at a glance                               |
-| `/dashboard/calendar`           | Day / week / month / agenda, drag-to-reschedule |
-| `/dashboard/appointments`       | Searchable list                                 |
+| Route                           | Purpose                                                           |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `/dashboard`                    | Today at a glance                                                 |
+| `/dashboard/calendar`           | Day / week / month / agenda, drag-to-reschedule                   |
+| `/dashboard/appointments`       | Searchable list                                                   |
 | `/dashboard/inbox`              | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
-| `/dashboard/customers` · `/:id` | CRM                                             |
-| `/dashboard/services`           | Catalogue management                            |
-| `/dashboard/availability`       | Hours, breaks, closures, booking rules          |
-| `/dashboard/reports`            | Revenue and utilisation                         |
-| `/dashboard/assistant`          | AI recommendations queue                        |
-| `/dashboard/settings`           | Salon profile, email, policies                  |
+| `/dashboard/customers` · `/:id` | CRM                                                               |
+| `/dashboard/services`           | Catalogue management                                              |
+| `/dashboard/availability`       | Hours, breaks, closures, booking rules                            |
+| `/dashboard/reports`            | Revenue and utilisation                                           |
+| `/dashboard/assistant`          | AI recommendations queue                                          |
+| `/dashboard/settings`           | Salon profile, email, policies                                    |
 
 `/dashboard/approvals` and `/dashboard/requests` render nothing themselves — both are kept
 mounted purely as redirects (`/dashboard/inbox?tab=approvals` / `?tab=requests`) so old

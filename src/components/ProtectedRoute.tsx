@@ -29,7 +29,13 @@ export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Eleme
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname + location.search }}
+      />
+    );
   }
 
   // Could not reach the database to ask. That is not a "no", and answering it

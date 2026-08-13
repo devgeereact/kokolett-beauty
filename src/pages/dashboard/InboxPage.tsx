@@ -56,9 +56,23 @@ export function InboxPage(): JSX.Element {
   // land the owner on the queue she actually answers day to day. An explicit
   // `?tab=approvals` (e.g. a bookmark, or Today's own stat-card link) is
   // always honoured.
-  const defaultTab: Tab =
-    summary && summary.pending_approval_count === 0 ? 'requests' : 'approvals';
-  const tab: Tab = explicitTab ?? defaultTab;
+  //
+  // `defaultTab` is chosen once, from the first `summary` value seen, and
+  // then frozen. `summary` keeps updating after every approve/decline
+  // (`refreshSummary()` runs inside `loadApprovals()` and
+  // `handleRequestsCountChange`), so recomputing this on every render would
+  // silently swap the visible tab out from under the owner mid-interaction
+  // — e.g. approving the last pending item would flip a bare `/dashboard/inbox`
+  // from Approvals to Requests with no click and no URL change. Freezing it
+  // means the default is decided once, when the page first has enough
+  // information to decide, and never revisited on its own afterwards.
+  const [defaultTab, setDefaultTab] = useState<Tab | null>(null);
+  useEffect(() => {
+    if (defaultTab === null && summary) {
+      setDefaultTab(summary.pending_approval_count === 0 ? 'requests' : 'approvals');
+    }
+  }, [summary, defaultTab]);
+  const tab: Tab = explicitTab ?? defaultTab ?? 'approvals';
 
   const goToTab = (next: Tab): void => {
     void navigate(`${routes.owner.inbox}?tab=${next}`);

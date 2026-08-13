@@ -49,7 +49,6 @@ export const routes = {
      */
     requests: '/dashboard/requests',
     customers: '/dashboard/customers',
-    customer: (id: string) => `/dashboard/customers/${id}`,
     /** The single appointment type: its length and price. */
     appointmentType: '/dashboard/appointment',
     /** The menu of styles shown on the website. Descriptive, not bookable. */

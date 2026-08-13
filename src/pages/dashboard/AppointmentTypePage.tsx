@@ -51,7 +51,7 @@ export function AppointmentTypePage(): JSX.Element {
 
   if (loading) {
     return (
-      <DashboardLayout title="Appointment">
+      <DashboardLayout title="Appointment type">
         <CalendarCapacityTabs />
         <LoadingState />
       </DashboardLayout>
@@ -60,7 +60,7 @@ export function AppointmentTypePage(): JSX.Element {
 
   if (error || !appointment) {
     return (
-      <DashboardLayout title="Appointment">
+      <DashboardLayout title="Appointment type">
         <CalendarCapacityTabs />
         <ErrorState
           error={error ?? new Error('No appointment type found.')}
@@ -105,7 +105,7 @@ export function AppointmentTypePage(): JSX.Element {
 
   return (
     <DashboardLayout
-      title="Appointment"
+      title="Appointment type"
       subtitle="One appointment type — every time you publish is one of these"
     >
       <CalendarCapacityTabs />

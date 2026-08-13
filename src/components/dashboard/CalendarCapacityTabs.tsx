@@ -20,7 +20,7 @@ const TABS = [
  */
 export function CalendarCapacityTabs(): JSX.Element {
   return (
-    <div
+    <nav
       aria-label="Calendar & capacity sections"
       className="mb-6 inline-flex gap-0.5 rounded-lg bg-muted p-1"
     >
@@ -42,6 +42,6 @@ export function CalendarCapacityTabs(): JSX.Element {
           {t.label}
         </NavLink>
       ))}
-    </div>
+    </nav>
   );
 }

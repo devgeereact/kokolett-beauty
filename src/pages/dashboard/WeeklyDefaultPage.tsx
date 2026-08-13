@@ -142,7 +142,7 @@ export function WeeklyDefaultPage(): JSX.Element {
 
   if (loading) {
     return (
-      <DashboardLayout title="Weekly default">
+      <DashboardLayout title="Weekly hours">
         <CalendarCapacityTabs />
         <LoadingState />
       </DashboardLayout>
@@ -153,7 +153,7 @@ export function WeeklyDefaultPage(): JSX.Element {
 
   return (
     <DashboardLayout
-      title="Weekly default"
+      title="Weekly hours"
       subtitle="A repeating week, so you are not typing times every day"
     >
       <CalendarCapacityTabs />

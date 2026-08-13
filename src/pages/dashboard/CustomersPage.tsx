@@ -19,6 +19,7 @@ import { listForCustomer } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
 import { formatDateTime, formatMoney } from '@/lib/format';
 import { StatusChip } from '@/components/ui/StatusChip';
+import { cn } from '@/lib/utils';
 import type { AppointmentDetailed, Customer } from '@/types';
 
 /** The customer book. Owner-only — RLS gives anon nothing from this table. */
@@ -171,8 +172,17 @@ export function CustomersPage(): JSX.Element {
         />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-2">
+      <div className={cn('grid gap-6', selected && 'lg:grid-cols-2')}>
+        <div
+          className={cn(
+            // With nothing selected there's no second column, so let the
+            // list itself tile across the freed-up width instead of
+            // sitting in a single narrow stack — the dashboard is meant to
+            // be dense and scannable (docs/DESIGN.md), not leave most of
+            // the screen empty while an owner scrolls a long customer list.
+            selected ? 'space-y-2' : 'grid gap-3 sm:grid-cols-2 xl:grid-cols-3',
+          )}
+        >
           {customers.map((customer) => (
             <div
               key={customer.id}

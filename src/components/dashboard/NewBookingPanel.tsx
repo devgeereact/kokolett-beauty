@@ -5,7 +5,7 @@ import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { createAppointmentAsOwner } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { salonInstant, toSalonDate } from '@/lib/format';
+import { salonInstant, toSalonDate, formatTime } from '@/lib/format';
 
 /**
  * Taking a booking by hand: over the phone, at the door, or a follow-up booked
@@ -37,19 +37,27 @@ export function NewBookingPanel({
   prefill,
   onBooked,
   onClose,
+  initialStartsAt,
+  initialDurationMin,
+  initialNote,
 }: {
   prefill?: PrefilledCustomer | null;
   onBooked: (reference: string) => void;
   onClose: () => void;
+  initialStartsAt?: string; // ISO UTC
+  initialDurationMin?: number;
+  initialNote?: string;
 }): JSX.Element {
   const { timezone } = useBusinessSettings();
-  const [date, setDate] = useState(() => toSalonDate(new Date(), timezone));
-  const [time, setTime] = useState('10:00');
-  const [duration, setDuration] = useState('240');
+  const [date, setDate] = useState(() =>
+    initialStartsAt ? toSalonDate(initialStartsAt, timezone) : toSalonDate(new Date(), timezone),
+  );
+  const [time, setTime] = useState(() => (initialStartsAt ? formatTime(initialStartsAt, timezone) : '10:00'));
+  const [duration, setDuration] = useState(() => (initialDurationMin ? String(initialDurationMin) : '240'));
   const [fullName, setFullName] = useState(prefill?.fullName ?? '');
   const [email, setEmail] = useState(prefill?.email ?? '');
   const [mobile, setMobile] = useState(prefill?.mobile ?? '');
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(initialNote ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +67,16 @@ export function NewBookingPanel({
     setEmail(prefill.email);
     setMobile(prefill.mobile);
   }, [prefill]);
+
+  useEffect(() => {
+    // If caller updates initial starts/duration/note, follow it into the form.
+    if (initialStartsAt) {
+      setDate(toSalonDate(initialStartsAt, timezone));
+      setTime(formatTime(initialStartsAt, timezone));
+    }
+    if (initialDurationMin) setDuration(String(initialDurationMin));
+    if (initialNote) setNote(initialNote);
+  }, [initialStartsAt, initialDurationMin, initialNote, timezone]);
 
   const submit = async (): Promise<void> => {
     if (fullName.trim().split(/\s+/).length < 2) {

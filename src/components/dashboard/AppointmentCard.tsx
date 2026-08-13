@@ -38,6 +38,7 @@ export function AppointmentCard({
   onStatusChange,
   onNoteSave,
   onBookFollowUp,
+  onReschedule,
   className,
 }: {
   appointment: AppointmentDetailed;
@@ -47,6 +48,8 @@ export function AppointmentCard({
   onNoteSave?: (id: string, note: string) => Promise<void>;
   /** Opens the booking form with this customer already filled in. */
   onBookFollowUp?: (appointment: AppointmentDetailed) => void;
+  /** Initiate a reschedule flow by opening the booking panel prefilled. */
+  onReschedule?: (appointment: AppointmentDetailed) => void;
   className?: string;
 }): JSX.Element {
   const [busy, setBusy] = useState<AppointmentStatus | null>(null);
@@ -176,6 +179,12 @@ export function AppointmentCard({
           {onBookFollowUp && (
             <Button size="sm" variant="ghost" onClick={() => onBookFollowUp(appointment)}>
               Book follow-up
+            </Button>
+          )}
+
+          {onReschedule && (
+            <Button size="sm" variant="ghost" onClick={() => onReschedule(appointment)}>
+              Reschedule
             </Button>
           )}
         </div>

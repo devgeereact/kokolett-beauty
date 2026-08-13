@@ -121,6 +121,8 @@ begin
     'pending_approval_count', (
       select count(*) from public.appointments a where a.status = 'pending_approval'
     ),
+    -- Surfaced separately: a hold inside its last two hours is the one the
+    -- owner has to answer now, not merely soon.
     'urgent_approval_count', (
       select count(*) from public.appointments a
       where a.status = 'pending_approval'

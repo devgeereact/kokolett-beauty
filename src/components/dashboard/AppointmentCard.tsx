@@ -16,9 +16,11 @@ import type { AppointmentDetailed, AppointmentStatus } from '@/types';
  * salon marks the day off at the end of it, and forcing three taps per customer
  * to record something that already happened is how a diary stops being kept.
  *
- * No price is shown. What the appointment cost is agreed in the chair and the
- * stored figure is a placeholder, so printing it here would put a number in
- * front of the owner that she cannot rely on.
+ * The quoted price is never shown. What the appointment cost is agreed in the
+ * chair and `price_pence` is a placeholder, so printing it here would put a
+ * number in front of the owner that she cannot rely on. What she actually
+ * logged as paid is different: it is her own attestation, not a placeholder,
+ * so that figure — and only that one — is printed.
  */
 const NEXT_ACTIONS: Partial<Record<AppointmentStatus, AppointmentStatus[]>> = {
   confirmed: ['completed', 'checked_in', 'no_show', 'cancelled'],

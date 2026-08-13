@@ -75,7 +75,7 @@ DEPLOY_CASES = [
 PRICE_CASES = [
     (('src/pages/MyBookingsPage.tsx', 'formatMoney(a.price_pence)'), True),
     (('src/components/public/Reviews.tsx', 'costs £42.50'), True),
-    (('src/pages/dashboard/TodayPage.tsx', 'formatMoney(summary.today_revenue_pence)'), False),
+    (('src/pages/dashboard/TodayPage.tsx', 'formatMoney(summary.today_collected_pence)'), False),
     (('src/pages/MyBookingsPage.tsx', 'Reference {a.reference}'), False),
 ]
 

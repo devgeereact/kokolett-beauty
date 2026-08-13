@@ -167,7 +167,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             {/* Opening hours, from the weekly pattern the owner publishes. */}
             {hours.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-foreground">Opening hours</h2>
+                <h3 className="text-sm font-semibold text-foreground">Opening hours</h3>
                 <dl className="mt-4 space-y-2 text-sm">
                   {hours.map((line) => (
                     <div key={line.days} className="flex justify-between gap-4">
@@ -198,7 +198,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
             {/* Where visitors actually want to go next. */}
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Bookings</h2>
+              <h3 className="text-sm font-semibold text-foreground">Bookings</h3>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
                   <Link

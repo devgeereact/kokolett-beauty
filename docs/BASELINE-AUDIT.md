@@ -91,7 +91,7 @@ Source: `docs/ARCHITECTURE.md`.
 
 | ARCHITECTURE claim | File(s) checked | Verdict |
 | --- | --- | --- |
-| §2 directory layout, `services/` list: `serviceCatalogService`, `availabilityService`, `bookingService`, `appointmentService`, `customerService`, `availabilityRequestService`, `reportingService`, `aiAssistantService`, `notificationService` | `ls src/services/` (17 files) | **Stale.** Four are simply renamed in the real tree: `availabilityRequestService` → `requestService.ts`, `reportingService` → `reportsService.ts`, `aiAssistantService` → `assistantService.ts`, `notificationService` → `notificationsService.ts`. Eight more exist and are undocumented: `bookingSettingsService.ts`, `customerSessionService.ts`, `dashboardService.ts`, `profileService.ts`, `reviewService.ts`, `serviceMenuService.ts`, `settingsService.ts`, `subscriberService.ts`. |
+| §2 directory layout, `services/` list: `serviceCatalogService`, `availabilityService`, `bookingService`, `appointmentService`, `customerService`, `availabilityRequestService`, `reportingService`, `aiAssistantService`, `notificationService` | `ls src/services/` (19 files: 18 real `.ts` service files + `customerSessionService.test.ts`) | **Stale.** Four are simply renamed in the real tree: `availabilityRequestService` → `requestService.ts`, `reportingService` → `reportsService.ts`, `aiAssistantService` → `assistantService.ts`, `notificationService` → `notificationsService.ts`. Nine more exist and are undocumented: `bookingSettingsService.ts`, `calendarFeedService.ts`, `customerSessionService.ts`, `dashboardService.ts`, `profileService.ts`, `reviewService.ts`, `serviceMenuService.ts`, `settingsService.ts`, `subscriberService.ts`. |
 | §3 routing table — public routes `/about`, `/gallery`, `/testimonials`, `/faqs`, `/contact`, `/services` · `/services/:slug`, `/book/:serviceSlug` | `src/App.tsx` (full read) | **Stale.** None of these are mounted routes (see §1 above). `/book/:serviceSlug` in particular does not exist — `BookPage` is only mounted at the bare `/book`. |
 | §3 routing table — owner route `/dashboard/availability` "Hours, breaks, closures, booking rules" | `src/lib/routes.ts:46`, `src/App.tsx:87-90` | **Stale/renamed.** The actual mounted path is `/dashboard/weekly` (`routes.owner.weeklyDefault`), rendering `WeeklyDefaultPage`. No `/dashboard/availability` route exists at all. (This is also the orphaned route flagged in §1 — real, but unlinked from any nav.) |
 | §3 routing table omits `/dashboard/appointment`, `/dashboard/notifications`, `/dashboard/profile` | `src/App.tsx:79-98` | These three routes exist and are mounted in the current app but are absent from ARCHITECTURE's table — the table is missing rows, not just wrong ones. |
@@ -151,7 +151,7 @@ The concrete discrepancies that matter for planning the next 6 phases:
    in code and should not be assumed by later phases.
 
 7. **`services/` naming has drifted** — four services were renamed after
-   ARCHITECTURE.md's directory listing was written, and eight newer services aren't
+   ARCHITECTURE.md's directory listing was written, and nine newer services aren't
    listed at all. A later phase reading ARCHITECTURE.md to find "the availability
    request service" will look for a file that doesn't exist (`requestService.ts` is the
    real name).

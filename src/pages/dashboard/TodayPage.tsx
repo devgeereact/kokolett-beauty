@@ -152,7 +152,7 @@ export function TodayPage(): JSX.Element {
     { label: 'Booked today', value: summary ? String(summary.today_count) : '—' },
     {
       label: 'Collected today',
-      value: summary ? formatMoney(summary.today_collected_pence) : '—',
+      value: summary ? formatMoney(summary.today_collected_pence ?? 0) : '—',
       // The one stat that is money actually moving through the business today,
       // so it carries the brand accent in the grid.
       accent: true,

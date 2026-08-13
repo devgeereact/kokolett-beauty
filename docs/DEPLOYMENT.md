@@ -23,6 +23,10 @@ leaks.
 ## 0. Before the first deploy
 
 - [ ] Both migrations applied (`0001_init.sql`, then `0002_salon.sql`).
+- [ ] `0027_payment_log.sql` pushed (`supabase db push --linked`) before or together with
+      any build that reads `today_collected_pence` — otherwise the Today page's
+      "Collected today" stat renders `£0.00` instead of a real figure until the
+      migration is pushed.
 - [ ] `btree_gist` extension present; the `appointments_no_overlap` constraint exists.
 - [ ] Owner row inserted into `public.staff`.
 - [ ] `booking_settings` reviewed — lead time, horizon, daily cap, `approve_first_time`,

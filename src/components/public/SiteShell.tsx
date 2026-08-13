@@ -133,7 +133,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Kokolett Beauty on Instagram"
-                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="grid h-11 w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -150,7 +150,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Kokolett Beauty reviews on Google"
-                    className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="grid h-11 w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <svg
                       viewBox="0 0 24 24"

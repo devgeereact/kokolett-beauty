@@ -156,7 +156,7 @@ export function ServiceMenuPage(): JSX.Element {
       actions={
         <>
           <a
-            href={routes.public.services}
+            href={`${routes.public.home}#services`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"

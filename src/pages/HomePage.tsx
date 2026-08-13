@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Reviews } from '@/components/public/Reviews';
 import { Card } from '@/components/ui/Card';
@@ -39,6 +40,7 @@ const HOW_IT_WORKS = [
 ];
 
 export function HomePage(): JSX.Element {
+  const location = useLocation();
   const { services } = useServices();
   const { groups: menu } = useServiceMenu();
   const { settings } = useBusinessSettings();
@@ -47,6 +49,15 @@ export function HomePage(): JSX.Element {
   );
 
   const nextDays = openDates.slice(0, 3);
+
+  // The Services section only exists once the menu has loaded, so a plain
+  // browser anchor-scroll on first paint finds nothing there yet — retry once
+  // the section has actually mounted (e.g. arriving via the dashboard's
+  // "View on website" link, opened fresh in a new tab).
+  useEffect(() => {
+    if (location.hash !== '#services' || menu.length === 0) return;
+    document.getElementById('services')?.scrollIntoView({ block: 'start' });
+  }, [location.hash, menu.length]);
 
   return (
     <SiteShell>

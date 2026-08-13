@@ -189,8 +189,27 @@ export function CustomersPage(): JSX.Element {
             >
               <p className="font-medium text-foreground">{customer.full_name}</p>
               <p className="text-sm text-muted-foreground">
-                {customer.email}
-                {customer.mobile ? ` · ${customer.mobile}` : ''}
+                <a
+                  href={`mailto:${customer.email}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="hover:text-foreground hover:underline hover:underline-offset-4"
+                >
+                  {customer.email}
+                </a>
+                {customer.mobile ? (
+                  <>
+                    {' · '}
+                    <a
+                      href={`tel:${customer.mobile.replace(/\s/g, '')}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="hover:text-foreground hover:underline hover:underline-offset-4"
+                    >
+                      {customer.mobile}
+                    </a>
+                  </>
+                ) : (
+                  ''
+                )}
               </p>
               {customer.marketing_consent && (
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -272,8 +291,25 @@ export function CustomersPage(): JSX.Element {
                     {selected.full_name}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    {selected.email}
-                    {selected.mobile ? ` · ${selected.mobile}` : ''}
+                    <a
+                      href={`mailto:${selected.email}`}
+                      className="hover:text-foreground hover:underline hover:underline-offset-4"
+                    >
+                      {selected.email}
+                    </a>
+                    {selected.mobile ? (
+                      <>
+                        {' · '}
+                        <a
+                          href={`tel:${selected.mobile.replace(/\s/g, '')}`}
+                          className="hover:text-foreground hover:underline hover:underline-offset-4"
+                        >
+                          {selected.mobile}
+                        </a>
+                      </>
+                    ) : (
+                      ''
+                    )}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">

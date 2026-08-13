@@ -26,6 +26,7 @@ import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import { statusLabel } from '@/lib/status';
+import { cn } from '@/lib/utils';
 import { LIVE_STATUSES, type AppointmentStatus } from '@/types';
 
 /**
@@ -151,6 +152,9 @@ export function TodayPage(): JSX.Element {
     {
       label: 'Collected today',
       value: summary ? formatMoney(summary.today_collected_pence) : '—',
+      // The one stat that is money actually moving through the business today,
+      // so it carries the brand accent in the grid.
+      accent: true,
     },
     {
       label: 'Awaiting approval',
@@ -215,11 +219,25 @@ export function TodayPage(): JSX.Element {
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((stat) => {
           const body = (
-            <Card className="h-full p-4">
+            <Card
+              className={cn(
+                'h-full p-4',
+                // Hierarchy from the terracotta token on the money stat — never a
+                // second shadow, since depth here is card/ground contrast only
+                // (docs/DESIGN.md §5).
+                stat.accent && 'border-t-2 border-t-primary',
+                // Two of these four cards navigate. Without a hover change they
+                // read as inert panels; the static cards must not borrow the
+                // affordance, so it is scoped to the linked ones.
+                stat.to && 'transition-colors duration-150 ease-out hover:border-primary',
+              )}
+            >
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {stat.label}
               </p>
-              <p className="mt-1 font-display text-2xl font-semibold text-foreground">
+              {/* Tabular figures: these refresh live over realtime, and
+                  proportional digits make the number visibly twitch as it does. */}
+              <p className="mt-2 font-display text-2xl font-semibold tabular-nums text-foreground sm:text-3xl">
                 {stat.value}
               </p>
               {stat.urgent && (
@@ -243,7 +261,7 @@ export function TodayPage(): JSX.Element {
         })}
       </div>
 
-      <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
+      <h2 className="mb-4 font-display text-lg font-semibold text-foreground">
         Today&rsquo;s schedule
       </h2>
 
@@ -292,7 +310,7 @@ export function TodayPage(): JSX.Element {
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {appointments.map((appointment) => (
           <div key={appointment.id}>
             <AppointmentCard

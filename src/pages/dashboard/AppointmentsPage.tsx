@@ -129,7 +129,7 @@ export function AppointmentsPage(): JSX.Element {
 
   return (
     <DashboardLayout
-      title="Appointments"
+      title="Bookings"
       subtitle="Mark them complete and keep your notes"
       actions={
         <>

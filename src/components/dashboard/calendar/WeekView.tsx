@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import {
   HOUR_ROW_PX,
   dayNumber,
@@ -6,10 +7,11 @@ import {
   hourRange,
   offsetPercent,
   WEEKDAY_HEADINGS,
+  type HourRange,
 } from '@/lib/calendar';
 import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
-import { useAppointmentDrag } from '@/hooks/useAppointmentDrag';
+import { useAppointmentDrag, type UseAppointmentDrag } from '@/hooks/useAppointmentDrag';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
 import { DragGhost } from '@/components/dashboard/calendar/DragGhost';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
@@ -32,6 +34,85 @@ export interface WeekViewProps {
 
 const DRAGGABLE_STATUSES = new Set(['confirmed', 'pending_approval']);
 
+/**
+ * Memoized so a drag pointermove or the 30s now-line tick — both of which
+ * re-render the whole `WeekView` — skip every open-slot block whose own
+ * props (date, slot, range) haven't actually changed. `onSelectOpenSlot` is
+ * this component's own prop, not baked into an inline closure at the call
+ * site, so its identity only changes when `WeekView`'s own `onSelectOpenSlot`
+ * prop changes.
+ */
+const WeekOpenSlotBlock = memo(function WeekOpenSlotBlock({
+  date,
+  slot,
+  range,
+  timezone,
+  onSelectOpenSlot,
+}: {
+  date: string;
+  slot: OwnerDaySlot;
+  range: HourRange;
+  timezone: string;
+  onSelectOpenSlot: (date: string, slot: OwnerDaySlot) => void;
+}): JSX.Element {
+  const start = minutesSinceMidnight(slot.starts_at, timezone);
+  return (
+    <EventBlock
+      variant="open"
+      time={slot.local_time}
+      label={`+ Add · ${slot.local_time}`}
+      topPercent={offsetPercent(start, range)}
+      heightPercent={offsetPercent(start + 60, range) - offsetPercent(start, range)}
+      onClick={() => onSelectOpenSlot(date, slot)}
+    />
+  );
+});
+
+/** Same memoization rationale as `WeekOpenSlotBlock`, for booked blocks. */
+const WeekAppointmentBlock = memo(function WeekAppointmentBlock({
+  appointment,
+  date,
+  range,
+  timezone,
+  onSelectAppointment,
+  beginDrag,
+}: {
+  appointment: AppointmentDetailed;
+  date: string;
+  range: HourRange;
+  timezone: string;
+  onSelectAppointment: (appointment: AppointmentDetailed) => void;
+  beginDrag: UseAppointmentDrag['beginDrag'];
+}): JSX.Element {
+  const start = minutesSinceMidnight(appointment.starts_at, timezone);
+  const end = minutesSinceMidnight(appointment.ends_at, timezone);
+  const draggable = DRAGGABLE_STATUSES.has(appointment.status);
+  return (
+    <EventBlock
+      variant="booked"
+      status={appointment.status}
+      time={formatTime(appointment.starts_at, timezone)}
+      label={appointment.customer_name ?? 'Customer'}
+      topPercent={offsetPercent(start, range)}
+      heightPercent={offsetPercent(end, range) - offsetPercent(start, range)}
+      onClick={() => onSelectAppointment(appointment)}
+      draggable={draggable}
+      onPointerDown={
+        draggable
+          ? (e) => {
+              const columnEl = e.currentTarget.closest('td');
+              if (columnEl) {
+                beginDrag(e, appointment, date, columnEl, () =>
+                  onSelectAppointment(appointment),
+                );
+              }
+            }
+          : undefined
+      }
+    />
+  );
+});
+
 export function WeekView({
   dates,
   today,
@@ -45,23 +126,39 @@ export function WeekView({
 }: WeekViewProps): JSX.Element {
   const nowMinutes = useNowLine(timezone);
 
-  const allMinutes: number[] = [];
-  for (const date of dates) {
-    for (const a of appointmentsByDate.get(date) ?? []) {
-      allMinutes.push(minutesSinceMidnight(a.starts_at, timezone));
-      allMinutes.push(minutesSinceMidnight(a.ends_at, timezone));
+  // Memoized so drag.preview changes (the highest-frequency re-render
+  // trigger, firing on every pointermove) don't rebuild this array or hand
+  // WeekAppointmentBlock/WeekOpenSlotBlock a new `range` object on every
+  // frame — drag.preview isn't a dependency here, so during a drag this
+  // returns the same object reference and those memoized blocks correctly
+  // skip re-rendering. nowMinutes stays a real dependency (not just for
+  // cache-busting): the live "now" line needs the axis to actually widen to
+  // cover the current time as the day goes on, or it can silently stop
+  // appearing once "now" drifts outside a range fitted at mount.
+  const { range, labels, gridHeight } = useMemo(() => {
+    const allMinutes: number[] = [];
+    for (const date of dates) {
+      for (const a of appointmentsByDate.get(date) ?? []) {
+        allMinutes.push(minutesSinceMidnight(a.starts_at, timezone));
+        allMinutes.push(minutesSinceMidnight(a.ends_at, timezone));
+      }
+      for (const s of openSlotsByDate.get(date) ?? []) {
+        allMinutes.push(minutesSinceMidnight(s.starts_at, timezone));
+      }
     }
-    for (const s of openSlotsByDate.get(date) ?? []) {
-      allMinutes.push(minutesSinceMidnight(s.starts_at, timezone));
-    }
-  }
-  // The live "now" line needs the axis to actually cover the current time —
-  // otherwise a day with only sparse published slots can auto-fit a range
-  // that excludes "now" entirely, and the line silently never appears.
-  if (dates.includes(today)) allMinutes.push(nowMinutes);
-  const range = hourRange(allMinutes);
-  const labels = hourLabels(range);
-  const gridHeight = labels.length * HOUR_ROW_PX;
+    // The live "now" line needs the axis to actually cover the current time
+    // — otherwise a day with only sparse published slots can auto-fit a
+    // range that excludes "now" entirely, and the line silently never
+    // appears.
+    if (dates.includes(today)) allMinutes.push(nowMinutes);
+    const computedRange = hourRange(allMinutes);
+    const computedLabels = hourLabels(computedRange);
+    return {
+      range: computedRange,
+      labels: computedLabels,
+      gridHeight: computedLabels.length * HOUR_ROW_PX,
+    };
+  }, [dates, appointmentsByDate, openSlotsByDate, timezone, today, nowMinutes]);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
 
@@ -162,69 +259,28 @@ export function WeekView({
                         >
                           {(openSlotsByDate.get(date) ?? [])
                             .filter((s) => !s.is_booked && !s.is_past)
-                            .map((slot) => {
-                              const start = minutesSinceMidnight(
-                                slot.starts_at,
-                                timezone,
-                              );
-                              return (
-                                <EventBlock
-                                  key={slot.starts_at}
-                                  variant="open"
-                                  time={slot.local_time}
-                                  label={`+ Add · ${slot.local_time}`}
-                                  topPercent={offsetPercent(start, range)}
-                                  heightPercent={
-                                    offsetPercent(start + 60, range) -
-                                    offsetPercent(start, range)
-                                  }
-                                  onClick={() => onSelectOpenSlot(date, slot)}
-                                />
-                              );
-                            })}
-
-                          {(appointmentsByDate.get(date) ?? []).map((appointment) => {
-                            const start = minutesSinceMidnight(
-                              appointment.starts_at,
-                              timezone,
-                            );
-                            const end = minutesSinceMidnight(
-                              appointment.ends_at,
-                              timezone,
-                            );
-                            const draggable = DRAGGABLE_STATUSES.has(appointment.status);
-                            return (
-                              <EventBlock
-                                key={appointment.id}
-                                variant="booked"
-                                status={appointment.status}
-                                time={formatTime(appointment.starts_at, timezone)}
-                                label={appointment.customer_name ?? 'Customer'}
-                                topPercent={offsetPercent(start, range)}
-                                heightPercent={
-                                  offsetPercent(end, range) - offsetPercent(start, range)
-                                }
-                                onClick={() => onSelectAppointment(appointment)}
-                                draggable={draggable}
-                                onPointerDown={
-                                  draggable
-                                    ? (e) => {
-                                        const columnEl = e.currentTarget.closest('td');
-                                        if (columnEl) {
-                                          drag.beginDrag(
-                                            e,
-                                            appointment,
-                                            date,
-                                            columnEl,
-                                            () => onSelectAppointment(appointment),
-                                          );
-                                        }
-                                      }
-                                    : undefined
-                                }
+                            .map((slot) => (
+                              <WeekOpenSlotBlock
+                                key={slot.starts_at}
+                                date={date}
+                                slot={slot}
+                                range={range}
+                                timezone={timezone}
+                                onSelectOpenSlot={onSelectOpenSlot}
                               />
-                            );
-                          })}
+                            ))}
+
+                          {(appointmentsByDate.get(date) ?? []).map((appointment) => (
+                            <WeekAppointmentBlock
+                              key={appointment.id}
+                              appointment={appointment}
+                              date={date}
+                              range={range}
+                              timezone={timezone}
+                              onSelectAppointment={onSelectAppointment}
+                              beginDrag={drag.beginDrag}
+                            />
+                          ))}
 
                           {drag.preview && drag.preview.date === date && (
                             <DragGhost

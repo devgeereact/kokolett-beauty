@@ -1,7 +1,14 @@
-import { HOUR_ROW_PX, hourLabels, hourRange, offsetPercent } from '@/lib/calendar';
+import { memo, useMemo } from 'react';
+import {
+  HOUR_ROW_PX,
+  hourLabels,
+  hourRange,
+  offsetPercent,
+  type HourRange,
+} from '@/lib/calendar';
 import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
-import { useAppointmentDrag } from '@/hooks/useAppointmentDrag';
+import { useAppointmentDrag, type UseAppointmentDrag } from '@/hooks/useAppointmentDrag';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
 import { DragGhost } from '@/components/dashboard/calendar/DragGhost';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
@@ -22,6 +29,75 @@ export interface DayViewProps {
 
 const DRAGGABLE_STATUSES = new Set(['confirmed', 'pending_approval']);
 
+/** Same memoization rationale as WeekView's identical pair of components. */
+const DayOpenSlotBlock = memo(function DayOpenSlotBlock({
+  slot,
+  range,
+  timezone,
+  onSelectOpenSlot,
+}: {
+  slot: OwnerDaySlot;
+  range: HourRange;
+  timezone: string;
+  onSelectOpenSlot: (slot: OwnerDaySlot) => void;
+}): JSX.Element {
+  const start = minutesSinceMidnight(slot.starts_at, timezone);
+  return (
+    <EventBlock
+      variant="open"
+      time={slot.local_time}
+      label={`+ Add · ${slot.local_time}`}
+      topPercent={offsetPercent(start, range)}
+      heightPercent={offsetPercent(start + 60, range) - offsetPercent(start, range)}
+      onClick={() => onSelectOpenSlot(slot)}
+    />
+  );
+});
+
+const DayAppointmentBlock = memo(function DayAppointmentBlock({
+  appointment,
+  date,
+  range,
+  timezone,
+  onSelectAppointment,
+  beginDrag,
+}: {
+  appointment: AppointmentDetailed;
+  date: string;
+  range: HourRange;
+  timezone: string;
+  onSelectAppointment: (appointment: AppointmentDetailed) => void;
+  beginDrag: UseAppointmentDrag['beginDrag'];
+}): JSX.Element {
+  const start = minutesSinceMidnight(appointment.starts_at, timezone);
+  const end = minutesSinceMidnight(appointment.ends_at, timezone);
+  const draggable = DRAGGABLE_STATUSES.has(appointment.status);
+  return (
+    <EventBlock
+      variant="booked"
+      status={appointment.status}
+      time={formatTime(appointment.starts_at, timezone)}
+      label={appointment.customer_name ?? 'Customer'}
+      topPercent={offsetPercent(start, range)}
+      heightPercent={offsetPercent(end, range) - offsetPercent(start, range)}
+      onClick={() => onSelectAppointment(appointment)}
+      draggable={draggable}
+      onPointerDown={
+        draggable
+          ? (e) => {
+              const columnEl = e.currentTarget.closest('td');
+              if (columnEl) {
+                beginDrag(e, appointment, date, columnEl, () =>
+                  onSelectAppointment(appointment),
+                );
+              }
+            }
+          : undefined
+      }
+    />
+  );
+});
+
 export function DayView({
   date,
   today,
@@ -34,21 +110,35 @@ export function DayView({
 }: DayViewProps): JSX.Element {
   const nowMinutes = useNowLine(timezone);
   const isToday = date === today;
-  const freeSlots = openSlots.filter((s) => !s.is_booked && !s.is_past);
+  const freeSlots = useMemo(
+    () => openSlots.filter((s) => !s.is_booked && !s.is_past),
+    [openSlots],
+  );
 
-  const allMinutes = [
-    ...appointments.flatMap((a) => [
-      minutesSinceMidnight(a.starts_at, timezone),
-      minutesSinceMidnight(a.ends_at, timezone),
-    ]),
-    ...freeSlots.map((s) => minutesSinceMidnight(s.starts_at, timezone)),
-  ];
-  // See WeekView's identical guard: without "now" in the fitted range, the
-  // live line can silently never show on a sparsely-published day.
-  if (isToday) allMinutes.push(nowMinutes);
-  const range = hourRange(allMinutes);
-  const labels = hourLabels(range);
-  const gridHeight = labels.length * HOUR_ROW_PX;
+  // See WeekView's identical memo: this only needs to recompute when the
+  // real inputs change, not on every drag pointermove — drag.preview isn't a
+  // dependency, so DayAppointmentBlock/DayOpenSlotBlock get a stable `range`
+  // reference during a drag and correctly skip re-rendering. nowMinutes
+  // stays a real dependency — see WeekView's identical guard: without "now"
+  // in the fitted range, the live line can silently never show on a
+  // sparsely-published day.
+  const { range, labels, gridHeight } = useMemo(() => {
+    const allMinutes = [
+      ...appointments.flatMap((a) => [
+        minutesSinceMidnight(a.starts_at, timezone),
+        minutesSinceMidnight(a.ends_at, timezone),
+      ]),
+      ...freeSlots.map((s) => minutesSinceMidnight(s.starts_at, timezone)),
+    ];
+    if (isToday) allMinutes.push(nowMinutes);
+    const computedRange = hourRange(allMinutes);
+    const computedLabels = hourLabels(computedRange);
+    return {
+      range: computedRange,
+      labels: computedLabels,
+      gridHeight: computedLabels.length * HOUR_ROW_PX,
+    };
+  }, [appointments, freeSlots, timezone, isToday, nowMinutes]);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
 
@@ -105,59 +195,27 @@ export function DayView({
                         backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
                       }}
                     >
-                      {freeSlots.map((slot) => {
-                        const start = minutesSinceMidnight(slot.starts_at, timezone);
-                        return (
-                          <EventBlock
-                            key={slot.starts_at}
-                            variant="open"
-                            time={slot.local_time}
-                            label={`+ Add · ${slot.local_time}`}
-                            topPercent={offsetPercent(start, range)}
-                            heightPercent={
-                              offsetPercent(start + 60, range) -
-                              offsetPercent(start, range)
-                            }
-                            onClick={() => onSelectOpenSlot(slot)}
-                          />
-                        );
-                      })}
+                      {freeSlots.map((slot) => (
+                        <DayOpenSlotBlock
+                          key={slot.starts_at}
+                          slot={slot}
+                          range={range}
+                          timezone={timezone}
+                          onSelectOpenSlot={onSelectOpenSlot}
+                        />
+                      ))}
 
-                      {appointments.map((appointment) => {
-                        const start = minutesSinceMidnight(
-                          appointment.starts_at,
-                          timezone,
-                        );
-                        const end = minutesSinceMidnight(appointment.ends_at, timezone);
-                        const draggable = DRAGGABLE_STATUSES.has(appointment.status);
-                        return (
-                          <EventBlock
-                            key={appointment.id}
-                            variant="booked"
-                            status={appointment.status}
-                            time={formatTime(appointment.starts_at, timezone)}
-                            label={appointment.customer_name ?? 'Customer'}
-                            topPercent={offsetPercent(start, range)}
-                            heightPercent={
-                              offsetPercent(end, range) - offsetPercent(start, range)
-                            }
-                            onClick={() => onSelectAppointment(appointment)}
-                            draggable={draggable}
-                            onPointerDown={
-                              draggable
-                                ? (e) => {
-                                    const columnEl = e.currentTarget.closest('td');
-                                    if (columnEl) {
-                                      drag.beginDrag(e, appointment, date, columnEl, () =>
-                                        onSelectAppointment(appointment),
-                                      );
-                                    }
-                                  }
-                                : undefined
-                            }
-                          />
-                        );
-                      })}
+                      {appointments.map((appointment) => (
+                        <DayAppointmentBlock
+                          key={appointment.id}
+                          appointment={appointment}
+                          date={date}
+                          range={range}
+                          timezone={timezone}
+                          onSelectAppointment={onSelectAppointment}
+                          beginDrag={drag.beginDrag}
+                        />
+                      ))}
 
                       {drag.preview && drag.preview.date === date && (
                         <DragGhost

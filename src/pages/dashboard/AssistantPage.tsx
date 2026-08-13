@@ -29,6 +29,12 @@ type ModuleKey = (typeof MODULES)[number]['key'];
  * mutate anything on their own — each ends in a real action (reschedule,
  * send, mark complete) that goes through the same service functions the
  * rest of the dashboard uses, and a person has to click it.
+ *
+ * The module switcher below is plain buttons + `aria-pressed`, not the ARIA
+ * tab pattern — same reasoning as `CalendarShell`'s view switcher:
+ * `role="tablist"`/`role="tab"` promises arrow-key roving-tabindex
+ * navigation and `role="tabpanel"` wiring that isn't implemented here,
+ * which is worse for assistive tech than no ARIA at all.
  */
 export function AssistantPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
@@ -40,16 +46,14 @@ export function AssistantPage(): JSX.Element {
       subtitle="Advisory only — nothing here acts on its own"
     >
       <div
-        role="tablist"
         aria-label="Assistant modules"
         className="mb-6 flex flex-wrap gap-1 border-b border-border"
       >
         {MODULES.map((m) => (
           <button
             key={m.key}
-            role="tab"
             type="button"
-            aria-selected={module === m.key}
+            aria-pressed={module === m.key}
             onClick={() => setModule(m.key)}
             className={cn(
               '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium',

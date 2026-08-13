@@ -146,13 +146,13 @@ export function TodayPage(): JSX.Element {
     {
       label: 'Awaiting approval',
       value: summary ? String(summary.pending_approval_count) : '—',
-      to: routes.owner.approvals,
+      to: `${routes.owner.inbox}?tab=approvals`,
       urgent: (summary?.urgent_approval_count ?? 0) > 0,
     },
     {
       label: 'New enquiries',
       value: summary ? String(summary.new_request_count) : '—',
-      to: routes.owner.requests,
+      to: `${routes.owner.inbox}?tab=requests`,
     },
   ];
 

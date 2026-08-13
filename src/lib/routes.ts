@@ -32,9 +32,21 @@ export const routes = {
     dashboard: '/dashboard',
     calendar: '/dashboard/calendar',
     appointments: '/dashboard/appointments',
-    /** First-time bookings waiting on the owner. */
+    /** Approvals + Requests, tabbed. The only place either queue renders. */
+    inbox: '/dashboard/inbox',
+    /**
+     * First-time bookings waiting on the owner.
+     * @deprecated Renders nothing — `/dashboard/approvals` redirects to
+     * `inbox?tab=approvals` (see `src/App.tsx`). Kept as a constant because
+     * other code may still reference the path during migration.
+     */
     approvals: '/dashboard/approvals',
-    /** Enquiries raised when no slot was available. */
+    /**
+     * Enquiries raised when no slot was available.
+     * @deprecated Renders nothing — `/dashboard/requests` redirects to
+     * `inbox?tab=requests` (see `src/App.tsx`). Kept as a constant because
+     * other code may still reference the path during migration.
+     */
     requests: '/dashboard/requests',
     customers: '/dashboard/customers',
     customer: (id: string) => `/dashboard/customers/${id}`,

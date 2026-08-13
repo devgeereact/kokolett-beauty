@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -17,7 +17,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { TodayPage } from '@/pages/dashboard/TodayPage';
 import { CalendarPage } from '@/pages/dashboard/CalendarPage';
 import { WeeklyDefaultPage } from '@/pages/dashboard/WeeklyDefaultPage';
-import { ApprovalsPage } from '@/pages/dashboard/ApprovalsPage';
+import { InboxPage } from '@/pages/dashboard/InboxPage';
 import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
 import { CustomersPage } from '@/pages/dashboard/CustomersPage';
 import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
@@ -66,15 +66,24 @@ export function App(): JSX.Element {
             <Route path={routes.auth.resetPassword} element={<ResetPasswordPage />} />
 
             <Route path={routes.owner.dashboard} element={owner(<TodayPage />)} />
-            <Route path={routes.owner.approvals} element={owner(<ApprovalsPage />)} />
+            <Route path={routes.owner.inbox} element={owner(<InboxPage />)} />
+            {/* Approvals and Requests used to be separate destinations
+                (Requests a tab inside AppointmentsPage, Approvals its own
+                page). Both queues now live in InboxPage; these routes stay
+                mounted purely as redirects so old links and bookmarks still
+                land somewhere real. */}
+            <Route
+              path={routes.owner.approvals}
+              element={<Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />}
+            />
+            <Route
+              path={routes.owner.requests}
+              element={<Navigate to={`${routes.owner.inbox}?tab=requests`} replace />}
+            />
             <Route
               path={routes.owner.appointments}
               element={owner(<AppointmentsPage />)}
             />
-            {/* Requests is a tab inside AppointmentsPage, not its own page —
-                the route stays so `routes.owner.requests` links (Today's
-                "New enquiries" stat) still land on the right tab. */}
-            <Route path={routes.owner.requests} element={owner(<AppointmentsPage />)} />
             <Route path={routes.owner.customers} element={owner(<CustomersPage />)} />
             <Route
               path={routes.owner.appointmentType}

@@ -291,3 +291,24 @@ npx ruflo@latest doctor --fix
 > by default; `--ttl 0` to disable, `daemon status --all` to audit running daemons).
 
 **Agent tool** handles execution (agents, files, code, git). **MCP tools** handle coordination (swarm, memory, hooks). **CLI** is the same via Bash.
+
+# gstack
+
+Installed at `~/.claude/skills/gstack`. Run `~/.claude/skills/gstack/setup` after
+cloning it if the skills aren't registered yet.
+
+## Web browsing
+
+Use the `/browse` skill from gstack for **all** web browsing. Never use the
+`mcp__claude-in-chrome__*` tools.
+
+## Available skills
+
+`/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`,
+`/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`,
+`/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`,
+`/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`,
+`/setup-gbrain`, `/retro`, `/investigate`, `/document-release`,
+`/document-generate`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`,
+`/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`,
+`/gstack-upgrade`, `/learn`.

@@ -38,11 +38,10 @@ export interface RequestsPanelHandle {
  * refuses to book a later request into a date an earlier one also wanted,
  * unless the owner gives a reason — which is then recorded on the request.
  *
- * Lives as a tab inside `AppointmentsPage` rather than its own screen, so
- * checking bookings and answering a request no longer costs a full page
- * navigation each way. `onCountChange` lets the parent show a live count on
- * the tab and the sidebar badge; `reload` is exposed so the parent's single
- * Refresh button can drive whichever tab is showing.
+ * Rendered by `InboxPage` as the Requests lane; `onCountChange` feeds both
+ * that tab's own count label and (via `InboxPage`'s reconciliation with
+ * `useOwnerSummary`) the sidebar badge, and `reload` is exposed so the
+ * page's single Refresh button can drive whichever tab is showing.
  */
 export const RequestsPanel = forwardRef<
   RequestsPanelHandle,

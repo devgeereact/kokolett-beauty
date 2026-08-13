@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Field, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useOwnerSummary } from '@/hooks/useOwnerSummary';
 import {
   approveAppointment,
   listPendingApprovals,
@@ -42,8 +43,22 @@ export function InboxPage(): JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const tab: Tab =
-    new URLSearchParams(location.search).get('tab') === 'requests' ? 'requests' : 'approvals';
+  // `useOwnerSummary` is the number the sidebar and Today's stat cards already
+  // trust — it stays correct no matter which tab (if any) is mounted, so it
+  // backstops the local, tab-gated state below rather than replacing it.
+  const { summary, refresh: refreshSummary } = useOwnerSummary();
+
+  const tabParam = new URLSearchParams(location.search).get('tab');
+  const explicitTab: Tab | null =
+    tabParam === 'requests' ? 'requests' : tabParam === 'approvals' ? 'approvals' : null;
+  // Under the current policy Approvals is structurally always empty (see its
+  // empty state below), so a bare `/dashboard/inbox` — no `?tab=` — should
+  // land the owner on the queue she actually answers day to day. An explicit
+  // `?tab=approvals` (e.g. a bookmark, or Today's own stat-card link) is
+  // always honoured.
+  const defaultTab: Tab =
+    summary && summary.pending_approval_count === 0 ? 'requests' : 'approvals';
+  const tab: Tab = explicitTab ?? defaultTab;
 
   const goToTab = (next: Tab): void => {
     void navigate(`${routes.owner.inbox}?tab=${next}`);
@@ -67,7 +82,10 @@ export function InboxPage(): JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, []);
+    // Keep the summary — the fallback for the inactive tab and the badge
+    // before this tab has loaded — in step with every local change.
+    void refreshSummary();
+  }, [refreshSummary]);
 
   useEffect(() => {
     void loadApprovals();
@@ -100,14 +118,38 @@ export function InboxPage(): JSX.Element {
   };
 
   // Requests queue — RequestsPanel owns its own data; this page only tracks
-  // the count for the tab badge and combined `badges` prop.
+  // the count for the tab badge and combined `badges` prop. It only mounts on
+  // the Requests tab, so `requestsCount`/`requestsLoaded` stay at their last
+  // known value (0/false until first load) whenever Approvals is active.
   const [requestsCount, setRequestsCount] = useState(0);
+  const [requestsLoaded, setRequestsLoaded] = useState(false);
   const requestsRef = useRef<RequestsPanelHandle>(null);
+
+  const handleRequestsCountChange = useCallback(
+    (n: number): void => {
+      setRequestsCount(n);
+      setRequestsLoaded(true);
+      void refreshSummary();
+    },
+    [refreshSummary],
+  );
 
   const refreshActive = (): void => {
     if (tab === 'requests') void requestsRef.current?.reload();
     else void loadApprovals();
   };
+
+  // Reconciliation: the active tab's own state is freshest once it has
+  // loaded (immediate after an approve/decline/offer/decline, no need to
+  // wait on a summary refetch); the inactive tab — which may never have
+  // mounted, or may be stale since it last was — falls back to the summary.
+  // The badge is always the sum of these two, so it can never read a number
+  // that disagrees with what either tab is about to show.
+  const approvalsLoaded = !loading;
+  const effectiveApprovalsCount =
+    tab === 'approvals' && approvalsLoaded ? rows.length : (summary?.pending_approval_count ?? 0);
+  const effectiveRequestsCount =
+    tab === 'requests' && requestsLoaded ? requestsCount : (summary?.new_request_count ?? 0);
 
   return (
     <DashboardLayout
@@ -117,7 +159,7 @@ export function InboxPage(): JSX.Element {
           ? 'First-time bookings holding a slot until you decide'
           : 'Answered oldest first — whoever asked first is served first'
       }
-      badges={{ inbox: rows.length + requestsCount }}
+      badges={{ inbox: effectiveApprovalsCount + effectiveRequestsCount }}
       actions={
         <>
           <div className="inline-flex rounded-lg border border-border p-0.5">
@@ -133,7 +175,7 @@ export function InboxPage(): JSX.Element {
               )}
             >
               Approvals
-              {rows.length > 0 && (
+              {effectiveApprovalsCount > 0 && (
                 <span
                   className={cn(
                     'ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
@@ -142,7 +184,7 @@ export function InboxPage(): JSX.Element {
                       : 'bg-primary text-primary-foreground',
                   )}
                 >
-                  {rows.length}
+                  {effectiveApprovalsCount}
                 </span>
               )}
             </button>
@@ -158,7 +200,7 @@ export function InboxPage(): JSX.Element {
               )}
             >
               Requests
-              {requestsCount > 0 && (
+              {effectiveRequestsCount > 0 && (
                 <span
                   className={cn(
                     'ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
@@ -167,7 +209,7 @@ export function InboxPage(): JSX.Element {
                       : 'bg-primary text-primary-foreground',
                   )}
                 >
-                  {requestsCount}
+                  {effectiveRequestsCount}
                 </span>
               )}
             </button>
@@ -320,7 +362,7 @@ export function InboxPage(): JSX.Element {
           </div>
         </>
       ) : (
-        <RequestsPanel ref={requestsRef} onCountChange={setRequestsCount} />
+        <RequestsPanel ref={requestsRef} onCountChange={handleRequestsCountChange} />
       )}
     </DashboardLayout>
   );

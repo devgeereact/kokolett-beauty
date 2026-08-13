@@ -91,14 +91,17 @@ path is declared once in `src/lib/routes.ts` — nothing hard-codes a path strin
 | `/dashboard`                    | Today at a glance                               |
 | `/dashboard/calendar`           | Day / week / month / agenda, drag-to-reschedule |
 | `/dashboard/appointments`       | Searchable list                                 |
-| `/dashboard/approvals`          | First-time bookings awaiting a decision         |
-| `/dashboard/requests`           | Availability requests inbox                     |
+| `/dashboard/inbox`              | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
 | `/dashboard/customers` · `/:id` | CRM                                             |
 | `/dashboard/services`           | Catalogue management                            |
 | `/dashboard/availability`       | Hours, breaks, closures, booking rules          |
 | `/dashboard/reports`            | Revenue and utilisation                         |
 | `/dashboard/assistant`          | AI recommendations queue                        |
 | `/dashboard/settings`           | Salon profile, email, policies                  |
+
+`/dashboard/approvals` and `/dashboard/requests` render nothing themselves — both are kept
+mounted purely as redirects (`/dashboard/inbox?tab=approvals` / `?tab=requests`) so old
+links and bookmarks still land somewhere real (see `src/App.tsx`).
 
 `ProtectedRoute` gates owner routes on Supabase session **and** `is_owner()`. A signed-in
 user who is not in `staff` gets a 403 view, not the dashboard.

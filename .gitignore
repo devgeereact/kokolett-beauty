@@ -66,3 +66,6 @@ CLAUDE.md.pre-ruflo
 !.claude/hookify.*.local.md
 
 .gstack/
+
+# Isolated workspaces for subagent-driven-development plan execution.
+.worktrees/

@@ -108,11 +108,15 @@ begin
         and a.status in ('pending_approval','confirmed','checked_in','in_service','completed')
     ),
     'today_collected_pence', (
+      -- Every payment the owner has logged against a booking starting
+      -- today, regardless of that booking's current status — a logged
+      -- payment is money that has actually changed hands, unlike the
+      -- price_pence placeholder this replaced, so it stays counted even
+      -- if the appointment is later cancelled or marked no-show.
       select coalesce(sum(p.amount_pence), 0)
       from public.payments p
       join public.appointments a on a.id = p.appointment_id
       where a.starts_at >= v_day_start and a.starts_at < v_day_end
-        and a.status in ('confirmed','checked_in','in_service','completed')
     ),
     'pending_approval_count', (
       select count(*) from public.appointments a where a.status = 'pending_approval'

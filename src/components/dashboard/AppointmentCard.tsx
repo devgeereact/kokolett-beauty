@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatusChip } from '@/components/ui/StatusChip';
-import { Textarea } from '@/components/ui/Field';
-import { formatDuration, formatTime } from '@/lib/format';
+import { Input, Textarea } from '@/components/ui/Field';
+import { formatDuration, formatMoney, formatTime, parseMoney } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed, AppointmentStatus } from '@/types';
 
@@ -38,6 +38,7 @@ export function AppointmentCard({
   timezone,
   onStatusChange,
   onNoteSave,
+  onLogPayment,
   onBookFollowUp,
   onMove,
   onReschedule,
@@ -48,6 +49,8 @@ export function AppointmentCard({
   onStatusChange?: (id: string, status: AppointmentStatus) => Promise<void>;
   /** Owner's private note. Omit to hide the notes control entirely. */
   onNoteSave?: (id: string, note: string) => Promise<void>;
+  /** What the customer actually paid. Omit to hide the payment control entirely. */
+  onLogPayment?: (id: string, amountPence: number, note: string) => Promise<void>;
   /** Opens the booking form with this customer already filled in. */
   onBookFollowUp?: (appointment: AppointmentDetailed) => void;
   /** Opens the Move panel for this appointment. Omit to hide the control. */
@@ -60,6 +63,11 @@ export function AppointmentCard({
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState(appointment.owner_note ?? '');
   const [savingNote, setSavingNote] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [amountInput, setAmountInput] = useState('');
+  const [paymentNote, setPaymentNote] = useState('');
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   // Which destructive status change (if any) is awaiting confirmation. Only
   // 'no_show' and 'cancelled' ever populate this — the other statuses in
   // NEXT_ACTIONS run immediately, no confirmation needed.
@@ -100,6 +108,25 @@ export function AppointmentCard({
       setNoteOpen(false);
     } finally {
       setSavingNote(false);
+    }
+  };
+
+  const savePayment = async (): Promise<void> => {
+    if (!onLogPayment) return;
+    const pence = parseMoney(amountInput);
+    if (pence === null) {
+      setPaymentError('Enter a valid amount, e.g. 45.00');
+      return;
+    }
+    setPaymentError(null);
+    setSavingPayment(true);
+    try {
+      await onLogPayment(appointment.id, pence, paymentNote);
+      setAmountInput('');
+      setPaymentNote('');
+      setPaymentOpen(false);
+    } finally {
+      setSavingPayment(false);
     }
   };
 
@@ -190,6 +217,13 @@ export function AppointmentCard({
                 {appointment.owner_note ? 'Note ✓' : 'Add note'}
               </Button>
             )}
+            {onLogPayment && (
+              <Button size="sm" variant="ghost" onClick={() => setPaymentOpen((v) => !v)}>
+                {(appointment.paid_pence ?? 0) > 0
+                  ? `Paid ${formatMoney(appointment.paid_pence ?? 0)}`
+                  : 'Log payment'}
+              </Button>
+            )}
             {onMove &&
               (appointment.status === 'confirmed' ||
                 appointment.status === 'pending_approval') && (
@@ -255,6 +289,60 @@ export function AppointmentCard({
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Your note: </span>
                 {appointment.owner_note}
+              </p>
+            )}
+          </div>
+        )}
+
+        {onLogPayment && (paymentOpen || (appointment.paid_pence ?? 0) > 0) && (
+          <div className="mt-3 border-t border-border pt-3">
+            {paymentOpen ? (
+              <>
+                <Input
+                  aria-label="Amount paid"
+                  inputMode="decimal"
+                  placeholder="£0.00"
+                  value={amountInput}
+                  onChange={(e) => setAmountInput(e.target.value)}
+                />
+                <Textarea
+                  aria-label="Payment note"
+                  rows={2}
+                  placeholder="Cash, gave 10% off, etc. (optional)"
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  className="mt-2"
+                />
+                {paymentError && (
+                  <p className="mt-2 text-xs font-medium text-destructive" role="alert">
+                    {paymentError}
+                  </p>
+                )}
+                <div className="mt-2 flex gap-2">
+                  <Button size="sm" loading={savingPayment} onClick={() => void savePayment()}>
+                    Save payment
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setAmountInput('');
+                      setPaymentNote('');
+                      setPaymentError(null);
+                      setPaymentOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  What she agreed in the chair, not a quoted price.
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">Paid: </span>
+                {formatMoney(appointment.paid_pence ?? 0)}
               </p>
             )}
           </div>

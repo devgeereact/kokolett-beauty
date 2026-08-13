@@ -6,6 +6,7 @@ import { reportError } from '@/lib/sentry';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { QuickActionLauncher } from '@/components/dashboard/QuickActionLauncher';
 
 interface NavEntry {
   to: string;
@@ -221,6 +222,7 @@ export function DashboardLayout({
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {actions}
+              <QuickActionLauncher />
               <NavLink
                 to={routes.owner.notifications}
                 aria-label="Notifications"

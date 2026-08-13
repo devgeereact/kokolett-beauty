@@ -3,17 +3,24 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
 import { ReschedulePicker } from '@/components/public/ReschedulePicker';
-import { NewBookingPanel, type PrefilledCustomer } from '@/components/dashboard/NewBookingPanel';
+import {
+  NewBookingPanel,
+  type PrefilledCustomer,
+} from '@/components/dashboard/NewBookingPanel';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { useToast } from '@/context/ToastContext';
 import { useOwnerSummary } from '@/hooks/useOwnerSummary';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments';
 import { useSalonToday } from '@/hooks/useSalonToday';
 import { useLiveClock } from '@/hooks/useLiveClock';
-import { setAppointmentStatus, createAppointmentAsOwner } from '@/services/appointmentService';
+import {
+  setAppointmentStatus,
+  createAppointmentAsOwner,
+} from '@/services/appointmentService';
 import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
@@ -64,12 +71,11 @@ export function TodayPage(): JSX.Element {
   const [moveError, setMoveError] = useState<string | null>(null);
   const [movedReference, setMovedReference] = useState<string | null>(null);
 
-  const [lastAction, setLastAction] = useState<{
-    id: string;
-    prevStatus: AppointmentStatus;
-    newStatus: AppointmentStatus;
-  } | null>(null);
+  const { showToast } = useToast();
 
+  // Replaces the page-local `lastAction` banner + hand-rolled 8s setTimeout
+  // this used to be: a Toast with an Undo action generalises exactly that
+  // interaction (docs/plan.md Phase 2 step 10).
   const changeStatus = useCallback(
     async (id: string, status: AppointmentStatus): Promise<void> => {
       try {
@@ -81,33 +87,33 @@ export function TodayPage(): JSX.Element {
           await Promise.all([refresh(), refreshSummary()]);
           return;
         }
-        const prev = app.status;
+        const prevStatus = app.status;
 
         await setAppointmentStatus(id, status);
         await Promise.all([refresh(), refreshSummary()]);
 
-        // show undo banner
-        setLastAction({ id, prevStatus: prev, newStatus: status });
-        // auto-dismiss after 8s
-        setTimeout(() => setLastAction((cur) => (cur && cur.id === id ? null : cur)), 8000);
+        showToast({
+          message: `Action applied — ${status}.`,
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              void (async (): Promise<void> => {
+                try {
+                  await setAppointmentStatus(id, prevStatus);
+                  await Promise.all([refresh(), refreshSummary()]);
+                } catch (e) {
+                  window.alert(errorMessage(e));
+                }
+              })();
+            },
+          },
+        });
       } catch (e) {
         window.alert(errorMessage(e));
       }
     },
-    [appointments, refresh, refreshSummary],
+    [appointments, refresh, refreshSummary, showToast],
   );
-
-  const undoLast = useCallback(async (): Promise<void> => {
-    if (!lastAction) return;
-    try {
-      await setAppointmentStatus(lastAction.id, lastAction.prevStatus);
-      await Promise.all([refresh(), refreshSummary()]);
-    } catch (e) {
-      window.alert(errorMessage(e));
-    } finally {
-      setLastAction(null);
-    }
-  }, [lastAction, refresh, refreshSummary]);
 
   const doOwnerReschedule = useCallback(
     async (id: string, startsAt: string): Promise<void> => {
@@ -116,7 +122,9 @@ export function TodayPage(): JSX.Element {
       try {
         const app = appointments.find((a) => a.id === id);
         if (!app) throw new Error('Original appointment not found');
-        const durationMin = Math.round((new Date(app.ends_at).getTime() - new Date(app.starts_at).getTime()) / 60000);
+        const durationMin = Math.round(
+          (new Date(app.ends_at).getTime() - new Date(app.starts_at).getTime()) / 60000,
+        );
         const ownerBooking = await createAppointmentAsOwner({
           startsAt: new Date(startsAt),
           fullName: app.customer_name ?? '',
@@ -238,22 +246,6 @@ export function TodayPage(): JSX.Element {
         Today&rsquo;s schedule
       </h2>
 
-      {lastAction && (
-        <div className="mb-4 flex items-center justify-between rounded-md border border-border bg-muted p-3">
-          <p className="text-sm">
-            Action applied — <span className="font-medium">{lastAction.newStatus}</span>
-          </p>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="ghost" onClick={() => void undoLast()}>
-              Undo
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setLastAction(null)}>
-              Dismiss
-            </Button>
-          </div>
-        </div>
-      )}
-
       {loading && <LoadingState label="Loading today's appointments…" />}
       {error && <ErrorState error={error} onRetry={() => void refresh()} />}
 
@@ -334,15 +326,21 @@ export function TodayPage(): JSX.Element {
                     setMovingId(null);
                     setMoveError(null);
                   }}
-                  onChoose={(startsAt) => void doOwnerReschedule(appointment.id, startsAt)}
+                  onChoose={(startsAt) =>
+                    void doOwnerReschedule(appointment.id, startsAt)
+                  }
                 />
               </div>
             )}
 
             {movedReference && (
               <div className="mt-2 rounded-md border border-status-completed p-3 text-sm">
-                <p className="font-medium text-foreground">Replacement booked — reference {movedReference}.</p>
-                <p className="mt-1 text-muted-foreground">The original booking is left intact; cancel or mark it as appropriate.</p>
+                <p className="font-medium text-foreground">
+                  Replacement booked — reference {movedReference}.
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  The original booking is left intact; cancel or mark it as appropriate.
+                </p>
               </div>
             )}
           </div>

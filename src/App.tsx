@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { ToastProvider } from '@/context/ToastContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
@@ -41,80 +42,85 @@ function owner(element: JSX.Element): JSX.Element {
 export function App(): JSX.Element {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path={routes.public.home} element={<HomePage />} />
-            <Route path={routes.public.book} element={<BookPage />} />
-            <Route
-              path={routes.public.requestAvailability}
-              element={<RequestAvailabilityPage />}
-            />
-            {/* Customer identity is passwordless: /access/:token redeems a
-                single-use link, /my uses the session it produced. */}
-            <Route path={routes.public.subscribe} element={<SubscribePage />} />
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path={routes.public.home} element={<HomePage />} />
+              <Route path={routes.public.book} element={<BookPage />} />
+              <Route
+                path={routes.public.requestAvailability}
+                element={<RequestAvailabilityPage />}
+              />
+              {/* Customer identity is passwordless: /access/:token redeems a
+                  single-use link, /my uses the session it produced. */}
+              <Route path={routes.public.subscribe} element={<SubscribePage />} />
 
-            <Route path="/access/:token" element={<MyBookingsPage />} />
-            <Route path={routes.customer.home} element={<MyBookingsPage />} />
-            <Route path={routes.customer.appointments} element={<MyBookingsPage />} />
+              <Route path="/access/:token" element={<MyBookingsPage />} />
+              <Route path={routes.customer.home} element={<MyBookingsPage />} />
+              <Route path={routes.customer.appointments} element={<MyBookingsPage />} />
 
-            <Route path={routes.public.privacy} element={<PrivacyPage />} />
-            <Route path={routes.public.bookingPolicy} element={<BookingPolicyPage />} />
-            <Route path={routes.public.terms} element={<TermsPage />} />
+              <Route path={routes.public.privacy} element={<PrivacyPage />} />
+              <Route path={routes.public.bookingPolicy} element={<BookingPolicyPage />} />
+              <Route path={routes.public.terms} element={<TermsPage />} />
 
-            <Route path="/login" element={<LoginPage />} />
-            <Route path={routes.auth.resetPassword} element={<ResetPasswordPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path={routes.auth.resetPassword} element={<ResetPasswordPage />} />
 
-            <Route path={routes.owner.dashboard} element={owner(<TodayPage />)} />
-            <Route path={routes.owner.inbox} element={owner(<InboxPage />)} />
-            {/* Approvals and Requests used to be separate destinations
-                (Requests a tab inside AppointmentsPage, Approvals its own
-                page). Both queues now live in InboxPage; these routes stay
-                mounted purely as redirects so old links and bookmarks still
-                land somewhere real. */}
-            <Route
-              path={routes.owner.approvals}
-              element={<Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />}
-            />
-            <Route
-              path={routes.owner.requests}
-              element={<Navigate to={`${routes.owner.inbox}?tab=requests`} replace />}
-            />
-            <Route
-              path={routes.owner.appointments}
-              element={owner(<AppointmentsPage />)}
-            />
-            <Route path={routes.owner.customers} element={owner(<CustomersPage />)} />
-            <Route
-              path={routes.owner.appointmentType}
-              element={owner(<AppointmentTypePage />)}
-            />
-            <Route path={routes.owner.serviceMenu} element={owner(<ServiceMenuPage />)} />
-            <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
+              <Route path={routes.owner.dashboard} element={owner(<TodayPage />)} />
+              <Route path={routes.owner.inbox} element={owner(<InboxPage />)} />
+              {/* Approvals and Requests used to be separate destinations
+                  (Requests a tab inside AppointmentsPage, Approvals its own
+                  page). Both queues now live in InboxPage; these routes stay
+                  mounted purely as redirects so old links and bookmarks still
+                  land somewhere real. */}
+              <Route
+                path={routes.owner.approvals}
+                element={<Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />}
+              />
+              <Route
+                path={routes.owner.requests}
+                element={<Navigate to={`${routes.owner.inbox}?tab=requests`} replace />}
+              />
+              <Route
+                path={routes.owner.appointments}
+                element={owner(<AppointmentsPage />)}
+              />
+              <Route path={routes.owner.customers} element={owner(<CustomersPage />)} />
+              <Route
+                path={routes.owner.appointmentType}
+                element={owner(<AppointmentTypePage />)}
+              />
+              <Route
+                path={routes.owner.serviceMenu}
+                element={owner(<ServiceMenuPage />)}
+              />
+              <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
 
-            <Route path={routes.owner.calendar} element={owner(<CalendarPage />)} />
-            <Route
-              path={routes.owner.weeklyDefault}
-              element={owner(<WeeklyDefaultPage />)}
-            />
+              <Route path={routes.owner.calendar} element={owner(<CalendarPage />)} />
+              <Route
+                path={routes.owner.weeklyDefault}
+                element={owner(<WeeklyDefaultPage />)}
+              />
 
-            <Route path={routes.owner.assistant} element={owner(<AssistantPage />)} />
-            <Route path={routes.owner.reports} element={owner(<ReportsPage />)} />
-            <Route
-              path={routes.owner.notifications}
-              element={owner(<NotificationsPage />)}
-            />
-            <Route path={routes.owner.profile} element={owner(<ProfilePage />)} />
+              <Route path={routes.owner.assistant} element={owner(<AssistantPage />)} />
+              <Route path={routes.owner.reports} element={owner(<ReportsPage />)} />
+              <Route
+                path={routes.owner.notifications}
+                element={owner(<NotificationsPage />)}
+              />
+              <Route path={routes.owner.profile} element={owner(<ProfilePage />)} />
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
 
-          {/* Global PWA affordances */}
-          <UpdatePrompt />
-          <InstallPrompt />
-          <OfflineBanner />
-        </BrowserRouter>
-      </AuthProvider>
+            {/* Global PWA affordances */}
+            <UpdatePrompt />
+            <InstallPrompt />
+            <OfflineBanner />
+          </BrowserRouter>
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

@@ -25,6 +25,28 @@ export type AppSettingsUpdate = Tables['app_settings']['Update'];
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type ResolvedTheme = 'dark' | 'light';
 
+/**
+ * A toast's optional action button — e.g. "Undo" on a status change.
+ * `onClick` fires once, then the toast dismisses itself.
+ */
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+/** What a caller passes to `useToast().showToast(...)`. */
+export interface ToastOptions {
+  message: string;
+  action?: ToastAction;
+  /** Auto-dismiss delay in ms. Defaults to 8000 — see `src/components/ui/Toast.tsx`. */
+  duration?: number;
+}
+
+/** A queued toast, as rendered by `ToastStack`. */
+export interface ToastItem extends ToastOptions {
+  id: string;
+}
+
 /* ---------------------------------------------------------------- enums --- */
 
 export type AppointmentStatus = Enums['appointment_status'];

@@ -1,0 +1,241 @@
+# Capability Matrix — Owner jobs vs. shipped code (Phase 0, Task 2)
+
+Date: 2026-08-13
+Scope: for each of the six owner jobs named in the plan, enumerate the concrete
+capabilities an owner would expect and rate each **Implemented** / **Partial** /
+**Missing**, grounded in a file this session actually read. Read-only; no source
+file was modified to produce this report and the DB/RLS was not touched. Builds on
+`docs/BASELINE-AUDIT.md` (Task 1) — its route-inventory and drift findings are
+cited rather than re-derived, and are treated as ground truth. Line numbers refer
+to the file state at commit `f382d1b` (current `main` tip when this audit was
+written; confirmed via `git diff --stat acc7117 HEAD -- src/` to be empty, so
+Task 1's line numbers into `src/` still apply unchanged).
+
+---
+
+## 1. Day operations
+
+*Running today: seeing today's schedule, taking walk-in/phone bookings, checking
+a customer in/starting/completing a service, cancelling, marking no-show, live
+updates when a web booking lands, undo on a status mistake.*
+
+| Capability | Status | Evidence (file:line or "no code found") | Notes |
+| --- | --- | --- | --- |
+| See today's schedule (salon-timezone-anchored) | Implemented | `src/pages/dashboard/TodayPage.tsx:30-43` (`useSalonToday`, `useAppointments` filtered to `LIVE_STATUSES`) | Rolls over on the day boundary, not frozen at mount (doc comment `:22-29`). |
+| Take a walk-in/phone booking, bypassing published availability | Implemented | `src/components/dashboard/NewBookingPanel.tsx:1-27` → `createAppointmentAsOwner` (`src/services/appointmentService.ts:134-151`) → RPC `create_appointment_as_owner` | Confirmed instantly, same confirmation email as a web booking (`NewBookingPanel.tsx:142-144`). Overlap constraint still enforced (`SLOT_TAKEN` handled at `:124-128`). |
+| Check in / start / complete a service | Implemented | `src/components/dashboard/AppointmentCard.tsx:21-33` (`NEXT_ACTIONS`, `ACTION_LABELS`) → `setAppointmentStatus` → RPC `set_appointment_status` | Complete is offered straight from `confirmed`, not gated behind check-in/start, by design (doc comment `AppointmentCard.tsx:13-16`). |
+| Cancel a live appointment | Implemented | `AppointmentCard.tsx:22,32,75-80` (confirm dialog, "The customer will be emailed") | Same `set_appointment_status` RPC as other transitions. |
+| Mark no-show | Implemented | `AppointmentCard.tsx:22,31,72-74` | Confirm dialog before applying. |
+| Live update when a web booking lands while the screen is open | Implemented | `src/hooks/useRealtimeAppointments.ts:25-59` (Supabase Realtime on the `appointments` table) wired in `TodayPage.tsx:46-50` | Subscribes to the base table, not the `_detailed` view (Postgres change streams don't replicate views — doc comment `useRealtimeAppointments.ts:21-23`), so the callback triggers a refetch rather than using the raw payload directly. Connection status shown as a Live/Offline dot (`TodayPage.tsx:175-184`). |
+| Undo a status mistake | Implemented | `TodayPage.tsx:67-110` (`lastAction` state, `undoLast`, 8s auto-dismiss banner) | Undo re-applies the previous status via the same RPC; only covers the most recent single action, not a stack. |
+| Owner's private note on a booking | Implemented | `AppointmentCard.tsx:39,49,183-249`, `setOwnerNote` (`appointmentService.ts:175-182`, direct table update, not an RPC) | Never shown to the customer (UI copy `AppointmentCard.tsx:240`). |
+| Book a follow-up straight from a booking in front of her | Implemented | `AppointmentCard.tsx:51,197-201` → `TodayPage.tsx:306-315` (prefills `NewBookingPanel`) | |
+| Reschedule a today appointment | Partial | `TodayPage.tsx:112-138` (`doOwnerReschedule`) calls `createAppointmentAsOwner`, **not** `rescheduleAppointmentAsOwner` | Creates a brand-new appointment with a note `Reschedule of ${reference}` and leaves the original row completely untouched — the UI itself says so: *"Replacement booked… The original booking is left intact; cancel or mark it as appropriate"* (`TodayPage.tsx:340-343`). Every other reschedule path in the app (Calendar's Move panel, calendar drag, the AI Assistant's suggestion panel) calls `rescheduleAppointmentAsOwner`, which the service doc comment describes as "retire-and-recreate under the hood" (`appointmentService.ts:153-157`) — i.e. an atomic backend transition. Today's inline picker is the one reschedule affordance in the whole app that does not retire the original row; see the cross-cutting note under Booking management. |
+
+**Summary:** Day operations is the most complete job in the app. The one real gap
+is the inline reschedule on Today using a different, weaker mechanism than every
+other reschedule entry point.
+
+---
+
+## 2. Queue management
+
+*Clearing pending decisions: approving/rejecting first-time-customer holds,
+handling availability requests (offering a slot, fairness/ordering), seeing
+SLA/urgency (how old, expiring soon).*
+
+| Capability | Status | Evidence (file:line or "no code found") | Notes |
+| --- | --- | --- | --- |
+| Approve a first-time-customer hold | Implemented | `src/pages/dashboard/ApprovalsPage.tsx:50-60` → `approveAppointment` (`appointmentService.ts:86-93`) → RPC `approve_appointment` | |
+| Reject a first-time-customer hold, with a reason | Implemented | `ApprovalsPage.tsx:62-74,156-192` → `rejectAppointment` (`appointmentService.ts:95-106`) | Reason is emailed to the customer (UI hint `ApprovalsPage.tsx:161`). |
+| See hold deadline / urgency on the approvals queue | Implemented | `ApprovalsPage.tsx:99-102,140-146` (`urgent` flag when `approval_deadline` is <2h away) | Deadline enforcement itself (`expire_pending_approvals()`) is a DB-side mechanism referenced only in a doc comment (`ApprovalsPage.tsx:23`) — not verified against the live DB (DB inspection out of scope, per task brief). |
+| See count/urgency of approvals from Today | Implemented | `TodayPage.tsx:140-157` (stat card, `urgent_approval_count`), `owner_dashboard_summary` RPC (`src/services/dashboardService.ts:12-16`, fields confirmed in `src/types/index.ts:91-96`) | **Approvals is not in the sidebar nav** (`DashboardLayout.tsx:40-50` — confirmed directly, matches `docs/BASELINE-AUDIT.md` §1). The only ways in are this Today stat card and typing the URL. |
+| Handle an availability request: offer a specific slot | Implemented | `src/components/dashboard/RequestsPanel.tsx:94-119` → `offerSlotToRequest` (`src/services/requestService.ts:73-88`) → RPC `offer_slot_to_request` | Offered slot need not be inside published hours — deliberate (UI copy `RequestsPanel.tsx:236-239`). |
+| Decline an availability request, with a reason | Implemented | `RequestsPanel.tsx:121-132,290-313` → `declineRequest` (`requestService.ts:90-96`) | |
+| Fairness / queue ordering (oldest-first, override requires a reason) | Implemented | `RequestsPanel.tsx:151-156` (queue position badge), `:241-273` (`aheadWarning` + mandatory `overrideReason` before "Book anyway" is enabled) → `whoIsAhead` (`requestService.ts:98-103`) parses the `EARLIER_REQUEST_WAITING` DB error | Ordering is enforced in the database (RPC refuses to skip), not merely in the UI — doc comment `requestService.ts:5-12`. |
+| See how old a request is | Implemented | `RequestsPanel.tsx:167-169,326-329` (`formatRelative(request.created_at)`, `waiting_hours`) | |
+| Filter the request queue (by status, e.g. answered vs. open) | Missing | Grepped `RequestsPanel.tsx` and `requestService.ts` for `status` and `priority` — zero hits in either file (confirmed directly; matches `docs/BASELINE-AUDIT.md` §2 row on §4.2) | `listQueuedRequests()` always returns the open queue only (RPC `open_requests_in_order`); there is no UI control to filter it. |
+| Priority indicator on a request | Missing | Same grep as above — 0 hits for `priority` | PRD §4.2 claims "priority indicators"; no field or UI element implements this. |
+| See a history of answered/declined requests | Missing | `listAllRequests()` exists (`requestService.ts:39-58`, explicit doc comment "for the history view") but has **zero call sites anywhere else in `src/`** (`grep -rn "listAllRequests" src/` → only its own definition) | Dead code: the function was built but nothing renders it. An owner cannot see what happened to a request once it leaves the open queue. |
+| Legacy `dashboardService.ts` request functions | Dead code, not evaluated as a capability | `listAvailabilityRequests`, `respondToRequest` (`src/services/dashboardService.ts:18-44`) — both have zero call sites outside their own file | Appears superseded by `requestService.ts`. Flagged so a later phase doesn't mistake it for the live path. |
+
+**Summary:** The two live decision types (approvals, requests) are both fully
+wired end-to-end including the DB-enforced fairness rule, which is a
+genuinely strong result. The gaps are entirely about *afterwards*: no history
+of answered requests, no filter, no priority — echoing `BASELINE-AUDIT.md`'s
+PRD-drift finding almost exactly.
+
+---
+
+## 3. Booking management
+
+*Finding/editing any appointment regardless of date: search/filter across the
+full history, changing status, rescheduling (inline picker and Move-panel),
+viewing a booking's detail/history.*
+
+| Capability | Status | Evidence (file:line or "no code found") | Notes |
+| --- | --- | --- | --- |
+| Find a booking by name/email/mobile/reference | Partial | `src/pages/dashboard/AppointmentsPage.tsx:82-90` (`visible` = client-side filter over `search`) | Search only filters *within the currently loaded date range* (see next row) — it is not a search across the whole booking history, despite the page's own framing ("Every booking in a window", doc comment `:28-37`). |
+| Filter/browse across the full history | Partial | `AppointmentsPage.tsx:38-44` (`RANGES` constant) | The widest options are "Next 30 days" and "Last 30 days" — there is no "all time" / unbounded range. A booking from 6 months ago cannot be found here at all, by search or by browsing. This directly narrows the brief's "search/filter across the full history" capability. |
+| Filter by status | Implemented | `AppointmentsPage.tsx:287-303` (Select: live / all / pending_approval / confirmed / completed / cancelled / no_show) | Combines with the date-range limitation above. |
+| Change status from the bookings list | Implemented | `AppointmentsPage.tsx:119-126,343-359` → same `setAppointmentStatus` RPC as Day operations | |
+| Owner note from the bookings list | Implemented | `AppointmentsPage.tsx:128-135,348` (`onNoteSave={saveNote}`) | |
+| Reschedule via the inline picker, from the bookings list | Missing | `AppointmentsPage.tsx:342-359` — the `AppointmentCard` here is given `onStatusChange`, `onNoteSave`, `onBookFollowUp` only; `onMove` and `onReschedule` are both omitted (confirmed by reading the full prop list at the call site) | The brief describes "the inline picker and the Move-panel paths that now both exist" as if both are reachable for booking management generally. In fact **neither** is wired on the one page whose job is finding/editing any appointment. See cross-cutting note below. |
+| Reschedule via the Move panel | Partial | `src/pages/dashboard/CalendarPage.tsx:276-304` → `MoveAppointmentPanel` (`src/components/dashboard/calendar/MoveAppointmentPanel.tsx`) → `rescheduleAppointmentAsOwner` RPC | Real and correctly wired, but only reachable from the **Calendar** page after selecting an appointment there, not from Appointments/booking-management. Restricted to `confirmed`/`pending_approval` appointments (`CalendarPage.tsx:288-290`) and to slots that are currently published free times (`MoveAppointmentPanel.tsx:42,55`). |
+| Reschedule via calendar drag-and-drop | Implemented | `src/hooks/useAppointmentDrag.ts:146` → `rescheduleAppointmentAsOwner` | A third, separate reschedule entry point, also Calendar-only, also using the correct RPC. |
+| View a booking's detail | Implemented | `AppointmentCard.tsx` (customer, contact links, note, reference, first-visit badge `:128-132`) rendered both in Appointments and Calendar | |
+| View a booking's own change history (audit trail of status/reschedule events) | Missing | Grepped `src/pages/dashboard/` and `src/services/` for an appointment-level event/audit log — found none; `NotificationsPage.tsx` is a global 14-day activity feed (see System settings section), not a per-booking history | An owner can see a customer's *list* of appointments (Customer management, below) but not a single appointment's own history of edits. |
+
+**Cross-cutting finding — three reschedule mechanisms, two different backend
+behaviours:** `rescheduleAppointmentAsOwner` (Move panel, drag, AI Assistant's
+`RescheduleSuggestionsPanel.tsx:77`) all call the same correct RPC. Today's inline
+`ReschedulePicker` is the outlier — it calls `createAppointmentAsOwner` instead
+(`TodayPage.tsx:120-127`), which does not retire the original appointment. Any
+phase that treats "reschedule" as one settled capability needs to know it is
+currently two different features that happen to share a button label.
+
+**Summary:** Booking management is the job most affected by `BASELINE-AUDIT.md`'s
+route/nav findings. Status-change and viewing are solid; the "regardless of
+date" and "reschedule from here" parts of the brief's own capability
+description are both weaker than the two individually-working Calendar/Today
+mechanisms would suggest.
+
+---
+
+## 4. Customer management
+
+*Acting from customer context: viewing a customer's history, editing their
+name/email/mobile, owner notes, rebook/book-follow-up, contacting them.*
+
+| Capability | Status | Evidence (file:line or "no code found") | Notes |
+| --- | --- | --- | --- |
+| Search customers by name/email/mobile | Implemented | `src/pages/dashboard/CustomersPage.tsx:44-60` (debounced 250ms) → `listCustomers` (`src/services/customerService.ts:15-33`, `ilike` across all three fields) | Capped at 200 rows (`customerService.ts:21`) with no pagination — not flagged as a real gap at current data volume, but worth a note for scale. |
+| View a customer's appointment history | Implemented | `CustomersPage.tsx:69,336-360` → `listForCustomer` (`appointmentService.ts:73-84`) | Shows date, service, price, status per row. |
+| Edit name/email/mobile | Implemented | `CustomersPage.tsx:75-114,206-267` → `updateCustomerDetails` (`customerService.ts:62-82`) | Validates full name (2+ words) and email format client-side (`CustomersPage.tsx:87-95`); a duplicate-email Postgres error surfaces as-is (doc comment `customerService.ts:65-67`). This is the capability the plan's task-list item 6 ("Let the owner edit a customer's name, email and mobile", commit `6dd4d4c`) refers to. |
+| Owner's private note on a customer | Implemented | `CustomersPage.tsx:116-127,311-324` → `setCustomerNote` (`customerService.ts:47-54`) | Distinct from the per-*appointment* note — this one is per-*customer*. |
+| Rebook / book a follow-up from customer context | Implemented | `CustomersPage.tsx:294-309,329-333` → `NewBookingPanel` prefilled with the customer's contact details | |
+| GDPR erasure (soft delete) | Implemented | `CustomersPage.tsx:129-144,362-366` → `softDeleteCustomer` (`customerService.ts:84-102`) | Confirm dialog explains the consequence in plain language (`CustomersPage.tsx:130-136`). Appointment history is kept (FK is `on delete restrict`); only contact fields, notes and marketing consent are cleared. |
+| Contact the customer (one click, from customer context) | Missing | Grepped `CustomersPage.tsx` for `mailto`/`tel:` — zero hits (confirmed directly) | Both the customer list rows (`:190-198`) and the detail header (`:274-277`) render email/mobile as plain text, not links. Contrast with `AppointmentCard.tsx:135-149`, which does render `mailto:`/`tel:` links — so "contact them" exists elsewhere in the app (from a booking) but not from the Customer management page itself, which is where the brief places this capability. |
+
+**Summary:** The strongest job after Day operations — every capability the
+brief lists is real except the one-click contact affordance, which is a
+small, precisely locatable gap (a missing `mailto`/`tel` link on one page)
+rather than a structural one.
+
+---
+
+## 5. Growth
+
+*The website-facing business surface: service menu/pricing management,
+appointment-type/capacity config, subscriber list, reviews, any
+offer/promotion mechanism.*
+
+| Capability | Status | Evidence (file:line or "no code found") | Notes |
+| --- | --- | --- | --- |
+| Service *menu* management (the marketing list of styles shown on the website) | Implemented | `src/pages/dashboard/ServiceMenuPage.tsx` (full CRUD: add/edit/toggle-visible/delete) → `src/services/serviceMenuService.ts` | Explicitly "not the appointment type" and carries no price/duration (doc comment `ServiceMenuPage.tsx:18-29`) — deliberate design (see next row). Reachable from sidebar ("Services", `DashboardLayout.tsx:46`). |
+| "View on website" link from the menu editor | Partial | `ServiceMenuPage.tsx:158-165` → `routes.public.services` (`/services`) | `docs/BASELINE-AUDIT.md` §1 confirms `/services` has no mounted route — clicking this is a live dead link (404). Carried over here because it directly undermines this specific Growth capability, not just route hygiene in the abstract. |
+| Appointment-type config (length, price, description — the one bookable product) | Partial | `src/pages/dashboard/AppointmentTypePage.tsx` (full read, 194 lines, real form) → `updateService` (`src/services/serviceCatalogService.ts`) | Fully functional but **orphaned**: zero inbound links anywhere in `src/` outside `App.tsx`'s own route mount (`docs/BASELINE-AUDIT.md` §1, confirmed). Not in the sidebar, not linked from Services or Settings. An owner who needs to change the salon's one price or duration cannot discover this screen without knowing the URL. |
+| Capacity config (business hours / weekly defaults — the actual bookable capacity) | Partial | `src/pages/dashboard/WeeklyDefaultPage.tsx` (468 lines, real) → `applyWeeklyTemplate`/`setWeeklyTemplateDay` (`src/services/availabilityService.ts:101-153`) | Same orphaned-route problem as above (`docs/BASELINE-AUDIT.md` §1/§2) — real and detailed, unreachable from any nav. Also listed under System settings below since it is business-hours configuration; counted once in the cross-cutting summary. |
+| Per-day capacity (publishing/clearing specific times) | Implemented | `src/components/dashboard/DayPanel.tsx` (used from Calendar's Day view) → `setDaySlots`/`copyDaySlots` (`availabilityService.ts:59-76`) | Reachable via Calendar → Day view, which is in the sidebar. |
+| Subscriber list (mailing list) | Implemented | `src/pages/dashboard/SettingsPage.tsx:229-278` ("Your links" tab) → `listSubscribers` (`src/services/subscriberService.ts:25-34`) | Shows count, first 50 names/emails, and a "Email everyone" button that opens a `mailto:` with all addresses in Bcc (`SettingsPage.tsx:259-271`). Lives inside Settings rather than a dedicated Growth page, but the capability itself is real. The public opt-in side (`src/pages/SubscribePage.tsx` → `subscribeToUpdates`) is shipped but has no in-app link anywhere (`docs/BASELINE-AUDIT.md` §1 — only usable as a copy-pasted external URL). |
+| Reviews — display on the website | Implemented | `src/components/public/Reviews.tsx` → `fetchReviews` (`src/services/reviewService.ts`) reads an Edge-Function-maintained cache (doc comment `reviewService.ts:3-9`) | |
+| Reviews — owner configuration (review link, Place ID) | Implemented | `SettingsPage.tsx:480-529` ("Reviews" tab) | Explains the two different fields' distinct purposes (`SettingsPage.tsx:487-489`) and warns the website panel stays hidden with no Place ID (`:522-527`). |
+| Reviews — owner-side management (reply, moderate, curate which reviews show) | Missing | Grepped `src/pages/dashboard/` and `src/components/dashboard/` for `reviewService`/`fetchReviews`/`PublicReview` — zero hits outside the public-facing `Reviews.tsx` | Not necessarily a gap against product intent (Google reviews aren't repliable via this kind of integration), but confirmed no owner-facing review workflow exists at all — it is purely a read-through display of the Google cache plus two config fields. |
+| Any offer/promotion mechanism (discount code, seasonal offer, referral incentive) | Missing | `grep -rniE "promo(tion)?|discount|coupon|offer code"` across `src/` → zero relevant hits (excluding unrelated uses of the word "offer" in the availability-request sense, e.g. `offerSlotToRequest`) | No code exists for this at all. |
+
+**Summary:** Growth has real building blocks for everything the brief lists,
+but two of its most business-critical screens — the one appointment type's
+price/length, and the weekly capacity pattern — are fully built and
+completely undiscoverable, which for an owner is functionally the same as
+missing. This matches `docs/BASELINE-AUDIT.md`'s drift finding #2/#3 almost
+exactly, applied to the Growth job specifically.
+
+---
+
+## 6. System settings
+
+*Business rules and integration controls: business hours/weekly defaults,
+owner password/account settings, notification preferences, any other
+configuration surface.*
+
+| Capability | Status | Evidence (file:line or "no code found") | Notes |
+| --- | --- | --- | --- |
+| Booking rules (slot spacing, buffer, lead time, horizon, daily cap, cancellation window) | Implemented | `src/pages/dashboard/SettingsPage.tsx:334-437` ("Booking rules" tab) → `useBusinessSettings` (`src/hooks/useBusinessSettings.ts`) → `updateBookingSettings` (`src/services/bookingSettingsService.ts`) | Client-side validation mirrors DB check constraints so failures read as sentences (`SettingsPage.tsx:125-138`). Enforced server-side, not just in the browser (doc comment `SettingsPage.tsx:25-27`). |
+| First-time-approval policy toggle + approval window | Implemented | `SettingsPage.tsx:439-476` | This is the single control that decides whether Queue management's Approvals path is ever used at all (see `ApprovalsPage.tsx:90-95`, which explicitly tells the owner this queue stays empty under the current policy). |
+| Business hours / weekly defaults (the repeating pattern) | Partial | `src/pages/dashboard/WeeklyDefaultPage.tsx` — see Growth section above for full evidence | Repeated here because the brief lists it explicitly under System settings; same orphaned-route caveat applies (not in sidebar, `docs/BASELINE-AUDIT.md` §1/§2). |
+| Salon details (address, phone, Instagram) | Implemented | `SettingsPage.tsx:283-331` | Shown in the site footer and email footers (`SettingsPage.tsx:289-291`). |
+| Owner password change | Implemented | `src/pages/dashboard/ProfilePage.tsx:60-82,143-186` → `supabase.auth.updateUser({ password })` directly | |
+| Owner account name / display identity | Implemented | `ProfilePage.tsx:42-58,92-130` → `updateProfile` (`src/services/profileService.ts`) | |
+| Appearance (theme) preference | Implemented | `ProfilePage.tsx:132-141` → `ThemeToggle` → `useTheme`/`ThemeContext` | Confirmed to persist via `ThemeContext`, not the unused `app_settings` row (see below). |
+| Calendar subscription (ICS feed for the owner's own phone/calendar app) | Implemented | `src/components/dashboard/CalendarSubscription.tsx` → `createCalendarFeed`/`listCalendarFeeds`/`revokeCalendarFeed` (`src/services/calendarFeedService.ts`) | Reachable from Settings → "Your links". Doc comment is explicit that the link is bearer-token-equivalent and that sync is polled, not realtime (`CalendarSubscription.tsx:15-29`). |
+| Notification preferences (choosing what triggers a notification, digest cadence, channel opt-in/out) | Missing | Grepped for `notification.{0,20}(preference|setting|toggle|opt)` across `src/` — zero hits. `src/pages/dashboard/NotificationsPage.tsx` is a **read-only 14-day activity feed** derived live from appointment/request timestamps — its own doc comment states plainly: *"there is no stored notifications table… nothing here can be marked read or dismissed"* (`NotificationsPage.tsx:54-58`, `src/services/notificationsService.ts:6-11`) | This is a naming trap for later phases: the sidebar/header item called "Notifications" is not a settings surface at all, it is an activity log. Actual configuration of *transactional email* triggers (booking confirmed, reminder, etc.) is hard-coded application behaviour, not an owner-facing preference anywhere. |
+| Unused settings surface | Not a capability gap, but flagged | `src/services/settingsService.ts` (`app_settings` table, per-user) — `grep -rn "settingsService" src/` shows call sites only inside its own file | Dead code: a whole settings service exists with no UI consumer. A later phase should not assume `app_settings` is where any current preference lives. |
+
+**Summary:** The booking-policy half of System settings (the rules that
+actually govern what can be booked) is thorough and well-connected to Queue
+management. The two real gaps are structural rather than missing code:
+Weekly defaults exists but is unreachable, and "Notifications" is a
+misleadingly-named read-only log rather than a preferences surface — an
+owner looking for notification settings today finds nothing that does that.
+
+---
+
+## Cross-cutting summary
+
+**Most complete jobs:** Day operations and Customer management. Both have
+every brief-listed capability implemented against real Supabase-backed code,
+with at most one narrowly-scoped gap each (Today's inline reschedule
+mechanism; the missing `mailto`/`tel` link on Customer management).
+
+**Biggest gaps, ranked:**
+1. **Discoverability, not code, is Growth's main problem.** `AppointmentTypePage`
+   (price/length of the one bookable product) and `WeeklyDefaultPage` (the
+   repeating capacity pattern) are both fully built, real screens with zero
+   path to them from any nav element — the exact orphaned-route finding
+   `docs/BASELINE-AUDIT.md` §1/§4 makes at the routing level, but landing on
+   two of Growth's most consequential capabilities specifically. An owner
+   cannot change her price, her appointment length, or her weekly hours
+   pattern without already knowing a URL exists.
+2. **Booking management's headline capability ("regardless of date") is
+   narrower than it sounds.** The Appointments page — the one built for
+   finding/editing any appointment — caps its browsable/searchable window at
+   30 days each way and wires neither reschedule mechanism onto its cards.
+   Reschedule only works from Calendar (Move panel, drag) or Today (a
+   different, weaker mechanism).
+3. **Queue management is solid going forward, blind going backward.** Both
+   live decision types (approvals, requests) are fully wired with real
+   fairness/urgency logic, but `listAllRequests()` — built explicitly "for
+   the history view" — has no UI consumer at all, so nothing shows what
+   happened to a request once it's answered.
+4. **"Notification preferences" doesn't exist under that name or any other.**
+   `NotificationsPage` is a read-only activity feed, not a settings surface —
+   a later phase reading the sidebar/header and assuming "Notifications"
+   means configurable preferences will be planning against a page that does
+   something else entirely.
+5. **One capability that spans two jobs is genuinely half-built each way.**
+   `AppointmentCard`'s `onMove`/`onReschedule` props are real, working
+   affordances — but each is wired into only one page (Calendar gets `onMove`,
+   Today gets `onReschedule`), and the page central to Booking management
+   (Appointments) gets neither. The component supports the full capability;
+   the pages that should surface it for booking management mostly don't.
+6. **A reschedule capability that looks singular in the UI is actually two
+   different backend behaviours.** Every reschedule path except Today's
+   inline picker retires the original appointment atomically
+   (`rescheduleAppointmentAsOwner`); Today's creates an unlinked duplicate
+   and leaves the original for the owner to clean up by hand
+   (`createAppointmentAsOwner`). Any phase touching reschedule needs to
+   treat these as two features, not one.
+
+**Doubts / not fully verified:**
+- `approval_deadline` expiry (`expire_pending_approvals()`) is referenced only
+  in a UI doc comment; whether it is actually scheduled and running in the
+  live database was not checked (DB inspection out of scope, consistent with
+  `docs/BASELINE-AUDIT.md`'s own scope boundary).
+- `listCustomers()` has no pagination beyond a 200-row cap
+  (`customerService.ts:21`) — not rated Partial since it is not visibly
+  broken at current data volume, but worth revisiting once the customer book
+  grows past 200.
+- Whether Google reviews being purely read-only (no reply/moderation) is a
+  genuine product gap or simply out of scope for a Google-Places-backed
+  display was not something this task could resolve from code alone — flagged
+  rather than rated as a gap.

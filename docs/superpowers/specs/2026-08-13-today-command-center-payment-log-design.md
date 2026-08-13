@@ -133,7 +133,7 @@ practice (RLS on `payments` returns nothing to anon/customer regardless).
 
 ## 6. Testing
 
-- Vitest: `paymentService.logPayment` call shape; `AppointmentCard`'s payment block render + interaction (open/save/collapse), following the existing test file conventions (`InboxPage.test.tsx`, `format.test.ts`).
+- No new Vitest files. Checked against `docs/superpowers/plans/2026-08-11-reschedule-as-owner-and-move-modal.md`'s Global Constraints while planning this spec: this codebase doesn't unit-test presentational components (`src/components/dashboard/**`) or the thin RPC-wrapper functions in `src/services/*.ts` — `appointmentService.ts` has nine exported functions and zero tests. `paymentService.ts` and `AppointmentCard`'s payment block are both that same shape, so they follow the same convention rather than inventing test coverage the rest of the file doesn't have.
 - `0027_payment_log.sql` validated against the live database in a rolled-back transaction before being applied for real (standing practice — see `[[validate-sql-against-live-in-a-rolled-back-transaction]]`).
 - Manual: mark an appointment complete, log a payment, confirm "Collected today" updates without a manual page refresh (the realtime → `refreshSummary()` path is already wired and untouched by this change).
 

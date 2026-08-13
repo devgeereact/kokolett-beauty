@@ -47,6 +47,15 @@ export interface OpenSlotSuggestion {
   slot: OwnerDaySlot;
 }
 
+/**
+ * How many candidate days' slots to fetch per round trip. A busy period can
+ * put most of the 60-day horizon into `candidateDates`; fetching one date at
+ * a time would chain that many sequential requests before the panel resolves.
+ * Batching keeps the earliest-first ordering (each batch is still processed
+ * in date order) while cutting the worst case to horizon/BATCH round trips.
+ */
+const DAY_SLOTS_BATCH_SIZE = 10;
+
 /** Earliest free published times on/after `fromDate`, up to `limit`. */
 export async function suggestOpenSlots(
   fromDate: string,
@@ -59,13 +68,22 @@ export async function suggestOpenSlots(
     .sort((a, b) => a.on_date.localeCompare(b.on_date));
 
   const suggestions: OpenSlotSuggestion[] = [];
-  for (const day of candidateDates) {
-    if (suggestions.length >= limit) break;
-    const slots = await listDaySlots(day.on_date);
-    for (const slot of slots) {
-      if (suggestions.length >= limit) break;
-      if (!slot.is_booked && !slot.is_past) {
-        suggestions.push({ date: day.on_date, slot });
+  for (
+    let i = 0;
+    i < candidateDates.length && suggestions.length < limit;
+    i += DAY_SLOTS_BATCH_SIZE
+  ) {
+    const batch = candidateDates.slice(i, i + DAY_SLOTS_BATCH_SIZE);
+    const batchSlots = await Promise.all(batch.map((day) => listDaySlots(day.on_date)));
+    for (let b = 0; b < batch.length && suggestions.length < limit; b += 1) {
+      const day = batch[b];
+      const slots = batchSlots[b];
+      if (!day || !slots) continue;
+      for (const slot of slots) {
+        if (suggestions.length >= limit) break;
+        if (!slot.is_booked && !slot.is_past) {
+          suggestions.push({ date: day.on_date, slot });
+        }
       }
     }
   }

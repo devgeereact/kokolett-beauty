@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { STATUS_BORDERS, STATUS_DOTS } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { AppointmentStatus } from '@/types';
@@ -33,7 +34,7 @@ export interface EventBlockProps {
  * `bg-card` surface, `text-foreground` text (passes by construction), and the
  * status hue reduced to a `border-l-4` accent plus a small redundant dot.
  */
-export function EventBlock({
+function EventBlockImpl({
   topPercent,
   heightPercent,
   variant,
@@ -70,7 +71,18 @@ export function EventBlock({
   return (
     <button
       type="button"
-      onClick={onPointerDown ? undefined : onClick}
+      onClick={(e) => {
+        // A real pointer click on a draggable block is already handled by
+        // useAppointmentDrag's finishDrag (it calls onClick itself when a
+        // press never crosses the drag threshold) — calling onClick here too
+        // would double-fire it. A keyboard-triggered click (Enter/Space)
+        // never goes through pointerdown at all, so it must still reach
+        // onClick here. Native MouseEvent.detail is 0 for a keyboard-
+        // synthesized click and >=1 for a real pointer click — that's the
+        // one reliable way to tell them apart.
+        if (onPointerDown && e.detail !== 0) return;
+        onClick?.();
+      }}
       onPointerDown={onPointerDown}
       style={style}
       className={cn(
@@ -95,3 +107,11 @@ export function EventBlock({
     </button>
   );
 }
+
+/**
+ * Memoized: WeekView/DayView re-render on every drag pointermove and every
+ * 30s now-line tick, and there can be dozens of these on screen at once.
+ * Callers must pass a referentially stable `onClick`/`onPointerDown` (see
+ * `WeekAppointmentBlock`/`WeekOpenSlotBlock`) or this memoization is a no-op.
+ */
+export const EventBlock = memo(EventBlockImpl);

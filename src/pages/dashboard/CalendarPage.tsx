@@ -182,9 +182,16 @@ export function CalendarPage(): JSX.Element {
     [load, showToast],
   );
 
-  const saveNote = useCallback(async (id: string, note: string): Promise<void> => {
-    await setOwnerNote(id, note);
-  }, []);
+  const saveNote = useCallback(
+    async (id: string, note: string): Promise<void> => {
+      try {
+        await setOwnerNote(id, note);
+      } catch (e) {
+        showToast({ message: errorMessage(e) });
+      }
+    },
+    [showToast],
+  );
 
   const goToDay = useCallback((date: string): void => {
     setAnchor(date);

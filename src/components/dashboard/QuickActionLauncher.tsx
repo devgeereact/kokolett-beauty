@@ -67,6 +67,30 @@ type Step =
 
 type ActionId = 'new-booking' | 'mark-completed' | 'rebook-search' | 'offer-slot';
 
+/**
+ * The dialog's accessible name per step — read by a screen reader the moment
+ * focus enters it, so it should say what's actually showing rather than
+ * "Quick actions" throughout (the menu step is the only one where that's
+ * literally true). The two `NewBookingPanel` steps reuse its own on-screen
+ * heading ("Take a booking") rather than inventing a second name for the
+ * same form.
+ */
+function dialogLabel(step: Step): string {
+  switch (step.kind) {
+    case 'menu':
+      return 'Quick actions';
+    case 'new-booking':
+    case 'rebook-booking':
+      return 'Take a booking';
+    case 'mark-completed':
+      return 'Mark completed';
+    case 'rebook-search':
+      return 'Rebook customer';
+    case 'offer-slot':
+      return 'Offer slot to request';
+  }
+}
+
 const ACTIONS: { id: ActionId; label: string; hint: string }[] = [
   {
     id: 'new-booking',
@@ -103,6 +127,15 @@ export function QuickActionLauncher(): JSX.Element {
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Also what Cmd+K/Ctrl+K calls, including while the launcher is already
+  // open mid-search — deliberately: it resets to the top-level menu rather
+  // than toggling closed or leaving an in-progress step untouched. A second
+  // "open" press is rare (there's no reason to press it again once the
+  // panel is already showing), and when it does happen — a habitual
+  // reflex-press, or genuine uncertainty about what's currently on
+  // screen — landing back on the known 4-action menu is a safer, more
+  // orientating default than silently doing nothing to whatever step
+  // happened to be open.
   const openLauncher = useCallback((): void => {
     setStep({ kind: 'menu' });
     setOpen(true);
@@ -340,7 +373,7 @@ export function QuickActionLauncher(): JSX.Element {
             ref={panelRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Quick actions"
+            aria-label={dialogLabel(step)}
             onKeyDown={handleArrowKeys}
             className={cn(
               'relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-y-auto',

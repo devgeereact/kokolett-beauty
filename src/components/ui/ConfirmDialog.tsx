@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +27,18 @@ export interface ConfirmDialogProps {
  * Renders via the same overlay/backdrop structure as `DashboardLayout`'s
  * mobile slide-over: `fixed inset-0`, a full-bleed backdrop `button` that
  * closes on click, then the panel.
+ *
+ * Portaled to `document.body` rather than rendered in place. Every current
+ * call site happens to render under `DashboardLayout`'s `<main>`, a sibling
+ * of the `<header>` that carries `backdrop-blur` — so today, nothing sits
+ * under that filter. But that's incidental, not structural: in Chromium, an
+ * ancestor with `backdrop-filter`/`filter`/`transform` establishes a new
+ * containing block for `position: fixed` descendants, so a call site added
+ * anywhere under such an ancestor (a page's `actions` prop, which does
+ * render inside the blurred header; a future glassmorphism card) would clip
+ * this dialog off-screen with no jsdom test able to catch it — the exact bug
+ * `QuickActionLauncher.tsx` hit and fixed the same way. Portaling here closes
+ * that gap for all 19 real call sites at once instead of leaving it latent.
  */
 export function ConfirmDialog({
   open,
@@ -96,7 +109,7 @@ export function ConfirmDialog({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
       <button
         type="button"
@@ -138,6 +151,7 @@ export function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

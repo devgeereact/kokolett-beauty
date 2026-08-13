@@ -300,6 +300,33 @@ describe('QuickActionLauncher', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
+    it('ArrowDown from the search field moves focus into the first result, and Enter selects it', async () => {
+      // The top-level-menu keyboard test only covers the 4 actions; this
+      // covers the same generic data-quicklauncher-item mechanism one level
+      // in, inside a step's own search results — arrow keys move real DOM
+      // focus from the search input onto the first result button, and Enter
+      // activates it natively (no bespoke Enter handling in the component).
+      const user = userEvent.setup();
+      renderLauncher();
+      await user.click(screen.getByRole('button', { name: /Quick actions/ }));
+      await user.click(screen.getByRole('button', { name: /Mark completed/ }));
+
+      const result = await screen.findByRole('button', { name: /Jane Doe/ });
+      const searchField = screen.getByLabelText('Find the appointment');
+      expect(searchField).toHaveFocus();
+
+      await user.keyboard('{ArrowDown}');
+      expect(result).toHaveFocus();
+
+      await user.keyboard('{Enter}');
+
+      expect(appointmentService.setAppointmentStatus).toHaveBeenCalledWith(
+        'apt-1',
+        'completed',
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
     it('filters results client-side as the owner types', async () => {
       const user = userEvent.setup();
       appointmentService.listAppointments.mockResolvedValue([

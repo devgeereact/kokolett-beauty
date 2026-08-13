@@ -228,31 +228,52 @@ export function HomePage(): JSX.Element {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {menu.map((group) => (
-              <Card key={group.group_name} className="p-5">
-                <h3 className="font-display text-lg font-semibold text-foreground">
-                  {group.group_name}
-                </h3>
-                <ul className="mt-3 space-y-1.5">
-                  {group.items.map((item) => (
-                    <li
-                      key={item.name}
-                      className="flex items-start gap-2 text-sm text-muted-foreground"
+              <Card key={group.group_name} className="p-0">
+                {/* Collapsed by default: a category name answers "do you do
+                    this at all", the item list only matters once someone
+                    actually cares — six categories × up to a dozen items
+                    each was a very long, low-signal scroll before this,
+                    worst on mobile where it dominated the whole page. */}
+                <details className="group p-5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-display text-lg font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                    {group.group_name}
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                      aria-hidden="true"
                     >
-                      <span
-                        className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary"
-                        aria-hidden="true"
+                      <path
+                        d="M6 9l6 6 6-6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
-                      <span>
-                        {item.name}
-                        {item.note && (
-                          <span className="block text-xs text-muted-foreground">
-                            {item.note}
-                          </span>
-                        )}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                    </svg>
+                  </summary>
+                  <ul className="mt-3 space-y-1.5">
+                    {group.items.map((item) => (
+                      <li
+                        key={item.name}
+                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                      >
+                        <span
+                          className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary"
+                          aria-hidden="true"
+                        />
+                        <span>
+                          {item.name}
+                          {item.note && (
+                            <span className="block text-xs text-muted-foreground">
+                              {item.note}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
               </Card>
             ))}
           </div>

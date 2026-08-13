@@ -68,6 +68,7 @@ export function useAppointmentDrag(
     startY: number;
     dragging: boolean;
     onClick: () => void;
+    pointerId: number;
   } | null>(null);
 
   const durationMinOf = (appointment: AppointmentDetailed): number =>
@@ -102,7 +103,7 @@ export function useAppointmentDrag(
   const onPointerMove = useCallback(
     (e: PointerEvent) => {
       const s = stateRef.current;
-      if (!s) return;
+      if (!s || e.pointerId !== s.pointerId) return;
       if (!s.dragging) {
         const moved = Math.hypot(e.clientX - s.startX, e.clientY - s.startY);
         if (moved < DRAG_THRESHOLD_PX) return;
@@ -113,12 +114,17 @@ export function useAppointmentDrag(
     [resolveFromPoint],
   );
 
+  // pointercancel means the browser/OS revoked pointer ownership (a system
+  // gesture, scroll, multi-touch) — it is not the user choosing a drop
+  // location, so unlike finishDrag this never commits a reschedule and never
+  // falls back to treating a non-dragging press as a click.
+  const cancelDrag = useCallback(() => {
+    stateRef.current = null;
+    setPreview(null);
+  }, []);
+
   const finishDrag = useCallback(
     (e: PointerEvent) => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', finishDrag);
-      window.removeEventListener('pointercancel', finishDrag);
-
       const s = stateRef.current;
       stateRef.current = null;
       if (!s) return;
@@ -154,7 +160,7 @@ export function useAppointmentDrag(
           setBusy(false);
         });
     },
-    [onPointerMove, onMoved, resolveFromPoint, timezone],
+    [onMoved, resolveFromPoint, timezone],
   );
 
   const beginDrag = useCallback(
@@ -167,6 +173,7 @@ export function useAppointmentDrag(
     ) => {
       if (busy) return;
       e.preventDefault();
+      const pointerId = e.pointerId;
       stateRef.current = {
         appointment,
         startDate: date,
@@ -175,12 +182,37 @@ export function useAppointmentDrag(
         startY: e.clientY,
         dragging: false,
         onClick,
+        pointerId,
       };
-      window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', finishDrag);
-      window.addEventListener('pointercancel', finishDrag);
+
+      // Scoped to this one pointer/gesture: a second finger touching a
+      // different draggable block mid-drag must not hijack stateRef, and
+      // each listener set must detach itself, not the next drag's set.
+      const detach = (): void => {
+        window.removeEventListener('pointermove', handleMove);
+        window.removeEventListener('pointerup', handleUp);
+        window.removeEventListener('pointercancel', handleCancel);
+      };
+      const handleMove = (ev: PointerEvent): void => {
+        if (ev.pointerId !== pointerId) return;
+        onPointerMove(ev);
+      };
+      const handleUp = (ev: PointerEvent): void => {
+        if (ev.pointerId !== pointerId) return;
+        detach();
+        finishDrag(ev);
+      };
+      const handleCancel = (ev: PointerEvent): void => {
+        if (ev.pointerId !== pointerId) return;
+        detach();
+        cancelDrag();
+      };
+
+      window.addEventListener('pointermove', handleMove);
+      window.addEventListener('pointerup', handleUp);
+      window.addEventListener('pointercancel', handleCancel);
     },
-    [busy, onPointerMove, finishDrag],
+    [busy, onPointerMove, finishDrag, cancelDrag],
   );
 
   const dismissError = useCallback(() => setError(null), []);

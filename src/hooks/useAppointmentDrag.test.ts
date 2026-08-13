@@ -21,14 +21,28 @@ const APPOINTMENT = {
 const COLUMN_RECT = { top: 0, height: 240 } as DOMRect;
 const COLUMN_EL = { getBoundingClientRect: () => COLUMN_RECT } as unknown as HTMLElement;
 
-function firePointer(type: string, clientX: number, clientY: number): void {
+function firePointer(
+  type: string,
+  clientX: number,
+  clientY: number,
+  pointerId?: number,
+): void {
   const event = new Event(type);
-  Object.assign(event, { clientX, clientY });
+  Object.assign(event, { clientX, clientY, pointerId });
   window.dispatchEvent(event);
 }
 
-function fakePointerDownEvent(clientX: number, clientY: number): React.PointerEvent {
-  return { preventDefault: vi.fn(), clientX, clientY } as unknown as React.PointerEvent;
+function fakePointerDownEvent(
+  clientX: number,
+  clientY: number,
+  pointerId?: number,
+): React.PointerEvent {
+  return {
+    preventDefault: vi.fn(),
+    clientX,
+    clientY,
+    pointerId,
+  } as unknown as React.PointerEvent;
 }
 
 describe('useAppointmentDrag', () => {
@@ -165,5 +179,69 @@ describe('useAppointmentDrag', () => {
       result.current.dismissError();
     });
     expect(result.current.error).toBeNull();
+  });
+
+  it('ignores a pointerup from a different pointerId than the one that started the drag', () => {
+    const onMoved = vi.fn();
+    const onClick = vi.fn();
+    const { result } = renderHook(() => useAppointmentDrag(RANGE, TIMEZONE, onMoved));
+
+    act(() => {
+      result.current.beginDrag(
+        fakePointerDownEvent(100, 60, 1),
+        APPOINTMENT,
+        '2026-08-11',
+        COLUMN_EL,
+        onClick,
+      );
+    });
+    act(() => {
+      // A second finger's pointerup — must not resolve the first finger's drag.
+      firePointer('pointerup', 999, 999, 2);
+    });
+
+    expect(onClick).not.toHaveBeenCalled();
+    expect(rescheduleAppointmentAsOwner).not.toHaveBeenCalled();
+
+    act(() => {
+      // The real pointer's own pointerup still resolves it as a click.
+      firePointer('pointerup', 100, 60, 1);
+    });
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('treats pointercancel as an abort, never a drop, even mid-drag', () => {
+    const onMoved = vi.fn();
+    const onClick = vi.fn();
+    const { result } = renderHook(() => useAppointmentDrag(RANGE, TIMEZONE, onMoved));
+
+    act(() => {
+      result.current.beginDrag(
+        fakePointerDownEvent(100, 60, 1),
+        APPOINTMENT,
+        '2026-08-11',
+        COLUMN_EL,
+        onClick,
+      );
+    });
+    act(() => {
+      firePointer('pointermove', 100, 120, 1); // past the drag threshold
+    });
+    expect(result.current.preview).not.toBeNull();
+
+    act(() => {
+      firePointer('pointercancel', 100, 120, 1);
+    });
+
+    expect(result.current.preview).toBeNull();
+    expect(onClick).not.toHaveBeenCalled();
+    expect(rescheduleAppointmentAsOwner).not.toHaveBeenCalled();
+
+    // A stray pointerup after the cancel (already-detached listeners) is a no-op.
+    act(() => {
+      firePointer('pointerup', 100, 120, 1);
+    });
+    expect(onClick).not.toHaveBeenCalled();
+    expect(rescheduleAppointmentAsOwner).not.toHaveBeenCalled();
   });
 });

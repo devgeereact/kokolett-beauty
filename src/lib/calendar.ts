@@ -148,9 +148,16 @@ export function minutesFromPercent(percent: number, range: HourRange): number {
   return range.startMin + (clamped / 100) * (range.endMin - range.startMin);
 }
 
-/** Rounds to the nearest `DRAG_SNAP_MIN`, so a drop always lands on a real slot boundary. */
+/**
+ * Rounds to the nearest `DRAG_SNAP_MIN`, so a drop always lands on a real slot
+ * boundary. Clamped below `DAY_MIN` — a drop in the last few minutes of the
+ * axis would otherwise round up to exactly midnight (minute 1440), which
+ * formats as `"24:00"` and `new Date(...)` silently rolls into the *next*
+ * day rather than rejecting it.
+ */
 export function snapMinutes(minutesOfDay: number): number {
-  return Math.round(minutesOfDay / DRAG_SNAP_MIN) * DRAG_SNAP_MIN;
+  const snapped = Math.round(minutesOfDay / DRAG_SNAP_MIN) * DRAG_SNAP_MIN;
+  return Math.min(snapped, DAY_MIN - DRAG_SNAP_MIN);
 }
 
 /** One label per hour row, e.g. `["09:00", "10:00", …]`. */

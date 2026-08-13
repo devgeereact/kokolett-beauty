@@ -75,6 +75,12 @@ describe('snapMinutes', () => {
   it('rounds a value exactly halfway up, matching Math.round', () => {
     expect(snapMinutes(607.5)).toBe(615);
   });
+
+  it('clamps below midnight instead of rounding up to 1440 ("24:00")', () => {
+    expect(snapMinutes(1440)).toBe(1425); // exactly midnight
+    expect(snapMinutes(1433)).toBe(1425); // would otherwise round up to 1440
+    expect(snapMinutes(1420)).toBe(1425); // still snaps normally below the clamp
+  });
 });
 
 describe('hourLabels', () => {

@@ -21,6 +21,7 @@ import {
   setAppointmentStatus,
   rescheduleAppointmentAsOwner,
 } from '@/services/appointmentService';
+import { logPayment } from '@/services/paymentService';
 import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
@@ -115,6 +116,18 @@ export function TodayPage(): JSX.Element {
     [appointments, refresh, refreshSummary, showToast],
   );
 
+  const logPaymentHandler = useCallback(
+    async (id: string, amountPence: number, note: string): Promise<void> => {
+      try {
+        await logPayment(id, amountPence, note);
+        await Promise.all([refresh(), refreshSummary()]);
+      } catch (e) {
+        showToast({ message: errorMessage(e) });
+      }
+    },
+    [refresh, refreshSummary, showToast],
+  );
+
   const doOwnerReschedule = useCallback(
     async (id: string, startsAt: string): Promise<void> => {
       setMoveBusy(true);
@@ -136,7 +149,7 @@ export function TodayPage(): JSX.Element {
   const stats = [
     { label: 'Booked today', value: summary ? String(summary.today_count) : '—' },
     {
-      label: 'Expected takings',
+      label: 'Collected today',
       value: summary ? formatMoney(summary.today_collected_pence) : '—',
     },
     {
@@ -286,6 +299,7 @@ export function TodayPage(): JSX.Element {
               appointment={appointment}
               timezone={timezone}
               onStatusChange={changeStatus}
+              onLogPayment={logPaymentHandler}
               onBookFollowUp={(a) => {
                 setPrefill({
                   fullName: a.customer_name ?? '',

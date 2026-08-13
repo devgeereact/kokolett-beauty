@@ -142,13 +142,13 @@ begin
     insert into public.appointments
       (reference, customer_id, service_id, starts_at, ends_at, price_pence,
        customer_note, owner_note, source, status, requires_approval,
-       approval_deadline, approved_at, rescheduled_from)
+       approval_deadline, approved_at, approved_by, rescheduled_from)
     values
       (v_ref, v_customer, v_old.service_id, p_new_starts_at,
        p_new_starts_at + (v_old.ends_at - v_old.starts_at),
        v_old.price_pence, v_old.customer_note, v_old.owner_note, v_old.source,
        v_old.status, v_old.requires_approval, v_deadline,
-       v_old.approved_at, p_appointment_id)
+       v_old.approved_at, v_old.approved_by, p_appointment_id)
     returning id into v_id;
   exception when exclusion_violation then
     -- Somebody took the new time in the meantime. Put the old booking back —

@@ -38,7 +38,6 @@ as $$
 declare
   v_old        public.appointments%rowtype;
   v_settings   public.booking_settings%rowtype;
-  v_service    public.services%rowtype;
   v_local_date date;
   v_local_time time;
   v_ref        text;
@@ -50,10 +49,6 @@ begin
   end if;
 
   select * into v_settings from public.booking_settings where id;
-  select * into v_service  from public.hair_appointment();
-  if v_service.id is null then
-    raise exception 'SERVICE_UNAVAILABLE' using errcode = 'P0001';
-  end if;
 
   -- Row lock: two concurrent reschedules of the same appointment (owner on
   -- two devices, or a retried request) must not both pass the status check
@@ -73,6 +68,9 @@ begin
     raise exception 'NOT_RESCHEDULABLE' using errcode = 'P0001';
   end if;
   if v_old.starts_at < now() then
+    raise exception 'ALREADY_PASSED' using errcode = 'P0001';
+  end if;
+  if p_new_starts_at < now() then
     raise exception 'ALREADY_PASSED' using errcode = 'P0001';
   end if;
   if p_new_starts_at = v_old.starts_at then
@@ -126,18 +124,19 @@ begin
        approval_deadline, approved_at, approved_by, rescheduled_from)
     values
       -- service_id carries forward from the OLD row, not the currently
-      -- active service (v_service.id) — consistent with price_pence and
-      -- duration already being preserved from v_old below. If the active
-      -- service ever changes between bookings, moving an old appointment
-      -- must not silently change what the confirmation email describes.
+      -- active service — consistent with price_pence and duration already
+      -- being preserved from v_old below. If the active service ever
+      -- changes between bookings, moving an old appointment must not
+      -- silently change what the confirmation email describes.
       (v_ref, v_old.customer_id, v_old.service_id, p_new_starts_at,
        -- Preserve the OLD appointment's actual duration rather than
        -- recomputing it from the currently active service's default length.
        -- Appointments have no duration column — length lives only in
        -- ends_at - starts_at — and an owner-created booking can already
        -- differ from the default (create_appointment_as_owner's
-       -- p_duration_min, 0019). Rebuilding from v_service.duration_min would
-       -- silently shrink a longer booking to the default on every move.
+       -- p_duration_min, 0019). Rebuilding from the current service's
+       -- default duration would silently shrink a longer booking to the
+       -- default on every move.
        p_new_starts_at + (v_old.ends_at - v_old.starts_at),
        v_old.price_pence, v_old.customer_note, v_old.owner_note, v_old.source,
        v_old.status, v_old.requires_approval, v_deadline,

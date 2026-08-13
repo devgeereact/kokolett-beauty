@@ -284,7 +284,41 @@ file (paste the full `create table` / `create policy` / `create or
 replace function` / `create or replace view` block from Step 1 in place
 of the comment below — not `\i`, this repo's proven pattern is to paste
 the literal SQL into the transaction, the same way `0024`'s validation
-script did):
+script did).
+
+**Two things a fresh worktree/session needs that a long-lived checkout
+might not:**
+1. `supabase link --project-ref erqrfjlozqyhogneqraj` first — `supabase/.temp/`
+   (where the CLI caches the link) is gitignored, so a fresh worktree
+   doesn't inherit it from any other checkout. Confirm the ref matches
+   `CLAUDE.md`'s documented `erqrfjlozqyhogneqraj` / `eu-west-2` before
+   linking — don't link blind.
+2. This installed CLI's `db query` takes SQL as a positional argument or
+   `--file`/`-f`, **not `-c`** — if your CLI version differs, `--help` it
+   rather than assuming.
+
+**Authenticating the session as the owner.** `supabase db query --linked`
+opens a raw `postgres`-role session — `auth.uid()` is `null` there (it
+reads `request.jwt.claim.sub`/`request.jwt.claims`, GUCs only PostgREST
+ever sets), so every `is_owner()`-gated call in this migration would
+otherwise fail `NOT_AUTHORISED` unconditionally, regardless of what's in
+`staff`. The fix is to set the same GUC PostgREST would have set, scoped
+to this rolled-back transaction only — reusing PostgREST's own mechanism,
+not inventing a new one. Verified directly against this project's live
+`auth.uid()` source before writing this:
+`coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''), (current_setting('request.jwt.claims', true)::jsonb->>'sub'))::uuid`.
+`set_config('request.jwt.claim.sub', <real staff.id>, true)` inside the
+`do` block satisfies the first branch.
+
+**Picking a collision-free test time.** The salon is on UTC+1 (BST) right
+now, so a UTC offset that looks "off-schedule" against the salon's
+09:00–17:00 **local** slot pattern can land exactly on a real one — `current_date
++ interval '10 hours'` (10:00 UTC) is 11:00 BST, one of the published
+times, and collided with a real live appointment when this was first
+tried. Rather than hand-picking one hour and hoping, the script below
+tries a short list of late-evening salon-local candidates in order and
+uses whichever one doesn't collide — robust to whatever's actually on the
+calendar today without needing to read it first.
 
 ```bash
 cat > /tmp/0027-validate.sql << 'EOF'
@@ -295,32 +329,60 @@ begin;
 
 do $$
 declare
-  v_customer_id    uuid;
-  v_service_id     uuid;
-  v_appointment_id uuid;
-  v_payment_id     uuid;
-  v_summary        jsonb;
-  v_paid           int;
+  v_owner_id          uuid;
+  v_customer_id       uuid;
+  v_service_id        uuid;
+  v_appointment_id    uuid;
+  v_payment_id        uuid;
+  v_summary           jsonb;
+  v_paid              int;
+  v_candidate_starts  timestamptz[];
+  v_starts_at         timestamptz;
+  v_inserted          boolean := false;
 begin
+  select id into v_owner_id from public.staff limit 1;
+  if v_owner_id is null then
+    raise exception using errcode = '22000', message = 'FAIL: no staff row present to validate as owner';
+  end if;
+  perform set_config('request.jwt.claim.sub', v_owner_id::text, true);
+
   insert into public.customers (email, full_name)
   values ('sdd-test-payment-log@example.invalid', 'SDD Test Customer')
   returning id into v_customer_id;
 
   select id into v_service_id from public.services where is_active limit 1;
 
-  -- 10:00 today: today (so it lands inside owner_dashboard_summary()'s
-  -- window), but off the salon's real published slots (09:00/11:00/13:00/
-  -- 15:00/17:00 per the weekly template), so this cannot collide with a
-  -- real appointment via appointments_no_overlap — same technique 0024's
-  -- validation script used (an off-schedule hour), just today instead of
-  -- 3 days out, since this test needs to land in "today".
-  insert into public.appointments
-    (reference, customer_id, service_id, starts_at, ends_at, status, price_pence, source)
-  values
-    ('SDDPAYTEST', v_customer_id, v_service_id,
-     current_date + interval '10 hours', current_date + interval '10 hours 30 minutes',
-     'confirmed', 6500, 'owner')
-  returning id into v_appointment_id;
+  -- Late-evening salon-local candidates today, comfortably after any
+  -- realistic closing/walk-in time. Tried in order; the loop below skips
+  -- whichever one(s) collide with a real appointment via
+  -- appointments_no_overlap, so this doesn't depend on knowing today's
+  -- schedule in advance.
+  v_candidate_starts := array[
+    ((now() at time zone 'Europe/London')::date + time '22:00') at time zone 'Europe/London',
+    ((now() at time zone 'Europe/London')::date + time '22:30') at time zone 'Europe/London',
+    ((now() at time zone 'Europe/London')::date + time '23:00') at time zone 'Europe/London',
+    ((now() at time zone 'Europe/London')::date + time '23:15') at time zone 'Europe/London'
+  ];
+
+  foreach v_starts_at in array v_candidate_starts loop
+    begin
+      insert into public.appointments
+        (reference, customer_id, service_id, starts_at, ends_at, status, price_pence, source)
+      values
+        ('SDDPAYTEST', v_customer_id, v_service_id, v_starts_at, v_starts_at + interval '30 minutes',
+         'confirmed', 6500, 'owner')
+      returning id into v_appointment_id;
+      v_inserted := true;
+      exit;
+    exception when exclusion_violation then
+      null; -- collides with a real appointment; try the next candidate
+    end;
+  end loop;
+
+  if not v_inserted then
+    raise exception using errcode = '22000',
+      message = 'FAIL: every candidate test time collided with a real appointment — check the live schedule and add another candidate';
+  end if;
 
   -- Case 1: INVALID_AMOUNT for a non-positive amount.
   begin
@@ -356,15 +418,13 @@ EOF
 supabase db query --linked --file /tmp/0027-validate.sql
 ```
 
-This deliberately doesn't test the `NOT_AUTHORISED` branch — every prior
-migration's live-validation script in this repo (`0024`'s included) calls
-its owner-gated function directly with no auth impersonation and still
-gets a real pass, so whatever session context `db query --linked` runs
-under already satisfies `is_owner()`. Inventing a JWT-claims impersonation
-technique with no precedent here risks a script that "passes" for the
-wrong reason. `INVALID_AMOUNT` and the two `NOT_AUTHORISED`-guarded reads
-this migration touches are covered instead by Step 2's own manual QA
-checklist (Task 7) once `0027` is actually live.
+This exercises `NOT_FOUND`'s sibling `INVALID_AMOUNT` guard for real (both
+are `is_owner()`-then-validate, so authenticating as the owner exercises
+the same code path `NOT_AUTHORISED` would hit if it fired). It does not
+separately assert the `NOT_AUTHORISED` branch itself — that would mean
+briefly authenticating as a non-owner, which isn't worth the extra
+complexity here. Task 7's live manual QA is the backstop for anything this
+scoped script doesn't cover.
 
 Expected: output ends with `PASS: payments, log_payment, and both redefined
 reads behave correctly` (raised as an error on purpose — a `raise notice`
@@ -375,7 +435,7 @@ validation file; nothing persists between attempts.
 
 Afterwards, confirm nothing persisted:
 
-Run: `supabase db query --linked -c "select count(*) from public.customers where email = 'sdd-test-payment-log@example.invalid'"`
+Run: `supabase db query --linked "select count(*) from public.customers where email = 'sdd-test-payment-log@example.invalid'"`
 Expected: `0` (the rollback removed it).
 
 - [ ] **Step 3: Delete the scratch validation file**

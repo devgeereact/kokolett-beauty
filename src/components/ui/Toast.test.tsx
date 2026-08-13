@@ -116,6 +116,33 @@ describe('Toast / ToastProvider', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('pauses auto-dismiss while a control inside it has keyboard focus, and resumes on blur', () => {
+    // Same pause/resume mechanism as hover, but via the onFocus/onBlur path —
+    // real DOM .focus()/.blur() (not fireEvent.focus, which doesn't bubble
+    // the way a genuine focus shift does) so the toast's onFocus/onBlur
+    // handler actually receives it, the way tabbing onto the Dismiss button
+    // would in the browser.
+    vi.useFakeTimers();
+    renderWithProvider(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: 'Fire toast' }));
+
+    const dismissButton = screen.getByRole('button', { name: 'Dismiss' });
+    dismissButton.focus();
+    expect(dismissButton).toHaveFocus();
+
+    // Well past the 8s default — still present because a control inside it is focused.
+    act(() => {
+      vi.advanceTimersByTime(20_000);
+    });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    dismissButton.blur();
+    act(() => {
+      vi.advanceTimersByTime(8000);
+    });
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('stacks multiple toasts instead of one replacing the other', async () => {
     const user = userEvent.setup();
     renderWithProvider(

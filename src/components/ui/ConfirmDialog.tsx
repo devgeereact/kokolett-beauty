@@ -119,7 +119,10 @@ export function ConfirmDialog({
         <h2 id={titleId} className="font-display text-lg font-semibold text-foreground">
           {title}
         </h2>
-        <p id={messageId} className="mt-2 text-sm text-muted-foreground">
+        <p
+          id={messageId}
+          className="mt-2 whitespace-pre-line text-sm text-muted-foreground"
+        >
           {message}
         </p>
         <div className="mt-5 flex justify-end gap-2">

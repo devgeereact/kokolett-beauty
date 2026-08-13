@@ -58,6 +58,34 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeInTheDocument();
   });
 
+  it('preserves paragraph breaks in the message (e.g. the GDPR erase / week-replace copy)', () => {
+    // Mirrors the real window.confirm strings this replaces — CustomersPage's
+    // erase warning and WeeklyDefaultPage's week-replace warning both embed a
+    // literal `\n\n` for a paragraph break that window.confirm renders
+    // natively. Without `whitespace-pre-line` on the message <p>, that
+    // collapses into a run-on sentence.
+    const message =
+      "Erase Jane Doe's personal details?\n\nTheir appointment history stays for your records, but their contact details and notes are removed.";
+    render(
+      <ConfirmDialog
+        open
+        title="Erase this customer?"
+        message={message}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    const description = screen.getByText(/Erase Jane Doe/);
+    expect(description.className).toMatch(/whitespace-pre-line/);
+    // textContent carries the raw string (including the embedded newlines)
+    // regardless of CSS — this is the actual source-of-truth check that the
+    // paragraph break survived the round trip into the DOM. (Not asserted via
+    // jest-dom's toHaveTextContent: it normalises whitespace by default,
+    // which would collapse the very `\n\n` this test exists to catch.)
+    expect(description.textContent).toBe(message);
+  });
+
   it('uses the destructive Button variant for the confirm action when tone is destructive', () => {
     render(
       <ConfirmDialog

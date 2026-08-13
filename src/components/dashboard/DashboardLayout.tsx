@@ -40,11 +40,9 @@ export function DashboardLayout({
   const entries: NavEntry[] = [
     { to: routes.owner.dashboard, label: 'Today' },
     { to: routes.owner.calendar, label: 'Calendar' },
-    { to: routes.owner.weeklyDefault, label: 'Weekly default' },
     { to: routes.owner.appointments, label: 'Appointments' },
     { to: routes.owner.requests, label: 'Requests', badge: badges?.requests },
     { to: routes.owner.customers, label: 'Customers' },
-    { to: routes.owner.appointmentType, label: 'Appointment' },
     { to: routes.owner.serviceMenu, label: 'Services' },
     { to: routes.owner.reports, label: 'Reports' },
     { to: routes.owner.assistant, label: 'AI Assistant' },

@@ -39,6 +39,7 @@ export function AppointmentCard({
   onNoteSave,
   onBookFollowUp,
   onMove,
+  onReschedule,
   className,
 }: {
   appointment: AppointmentDetailed;
@@ -50,6 +51,8 @@ export function AppointmentCard({
   onBookFollowUp?: (appointment: AppointmentDetailed) => void;
   /** Opens the Move panel for this appointment. Omit to hide the control. */
   onMove?: (appointment: AppointmentDetailed) => void;
+  /** Opens an inline reschedule picker for this appointment. Omit to hide the control. */
+  onReschedule?: (appointment: AppointmentDetailed) => void;
   className?: string;
 }): JSX.Element {
   const [busy, setBusy] = useState<AppointmentStatus | null>(null);
@@ -194,6 +197,12 @@ export function AppointmentCard({
           {onBookFollowUp && (
             <Button size="sm" variant="ghost" onClick={() => onBookFollowUp(appointment)}>
               Book follow-up
+            </Button>
+          )}
+
+          {onReschedule && (
+            <Button size="sm" variant="ghost" onClick={() => onReschedule(appointment)}>
+              Reschedule
             </Button>
           )}
         </div>

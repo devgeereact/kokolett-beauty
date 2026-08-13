@@ -175,11 +175,9 @@ export function AppointmentCard({
                   variant={
                     status === 'completed'
                       ? 'primary'
-                      : status === 'cancelled'
-                        ? 'destructive'
-                        : status === 'no_show'
-                          ? 'ghost'
-                          : 'secondary'
+                      : status === 'cancelled' || status === 'no_show'
+                        ? 'ghost'
+                        : 'secondary'
                   }
                   loading={busy === status}
                   onClick={() => requestStatusChange(status)}

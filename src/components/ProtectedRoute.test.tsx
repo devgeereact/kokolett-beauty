@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 
 const mockAuth = vi.hoisted(() => ({
   user: null as { id: string } | null,
@@ -20,13 +20,35 @@ vi.mock('@/hooks/useIsOwner', () => ({ useIsOwner: () => mockOwner }));
 
 const { ProtectedRoute } = await import('@/components/ProtectedRoute');
 
+/** Surfaces the redirect state's `from` so tests can assert what survived
+ * the round trip, without disturbing the plain "Login page" text the other
+ * tests already look for. */
+function LoginPageStub(): JSX.Element {
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from ?? '';
+  return (
+    <div>
+      <p>Login page</p>
+      <p data-testid="redirect-from">{from}</p>
+    </div>
+  );
+}
+
 function renderAt(path: string): void {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/login" element={<p>Login page</p>} />
+        <Route path="/login" element={<LoginPageStub />} />
         <Route
           path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <p>Dashboard</p>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/inbox"
           element={
             <ProtectedRoute>
               <p>Dashboard</p>
@@ -54,6 +76,22 @@ describe('ProtectedRoute', () => {
 
     renderAt('/dashboard');
     expect(screen.getByText('Login page')).toBeInTheDocument();
+  });
+
+  it('preserves the query string through the login redirect (Fix E)', () => {
+    Object.assign(mockAuth, { user: null, loading: false });
+    Object.assign(mockOwner, { isOwner: false, loading: false, failed: false });
+
+    // A bookmarked deep link — e.g. a specific Inbox tab — must round-trip
+    // through login intact. Capturing only `location.pathname` used to drop
+    // everything after the `?`, landing the owner back on whatever the
+    // default tab resolves to instead of the one she bookmarked.
+    renderAt('/dashboard/inbox?tab=requests');
+
+    expect(screen.getByText('Login page')).toBeInTheDocument();
+    expect(screen.getByTestId('redirect-from')).toHaveTextContent(
+      '/dashboard/inbox?tab=requests',
+    );
   });
 
   it('lets salon staff through', () => {

@@ -4,6 +4,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Input, Textarea } from '@/components/ui/Field';
 import { formatDuration, formatMoney, formatTime, parseMoney } from '@/lib/format';
+import { errorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed, AppointmentStatus } from '@/types';
 
@@ -125,6 +126,8 @@ export function AppointmentCard({
       setAmountInput('');
       setPaymentNote('');
       setPaymentOpen(false);
+    } catch (e) {
+      setPaymentError(errorMessage(e));
     } finally {
       setSavingPayment(false);
     }

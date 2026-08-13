@@ -124,6 +124,7 @@ export function TodayPage(): JSX.Element {
         await Promise.all([refresh(), refreshSummary()]);
       } catch (e) {
         showToast({ message: errorMessage(e) });
+        throw e;
       }
     },
     [refresh, refreshSummary, showToast],

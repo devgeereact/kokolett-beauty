@@ -607,7 +607,7 @@ export async function logPayment(
   const { error } = await supabase.rpc('log_payment', {
     p_appointment_id: appointmentId,
     p_amount_pence: amountPence,
-    p_note: note.trim() || null,
+    p_note: note.trim() || undefined,
   });
 
   if (error) throw error;

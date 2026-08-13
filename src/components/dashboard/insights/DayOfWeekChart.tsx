@@ -7,7 +7,7 @@ const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 /**
  * Bookings by day of week, as horizontal bars. A closed day (per the weekly
- * template) renders in the neutral `border` tone rather than `primary`, so
+ * template) renders in the neutral `border` tone rather than `chart-1`, so
  * a quiet Sunday reads as "closed", not "underperforming".
  */
 export function DayOfWeekChart({ trend }: { trend: DayOfWeekTrend[] }): JSX.Element {
@@ -28,7 +28,7 @@ export function DayOfWeekChart({ trend }: { trend: DayOfWeekTrend[] }): JSX.Elem
             <div className="h-5 flex-1 overflow-hidden rounded-md bg-muted">
               <div
                 className={
-                  open ? 'h-full rounded-md bg-primary' : 'h-full rounded-md bg-border'
+                  open ? 'h-full rounded-md bg-chart-1' : 'h-full rounded-md bg-border'
                 }
                 style={{ width: `${(count / maxCount) * 100}%` }}
               />

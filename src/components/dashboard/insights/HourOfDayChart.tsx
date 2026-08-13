@@ -13,7 +13,7 @@ export function HourOfDayChart({ trend }: { trend: HourOfDayTrend[] }): JSX.Elem
           title={`${String(t.hour).padStart(2, '0')}:00 — ${t.count} booking${t.count === 1 ? '' : 's'}`}
         >
           <div
-            className="w-full rounded-t-sm bg-primary"
+            className="w-full rounded-t-sm bg-chart-1"
             style={{ height: `${(t.count / maxCount) * 100}%` }}
           />
           {t.hour % 3 === 0 && (

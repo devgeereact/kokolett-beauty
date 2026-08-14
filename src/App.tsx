@@ -26,6 +26,8 @@ import { ServiceMenuPage } from '@/pages/dashboard/ServiceMenuPage';
 import { AssistantPage } from '@/pages/dashboard/AssistantPage';
 import { ReportsPage } from '@/pages/dashboard/ReportsPage';
 import { NotificationsPage } from '@/pages/dashboard/NotificationsPage';
+import { EmailPage } from '@/pages/dashboard/EmailPage';
+import { TemplatesPage } from '@/pages/dashboard/TemplatesPage';
 import { ProfilePage } from '@/pages/dashboard/ProfilePage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
@@ -109,6 +111,8 @@ export function App(): JSX.Element {
                 path={routes.owner.notifications}
                 element={owner(<NotificationsPage />)}
               />
+              <Route path={routes.owner.email} element={owner(<EmailPage />)} />
+              <Route path={routes.owner.templates} element={owner(<TemplatesPage />)} />
               <Route path={routes.owner.profile} element={owner(<ProfilePage />)} />
 
               <Route path="*" element={<NotFoundPage />} />

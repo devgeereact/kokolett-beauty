@@ -58,6 +58,10 @@ export const routes = {
     assistant: '/dashboard/assistant',
     settings: '/dashboard/settings',
     notifications: '/dashboard/notifications',
+    /** Delivery log for the email_messages outbox (docs/SCHEMA.md §10). */
+    email: '/dashboard/email',
+    /** Named transactional email templates referenced by email_messages.template. */
+    templates: '/dashboard/templates',
     profile: '/dashboard/profile',
   },
   auth: {

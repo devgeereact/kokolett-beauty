@@ -20,7 +20,23 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-export const NAV_ICONS: Record<string, LucideIcon> = {
+export type NavIconLabel =
+  | 'Dashboard'
+  | 'Calendar'
+  | 'Appointments'
+  | 'Approvals'
+  | 'Availability Requests'
+  | 'Customers'
+  | 'Services'
+  | 'Availability'
+  | 'Reports'
+  | 'AI Assistant'
+  | 'Notifications'
+  | 'Email'
+  | 'Templates'
+  | 'Settings';
+
+export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Dashboard: LayoutDashboard,
   Calendar,
   Appointments: ClipboardList,

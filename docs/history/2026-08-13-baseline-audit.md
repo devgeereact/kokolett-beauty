@@ -1,5 +1,9 @@
 # Baseline Audit — Docs vs. Code (Phase 0, Task 1)
 
+> **Archived 2026-08-14.** Point-in-time audit, moved here from `docs/`. Its findings
+> were applied back to `docs/ARCHITECTURE.md` and `docs/PRD.md` during the 2026-08-14
+> docs cleanup. Read for context, not as current truth.
+
 Date: 2026-08-13
 Scope: reconcile `docs/PRD.md` and `docs/ARCHITECTURE.md` against the actual mounted
 routes (`src/App.tsx`, `src/lib/routes.ts`) and the code those routes render. Read-only;

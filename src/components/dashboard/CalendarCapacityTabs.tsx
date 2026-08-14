@@ -11,8 +11,8 @@ const TABS = [
 /**
  * Shared by `CalendarPage`, `AppointmentTypePage` and `WeeklyDefaultPage` —
  * three separately-routed pages grouped under the sidebar's single
- * "Calendar & Capacity" entry (docs/plan.md Phase 1 step 6). Each page keeps
- * its own state and logic; this just makes the other two one click away.
+ * "Calendar & Capacity" entry. Each page keeps its own state and logic;
+ * this just makes the other two one click away.
  *
  * Same visual pattern as `CalendarShell`'s Week/Day/Month switcher, but real
  * `NavLink`s rather than a state toggle, since these are three distinct

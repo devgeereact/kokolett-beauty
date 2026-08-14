@@ -7,13 +7,14 @@ export interface CalendarShellProps {
 }
 
 const VIEWS: { key: CalendarView; label: string }[] = [
-  { key: 'week', label: 'Week' },
   { key: 'day', label: 'Day' },
+  { key: 'week', label: 'Week' },
   { key: 'month', label: 'Month' },
+  { key: 'agenda', label: 'Agenda' },
 ];
 
 /**
- * The Week / Day / Month view switcher. Navigation (prev/today/next) stays in
+ * The Day / Week / Month / Agenda view switcher. Navigation (prev/today/next) stays in
  * `CalendarPage`'s existing header `actions` slot — this is only the mode
  * switch.
  *

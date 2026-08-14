@@ -11,16 +11,16 @@ import { errorMessage } from '@/lib/errors';
 
 /**
  * Action 4's search half: find the request. Fetches the open queue once
- * (`listQueuedRequests`, the same RPC `RequestsPanel` calls) and filters
+ * (`listQueuedRequests`, the same table `RequestsQueue` reads) and filters
  * client-side as the owner types — the queue is short enough that a second
  * round trip per keystroke would be overhead, not speed.
  *
  * Selecting a result is the parent's job: it closes the launcher and
  * navigates to Inbox's Requests tab. The actual "offer a slot" interaction
  * (date/time picker, fairness warnings, override reason) is answered there,
- * inside `RequestsPanel` itself — reimplementing it here would duplicate
- * DB-enforced, fairness-critical business logic for what's meant to be a
- * fast "find it, jump to it" shortcut.
+ * inside `RequestDetailPanel` itself — reimplementing it here would
+ * duplicate DB-enforced, fairness-critical business logic for what's meant
+ * to be a fast "find it, jump to it" shortcut.
  */
 export function OfferSlotStep({
   searchInputRef,

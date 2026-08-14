@@ -42,15 +42,25 @@ src/
 │   └── routes.ts    # the single route map
 ├── pages/         # route-level views (public / customer / dashboard)
 ├── services/      # typed data access over Supabase
-│   ├── serviceCatalogService.ts     # services + categories
+│   ├── serviceCatalogService.ts     # website service catalogue + categories
+│   ├── serviceMenuService.ts        # owner-side service-menu management
 │   ├── availabilityService.ts       # slot generation from rules
 │   ├── bookingService.ts            # book_appointment RPC wrapper
+│   ├── bookingSettingsService.ts    # the single booking_settings row
 │   ├── appointmentService.ts        # lifecycle transitions
+│   ├── requestService.ts            # availability-request queue + offers
 │   ├── customerService.ts           # CRM reads/writes
-│   ├── availabilityRequestService.ts
-│   ├── reportingService.ts
-│   ├── aiAssistantService.ts        # read + accept/dismiss recommendations
-│   └── notificationService.ts       # Inngest event dispatch
+│   ├── customerSessionService.ts    # magic-link session exchange
+│   ├── paymentService.ts            # log_payment RPC wrapper (migration 0027)
+│   ├── calendarFeedService.ts       # ICS calendar feed
+│   ├── reportsService.ts            # reporting queries
+│   ├── assistantService.ts          # data feed for the client-side AI insights module
+│   ├── dashboardService.ts          # Today-page summary stats
+│   ├── settingsService.ts           # salon profile + policy settings
+│   ├── profileService.ts            # owner account profile
+│   ├── reviewService.ts             # Google review sync
+│   ├── subscriberService.ts         # mailing-list subscribe
+│   └── notificationsService.ts      # Inngest event dispatch
 ├── types/         # shared + generated DB types
 ├── App.tsx        # providers + router
 ├── main.tsx       # bootstrap: Sentry, SW registration, render
@@ -63,48 +73,58 @@ and `context`. Nothing in `lib` imports from `pages`/`components` (no cycles).
 ## 3. Information architecture & routing
 
 Single-page app; React Router. Deep links work because `.htaccess` rewrites unknown
-paths to `index.html`, and Workbox's `navigateFallback` does the same offline. Every
-path is declared once in `src/lib/routes.ts` — nothing hard-codes a path string.
+paths to `index.html`, and Workbox's `navigateFallback` does the same offline. Nearly
+every path is declared once in `src/lib/routes.ts` — two exceptions, `/login` and
+`/access/:token`, are hard-coded string literals in `App.tsx`/`ProtectedRoute.tsx`/
+`SiteShell.tsx` rather than routed through the `routes` constant.
 
 **Public (anonymous)**
 
-| Route                                                  | Purpose                                  |
-| ------------------------------------------------------ | ---------------------------------------- |
-| `/`                                                    | Marketing home; primary CTA into booking |
-| `/about` `/gallery` `/testimonials` `/faqs` `/contact` | Marketing                                |
-| `/services` · `/services/:slug`                        | Catalogue and detail                     |
-| `/book` · `/book/:serviceSlug`                         | The booking flow                         |
-| `/request-availability`                                | Enquiry when no slot fits                |
-| `/privacy` `/booking-policy` `/terms`                  | Policies                                 |
+| Route                                 | Purpose                                                          |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `/`                                    | Marketing home — one scrolling page (hero, next-available, services, how-it-works, closing CTA), not a multi-page site |
+| `/book`                                | The booking flow — no per-service step; one appointment type      |
+| `/request-availability`                | Enquiry when nothing's open                                       |
+| `/subscribe`                           | Mailing-list opt-in — not linked in-app; meant to be pasted externally (e.g. an Instagram bio) |
+| `/privacy` `/booking-policy` `/terms`  | Policies                                                           |
+
+`routes.public` also declares `about`, `gallery`, `testimonials`, `faqs` and `contact`
+— none are mounted in `App.tsx`. They're unused constants, not pages; don't build
+against them without checking `App.tsx` first.
 
 **Customer (magic-link session)**
 
-| Route                                                      | Purpose                                                           |
-| ---------------------------------------------------------- | ----------------------------------------------------------------- |
-| `/access/:token`                                           | Exchanges a single-use token for a 30-day session, then redirects |
-| `/my` · `/my/appointments` · `/my/appointments/:reference` | Upcoming, history, manage                                         |
+| Route                       | Purpose                                                            |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `/access/:token`            | Exchanges a single-use token for a 30-day session, then redirects   |
+| `/my` · `/my/appointments`  | Same component (`MyBookingsPage`) for both; no distinct behaviour   |
 
-**Owner (Supabase session + `staff` membership)**
+**Owner (Supabase session + `is_owner()`)** — grouped by sidebar nav entry
+(`DashboardLayout.tsx`'s `entries`/`secondaryEntries`):
 
-| Route                           | Purpose                                                           |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `/dashboard`                    | Today at a glance                                                 |
-| `/dashboard/calendar`           | Day / week / month / agenda, drag-to-reschedule                   |
-| `/dashboard/appointments`       | Searchable list                                                   |
-| `/dashboard/inbox`              | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
-| `/dashboard/customers` · `/:id` | CRM                                                               |
-| `/dashboard/services`           | Catalogue management                                              |
-| `/dashboard/availability`       | Hours, breaks, closures, booking rules                            |
-| `/dashboard/reports`            | Revenue and utilisation                                           |
-| `/dashboard/assistant`          | AI recommendations queue                                          |
-| `/dashboard/settings`           | Salon profile, email, policies                                    |
+| Route                      | Nav                      | Purpose                                                    |
+| --------------------------- | ------------------------- | ------------------------------------------------------------ |
+| `/dashboard`                | Today                    | Today at a glance                                            |
+| `/dashboard/inbox`          | Inbox                    | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
+| `/dashboard/calendar`       | Calendar & Capacity      | Day / week / month, drag-to-reschedule                    |
+| `/dashboard/appointment`    | Calendar & Capacity      | The single appointment type's length and price             |
+| `/dashboard/weekly`         | Calendar & Capacity      | The repeating week that generates calendar days            |
+| `/dashboard/appointments`   | Bookings                 | Searchable list                                              |
+| `/dashboard/customers`      | Customers                | CRM                                                           |
+| `/dashboard/services`       | Growth                   | Service-menu content (descriptive, not priced/bookable)      |
+| `/dashboard/settings`       | Settings                 | Salon profile, email, policies                                |
+| `/dashboard/reports`        | Reports (secondary)      | Revenue and utilisation                                    |
+| `/dashboard/assistant`      | AI Assistant (secondary) | Advisory insights queue                                    |
+| `/dashboard/notifications`  | — (header bell)          | Not in sidebar                                                |
+| `/dashboard/profile`        | — (account link)         | Not in sidebar                                                |
 
 `/dashboard/approvals` and `/dashboard/requests` render nothing themselves — both are kept
 mounted purely as redirects (`/dashboard/inbox?tab=approvals` / `?tab=requests`) so old
 links and bookmarks still land somewhere real (see `src/App.tsx`).
 
 `ProtectedRoute` gates owner routes on Supabase session **and** `is_owner()`. A signed-in
-user who is not in `staff` gets a 403 view, not the dashboard.
+user who fails that check gets a client-side "no access" view, not the dashboard —
+not a literal HTTP 403.
 
 ## 4. State management
 
@@ -117,9 +137,10 @@ user who is not in `staff` gets a 403 view, not the dashboard.
 - **Live schedule:** `useRealtimeAppointments` subscribes to Postgres changes on
   `appointments` so the owner's calendar updates without polling. This is Supabase
   Realtime — there is no socket server in this repo and there never will be.
-- **Booking flow:** `useBookingFlow` owns a single reducer for service → date → slot →
-  details → review. Keeping it in one reducer is what makes back-navigation and
-  slot-expiry recovery tractable.
+- **Booking flow:** `BookPage` manages its own flow state locally with five
+  `useState` hooks (open date, slot, details, submitting, error/result) — there is
+  no dedicated reducer hook. There's also no service-selection step: one
+  appointment type, so the flow goes straight from date to time.
 - **Theme:** `ThemeProvider`, defaulting to `system`.
 
 ## 5. PWA & offline strategy
@@ -184,17 +205,26 @@ credential. Everything requiring a secret happens in a Supabase Edge Function.
 | `appointment/completed`                         | owner action      | Thank-you, then the Google review request                           |
 | `availability-request/created`                  | client dispatch   | Owner notification + customer acknowledgement                       |
 | `email/send`                                    | internal          | SMTP send with retry, backoff and logging                           |
-| `ai/daily-insights`                             | `pg_cron` 06:00   | Writes advisory rows to `ai_recommendations`                        |
+| _(none — see §6b)_                              | —                 | AI insights are computed on page load, not scheduled                |
 | `approvals/expire`                              | `pg_cron` hourly  | `expire_pending_approvals()` releases stale holds                   |
 
 ## 6b. AI boundary
 
-The assistant runs entirely in an Edge Function. It reads schedule and request data,
-produces recommendations, and writes them to `ai_recommendations` with status
-`pending`. It has **no write access to `appointments`, `customers`, or
-`availability_*`**. Acting on a recommendation is a separate, explicit owner action
-that goes through the normal service layer. This is a structural guarantee, not a
-prompt instruction — prompt instructions are not a security boundary.
+The assistant is **not** an LLM in an Edge Function — it's a deterministic,
+statistical TypeScript module, `src/lib/insights.ts`, computed client-side on page
+load from data `assistantService.ts` already fetched (conflicts, reschedule
+opportunities, drafted replies, messages, analytics, trends, repeat customers,
+cancellation risk). Nothing in that module talks to Supabase or mutates data. The
+`ai_recommendations` table and a `pending`-status recommendation queue exist in the
+generated types but nothing reads or writes them — an earlier design called for an
+Edge Function + queue; the shipped mechanism is simpler.
+
+The safety property is unchanged: the assistant has **no write access to
+`appointments`, `customers`, or `availability_*`**, and acting on anything it
+surfaces is a separate, explicit owner action through the normal service layer. That
+still holds structurally (there's no code path from `insights.ts` to a mutation) —
+it just isn't enforced by a server-side write boundary, because there's no server
+component to enforce it in.
 
 ## 7. Build & deploy pipeline
 

@@ -58,6 +58,55 @@ export async function listPendingApprovals(): Promise<AppointmentDetailed[]> {
   return (data ?? []) as AppointmentDetailed[];
 }
 
+export interface ApprovalStats {
+  /** Mean minutes between request and decision, over holds decided in the last 7 days. `null` if none were decided. */
+  avgWaitMinutes: number | null;
+  /** Approved ÷ (approved + declined) over the last 7 days, as a whole percentage. `null` if none were decided. */
+  approvedPercent: number | null;
+  /** Every hold requested in the last 7 days, decided or not. */
+  thisWeekCount: number;
+}
+
+/**
+ * Historical shape of the approvals queue, for the stat row above it.
+ * `approval_deadline is not null` scopes this to holds that actually went
+ * through the approval flow — a directly-booked `confirmed` appointment
+ * shares the `confirmed` status but never had a deadline.
+ */
+export async function getApprovalStats(): Promise<ApprovalStats> {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('appointments_detailed')
+    .select('created_at, approved_at, rejected_at')
+    .not('approval_deadline', 'is', null)
+    .gte('created_at', since);
+
+  if (error) throw error;
+  const rows = data ?? [];
+
+  const waitMinutes: number[] = [];
+  let approvedCount = 0;
+  let decidedCount = 0;
+  for (const row of rows) {
+    const decidedAt = row.approved_at ?? row.rejected_at;
+    if (!decidedAt || !row.created_at) continue;
+    decidedCount += 1;
+    if (row.approved_at) approvedCount += 1;
+    waitMinutes.push(
+      (new Date(decidedAt).getTime() - new Date(row.created_at).getTime()) / 60_000,
+    );
+  }
+
+  return {
+    avgWaitMinutes: waitMinutes.length
+      ? Math.round(waitMinutes.reduce((a, b) => a + b, 0) / waitMinutes.length)
+      : null,
+    approvedPercent: decidedCount ? Math.round((approvedCount / decidedCount) * 100) : null,
+    thisWeekCount: rows.length,
+  };
+}
+
 /** Everything live on one salon-local day, for the "today" view. */
 export async function listForDay(
   dayStart: Date,
@@ -177,6 +226,21 @@ export async function setOwnerNote(id: string, note: string): Promise<void> {
     .from('appointments')
     .update({ owner_note: note.trim() || null })
     .eq('id', id);
+
+  if (error) throw error;
+}
+
+/**
+ * A genuine hard delete (migration 0029) — deliberately narrow. Only
+ * cancelled/rejected/no-show rows with no logged payment qualify; the RPC
+ * itself refuses anything else (`NOT_DELETABLE`, `HAS_PAYMENT`). This is a
+ * housekeeping tool for junk/duplicate entries, not a way to erase a live
+ * or completed booking — Cancel is still the tool for that.
+ */
+export async function deleteAppointmentAsOwner(id: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_appointment_as_owner', {
+    p_appointment_id: id,
+  });
 
   if (error) throw error;
 }

@@ -72,6 +72,22 @@ const config: Config = {
           cancelled: 'var(--status-cancelled)',
           'no-show': 'var(--status-no-show)',
         },
+        tint: {
+          pending: 'var(--tint-pending)',
+          confirmed: 'var(--tint-confirmed)',
+          'in-service': 'var(--tint-in-service)',
+          completed: 'var(--tint-completed)',
+          cancelled: 'var(--tint-cancelled)',
+          'no-show': 'var(--tint-no-show)',
+          primary: 'var(--tint-primary)',
+          chart: {
+            1: 'var(--tint-chart-1)',
+            2: 'var(--tint-chart-2)',
+            3: 'var(--tint-chart-3)',
+            4: 'var(--tint-chart-4)',
+            5: 'var(--tint-chart-5)',
+          },
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

@@ -35,27 +35,96 @@ export const STATUS_DOTS: Record<AppointmentStatus, string> = {
   no_show: 'bg-status-no-show',
 };
 
-/**
- * The status hue as a left-border accent, for surfaces (EventBlock's booked
- * variant) that need a neutral fill with `text-foreground` text rather than a
- * solid colour fill with white text — the latter fails WCAG contrast at small
- * sizes (docs/DESIGN.md §3; see StatusChip's doc comment for the numbers).
- * Kept as its own literal-string record, not derived from `STATUS_DOTS` by
- * string substitution, so every class name Tailwind needs to see stays static
- * in source and survives the production content scan.
- */
-export const STATUS_BORDERS: Record<AppointmentStatus, string> = {
-  pending_approval: 'border-l-status-pending',
-  confirmed: 'border-l-status-confirmed',
-  checked_in: 'border-l-status-confirmed',
-  in_service: 'border-l-status-in-service',
-  completed: 'border-l-status-completed',
-  cancelled: 'border-l-status-cancelled',
-  rejected: 'border-l-status-cancelled',
-  rescheduled: 'border-l-status-cancelled',
-  no_show: 'border-l-status-no-show',
-};
-
 export function statusLabel(status: AppointmentStatus): string {
   return STATUS_LABELS[status];
 }
+
+/**
+ * Filled status pill classes — pale `--tint-*` background, full-saturation
+ * text (docs/design/appointment.png's table). Different direction from
+ * `STATUS_DOTS`'s neutral-surface-plus-dot (a solid status colour behind
+ * *white* text is what fails contrast; a status colour used as small text on
+ * its own near-white tint clears 4.5:1 easily, so the label itself can carry
+ * the hue here without repeating that mistake).
+ */
+const STATUS_PILL_BG: Record<AppointmentStatus, string> = {
+  pending_approval: 'bg-tint-pending',
+  confirmed: 'bg-tint-confirmed',
+  checked_in: 'bg-tint-confirmed',
+  in_service: 'bg-tint-in-service',
+  completed: 'bg-tint-completed',
+  cancelled: 'bg-tint-cancelled',
+  rejected: 'bg-tint-cancelled',
+  rescheduled: 'bg-tint-cancelled',
+  no_show: 'bg-tint-no-show',
+};
+
+const STATUS_PILL_TEXT: Record<AppointmentStatus, string> = {
+  pending_approval: 'text-status-pending',
+  confirmed: 'text-status-confirmed',
+  checked_in: 'text-status-confirmed',
+  in_service: 'text-status-in-service',
+  completed: 'text-status-completed',
+  cancelled: 'text-status-cancelled',
+  rejected: 'text-status-cancelled',
+  rescheduled: 'text-status-cancelled',
+  no_show: 'text-status-no-show',
+};
+
+export function statusPillClass(status: AppointmentStatus): string {
+  return `${STATUS_PILL_BG[status]} ${STATUS_PILL_TEXT[status]}`;
+}
+
+/**
+ * The 6 status families the calendar's legend and status filter group by —
+ * coarser than `AppointmentStatus` itself, e.g. `checked_in` reads as
+ * "Confirmed" and `rejected`/`rescheduled` read as "Cancelled/Rejected".
+ * Matches the legend on `docs/design/calendar.png`.
+ */
+export type StatusCategory =
+  | 'pending_approval'
+  | 'confirmed'
+  | 'in_service'
+  | 'completed'
+  | 'cancelled'
+  | 'no_show';
+
+export const STATUS_CATEGORY: Record<AppointmentStatus, StatusCategory> = {
+  pending_approval: 'pending_approval',
+  confirmed: 'confirmed',
+  checked_in: 'confirmed',
+  in_service: 'in_service',
+  completed: 'completed',
+  cancelled: 'cancelled',
+  rejected: 'cancelled',
+  rescheduled: 'cancelled',
+  no_show: 'no_show',
+};
+
+export const STATUS_CATEGORY_LABELS: Record<StatusCategory, string> = {
+  pending_approval: 'Pending approval',
+  confirmed: 'Confirmed',
+  in_service: 'In service',
+  completed: 'Completed',
+  cancelled: 'Cancelled / Rejected',
+  no_show: 'No-show',
+};
+
+/** One representative status per category, for looking up a dot colour. */
+export const STATUS_CATEGORY_DOT: Record<StatusCategory, AppointmentStatus> = {
+  pending_approval: 'pending_approval',
+  confirmed: 'confirmed',
+  in_service: 'in_service',
+  completed: 'completed',
+  cancelled: 'cancelled',
+  no_show: 'no_show',
+};
+
+export const STATUS_CATEGORIES: StatusCategory[] = [
+  'pending_approval',
+  'confirmed',
+  'in_service',
+  'completed',
+  'cancelled',
+  'no_show',
+];

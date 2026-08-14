@@ -1,8 +1,9 @@
 import { memo, useMemo } from 'react';
 import {
-  HOUR_ROW_PX,
+  CALENDAR_GRID_HEIGHT_CLASS,
   dayNumber,
   dayOfWeek,
+  hourGridlines,
   hourLabels,
   hourRange,
   offsetPercent,
@@ -135,7 +136,7 @@ export function WeekView({
   // cache-busting): the live "now" line needs the axis to actually widen to
   // cover the current time as the day goes on, or it can silently stop
   // appearing once "now" drifts outside a range fitted at mount.
-  const { range, labels, gridHeight } = useMemo(() => {
+  const { range, labels } = useMemo(() => {
     const allMinutes: number[] = [];
     for (const date of dates) {
       for (const a of appointmentsByDate.get(date) ?? []) {
@@ -152,12 +153,7 @@ export function WeekView({
     // appears.
     if (dates.includes(today)) allMinutes.push(nowMinutes);
     const computedRange = hourRange(allMinutes);
-    const computedLabels = hourLabels(computedRange);
-    return {
-      range: computedRange,
-      labels: computedLabels,
-      gridHeight: computedLabels.length * HOUR_ROW_PX,
-    };
+    return { range: computedRange, labels: hourLabels(computedRange) };
   }, [dates, appointmentsByDate, openSlotsByDate, timezone, today, nowMinutes]);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
@@ -179,8 +175,13 @@ export function WeekView({
           </button>
         </p>
       )}
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <table className="w-full border-collapse text-sm">
+      <div
+        className={cn(
+          'flex flex-col overflow-hidden rounded-xl border border-border bg-card',
+          CALENDAR_GRID_HEIGHT_CLASS,
+        )}
+      >
+        <table className="w-full flex-1 border-collapse text-sm">
           <caption className="sr-only">
             Week of {dates[0]} to {dates[6]}. Select a day heading, or switch to Day view,
             for a full list of that day&apos;s times.
@@ -222,12 +223,11 @@ export function WeekView({
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="h-full">
             {labels.map((label, i) => (
-              <tr key={label}>
+              <tr key={label} style={{ height: `${100 / labels.length}%` }}>
                 <th
                   scope="row"
-                  style={{ height: HOUR_ROW_PX }}
                   className="pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
                 >
                   {label}
@@ -251,11 +251,8 @@ export function WeekView({
                         }
                       >
                         <div
-                          className="relative"
-                          style={{
-                            height: gridHeight,
-                            backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
-                          }}
+                          className="absolute inset-0"
+                          style={{ backgroundImage: hourGridlines(labels.length) }}
                         >
                           {(openSlotsByDate.get(date) ?? [])
                             .filter((s) => !s.is_booked && !s.is_past)

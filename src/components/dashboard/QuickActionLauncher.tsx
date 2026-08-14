@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import {
   NewBookingPanel,
   type PrefilledCustomer,
@@ -20,9 +21,9 @@ import { cn } from '@/lib/utils';
 import type { AppointmentDetailed, Customer } from '@/types';
 
 /**
- * The cross-nav quick-action launcher (docs/plan.md Phase 2 step 9).
+ * The cross-nav quick-action launcher.
  *
- * Deliberately narrow: exactly the 4 actions named in the plan, each with its
+ * Deliberately narrow: exactly 4 actions, each with its
  * own scoped search rather than one combined index across appointments,
  * customers and requests — built out in `./quickActions/*Step.tsx`. Mounted
  * once inside `DashboardLayout`, next to the Notifications link — every
@@ -184,13 +185,13 @@ export function QuickActionLauncher(): JSX.Element {
   /**
    * The actual "offer a slot" interaction (date/time picker, fairness
    * warnings, mandatory override reason) lives entirely inside
-   * `RequestsPanel.tsx`'s per-row rendering and isn't a separable component —
-   * reimplementing it here would duplicate DB-enforced, fairness-critical
-   * business logic. This is a "find the right request, jump straight to it"
-   * shortcut, not a second way to answer one. Scrolling to / highlighting the
-   * specific request once there would require RequestsPanel to accept a
-   * highlight prop, which touches its internals — explicitly out of scope,
-   * so this only navigates.
+   * `RequestDetailPanel.tsx` and isn't a separable component — reimplementing
+   * it here would duplicate DB-enforced, fairness-critical business logic.
+   * This is a "find the right request, jump straight to it" shortcut, not a
+   * second way to answer one. Scrolling to / highlighting the specific
+   * request once there would require `RequestsQueue` to accept a highlight
+   * prop, which touches its internals — explicitly out of scope, so this
+   * only navigates.
    */
   const jumpToRequest = (_request: QueuedRequest): void => {
     close();
@@ -323,16 +324,21 @@ export function QuickActionLauncher(): JSX.Element {
       onClick={openLauncher}
       aria-haspopup="dialog"
       aria-expanded={open}
+      // Visible copy reads as a search box (the familiar Cmd+K pattern —
+      // VS Code, Notion, Linear all style their command launcher this way),
+      // but the accessible name stays "Quick actions" so it doesn't drift
+      // from what dialogLabel/the tests below actually expect: this opens
+      // the 4-action launcher, not a live-filtering search field.
+      aria-label="Quick actions"
       className={cn(
-        'inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium',
+        'inline-flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-border px-3 text-sm sm:w-64',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        open
-          ? 'bg-muted text-foreground'
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        open ? 'bg-muted text-foreground' : 'bg-input text-muted-foreground hover:bg-muted',
       )}
     >
-      Quick actions
-      <kbd className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px]">
+      <Search aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
+      <span className="flex-1 truncate text-left">Search anything…</span>
+      <kbd className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px]">
         ⌘K
       </kbd>
     </button>
@@ -377,7 +383,13 @@ export function QuickActionLauncher(): JSX.Element {
             onKeyDown={handleArrowKeys}
             className={cn(
               'relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-y-auto',
-              'rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-card',
+              // The two NewBookingPanel steps render their own Card chrome
+              // (border/shadow/background) — giving this wrapper the same
+              // chrome around it would nest one card inside another instead
+              // of the single clean surface every other popup shows.
+              step.kind === 'new-booking' || step.kind === 'rebook-booking'
+                ? undefined
+                : 'rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-card',
             )}
           >
             {step.kind === 'menu' && (

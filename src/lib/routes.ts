@@ -62,6 +62,7 @@ export const routes = {
     email: '/dashboard/email',
     /** Named transactional email templates referenced by email_messages.template. */
     templates: '/dashboard/templates',
+    templateEditor: (key: string) => `/dashboard/templates/${key}/edit`,
     profile: '/dashboard/profile',
   },
   auth: {

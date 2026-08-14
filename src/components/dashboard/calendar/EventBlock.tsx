@@ -1,7 +1,27 @@
 import { memo } from 'react';
-import { STATUS_BORDERS, STATUS_DOTS } from '@/lib/status';
+import { STATUS_DOTS } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { AppointmentStatus } from '@/types';
+
+/**
+ * Pastel block fill by status — the `--tint-*` custom properties
+ * (docs/DESIGN.md §7: an explicit `color-mix()` token, not an opacity
+ * modifier against a `var()` colour). Paired with `text-foreground` body
+ * text below, not white-on-solid: a 15% tint against `--card` stays pale
+ * enough that dark text on it clears 4.5:1 by construction, which is what
+ * the neutral-surface decision this replaces was actually protecting.
+ */
+const BLOCK_TINTS: Record<AppointmentStatus, string> = {
+  pending_approval: 'bg-tint-pending',
+  confirmed: 'bg-tint-confirmed',
+  checked_in: 'bg-tint-confirmed',
+  in_service: 'bg-tint-in-service',
+  completed: 'bg-tint-completed',
+  cancelled: 'bg-tint-cancelled',
+  rejected: 'bg-tint-cancelled',
+  rescheduled: 'bg-tint-cancelled',
+  no_show: 'bg-tint-no-show',
+};
 
 export interface EventBlockProps {
   topPercent: number;
@@ -29,10 +49,10 @@ export interface EventBlockProps {
  * The booked variant does not fill with a solid `bg-status-*` colour and
  * white text — that fails WCAG contrast at 10-11px (`#d97706` on white is
  * ~3.2:1, needs 4.5:1) and colour would be the only thing carrying status,
- * which docs/DESIGN.md §3 forbids. Instead it follows the same pattern
- * `AppointmentCard` already uses for its "completed" accent: a neutral
- * `bg-card` surface, `text-foreground` text (passes by construction), and the
- * status hue reduced to a `border-l-4` accent plus a small redundant dot.
+ * which docs/DESIGN.md §3 forbids. It uses the pale `BLOCK_TINTS` fill with
+ * `text-foreground` text instead (passes by construction at 15% mix against
+ * `--card`), plus the status dot — colour supports the block, the dot and
+ * label still carry it on their own.
  */
 function EventBlockImpl({
   topPercent,
@@ -86,10 +106,10 @@ function EventBlockImpl({
       onPointerDown={onPointerDown}
       style={style}
       className={cn(
-        'absolute inset-x-1 overflow-hidden rounded-md border border-border border-l-4 bg-card px-2 py-1',
+        'absolute inset-x-1 overflow-hidden rounded-md border border-border px-2 py-1',
+        status ? BLOCK_TINTS[status] : 'bg-card',
         'text-left text-xs text-foreground',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        status ? STATUS_BORDERS[status] : 'border-l-muted-foreground',
         draggable && 'cursor-grab touch-none active:cursor-grabbing',
       )}
     >

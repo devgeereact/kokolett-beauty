@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   analyzeDayOfWeekTrend,
   analyzeHourOfDayTrend,
+  analyzeWeekBookings,
   buildAppointmentActivity,
+  findNextUp,
   findScheduleConflicts,
   forecastCancellationRisk,
+  percentChange,
   rankRepeatCustomers,
   summarizeBusiness,
 } from '@/lib/insights';
@@ -128,6 +131,70 @@ describe('analyzeDayOfWeekTrend', () => {
     expect(trend[0]!).toEqual({ dayOfWeek: 0, count: 1, templateOpen: false });
     expect(trend[2]!).toEqual({ dayOfWeek: 2, count: 2, templateOpen: true });
     expect(trend[1]!).toEqual({ dayOfWeek: 1, count: 0, templateOpen: false });
+  });
+});
+
+describe('analyzeWeekBookings', () => {
+  it('splits each day into new vs returning by prior completed visits', () => {
+    // 2026-08-11 is a Tuesday (dow 2).
+    const appointments = [
+      appt({ starts_at: '2026-08-11T09:00:00.000Z', customer_completed_count: 0 }),
+      appt({ starts_at: '2026-08-11T11:00:00.000Z', customer_completed_count: 2 }),
+      appt({ starts_at: '2026-08-11T14:00:00.000Z', customer_completed_count: 1 }),
+    ];
+
+    const week = analyzeWeekBookings(appointments, 'UTC');
+    expect(week[2]).toEqual({ dayOfWeek: 2, newCount: 1, returningCount: 2 });
+    expect(week[0]).toEqual({ dayOfWeek: 0, newCount: 0, returningCount: 0 });
+  });
+
+  it('drops rescheduled and rejected rows, same as analyzeDayOfWeekTrend', () => {
+    const appointments = [
+      appt({ starts_at: '2026-08-11T09:00:00.000Z', status: 'rescheduled' }),
+      appt({ starts_at: '2026-08-11T09:00:00.000Z', status: 'rejected' }),
+    ];
+    const week = analyzeWeekBookings(appointments, 'UTC');
+    expect(week[2]).toEqual({ dayOfWeek: 2, newCount: 0, returningCount: 0 });
+  });
+});
+
+describe('findNextUp', () => {
+  const now = new Date('2026-08-11T10:00:00.000Z');
+
+  it('picks the soonest confirmed or checked-in appointment that has not started', () => {
+    const past = appt({ id: 'past', status: 'confirmed', starts_at: '2026-08-11T09:00:00.000Z' });
+    const soonest = appt({
+      id: 'soonest',
+      status: 'confirmed',
+      starts_at: '2026-08-11T11:00:00.000Z',
+    });
+    const later = appt({
+      id: 'later',
+      status: 'checked_in',
+      starts_at: '2026-08-11T14:00:00.000Z',
+    });
+    expect(findNextUp([past, later, soonest], now)?.id).toBe('soonest');
+  });
+
+  it('ignores in-progress and completed appointments', () => {
+    const inService = appt({ id: 'in-service', status: 'in_service', starts_at: '2026-08-11T09:30:00.000Z' });
+    const completed = appt({ id: 'done', status: 'completed', starts_at: '2026-08-11T09:00:00.000Z' });
+    expect(findNextUp([inService, completed], now)).toBeNull();
+  });
+
+  it('returns null when nothing is left today', () => {
+    expect(findNextUp([], now)).toBeNull();
+  });
+});
+
+describe('percentChange', () => {
+  it('computes a relative percentage change', () => {
+    expect(percentChange(112, 100)).toBe(12);
+    expect(percentChange(88, 100)).toBe(-12);
+  });
+
+  it('returns null instead of Infinity when there is nothing to compare against', () => {
+    expect(percentChange(5, 0)).toBeNull();
   });
 });
 

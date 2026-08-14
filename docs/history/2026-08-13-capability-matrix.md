@@ -1,5 +1,10 @@
 # Capability Matrix — Owner jobs vs. shipped code (Phase 0, Task 2)
 
+> **Archived 2026-08-14.** Point-in-time audit, moved here from `docs/`. Its one
+> flagged critical item (reschedule split-brain) has since shipped
+> (`docs/history/2026-08-13-plan-review-ceo.md`). Read for context, not as current
+> truth — `docs/ARCHITECTURE.md` and `docs/PRD.md` carry the corrections.
+
 Date: 2026-08-13
 Scope: for each of the six owner jobs named in the plan, enumerate the concrete
 capabilities an owner would expect and rate each **Implemented** / **Partial** /

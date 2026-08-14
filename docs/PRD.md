@@ -1,6 +1,7 @@
 # Product Requirements — Kokolett Beauty UK
 
-Version 3.1 · MVP · single salon, single owner
+Version 3.2 (2026-08-14: booking model, marketing IA and pricing sections brought in
+line with shipped behaviour) · MVP · single salon, single owner
 Production domain: `https://www.kokolettbeauty.com`
 
 ---
@@ -36,48 +37,39 @@ create an account. Wants certainty that the booking exists, and a reminder close
 the day. May return six months later having forgotten everything except her email
 address.
 
-## 4. Booking model — hybrid
+## 4. Booking model — availability is the gate
 
-Availability-first, with a trust gate on the first visit.
+The owner publishes exactly the hours she is willing to work. Anything inside them
+books **instantly, for anyone, new or returning** — there is no approval step on the
+happy path. When nothing is open, the customer submits a request instead, and it is
+the *request* that gets approved: requests are offered slots first-come-first-served,
+so a last-minute cancellation is reachable by whoever asked first.
 
-The owner defines working hours, breaks, closures, service durations and buffers. The
-engine generates slots from those rules, so customers only ever see times that are
-genuinely open.
-
-- **Returning customers** — anyone with at least one _completed_ appointment — are
-  **confirmed instantly**. No wait, no approval.
-- **First-time customers** are **held for owner approval**. The slot is reserved the
-  moment they submit, so nobody else can take it, and the owner has a bounded window
-  (default 12 hours, never past the appointment itself) to approve or decline. If the
-  window elapses, the hold is released automatically and the slot returns to sale.
-
-A prior cancellation or no-show does not earn instant booking. Trust is earned by
-turning up.
-
-**Why hybrid rather than pure instant:** the owner keeps a filter against no-shows and
-prank bookings from strangers, while the customers who actually drive repeat revenue
-get the frictionless path. The cost is a wait for first-timers, which is mitigated by
-a clear "held — you'll hear within 12 hours" state and an immediate email.
+This replaced an earlier hybrid design (returning customers instant, first-timers held
+for approval) on 2026-08-07 — see `docs/SCHEMA.md` §11 for the migration and the
+reasoning. The hybrid machinery still exists in the schema as a fallback
+(`booking_settings.approve_first_time`, currently `false`) and costs nothing to keep,
+but is not how the product behaves today.
 
 ### 4.1 Customer booking flow
 
 ```
-Visit site → Select service → Choose open date → Choose time
-  → Enter contact details → Review → Submit
-      ├── returning customer → Confirmed instantly
-      └── first-time customer → Held for approval (slot reserved)
-                                    ├── owner approves → Confirmed
-                                    └── owner declines / window elapses → Released
+Visit site → Choose open date → Choose time → Enter contact details → Review → Submit
+  → Confirmed instantly
   → Confirmation email + .ics → Reminders (24h, 2h) → Appointment
   → Completed → Thank-you email → Google review request
 ```
+
+There is no per-service selection step: the salon has one appointment type (see §7,
+"no fixed price"), so length is fixed and the booking flow goes straight from date to
+time.
 
 ### 4.2 When no slot exists
 
 The customer is never dead-ended on an empty calendar. The page states plainly that
 nothing is currently available and offers an **Availability Request**: name, email,
-mobile, service, preferred dates, preferred times, flexibility (any / morning /
-afternoon / evening), and notes.
+mobile, preferred dates, preferred times, flexibility (any / morning / afternoon /
+evening), and notes.
 
 On submit: the request is stored, the owner is emailed and sees it in the Availability
 Requests inbox, and the customer receives an acknowledgement. The owner can open extra
@@ -113,12 +105,19 @@ account that can mutate salon data.
 
 ## 7. MVP feature set
 
-**Marketing site** — Home, About, Services, Gallery, Testimonials, FAQs, Contact,
-Privacy, Booking Policy, Terms.
+**Marketing site** — a single scrolling home page (hero, next-available, services,
+how-it-works, closing CTA), a Google-reviews block standing in for testimonials, plus
+standalone Privacy, Booking Policy and Terms pages. There is no separate About,
+Gallery, FAQs or Contact page — an earlier multi-page plan was simplified to this.
 
-**Booking** — service browsing, live availability, slot selection, details capture,
-review, submit, instant confirm or approval hold, confirmation email with `.ics`,
-reminders, self-service cancel and reschedule, one-tap rebook.
+**No fixed price.** The salon has one appointment type; what it costs is agreed in
+the chair, not quoted online. The owner logs what was actually charged after the
+appointment (`docs/SCHEMA.md` migration `0027`) and the Today page's "Collected
+today" reflects that log, not a price list.
+
+**Booking** — live availability, slot selection, details capture, review, submit,
+instant confirmation, confirmation email with `.ics`, reminders, self-service cancel
+and reschedule, one-tap rebook.
 
 **Availability requests** — public form, owner inbox with new / awaiting response /
 converted / declined states, filtering, priority indicators, one-click "offer this
@@ -131,16 +130,20 @@ services, availability rules, reports, AI assistant, settings.
 **Customer management** — automatic creation, visit history, average spend, favourite
 services, private notes, marketing consent, email history.
 
-**Service management** — create, edit, archive, pricing, duration, buffer, category,
-image, active toggle.
+**Service menu management** — the salon's styles as shown on the website (create,
+edit, archive, image, category, active toggle) — descriptive content, not a
+bookable, priced catalogue. The single appointment type's length and buffer are
+managed separately, on their own settings page.
 
 **Reports** — revenue, bookings, returning-customer rate, cancellation rate, no-show
 rate, popular services, peak hours, review requests, trends.
 
-**AI assistant (advisory only)** — matches cancellations to waiting requests, flags
-under-utilised days, surfaces repeatedly requested unavailable windows, recommends
-opening-hours changes, drafts customer replies. Output is a recommendation with status
-`pending`. Nothing executes without an explicit owner action.
+**AI assistant (advisory only)** — flags conflicts and reschedule opportunities,
+drafts customer email replies, and surfaces messages, analytics, trends, repeat
+customers and cancellation risk. Computed live in the browser from data the
+dashboard already has (`src/lib/insights.ts`) — not a queued recommendation an Edge
+Function writes. Nothing it produces executes without an explicit owner action; see
+`docs/ARCHITECTURE.md` §6b for the mechanism.
 
 **Email automation** — booking held, booking confirmed, booking declined, reminder,
 rescheduled, cancelled, completed, review request, availability request received,
@@ -207,8 +210,8 @@ The product is production-ready when:
 
 - Every journey runs end to end from landing to review request, with no dead ends,
   no placeholder screens and no unhandled empty states.
-- Instant confirmation works for returning customers; approval holds work for
-  first-timers, including automatic release on timeout.
+- Instant confirmation works for anyone booking inside published hours; requests
+  raised against a full calendar are offered slots first-come-first-served.
 - Concurrent booking attempts on the same slot produce exactly one appointment and a
   clear, recoverable message for the loser.
 - Magic links authenticate customers, expire correctly, and cannot be replayed.

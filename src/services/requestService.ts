@@ -13,7 +13,8 @@ import type { AvailabilityRequestStatus } from '@/types';
 
 export interface QueuedRequest {
   id: string;
-  queue_position: number;
+  /** Position within the *open* queue only — `null` for an already-answered row. */
+  queue_position: number | null;
   full_name: string;
   email: string;
   mobile: string | null;
@@ -25,36 +26,104 @@ export interface QueuedRequest {
   notes: string | null;
   status: AvailabilityRequestStatus;
   owner_response: string | null;
+  /** Private, never emailed to the customer — migration 0030. */
+  owner_note: string | null;
   created_at: string;
+  updated_at: string;
   waiting_hours: number;
 }
 
-export async function listQueuedRequests(): Promise<QueuedRequest[]> {
-  const { data, error } = await supabase.rpc('open_requests_in_order');
-  if (error) throw error;
-  return data ?? [];
+const REQUEST_COLUMNS =
+  'id, full_name, email, mobile, service_id, preferred_dates, preferred_times, ' +
+  'flexibility, notes, status, owner_response, owner_note, created_at, updated_at, ' +
+  'services(name)';
+
+type RequestRow = {
+  id: string;
+  full_name: string;
+  email: string;
+  mobile: string | null;
+  service_id: string | null;
+  preferred_dates: string[] | null;
+  preferred_times: string | null;
+  flexibility: string;
+  notes: string | null;
+  status: AvailabilityRequestStatus;
+  owner_response: string | null;
+  owner_note: string | null;
+  created_at: string;
+  updated_at: string;
+  services: { name: string } | { name: string }[] | null;
+};
+
+function toQueuedRequest(row: RequestRow, queuePosition: number | null): QueuedRequest {
+  const service = Array.isArray(row.services) ? row.services[0] : row.services;
+  return {
+    id: row.id,
+    queue_position: queuePosition,
+    full_name: row.full_name,
+    email: row.email,
+    mobile: row.mobile,
+    service_id: row.service_id,
+    service_name: service?.name ?? null,
+    preferred_dates: row.preferred_dates ?? [],
+    preferred_times: row.preferred_times,
+    flexibility: row.flexibility,
+    notes: row.notes,
+    status: row.status,
+    owner_response: row.owner_response,
+    owner_note: row.owner_note,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    waiting_hours: Math.round(((Date.now() - new Date(row.created_at).getTime()) / 3_600_000) * 10) / 10,
+  };
 }
 
-/** Everything, including answered ones, for the history view. */
-export async function listAllRequests(): Promise<
-  {
-    id: string;
-    full_name: string;
-    email: string;
-    status: AvailabilityRequestStatus;
-    created_at: string;
-    owner_response: string | null;
-  }[]
-> {
+const OPEN_STATUSES: AvailabilityRequestStatus[] = ['new', 'awaiting_response', 'offer_sent'];
+
+/** Open requests only, oldest first — whoever asked first is served first. */
+export async function listQueuedRequests(): Promise<QueuedRequest[]> {
   const { data, error } = await supabase
     .from('availability_requests')
-    .select('id, full_name, email, status, created_at, owner_response')
-    .not('status', 'in', '("new","awaiting_response")')
-    .order('created_at', { ascending: false })
-    .limit(100);
+    .select(REQUEST_COLUMNS)
+    .in('status', OPEN_STATUSES)
+    .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((row, i) => toQueuedRequest(row as unknown as RequestRow, i + 1));
+}
+
+/**
+ * Every request, open and answered — the "All" tab's dataset. Open rows
+ * carry their real queue position (computed the same way as
+ * `listQueuedRequests`, just not re-fetched separately); answered rows
+ * carry `queue_position: null` since a resolved request no longer holds a
+ * place in line.
+ */
+export async function listAllRequests(): Promise<QueuedRequest[]> {
+  const { data, error } = await supabase
+    .from('availability_requests')
+    .select(REQUEST_COLUMNS)
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if (error) throw error;
+
+  let nextPosition = 1;
+  return (data ?? []).map((row) => {
+    const typed = row as unknown as RequestRow;
+    const isOpen = OPEN_STATUSES.includes(typed.status);
+    return toQueuedRequest(typed, isOpen ? nextPosition++ : null);
+  });
+}
+
+/** Private note, visible only to the owner — never emailed (migration 0030). */
+export async function setRequestOwnerNote(requestId: string, note: string): Promise<void> {
+  const { error } = await supabase.rpc('set_request_owner_note', {
+    p_request_id: requestId,
+    p_note: note,
+  });
+  if (error) throw error;
 }
 
 export interface OfferResult {

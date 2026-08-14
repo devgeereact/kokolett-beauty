@@ -66,6 +66,34 @@
     --status-completed: #059669;
     --status-cancelled: #6b7280;
     --status-no-show: #dc2626;
+
+    /*
+     * Pastel tint fills — explicit tokens per docs/DESIGN.md §7 ("colour
+     * opacity modifiers do not work against var() colours... add an
+     * explicit token or use color-mix()"). Each is derived from its source
+     * status/primary colour via color-mix(), not a separate hand-picked hex,
+     * so it stays in sync if that source colour ever changes, and it needs
+     * no dark-mode override: the status, primary and card tokens it reads
+     * already resolve to their dark values under .dark, and var() resolves
+     * at used-value time, so these pick up the right theme automatically.
+     */
+    --tint-pending: color-mix(in srgb, var(--status-pending) 15%, var(--card));
+    --tint-confirmed: color-mix(in srgb, var(--status-confirmed) 15%, var(--card));
+    --tint-in-service: color-mix(in srgb, var(--status-in-service) 15%, var(--card));
+    --tint-completed: color-mix(in srgb, var(--status-completed) 15%, var(--card));
+    --tint-cancelled: color-mix(in srgb, var(--status-cancelled) 15%, var(--card));
+    --tint-no-show: color-mix(in srgb, var(--status-no-show) 15%, var(--card));
+    --tint-primary: color-mix(in srgb, var(--primary) 12%, var(--card));
+
+    /* Same recipe, off the chart palette — customer-identity colours for the
+       schedule timeline, kept separate from the status tints above so a
+       customer's block can never be mistaken for a status (e.g. landing on
+       the same tone as "no-show" by coincidence). */
+    --tint-chart-1: color-mix(in srgb, var(--chart-1) 20%, var(--card));
+    --tint-chart-2: color-mix(in srgb, var(--chart-2) 20%, var(--card));
+    --tint-chart-3: color-mix(in srgb, var(--chart-3) 20%, var(--card));
+    --tint-chart-4: color-mix(in srgb, var(--chart-4) 20%, var(--card));
+    --tint-chart-5: color-mix(in srgb, var(--chart-5) 20%, var(--card));
   }
 
   .dark {

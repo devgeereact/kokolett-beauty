@@ -96,6 +96,13 @@ vi.mock('@/hooks/useOwnerSummary', () => ({
 
 vi.mock('@/services/appointmentService', () => ({
   listPendingApprovals: vi.fn(() => Promise.resolve([...approvalsBus.rows])),
+  getApprovalStats: vi.fn(() =>
+    Promise.resolve({
+      avgWaitMinutes: null,
+      approvedPercent: null,
+      thisWeekCount: approvalsBus.rows.length,
+    }),
+  ),
   approveAppointment: vi.fn((id: string) => {
     approvalsBus.rows = approvalsBus.rows.filter((r) => r.id !== id);
     return Promise.resolve();
@@ -103,7 +110,7 @@ vi.mock('@/services/appointmentService', () => ({
   rejectAppointment: vi.fn(() => Promise.resolve()),
 }));
 
-// RequestsPanel (real, unmocked, so mounting the Requests tab exercises the
+// RequestsQueue (real, unmocked, so mounting the Requests tab exercises the
 // actual component) pulls in requestService itself — stub it so the
 // explicit-`?tab=requests` test doesn't reach for a real Supabase client.
 vi.mock('@/services/requestService', () => ({
@@ -111,6 +118,7 @@ vi.mock('@/services/requestService', () => ({
   listAllRequests: vi.fn(() => Promise.resolve([])),
   offerSlotToRequest: vi.fn(() => Promise.resolve({})),
   declineRequest: vi.fn(() => Promise.resolve()),
+  setRequestOwnerNote: vi.fn(() => Promise.resolve()),
   whoIsAhead: vi.fn(() => null),
 }));
 
@@ -168,7 +176,7 @@ describe('InboxPage — default tab freeze', () => {
 
     renderInbox('/dashboard/inbox');
 
-    await screen.findByText('Demo Customer');
+    await waitFor(() => expect(screen.getAllByText('Demo Customer').length).toBeGreaterThan(0));
     expect(activeTabLabel()).toBe('Approvals');
 
     // Nothing the owner did — just the summary itself reporting the count
@@ -188,7 +196,7 @@ describe('InboxPage — default tab freeze', () => {
 
     // Bare URL, one pending approval — both the pre-fix and fixed code
     // default here, so this is the exact scenario from the bug report.
-    await screen.findByText('Demo Customer');
+    await waitFor(() => expect(screen.getAllByText('Demo Customer').length).toBeGreaterThan(0));
     expect(activeTabLabel()).toBe('Approvals');
 
     await userEvent.click(screen.getByRole('button', { name: 'Approve booking' }));
@@ -196,8 +204,10 @@ describe('InboxPage — default tab freeze', () => {
     // The approval lands, the row disappears, and pending_approval_count
     // (via the mocked refresh, exercising the same code path
     // `loadApprovals()` really calls) drops to 0 — the trigger for the bug.
+    // The queue then falls back to its demo preview (real backend rows are
+    // empty), not a bare empty state.
     await waitFor(() => {
-      expect(screen.getByText('Nothing waiting')).toBeInTheDocument();
+      expect(screen.getByText(/Nothing is waiting for real right now/)).toBeInTheDocument();
     });
 
     // Still Approvals. No click on Requests, no `?tab=` in the URL — the
@@ -214,7 +224,7 @@ describe('InboxPage — default tab freeze', () => {
     renderInbox('/dashboard/inbox?tab=requests');
 
     expect(activeTabLabel()).toBe('Requests');
-    // Let RequestsPanel's own mocked fetch settle before the test tears down.
+    // Let RequestsQueue's own mocked fetch settle before the test tears down.
     await screen.findByText('Nobody waiting');
   });
 });

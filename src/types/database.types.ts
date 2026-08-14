@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       ai_recommendations: {
@@ -230,6 +255,7 @@ export type Database = {
           id: string
           mobile: string | null
           notes: string | null
+          owner_note: string | null
           owner_response: string | null
           preferred_dates: string[]
           preferred_times: string | null
@@ -248,6 +274,7 @@ export type Database = {
           id?: string
           mobile?: string | null
           notes?: string | null
+          owner_note?: string | null
           owner_response?: string | null
           preferred_dates?: string[]
           preferred_times?: string | null
@@ -266,6 +293,7 @@ export type Database = {
           id?: string
           mobile?: string | null
           notes?: string | null
+          owner_note?: string | null
           owner_response?: string | null
           preferred_dates?: string[]
           preferred_times?: string | null
@@ -334,7 +362,10 @@ export type Database = {
           address_line: string | null
           approval_window_h: number
           approve_first_time: boolean
+          business_category: string
+          business_name: string
           cancellation_window_h: number
+          country: string
           created_at: string
           default_buffer_min: number
           google_place_id: string | null
@@ -353,7 +384,10 @@ export type Database = {
           address_line?: string | null
           approval_window_h?: number
           approve_first_time?: boolean
+          business_category?: string
+          business_name?: string
           cancellation_window_h?: number
+          country?: string
           created_at?: string
           default_buffer_min?: number
           google_place_id?: string | null
@@ -372,7 +406,10 @@ export type Database = {
           address_line?: string | null
           approval_window_h?: number
           approve_first_time?: boolean
+          business_category?: string
+          business_name?: string
           cancellation_window_h?: number
+          country?: string
           created_at?: string
           default_buffer_min?: number
           google_place_id?: string | null
@@ -596,6 +633,39 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          active: boolean
+          allow_edit_before_sending: boolean
+          category: string
+          html_body: string
+          include_in_automation: boolean
+          key: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allow_edit_before_sending?: boolean
+          category: string
+          html_body: string
+          include_in_automation?: boolean
+          key: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allow_edit_before_sending?: boolean
+          category?: string
+          html_body?: string
+          include_in_automation?: boolean
+          key?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       google_place_snapshot: {
         Row: {
           fetched_at: string
@@ -762,9 +832,12 @@ export type Database = {
       service_menu: {
         Row: {
           active: boolean
+          buffer_min: number
           created_at: string
+          duration_min: number
           group_name: string
           id: string
+          image_path: string | null
           name: string
           note: string | null
           sort_order: number
@@ -772,9 +845,12 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          buffer_min?: number
           created_at?: string
+          duration_min?: number
           group_name: string
           id?: string
+          image_path?: string | null
           name: string
           note?: string | null
           sort_order?: number
@@ -782,9 +858,12 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          buffer_min?: number
           created_at?: string
+          duration_min?: number
           group_name?: string
           id?: string
+          image_path?: string | null
           name?: string
           note?: string | null
           sort_order?: number
@@ -1164,6 +1243,10 @@ export type Database = {
         Args: { p_reason?: string; p_request_id: string }
         Returns: undefined
       }
+      delete_appointment_as_owner: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
       drain_email_queue: { Args: never; Returns: number }
       expire_pending_approvals: { Args: never; Returns: number }
       extend_weekly_template: { Args: never; Returns: number }
@@ -1195,7 +1278,11 @@ export type Database = {
       }
       is_owner: { Args: never; Returns: boolean }
       log_payment: {
-        Args: { p_amount_pence: number; p_appointment_id: string; p_note?: string }
+        Args: {
+          p_amount_pence: number
+          p_appointment_id: string
+          p_note?: string
+        }
         Returns: string
       }
       month_slot_summary: {
@@ -1306,15 +1393,13 @@ export type Database = {
         Returns: boolean
       }
       reschedule_appointment_as_owner: {
-        Args: {
-          p_appointment_id: string
-          p_new_starts_at: string
-        }
+        Args: { p_appointment_id: string; p_new_starts_at: string }
         Returns: {
           appointment_id: string
           reference: string
         }[]
       }
+      retired_booking_templates: { Args: never; Returns: string[] }
       revoke_calendar_feed: { Args: { p_id: string }; Returns: undefined }
       set_appointment_status: {
         Args: {
@@ -1359,6 +1444,10 @@ export type Database = {
       set_day_slots: {
         Args: { p_date: string; p_times: string[] }
         Returns: number
+      }
+      set_request_owner_note: {
+        Args: { p_note: string; p_request_id: string }
+        Returns: undefined
       }
       set_weekly_template: {
         Args: { p_day_of_week: number; p_times: string[] }
@@ -1517,6 +1606,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       appointment_status: [

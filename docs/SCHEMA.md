@@ -380,7 +380,8 @@ is right; pinning it too narrowly is the bug. They now use `public, extensions`.
 ## 11. Migration `0007` — availability is the gate
 
 A change of booking policy, decided by the owner on 2026-08-07. It replaces the
-hybrid trust gate described in §PRD and `PROJECT-MEMORY.md`.
+hybrid trust gate described in `docs/history/2026-08-06-intake-decisions.md`
+(superseded; PRD.md §4 now matches this section).
 
 **Before:** availability was generous, trust was the gate. First-time customers
 were held for approval; returning ones confirmed instantly.
@@ -586,3 +587,187 @@ window would receive "You are booked in" for an appointment that had already
 been retired, immediately followed by the cancellation. Now every unsent message
 about a retired booking is retired with it. Already-sent rows are untouched —
 rewriting those would make `sent_at` a lie.
+
+## 16. Migration `0017` — marketing and reviews
+
+Google reviews are cached instead of fetched per page view. Two reasons: (1) a
+Places API key shipped to the browser is effectively public and billable; (2)
+a salon's reviews change a few times a month, not per visit. An Edge Function
+pulls them hourly into `google_reviews` and `google_place_snapshot`, where the
+fetch timestamp is kept so staleness is visible. The marketing page reads the
+cache via `public_reviews()`, which returns the rating, review count, and the
+most recent reviews with text.
+
+`booking_settings` gains `google_place_id`, `instagram_url`, `address_line`,
+`phone` so the owner can configure her presence without a code change.
+
+## 17. Migration `0018` — service menu and mail
+
+**The menu.** `service_menu` is the marketing list of styles offered — separate
+from `services`, which is the single bookable appointment type. The owner can
+edit the menu without touching the booking path. It is seeded with a working
+list for an African hair salon; the owner deletes anything she does not do,
+because a listed style that gets turned down at the door costs goodwill.
+
+**The mailing list.** `subscribers` is an opt-in list for updates. Subscribing
+goes through `subscribe_to_updates()`, which takes no parameters other than
+email and name, deliberately returns nothing, and never reports whether an
+address is already on the list — the form would otherwise become a membership
+oracle for any email someone wants to probe.
+
+**Email rewrites.** The second reminder moves from two hours out to one. The
+completion email is now always sent (not just when a review URL is configured);
+the review ask is folded in when there is somewhere to send it. A moved booking
+reads as moved: the insert trigger queues a plain confirmation, then a second
+trigger (`rescheduled_mail`) rewrites it to `booking_rescheduled` and carries
+the old start time.
+
+## 18. Migration `0019` — calendar feed and owner booking
+
+**Calendar subscription.** `calendar_feeds` mints token pairs: the plaintext is
+shown exactly once (never stored, never readable again), and only its SHA-256
+hash lives in the database. This makes the URL a 256-bit bearer token with no
+guessing, and a leaked table is worthless. The owner can revoke any feed on one
+click. The feed endpoint (`calendar_feed_events()`) is not granted to anon or
+authenticated — only the Edge Function calls it with the service role after
+validating the token.
+
+**Manual bookings with custom duration.** `create_appointment_as_owner()` gains
+a `p_duration_min` parameter so the owner can book a five-hour full head when
+the appointment type says four. Duration is validated (15 min–12 hours) and
+applied at insert time, separate from the service default.
+
+## 19. Migration `0020` — subject lines without em dashes
+
+Cosmetic: re-applies three email functions (`notify_appointment_status_changed`,
+`notify_appointment_created`, `rescheduled_mail`) with subject lines corrected
+from em dashes to middle dots (the canonical separator). Mail already queued
+keeps its original subject. No logic changes; same triggers, same payloads.
+
+## 20. Migration `0021` — four security fixes
+
+**(1) Magic links are single-use.** `customer_access_tokens` gains a third
+`purpose` value: `'session'`. Magic links stay `'manage'`, and the redeemed
+`session` token is separate and non-interchangeable — a leaked link cannot be
+held open as a session for 30 minutes after the customer has used it. Both must
+also pass `used_at is null` to be valid, closing a race where the same token
+worked as both. Existing sessions (identified by their 30-day TTL) are reclassified
+on migration so nobody is signed out.
+
+**(2) Enquiries cannot spam.** `validate_availability_request()` is a new
+trigger that validates email format (rejecting empty, obviously fabricated,
+non-routable addresses) and rate-limits to 3 per address per day. The insert
+policy forbids `customer_id` to be set — the owner links the request when
+converting, not the form. Both prevent the form from being turned into an
+arbitrary-address mailer.
+
+**(3) Reviews sync needs a secret.** `sync_google_reviews()` now demands
+`x-cron-secret` in the request headers (stored in the vault, like the endpoint
+URL). The cron scheduler provides it; anyone who finds the endpoint cannot
+make a billable call to Places.
+
+**(4) Cron-only functions are not callable over the API.** Three functions
+(`expire_pending_approvals`, `purge_expired_access_tokens`, `extend_weekly_template`)
+are revoked from `public, anon, authenticated` so they cannot be reached at
+`/rest/v1/rpc/…`. They are scheduled via `pg_cron` and run as a superuser, so
+they do not need the grant.
+
+## 21. Migrations `0022` — slots and mail keep their promises
+
+Five correctness fixes, two live and three dormant traps:
+
+**(1) LIVE.** A `retired_booking_templates()` function replaces the hard-coded
+list of mail templates that must be retired when a booking dies. This is the
+bug 0016 fixed and 0018/0020 reintroduced: confirmations and holds were
+dropped from the list, so a booking cancelled during the five-minute drain
+window still sent "You are booked in" after being retired. Now the list is
+canonical and used in both `notify_appointment_status_changed` (cancel/reject/
+no-show path) and in a retrospective sweep of already-queued mail.
+
+**(2) LIVE.** The nightly template extender (`extend_weekly_template()`) now
+unions any time that already has a live appointment when it rebuilds a day from
+the weekly pattern. The bulk-edit guarantee that "a time with a live appointment
+survives any edit" (from 0012) was broken by this function's raw delete-and-insert.
+
+**(3) Slot alignment checked against salon's clock, not UTC.** `book_appointment()`
+and `customer_reschedule_appointment()` check alignment against the epoch only,
+which fails when the granularity does not divide 60 — on the last Sunday in
+March, every published slot starts failing `SLOT_MISALIGNED` for the whole of
+British Summer Time while `available_slots()` still lists them as bookable. Both
+functions now check against local wall-clock minutes-since-midnight, matching
+the publish-side functions.
+
+**(4) Approval deadline recomputed on reschedule.** A still-pending booking gets
+a deadline measured from the move, against the new time. Copying it forward
+handed the new booking a deadline belonging to the old date, often already past,
+which the hourly expiry sweep would then act on and reject a booking the customer
+had just moved.
+
+**(5) Daily cap check uses an advisory lock.** Two customers booking different
+times on a day one short of the cap both saw `count < cap` under READ COMMITTED
+and both inserted. The overlap constraint did not fire because their times did
+not collide. A transaction-scoped advisory lock keyed on the local date serialises
+just bookings on the same day, so different days are unaffected.
+
+## 22. Migration `0023` — realtime actually publishes
+
+The dashboard subscribes to `postgres_changes` on `public.appointments` for
+live updates, and the "Live" indicator showed green — but `appointments` was
+never added to the `supabase_realtime` publication, and change streams come
+from logical replication. A table not published produces no changes. The owner
+has been looking at an indicator saying "Live" on a screen that only updated on
+reload. Publishing the base table (not the view, because views do not replicate)
+fixes this. The payload is un-joined; consumers refetch on any event rather than
+rendering from it. Replica identity is set to `full` so updates carry the
+previous row as well as the new one.
+
+## 23. Migrations `0024`–`0026` — owner and customer reschedule
+
+**`0024` — drag-to-reschedule write path.** `reschedule_appointment_as_owner()`
+retires and recreates, mirroring `customer_reschedule_appointment` rather than
+an in-place `UPDATE`. This reuses the existing insert-trigger chain (mail
+queueing, reminders) and its proven "restore the old row if the new insert
+collides" safety. The function auto-publishes the destination time (the owner
+declaring a new time on her own calendar IS her publishing availability) and
+skips customer-protection guards — the owner is looking at the calendar, not a
+booking form.
+
+**`0025` — race condition and duration fix.** Two bugs in `customer_reschedule_appointment`:
+(1) No row lock, so two concurrent calls on the same appointment both pass the
+status check and both insert, leaving two live bookings. `for update` makes the
+second caller block and correctly fail. (2) Duration was recomputed from the
+current service default instead of preserved from the old row. Appointments have
+no duration column — length lives only in `ends_at - starts_at` — and an owner-created
+booking can be any length. Rescheduling a 4-hour appointment silently shrank it
+to the service default, leaving chair time unprotected. The fix preserves
+`service_id` too, so a confirmation email describes the same service, not the
+current one.
+
+**`0026` — review pass.** Three bugs in 0024 and 0025: (1) `reschedule_appointment_as_owner`
+never checked that the new time was in the future — a drag onto a past slot
+silently succeeded. (2) `customer_reschedule_appointment`'s insert dropped
+`approved_by` while carrying `approved_at`, silently losing the approver reference
+on a reschedule of an approved booking. (3) `reschedule_appointment_as_owner` still
+called `hair_appointment()` to raise `SERVICE_UNAVAILABLE` even though the operation
+touches no service data — deactivating the service would wrongly block rescheduling
+any existing appointment. All three are fixed by redefining both functions.
+
+## 24. Migration `0027` — payment log
+
+`payments` records what the owner actually logged as paid, per appointment.
+Append-only by design: no update or delete RPC. A mis-logged amount is corrected
+by logging another row, the same way the schema already preserves financial
+history over mutating it (customers' soft-delete for GDPR, price snapshots on
+bookings). One appointment can carry more than one payment row (deposit then
+balance, say), though the v1 UI only ever adds one at a time.
+
+`log_payment(appointment_id, amount_pence, note)` is owner-only. The dashboard's
+summary function changes: `today_revenue_pence` (a placeholder based on `services.price_pence`)
+becomes `today_collected_pence`, which sums logged payments for the day regardless
+of the booking's status — a logged payment is money that has actually changed hands,
+unlike the snapshot price, so it stays counted even if the appointment is later
+cancelled or marked no-show.
+
+`appointments_detailed` view gains `paid_pence`, summing all payments for each
+appointment. `price_pence` and `services.price_pence` remain in the schema for
+booking history; nothing in the booking path reads them any more.

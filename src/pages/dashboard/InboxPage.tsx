@@ -1,24 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Zap } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { ApprovalCard } from '@/components/dashboard/approvals/ApprovalCard';
+import { ApprovalDetailPanel } from '@/components/dashboard/approvals/ApprovalDetailPanel';
+import { ApprovalPolicyFooter } from '@/components/dashboard/approvals/ApprovalPolicyFooter';
+import { ApprovalStats } from '@/components/dashboard/approvals/ApprovalStats';
 import {
-  RequestsPanel,
-  type RequestsPanelHandle,
-} from '@/components/dashboard/RequestsPanel';
+  buildDemoApprovalStats,
+  buildDemoApprovals,
+} from '@/components/dashboard/approvals/demoApprovals';
+import {
+  RequestsQueue,
+  type RequestsQueueHandle,
+} from '@/components/dashboard/requests/RequestsQueue';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Field, Textarea } from '@/components/ui/Field';
-import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useOwnerSummary } from '@/hooks/useOwnerSummary';
 import {
   approveAppointment,
+  getApprovalStats,
   listPendingApprovals,
   rejectAppointment,
+  type ApprovalStats as ApprovalStatsData,
 } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
-import { formatDateTime, formatMoney, formatRelative, formatTime } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed } from '@/types';
@@ -43,7 +51,7 @@ type Tab = 'approvals' | 'requests';
  * land on the right tab.
  */
 export function InboxPage(): JSX.Element {
-  const { timezone } = useBusinessSettings();
+  const { timezone, settings } = useBusinessSettings();
   const { showToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -56,8 +64,8 @@ export function InboxPage(): JSX.Element {
   const tabParam = new URLSearchParams(location.search).get('tab');
   const explicitTab: Tab | null =
     tabParam === 'requests' ? 'requests' : tabParam === 'approvals' ? 'approvals' : null;
-  // Under the current policy Approvals is structurally always empty (see its
-  // empty state below), so a bare `/dashboard/inbox` — no `?tab=` — should
+  // Under the current policy Approvals is structurally always empty (see
+  // `isDemo` below), so a bare `/dashboard/inbox` — no `?tab=` — should
   // land the owner on the queue she actually answers day to day. An explicit
   // `?tab=approvals` (e.g. a bookmark, or Today's own stat-card link) is
   // always honoured.
@@ -87,6 +95,8 @@ export function InboxPage(): JSX.Element {
   const [rows, setRows] = useState<AppointmentDetailed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [stats, setStats] = useState<ApprovalStatsData | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [decliningId, setDecliningId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -94,7 +104,12 @@ export function InboxPage(): JSX.Element {
   const loadApprovals = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      setRows(await listPendingApprovals());
+      const [approvals, approvalStats] = await Promise.all([
+        listPendingApprovals(),
+        getApprovalStats(),
+      ]);
+      setRows(approvals);
+      setStats(approvalStats);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
@@ -110,7 +125,35 @@ export function InboxPage(): JSX.Element {
     void loadApprovals();
   }, [loadApprovals]);
 
+  // Under the salon's current live settings `approve_first_time` is off, so
+  // this queue is structurally empty — see the empty-state copy below. The
+  // demo set stands in so the screen is a real, working view rather than a
+  // blank one; it never touches the backend (approve/decline no-op on it).
+  const isDemo = !loading && !error && rows.length === 0;
+  const displayRows = isDemo ? buildDemoApprovals(new Date()) : rows;
+  const displayStats = isDemo ? buildDemoApprovalStats() : stats;
+
+  useEffect(() => {
+    if (displayRows.length === 0) {
+      setSelectedId(null);
+      return;
+    }
+    const first = displayRows[0];
+    if (first && !displayRows.some((r) => r.id === selectedId)) {
+      setSelectedId(first.id);
+    }
+    // Only re-pick when the available rows change — not on every
+    // `selectedId` change, or a click could never stick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayRows]);
+
+  const selectedRow = displayRows.find((r) => r.id === selectedId) ?? null;
+
   const approve = async (id: string): Promise<void> => {
+    if (isDemo) {
+      showToast({ message: 'Demo data — turn on first-time approval in Settings to use this for real.' });
+      return;
+    }
     setBusyId(id);
     try {
       await approveAppointment(id);
@@ -120,6 +163,16 @@ export function InboxPage(): JSX.Element {
     } finally {
       setBusyId(null);
     }
+  };
+
+  const startDecline = (id: string): void => {
+    if (isDemo) {
+      showToast({ message: 'Demo data — turn on first-time approval in Settings to use this for real.' });
+      return;
+    }
+    setSelectedId(id);
+    setDecliningId(id);
+    setReason('');
   };
 
   const decline = async (id: string): Promise<void> => {
@@ -136,13 +189,13 @@ export function InboxPage(): JSX.Element {
     }
   };
 
-  // Requests queue — RequestsPanel owns its own data; this page only tracks
+  // Requests queue — RequestsQueue owns its own data; this page only tracks
   // the count for the tab badge and combined `badges` prop. It only mounts on
   // the Requests tab, so `requestsCount`/`requestsLoaded` stay at their last
   // known value (0/false until first load) whenever Approvals is active.
   const [requestsCount, setRequestsCount] = useState(0);
   const [requestsLoaded, setRequestsLoaded] = useState(false);
-  const requestsRef = useRef<RequestsPanelHandle>(null);
+  const requestsRef = useRef<RequestsQueueHandle>(null);
 
   const handleRequestsCountChange = useCallback(
     (n: number): void => {
@@ -176,16 +229,20 @@ export function InboxPage(): JSX.Element {
 
   return (
     <DashboardLayout
-      title="Inbox"
+      title={tab === 'approvals' ? 'Approvals' : 'Availability requests'}
       subtitle={
         tab === 'approvals'
-          ? 'First-time bookings holding a slot until you decide'
-          : 'Answered oldest first — whoever asked first is served first'
+          ? `Review and approve first-time bookings within the ${settings?.approval_window_h ?? 12}-hour window.`
+          : "Respond to customer requests when your calendar doesn't have a suitable slot."
       }
       badges={{ approvals: effectiveApprovalsCount, requests: effectiveRequestsCount }}
       actions={
         <>
-          <div className="inline-flex rounded-lg border border-border p-0.5">
+          {/* The sidebar already carries separate Approvals / Availability Requests
+              rows (DashboardLayout's grouped nav), so this pill is redundant on
+              desktop — it only earns its keep below `md:`, where the sidebar is
+              hidden behind the Menu button. */}
+          <div className="inline-flex rounded-lg border border-border p-0.5 md:hidden">
             <button
               type="button"
               onClick={() => goToTab('approvals')}
@@ -244,148 +301,76 @@ export function InboxPage(): JSX.Element {
       }
     >
       {tab === 'approvals' ? (
-        <>
+        <div className="space-y-6">
           {loading && <LoadingState label="Loading approvals…" />}
           {error && <ErrorState error={error} onRetry={() => void loadApprovals()} />}
 
-          {!loading && !error && rows.length === 0 && (
-            <EmptyState
-              title="Nothing waiting"
-              description="Under your current policy nothing lands here: published hours book instantly for everyone. This queue only fills if you switch first-time approval back on in Settings. What you answer day to day is Requests."
-            />
+          {!loading && !error && (
+            <>
+              <ApprovalStats
+                pendingCount={displayRows.length}
+                avgWaitMinutes={displayStats?.avgWaitMinutes ?? null}
+                approvedPercent={displayStats?.approvedPercent ?? null}
+                thisWeekCount={displayStats?.thisWeekCount ?? 0}
+              />
+
+              <div className="flex items-start gap-3 rounded-lg bg-tint-pending p-4 text-sm text-status-pending">
+                <Zap aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+                <p>Slots are reserved immediately when a first-time customer submits a booking.</p>
+              </div>
+
+              {isDemo && (
+                <p className="text-xs text-muted-foreground">
+                  Nothing is waiting for real right now — published hours book instantly for
+                  everyone under your current policy, so this queue only fills once you switch
+                  first-time approval back on in Settings. The queue below is a preview of how
+                  it looks when it does.
+                </p>
+              )}
+
+              <h2 className="font-display text-lg font-semibold text-foreground">
+                Pending approvals ({displayRows.length})
+              </h2>
+
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="space-y-4 lg:col-span-2">
+                  {displayRows.map((row) => (
+                    <ApprovalCard
+                      key={row.id}
+                      row={row}
+                      timezone={timezone}
+                      selected={row.id === selectedId}
+                      busy={busyId === row.id}
+                      onSelect={() => setSelectedId(row.id)}
+                      onApprove={() => void approve(row.id)}
+                      onDecline={() => startDecline(row.id)}
+                    />
+                  ))}
+                </div>
+
+                <ApprovalDetailPanel
+                  row={selectedRow}
+                  timezone={timezone}
+                  busy={selectedRow !== null && busyId === selectedRow.id}
+                  declining={selectedRow !== null && decliningId === selectedRow.id}
+                  reason={reason}
+                  onReasonChange={setReason}
+                  onApprove={() => selectedRow && void approve(selectedRow.id)}
+                  onDeclineStart={() => selectedRow && startDecline(selectedRow.id)}
+                  onDeclineConfirm={() => selectedRow && void decline(selectedRow.id)}
+                  onDeclineCancel={() => {
+                    setDecliningId(null);
+                    setReason('');
+                  }}
+                />
+              </div>
+
+              <ApprovalPolicyFooter approvalWindowHours={settings?.approval_window_h ?? 12} />
+            </>
           )}
-
-          <div className="space-y-4">
-            {rows.map((row) => {
-              const deadline = row.approval_deadline;
-              const urgent =
-                deadline !== null &&
-                new Date(deadline).getTime() - Date.now() < 2 * 60 * 60 * 1000;
-
-              return (
-                <Card key={row.id} className="p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="font-display text-lg font-semibold text-foreground">
-                        {row.customer_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {row.customer_email}
-                        {row.customer_mobile ? ` · ${row.customer_mobile}` : ''}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-mono text-sm text-muted-foreground">
-                        {row.reference}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Asked {formatRelative(row.created_at)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Service
-                      </dt>
-                      <dd className="text-sm font-medium text-foreground">
-                        {row.service_name} · {formatMoney(row.price_pence)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Requested slot
-                      </dt>
-                      <dd className="text-sm font-medium text-foreground">
-                        {formatDateTime(row.starts_at, timezone)}–
-                        {formatTime(row.ends_at, timezone)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Hold expires
-                      </dt>
-                      <dd
-                        className={`text-sm font-medium ${urgent ? 'text-status-pending' : 'text-foreground'}`}
-                      >
-                        {deadline ? formatRelative(deadline) : 'No deadline'}
-                        {urgent && ' — slot released automatically'}
-                      </dd>
-                    </div>
-                  </dl>
-
-                  {row.customer_note && (
-                    <p className="mt-3 rounded-md bg-muted p-3 text-sm text-muted-foreground">
-                      &ldquo;{row.customer_note}&rdquo;
-                    </p>
-                  )}
-
-                  {decliningId === row.id ? (
-                    <div className="mt-4 border-t border-border pt-4">
-                      <Field
-                        label="Reason for declining"
-                        hint="The customer is emailed this. Keep it brief and kind."
-                      >
-                        {({ id, describedBy }) => (
-                          <Textarea
-                            id={id}
-                            aria-describedby={describedBy}
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            placeholder="I'm afraid I'm already committed at that time."
-                          />
-                        )}
-                      </Field>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          loading={busyId === row.id}
-                          onClick={() => void decline(row.id)}
-                        >
-                          Confirm decline
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setDecliningId(null);
-                            setReason('');
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-                      <Button
-                        size="sm"
-                        loading={busyId === row.id}
-                        onClick={() => void approve(row.id)}
-                      >
-                        Approve booking
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setDecliningId(row.id);
-                          setReason('');
-                        }}
-                      >
-                        Decline
-                      </Button>
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        </>
+        </div>
       ) : (
-        <RequestsPanel ref={requestsRef} onCountChange={handleRequestsCountChange} />
+        <RequestsQueue ref={requestsRef} onCountChange={handleRequestsCountChange} />
       )}
     </DashboardLayout>
   );

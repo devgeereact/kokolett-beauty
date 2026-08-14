@@ -1,7 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AppointmentCard } from '@/components/dashboard/AppointmentCard';
+import { AppointmentDetailModal } from '@/components/dashboard/AppointmentDetailModal';
+import { ScheduleTimeline } from '@/components/dashboard/today/ScheduleTimeline';
+import { NextUpCard } from '@/components/dashboard/today/NextUpCard';
+import { GlanceGrid } from '@/components/dashboard/today/GlanceGrid';
+import { ApprovalsQueueCard } from '@/components/dashboard/today/ApprovalsQueueCard';
+import { BookingsOverviewChart } from '@/components/dashboard/today/BookingsOverviewChart';
+import { AvailabilityRequestsCard } from '@/components/dashboard/today/AvailabilityRequestsCard';
+import { RecentActivityCard } from '@/components/dashboard/today/RecentActivityCard';
+import { AssistantInsightsRow } from '@/components/dashboard/today/AssistantInsightsRow';
 import { ReschedulePicker } from '@/components/public/ReschedulePicker';
 import {
   NewBookingPanel,
@@ -9,6 +17,7 @@ import {
 } from '@/components/dashboard/NewBookingPanel';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useOwnerSummary } from '@/hooks/useOwnerSummary';
@@ -17,16 +26,25 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments';
 import { useSalonToday } from '@/hooks/useSalonToday';
 import { useLiveClock } from '@/hooks/useLiveClock';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import {
   setAppointmentStatus,
+  setOwnerNote,
   rescheduleAppointmentAsOwner,
 } from '@/services/appointmentService';
 import { logPayment } from '@/services/paymentService';
-import { formatDateLong, formatMoney, formatTime } from '@/lib/format';
+import { getProfile } from '@/services/profileService';
+import { getRecentActivity } from '@/services/notificationsService';
+import {
+  formatDateLong,
+  formatTime,
+  greetingForHour,
+  minutesSinceMidnight,
+} from '@/lib/format';
 import { errorMessage } from '@/lib/errors';
+import { findNextUpcoming } from '@/lib/insights';
 import { routes } from '@/lib/routes';
 import { statusLabel } from '@/lib/status';
-import { cn } from '@/lib/utils';
 import { LIVE_STATUSES, type AppointmentStatus } from '@/types';
 
 /**
@@ -36,10 +54,30 @@ import { LIVE_STATUSES, type AppointmentStatus } from '@/types';
  * "Today" is the salon's day, not the browser's: `useSalonToday` anchors to the
  * salon timezone so an owner abroad still sees the same day her clients booked,
  * and re-derives it on rollover so a tablet left open overnight moves on too.
+ * That's also why this page never grew day-to-day navigation — Calendar already
+ * owns browsing other dates; this one screen is deliberately always "today".
  */
 export function TodayPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
   const { summary, refresh: refreshSummary } = useOwnerSummary();
+  const { user } = useSupabaseAuth();
+
+  const [firstName, setFirstName] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    getProfile(user.id)
+      .then((p) => setFirstName(p?.full_name?.split(' ')[0] ?? null))
+      .catch(() => setFirstName(null));
+  }, [user]);
+
+  // Header bell badge — same "last 24h of activity" source as
+  // RecentActivityCard, since there's no read/unread state to count instead.
+  const [recentNotificationCount, setRecentNotificationCount] = useState(0);
+  useEffect(() => {
+    getRecentActivity(timezone, 1)
+      .then((events) => setRecentNotificationCount(events.length))
+      .catch(() => setRecentNotificationCount(0));
+  }, [timezone]);
 
   // Recomputed on rollover, not frozen at mount — this screen is left open on a
   // salon tablet overnight.
@@ -52,11 +90,29 @@ export function TodayPage(): JSX.Element {
     statuses,
   });
 
+  // "Next up" isn't bounded to today — a quiet afternoon with only one
+  // booking left should still show two by reaching into tomorrow, so this
+  // queries a 60-day horizon independent of the today-only list above.
+  // `now` deliberately isn't in this hook's own range (it ticks every
+  // second); `findNextUpcoming` below does the ">now" filtering against
+  // this already-fetched pool instead, so the query itself stays stable.
+  const upcomingHorizon = useMemo(
+    () => new Date(start.getTime() + 60 * 24 * 60 * 60 * 1000),
+    [start],
+  );
+  const upcomingStatuses = useMemo<AppointmentStatus[]>(() => ['confirmed', 'checked_in'], []);
+  const { appointments: upcomingPool, refresh: refreshUpcoming } = useAppointments({
+    from: start,
+    to: upcomingHorizon,
+    statuses: upcomingStatuses,
+  });
+
   // A booking taken on the website while this screen is open must appear here.
   const onRealtimeChange = useCallback(() => {
     void refresh();
+    void refreshUpcoming();
     void refreshSummary();
-  }, [refresh, refreshSummary]);
+  }, [refresh, refreshUpcoming, refreshSummary]);
   const { connected } = useRealtimeAppointments(onRealtimeChange);
 
   const [booking, setBooking] = useState(false);
@@ -67,6 +123,9 @@ export function TodayPage(): JSX.Element {
     initialDurationMin?: number;
     initialNote?: string;
   } | null>(null);
+
+  // Which schedule row is expanded to its full detail popup.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Reschedule picker state (compact flow for owners)
   const [movingId, setMovingId] = useState<string | null>(null);
@@ -130,6 +189,18 @@ export function TodayPage(): JSX.Element {
     [refresh, refreshSummary, showToast],
   );
 
+  const saveNote = useCallback(
+    async (id: string, note: string): Promise<void> => {
+      try {
+        await setOwnerNote(id, note);
+        await refresh();
+      } catch (e) {
+        showToast({ message: errorMessage(e) });
+      }
+    },
+    [refresh, showToast],
+  );
+
   const doOwnerReschedule = useCallback(
     async (id: string, startsAt: string): Promise<void> => {
       setMoveBusy(true);
@@ -148,38 +219,24 @@ export function TodayPage(): JSX.Element {
     [refresh, refreshSummary, showToast],
   );
 
-  const stats = [
-    { label: 'Booked today', value: summary ? String(summary.today_count) : '—' },
-    {
-      label: 'Collected today',
-      value: summary ? formatMoney(summary.today_collected_pence ?? 0) : '—',
-      // The one stat that is money actually moving through the business today,
-      // so it carries the brand accent in the grid.
-      accent: true,
-    },
-    {
-      label: 'Awaiting approval',
-      value: summary ? String(summary.pending_approval_count) : '—',
-      to: `${routes.owner.inbox}?tab=approvals`,
-      urgent: (summary?.urgent_approval_count ?? 0) > 0,
-    },
-    {
-      label: 'New enquiries',
-      value: summary ? String(summary.new_request_count) : '—',
-      to: `${routes.owner.inbox}?tab=requests`,
-    },
-  ];
+  const greeting = greetingForHour(Math.floor(minutesSinceMidnight(now, timezone) / 60));
+  const nextUpcoming = useMemo(
+    () => findNextUpcoming(upcomingPool, now, 2),
+    [upcomingPool, now],
+  );
+  const expandedAppointment = appointments.find((a) => a.id === expandedId) ?? null;
 
   return (
     <DashboardLayout
-      title="Today"
-      subtitle={formatDateLong(start, timezone)}
+      title={firstName ? `${greeting}, ${firstName} 👋` : greeting}
+      subtitle="Here's what's happening at your salon today."
       badges={{
         // Separate counts for the sidebar's Approvals and Availability
         // Requests rows — matches the "Awaiting approval" stat card directly
         // below and InboxPage's own per-tab counts.
         approvals: summary?.pending_approval_count ?? 0,
         requests: summary?.new_request_count ?? 0,
+        notifications: recentNotificationCount,
       }}
       actions={
         <div className="flex items-center gap-3">
@@ -201,7 +258,14 @@ export function TodayPage(): JSX.Element {
           </span>
 
           <div className="ml-2 inline-flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => void refresh()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                void refresh();
+                void refreshUpcoming();
+              }}
+            >
               Refresh
             </Button>
             <Button
@@ -217,71 +281,165 @@ export function TodayPage(): JSX.Element {
         </div>
       }
     >
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map((stat) => {
-          const body = (
-            <Card
-              className={cn(
-                'h-full p-4',
-                // Hierarchy from the terracotta token on the money stat — never a
-                // second shadow, since depth here is card/ground contrast only
-                // (docs/DESIGN.md §5).
-                stat.accent && 'border-t-2 border-t-primary',
-                // Two of these four cards navigate. Without a hover change they
-                // read as inert panels; the static cards must not borrow the
-                // affordance, so it is scoped to the linked ones.
-                stat.to && 'transition-colors duration-150 ease-out hover:border-primary',
-              )}
-            >
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {stat.label}
-              </p>
-              {/* Tabular figures: these refresh live over realtime, and
-                  proportional digits make the number visibly twitch as it does. */}
-              <p className="mt-2 font-display text-2xl font-semibold tabular-nums text-foreground sm:text-3xl">
-                {stat.value}
-              </p>
-              {stat.urgent && (
-                <p className="mt-1 text-xs font-medium text-status-pending">
-                  Some expire within 2 hours
-                </p>
-              )}
-            </Card>
-          );
-          return stat.to ? (
-            <Link
-              key={stat.label}
-              to={stat.to}
-              className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {body}
-            </Link>
-          ) : (
-            <div key={stat.label}>{body}</div>
-          );
-        })}
-      </div>
-
-      <h2 className="mb-4 font-display text-lg font-semibold text-foreground">
-        Today&rsquo;s schedule
-      </h2>
-
-      {loading && <LoadingState label="Loading today's appointments…" />}
-      {error && <ErrorState error={error} onRetry={() => void refresh()} />}
-
-      {!loading && !error && appointments.length === 0 && (
-        <EmptyState
-          title="Nothing booked today"
-          description="When a customer books online it will appear here straight away."
-          action={
-            <Button variant="ghost" size="sm" onClick={() => void refresh()}>
-              Refresh
-            </Button>
-          }
-        />
+      {justBooked && (
+        <div className="mb-6 rounded-lg border border-status-completed p-4 text-sm">
+          <p className="font-medium text-foreground">Booked. Reference {justBooked}.</p>
+          <p className="mt-1 text-muted-foreground">
+            Their confirmation email is on its way, with a link they can use to change or
+            cancel it themselves.
+          </p>
+        </div>
       )}
 
-      {booking && (
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch">
+        <Card className="flex h-full flex-col p-4 lg:col-span-3 lg:row-span-2">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-base font-semibold text-foreground">
+                Today&rsquo;s schedule
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {formatDateLong(start, timezone)}
+              </p>
+            </div>
+            {/* Same plain-text header link every other card uses (View all /
+                View list / …) — the bordered button this used to be sat
+                heavier than its siblings and squeezed the title onto two
+                lines in this narrower column. */}
+            <Link
+              to={routes.owner.calendar}
+              className="shrink-0 text-xs font-medium text-primary hover:underline"
+            >
+              View calendar
+            </Link>
+          </div>
+
+          {loading && <LoadingState label="Loading today's appointments…" />}
+          {error && <ErrorState error={error} onRetry={() => void refresh()} />}
+
+          {!loading && !error && appointments.length === 0 && (
+            <EmptyState
+              title="Nothing booked today"
+              description="When a customer books online it will appear here straight away."
+              action={
+                <Button variant="ghost" size="sm" onClick={() => void refresh()}>
+                  Refresh
+                </Button>
+              }
+            />
+          )}
+
+          {!loading && !error && appointments.length > 0 && (
+            <ScheduleTimeline
+              appointments={appointments}
+              timezone={timezone}
+              nextUpId={nextUpcoming[0]?.id ?? null}
+              expandedId={expandedId}
+              onToggle={(id) => setExpandedId((cur) => (cur === id ? null : id))}
+            />
+          )}
+
+          {/* Reschedule stays an inline panel, not a popup — it's opened from
+              inside the Edit popup, so closing that popup first (below) keeps
+              it from appearing behind the overlay. */}
+          {expandedAppointment && movingId === expandedAppointment.id && (
+            <div className="mt-3">
+              <ReschedulePicker
+                currentStartsAt={expandedAppointment.starts_at}
+                busy={moveBusy}
+                error={moveError}
+                onCancel={() => {
+                  setMovingId(null);
+                  setMoveError(null);
+                }}
+                onChoose={(startsAt) => void doOwnerReschedule(expandedAppointment.id, startsAt)}
+              />
+            </div>
+          )}
+
+          {!loading && !error && appointments.length > 0 && (
+            <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+              <span className="text-xs text-muted-foreground">
+                {appointments.length} appointment{appointments.length === 1 ? '' : 's'}
+              </span>
+              <Link
+                to={routes.owner.appointments}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                View full day
+              </Link>
+            </div>
+          )}
+        </Card>
+
+        <NextUpCard
+          className="lg:col-span-3"
+          appointments={nextUpcoming}
+          timezone={timezone}
+          now={now}
+          onViewDetails={(id) => setExpandedId(id)}
+        />
+        <GlanceGrid
+          className="lg:col-span-3"
+          appointments={appointments}
+          todayCount={summary?.today_count ?? null}
+          timezone={timezone}
+        />
+        {/* Direct row-1 grid siblings of Next up / Today at a glance, not a
+            row-span-2 stack — otherwise this column floats independently of
+            the row boundary and its bottom edge stops lining up with theirs. */}
+        <ApprovalsQueueCard className="lg:col-span-3" />
+
+        {/* h-full on the wrapper itself, not just the Card inside it — a
+            percentage height only resolves against the grid row track when
+            it's set on the direct grid item; nested one level deeper it just
+            resolves against an auto-sized ancestor and does nothing. */}
+        <div className="h-full lg:col-span-6">
+          <BookingsOverviewChart timezone={timezone} />
+        </div>
+        <div className="grid h-full gap-4 lg:col-span-3 lg:grid-rows-2">
+          <AvailabilityRequestsCard />
+          <RecentActivityCard timezone={timezone} />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <AssistantInsightsRow timezone={timezone} />
+      </div>
+
+      <Modal
+        open={expandedId !== null && movingId === null}
+        onClose={() => setExpandedId(null)}
+        ariaLabel="Edit appointment"
+        className="max-w-3xl"
+      >
+        {expandedAppointment && (
+          <AppointmentDetailModal
+            appointment={expandedAppointment}
+            timezone={timezone}
+            onClose={() => setExpandedId(null)}
+            onStatusChange={changeStatus}
+            onNoteSave={saveNote}
+            onLogPayment={logPaymentHandler}
+            onBookFollowUp={(a) => {
+              setPrefill({
+                fullName: a.customer_name ?? '',
+                email: a.customer_email ?? '',
+                mobile: a.customer_mobile ?? '',
+              });
+              setJustBooked(null);
+              setExpandedId(null);
+              setBooking(true);
+            }}
+            onMove={(a) => {
+              setMovingId(a.id);
+              setMoveError(null);
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="New booking">
         <NewBookingPanel
           prefill={prefill}
           initialStartsAt={rescheduleInitial?.initialStartsAt}
@@ -299,62 +457,7 @@ export function TodayPage(): JSX.Element {
             void refreshSummary();
           }}
         />
-      )}
-
-      {justBooked && (
-        <div className="mb-6 rounded-lg border border-status-completed p-4 text-sm">
-          <p className="font-medium text-foreground">Booked. Reference {justBooked}.</p>
-          <p className="mt-1 text-muted-foreground">
-            Their confirmation email is on its way, with a link they can use to change or
-            cancel it themselves.
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        {appointments.map((appointment) => (
-          <div key={appointment.id}>
-            <AppointmentCard
-              appointment={appointment}
-              timezone={timezone}
-              onStatusChange={changeStatus}
-              onLogPayment={logPaymentHandler}
-              onBookFollowUp={(a) => {
-                setPrefill({
-                  fullName: a.customer_name ?? '',
-                  email: a.customer_email ?? '',
-                  mobile: a.customer_mobile ?? '',
-                });
-                setJustBooked(null);
-                setBooking(true);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onReschedule={(a) => {
-                // Open the compact reschedule picker inline for quick owner reschedules.
-                setMovingId(a.id);
-                setMoveError(null);
-              }}
-            />
-
-            {movingId === appointment.id && (
-              <div className="mt-3">
-                <ReschedulePicker
-                  currentStartsAt={appointment.starts_at}
-                  busy={moveBusy}
-                  error={moveError}
-                  onCancel={() => {
-                    setMovingId(null);
-                    setMoveError(null);
-                  }}
-                  onChoose={(startsAt) =>
-                    void doOwnerReschedule(appointment.id, startsAt)
-                  }
-                />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      </Modal>
     </DashboardLayout>
   );
 }

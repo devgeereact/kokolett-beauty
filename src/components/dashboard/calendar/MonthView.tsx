@@ -1,4 +1,10 @@
-import { WEEKDAY_HEADINGS, dayNumber, isSameMonth, monthGrid } from '@/lib/calendar';
+import {
+  CALENDAR_GRID_HEIGHT_CLASS,
+  WEEKDAY_HEADINGS,
+  dayNumber,
+  isSameMonth,
+  monthGrid,
+} from '@/lib/calendar';
 import { formatTime } from '@/lib/format';
 import { STATUS_DOTS } from '@/lib/status';
 import { cn } from '@/lib/utils';
@@ -35,8 +41,13 @@ export function MonthView({
   const weeks = monthGrid(year, month);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="grid grid-cols-7 border-b border-border bg-muted">
+    <div
+      className={cn(
+        'flex flex-col overflow-hidden rounded-xl border border-border bg-card',
+        CALENDAR_GRID_HEIGHT_CLASS,
+      )}
+    >
+      <div className="grid shrink-0 grid-cols-7 border-b border-border bg-muted">
         {WEEKDAY_HEADINGS.map((heading) => (
           <div
             key={heading}
@@ -47,7 +58,10 @@ export function MonthView({
         ))}
       </div>
 
-      <div className="grid grid-cols-7">
+      {/* Fixed 6 rows filling whatever height is left, not a row per week
+          sized to its own content — so the month always fits the screen
+          instead of pushing the page taller in a 6-week month. */}
+      <div className="grid flex-1 grid-cols-7" style={{ gridTemplateRows: 'repeat(6, minmax(0, 1fr))' }}>
         {weeks.flat().map((date) => {
           const row = summary.get(date);
           const inMonth = isSameMonth(date, year, month);
@@ -64,7 +78,7 @@ export function MonthView({
               aria-label={`${date}: ${row?.slot_count ?? 0} times, ${row?.booked_count ?? 0} booked`}
               aria-current={isToday ? 'date' : undefined}
               className={cn(
-                'flex min-h-[6.5rem] flex-col items-start gap-0.5 border-b border-r border-border p-2 text-left',
+                'flex min-h-0 flex-col items-start gap-0.5 overflow-hidden border-b border-r border-border p-2 text-left',
                 'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 inMonth ? 'bg-card hover:bg-muted' : 'bg-muted',
               )}

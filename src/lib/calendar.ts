@@ -98,6 +98,28 @@ export interface HourRange {
 /** Pixel height of one hour row — shared by the axis labels and the grid lines. */
 export const HOUR_ROW_PX = 64;
 
+/**
+ * Week/Day's grid fits the viewport instead of scrolling internally
+ * (docs/design/calendar.png shows the full opening-to-closing span on
+ * screen at once, however many hours that is) — so rows are sized by
+ * percentage of this fixed container height, not a per-hour pixel constant.
+ * `HOUR_ROW_PX` stays in use for `ScheduleTimeline` (Today page), which is a
+ * summary widget that scrolls within its own card, not the primary editing
+ * surface this constraint applies to.
+ */
+export const CALENDAR_GRID_HEIGHT_CLASS = 'h-[calc(100vh-16rem)] min-h-[480px]';
+
+/**
+ * Equal-height hour gridlines as a percentage-based repeating gradient, so
+ * they render correctly at any container height — used with
+ * `CALENDAR_GRID_HEIGHT_CLASS` instead of `HOUR_ROW_PX`-per-row pixel maths.
+ */
+export function hourGridlines(rowCount: number): string {
+  if (rowCount <= 0) return 'none';
+  const rowPercent = 100 / rowCount;
+  return `repeating-linear-gradient(180deg, transparent, transparent calc(${rowPercent}% - 1px), var(--border) calc(${rowPercent}% - 1px), var(--border) ${rowPercent}%)`;
+}
+
 const FALLBACK_RANGE: HourRange = { startMin: 8 * 60, endMin: 20 * 60 };
 const MIN_SPAN_MIN = 6 * 60;
 const DAY_MIN = 24 * 60;
@@ -177,7 +199,7 @@ export function weekDates(anchorDate: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
 }
 
-export type CalendarView = 'month' | 'week' | 'day';
+export type CalendarView = 'month' | 'week' | 'day' | 'agenda';
 
 /** Moves the focused date by one step of whichever view is showing. */
 export function shiftAnchor(
@@ -185,7 +207,8 @@ export function shiftAnchor(
   anchor: string,
   direction: 1 | -1,
 ): string {
-  if (view === 'day') return addDays(anchor, direction);
+  // Agenda is a chronological list for a single day, same as Day.
+  if (view === 'day' || view === 'agenda') return addDays(anchor, direction);
   if (view === 'week') return addDays(anchor, 7 * direction);
   const { year, month } = shiftMonth(
     parseDate(anchor).getUTCFullYear(),

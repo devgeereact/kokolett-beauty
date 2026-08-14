@@ -1,37 +1,63 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Download, Search } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { AdvisorySection } from '@/components/dashboard/assistant/AdvisorySection';
+import { CommunicationAssistancePanel } from '@/components/dashboard/assistant/CommunicationAssistancePanel';
+import { RepeatCustomerInsightsPanel } from '@/components/dashboard/assistant/RepeatCustomerInsightsPanel';
+import { CancellationForecastingPanel } from '@/components/dashboard/assistant/CancellationForecastingPanel';
+import { CustomerTable } from '@/components/dashboard/customers/CustomerTable';
+import { CustomerDetailPanel } from '@/components/dashboard/customers/CustomerDetailPanel';
 import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Field, Input, Textarea } from '@/components/ui/Field';
+import { Modal } from '@/components/ui/Modal';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
-  listCustomers,
+  getCustomer,
+  listCustomersWithStats,
   setCustomerNote,
   softDeleteCustomer,
   updateCustomerDetails,
   type CustomerContactDraft,
+  type CustomerWithStats,
 } from '@/services/customerService';
 import { listForCustomer } from '@/services/appointmentService';
+import { downloadCsv } from '@/lib/csv';
 import { errorMessage } from '@/lib/errors';
-import { formatDateTime, formatMoney } from '@/lib/format';
-import { StatusChip } from '@/components/ui/StatusChip';
-import { cn } from '@/lib/utils';
-import type { AppointmentDetailed, Customer } from '@/types';
+import { routes } from '@/lib/routes';
+import type { AppointmentDetailed } from '@/types';
+
+type StatusFilter = 'all' | 'active' | 'inactive' | 'new';
+
+function isInactive(customer: CustomerWithStats): boolean {
+  if (!customer.last_visit_at) return false;
+  return Date.now() - new Date(customer.last_visit_at).getTime() > 180 * 24 * 60 * 60 * 1000;
+}
+
+function isNewCustomer(customer: CustomerWithStats): boolean {
+  if (customer.completed_count > 1) return false;
+  const ageMs = Date.now() - new Date(customer.first_seen_at ?? customer.created_at).getTime();
+  return ageMs < 14 * 24 * 60 * 60 * 1000;
+}
 
 /** The customer book. Owner-only — RLS gives anon nothing from this table. */
 export function CustomersPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
   const { showToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState('');
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [customers, setCustomers] = useState<CustomerWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const [selected, setSelected] = useState<Customer | null>(null);
+  const [selected, setSelected] = useState<CustomerWithStats | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [history, setHistory] = useState<AppointmentDetailed[]>([]);
   const [note, setNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
@@ -44,12 +70,12 @@ export function CustomersPage(): JSX.Element {
   });
   const [savingContact, setSavingContact] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
-  const [pendingErase, setPendingErase] = useState<Customer | null>(null);
+  const [pendingErase, setPendingErase] = useState<CustomerWithStats | null>(null);
 
   const load = useCallback(async (term: string): Promise<void> => {
     setLoading(true);
     try {
-      setCustomers(await listCustomers(term));
+      setCustomers(await listCustomersWithStats(term));
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
@@ -59,13 +85,20 @@ export function CustomersPage(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    // Debounced so typing a name is not one request per keystroke.
     const timer = window.setTimeout(() => void load(search), 250);
     return () => window.clearTimeout(timer);
   }, [search, load]);
 
-  const open = async (customer: Customer): Promise<void> => {
+  const filtered = useMemo(() => {
+    if (statusFilter === 'all') return customers;
+    if (statusFilter === 'new') return customers.filter(isNewCustomer);
+    if (statusFilter === 'inactive') return customers.filter(isInactive);
+    return customers.filter((c) => !isInactive(c));
+  }, [customers, statusFilter]);
+
+  const open = async (customer: CustomerWithStats): Promise<void> => {
     setSelected(customer);
+    setDetailOpen(true);
     setNote(customer.notes ?? '');
     setBooking(false);
     setEditingContact(false);
@@ -77,7 +110,19 @@ export function CustomersPage(): JSX.Element {
     }
   };
 
-  const startEditingContact = (customer: Customer): void => {
+  useEffect(() => {
+    const customerId = new URLSearchParams(location.search).get('customer');
+    if (!customerId) return;
+    getCustomer(customerId)
+      .then((customer) => {
+        if (customer) void open({ ...customer, completed_count: 0, upcoming_count: 0, no_show_count: 0, last_visit_at: null, favourite_services: [] });
+      })
+      .catch((e: unknown) => showToast({ message: errorMessage(e) }));
+    void navigate(routes.owner.customers, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const startEditingContact = (customer: CustomerWithStats): void => {
     setContactDraft({
       fullName: customer.full_name,
       email: customer.email,
@@ -124,6 +169,7 @@ export function CustomersPage(): JSX.Element {
     try {
       await setCustomerNote(selected.id, note);
       await load(search);
+      showToast({ message: 'Note saved.' });
     } catch (e) {
       showToast({ message: errorMessage(e) });
     } finally {
@@ -131,37 +177,75 @@ export function CustomersPage(): JSX.Element {
     }
   };
 
-  const erase = async (customer: Customer): Promise<void> => {
+  const erase = async (customer: CustomerWithStats): Promise<void> => {
     try {
       await softDeleteCustomer(customer.id);
       setSelected(null);
+      setDetailOpen(false);
       await load(search);
     } catch (e) {
       showToast({ message: errorMessage(e) });
     }
   };
 
+  const exportCsv = (): void => {
+    const header = ['Name', 'Email', 'Mobile', 'Total visits', 'Last visit', 'Status', 'Marketing consent'];
+    const rows = filtered.map((c) => [
+      c.full_name,
+      c.email,
+      c.mobile ?? '',
+      String(c.completed_count),
+      c.last_visit_at ?? '',
+      isInactive(c) ? 'Inactive' : 'Active',
+      c.marketing_consent ? 'Yes' : 'No',
+    ]);
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCsv(`customers-${today}.csv`, [header, ...rows]);
+  };
+
   return (
-    <DashboardLayout title="Customers" subtitle="Everyone who has booked with you">
-      <div className="mb-6 max-w-md">
-        <Field label="Search" hint="Name, email or mobile.">
-          {({ id, describedBy }) => (
-            <Input
-              id={id}
-              aria-describedby={describedBy}
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Start typing…"
-            />
-          )}
-        </Field>
+    <DashboardLayout title="Customers" subtitle="View your clients, their history and preferences.">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {loading ? 'Loading…' : `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`}
+        </p>
+        <Button variant="ghost" size="sm" onClick={exportCsv}>
+          <Download aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+          Export
+        </Button>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            strokeWidth={2}
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search customers, email, phone…"
+            className="h-11 w-full rounded-lg border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+          className="h-11 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="all">All customers</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="new">New</option>
+        </select>
       </div>
 
       {loading && <LoadingState label="Loading customers…" />}
       {error && <ErrorState error={error} onRetry={() => void load(search)} />}
 
-      {!loading && !error && customers.length === 0 && (
+      {!loading && !error && filtered.length === 0 && (
         <EmptyState
           title={search ? 'No one matches that' : 'No customers yet'}
           description={
@@ -172,264 +256,70 @@ export function CustomersPage(): JSX.Element {
         />
       )}
 
-      <div className={cn('grid gap-6', selected && 'lg:grid-cols-2')}>
-        <div
-          className={cn(
-            // With nothing selected there's no second column, so let the
-            // list itself tile across the freed-up width instead of
-            // sitting in a single narrow stack — the dashboard is meant to
-            // be dense and scannable (docs/DESIGN.md), not leave most of
-            // the screen empty while an owner scrolls a long customer list.
-            selected ? 'space-y-2' : 'grid gap-3 sm:grid-cols-2 xl:grid-cols-3',
-          )}
-        >
-          {customers.map((customer) => (
-            <div
-              key={customer.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => void open(customer)}
-              onKeyDown={(e) => {
-                // Mirrors a native <button>'s activation keys. A real
-                // <button> can't be used here — it would wrap the mailto/tel
-                // links below, and a button's content model forbids
-                // interactive-content descendants.
-                //
-                // Guarded to the row itself, not bubbled children: this
-                // handler also receives keydowns that bubble up from the
-                // nested mailto:/tel: links below. Without the guard,
-                // pressing Enter on a focused link would preventDefault()
-                // here and open the customer instead of letting the link
-                // activate — breaking keyboard access to the very links
-                // this row renders.
-                if (e.target !== e.currentTarget) return;
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  void open(customer);
-                }
-              }}
-              className={`w-full cursor-pointer rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                selected?.id === customer.id
-                  ? 'border-primary bg-card'
-                  : 'border-border bg-card hover:bg-muted'
-              }`}
-            >
-              <p className="font-medium text-foreground">{customer.full_name}</p>
-              <p className="text-sm text-muted-foreground">
-                <a
-                  href={`mailto:${customer.email}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="hover:text-foreground hover:underline hover:underline-offset-4"
-                >
-                  {customer.email}
-                </a>
-                {customer.mobile ? (
-                  <>
-                    {' · '}
-                    <a
-                      href={`tel:${customer.mobile.replace(/\s/g, '')}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="hover:text-foreground hover:underline hover:underline-offset-4"
-                    >
-                      {customer.mobile}
-                    </a>
-                  </>
-                ) : (
-                  ''
-                )}
-              </p>
-              {customer.marketing_consent && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Consented to marketing
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
+      {!loading && !error && filtered.length > 0 && (
+        <CustomerTable
+          customers={filtered}
+          selectedId={selected?.id ?? null}
+          onSelect={(c) => void open(c)}
+          timezone={timezone}
+        />
+      )}
 
+      <Modal
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        ariaLabel="Customer details"
+        className="max-w-3xl"
+      >
         {selected && (
-          <Card className="h-fit p-5">
-            {editingContact ? (
-              <div className="mb-4 border-b border-border pb-4">
-                <Field label="Full name">
-                  {({ id }) => (
-                    <Input
-                      id={id}
-                      value={contactDraft.fullName}
-                      onChange={(e) =>
-                        setContactDraft({ ...contactDraft, fullName: e.target.value })
-                      }
-                    />
-                  )}
-                </Field>
-                <Field label="Email">
-                  {({ id }) => (
-                    <Input
-                      id={id}
-                      type="email"
-                      value={contactDraft.email}
-                      onChange={(e) =>
-                        setContactDraft({ ...contactDraft, email: e.target.value })
-                      }
-                    />
-                  )}
-                </Field>
-                <Field label="Mobile">
-                  {({ id }) => (
-                    <Input
-                      id={id}
-                      type="tel"
-                      value={contactDraft.mobile}
-                      onChange={(e) =>
-                        setContactDraft({ ...contactDraft, mobile: e.target.value })
-                      }
-                    />
-                  )}
-                </Field>
-                {contactError && (
-                  <p role="alert" className="mb-3 text-sm font-medium text-destructive">
-                    {contactError}
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    loading={savingContact}
-                    onClick={() => void saveContact()}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setEditingContact(false);
-                      setContactError(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-display text-lg font-semibold text-foreground">
-                    {selected.full_name}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    <a
-                      href={`mailto:${selected.email}`}
-                      className="hover:text-foreground hover:underline hover:underline-offset-4"
-                    >
-                      {selected.email}
-                    </a>
-                    {selected.mobile ? (
-                      <>
-                        {' · '}
-                        <a
-                          href={`tel:${selected.mobile.replace(/\s/g, '')}`}
-                          className="hover:text-foreground hover:underline hover:underline-offset-4"
-                        >
-                          {selected.mobile}
-                        </a>
-                      </>
-                    ) : (
-                      ''
-                    )}
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => startEditingContact(selected)}
-                  >
-                    Edit
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
-                    Close
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {booking && (
-              <div className="mb-4">
-                <NewBookingPanel
-                  prefill={{
-                    fullName: selected.full_name,
-                    email: selected.email,
-                    mobile: selected.mobile ?? '',
-                  }}
-                  onClose={() => setBooking(false)}
-                  onBooked={() => {
-                    setBooking(false);
-                    void open(selected);
-                  }}
-                />
-              </div>
-            )}
-
-            <Field
-              label="Private note"
-              hint="Only you see this. Never shown to the customer."
-            >
-              {({ id, describedBy }) => (
-                <Textarea
-                  id={id}
-                  aria-describedby={describedBy}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Prefers a quiet appointment. Allergic to ammonia."
-                />
-              )}
-            </Field>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" loading={savingNote} onClick={() => void saveNote()}>
-                Save note
-              </Button>
-              {!booking && (
-                <Button size="sm" variant="ghost" onClick={() => setBooking(true)}>
-                  Book follow-up
-                </Button>
-              )}
-            </div>
-
-            <h3 className="mb-2 mt-6 font-display text-base font-semibold text-foreground">
-              History
-            </h3>
-            {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No appointments yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {history.map((a) => (
-                  <li
-                    key={a.id}
-                    className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 text-sm last:border-0"
-                  >
-                    <span className="text-foreground">
-                      {formatDateTime(a.starts_at, timezone)} · {a.service_name}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="text-muted-foreground">
-                        {formatMoney(a.price_pence)}
-                      </span>
-                      <StatusChip status={a.status} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-6 border-t border-border pt-4">
-              <Button variant="ghost" size="sm" onClick={() => setPendingErase(selected)}>
-                Erase personal details
-              </Button>
-            </div>
-          </Card>
+          <CustomerDetailPanel
+            customer={selected}
+            history={history}
+            timezone={timezone}
+            note={note}
+            onNoteChange={setNote}
+            savingNote={savingNote}
+            onSaveNote={() => void saveNote()}
+            editingContact={editingContact}
+            contactDraft={contactDraft}
+            onContactDraftChange={setContactDraft}
+            contactError={contactError}
+            savingContact={savingContact}
+            onStartEdit={() => startEditingContact(selected)}
+            onSaveContact={() => void saveContact()}
+            onCancelEdit={() => {
+              setEditingContact(false);
+              setContactError(null);
+            }}
+            onClose={() => setDetailOpen(false)}
+            onBookFollowUp={() => {
+              setDetailOpen(false);
+              setBooking(true);
+            }}
+            onErase={() => setPendingErase(selected)}
+            onConsentChange={(consent) =>
+              setCustomers((prev) => prev.map((c) => (c.id === selected.id ? { ...c, marketing_consent: consent } : c)))
+            }
+          />
         )}
-      </div>
+      </Modal>
+
+      <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="New booking">
+        {selected && (
+          <NewBookingPanel
+            prefill={{
+              fullName: selected.full_name,
+              email: selected.email,
+              mobile: selected.mobile ?? '',
+            }}
+            onClose={() => setBooking(false)}
+            onBooked={() => {
+              setBooking(false);
+              void open(selected);
+            }}
+          />
+        )}
+      </Modal>
 
       <ConfirmDialog
         open={pendingErase !== null}
@@ -449,6 +339,16 @@ export function CustomersPage(): JSX.Element {
         }}
         onCancel={() => setPendingErase(null)}
       />
+
+      <AdvisorySection title="Customer messages" description="AI-assisted replies for a customer's message.">
+        <CommunicationAssistancePanel timezone={timezone} />
+      </AdvisorySection>
+      <AdvisorySection title="Repeat customers" description="Who books again and again, and who's gone quiet.">
+        <RepeatCustomerInsightsPanel timezone={timezone} />
+      </AdvisorySection>
+      <AdvisorySection title="Cancellation risk" description="Bookings more likely than usual to no-show or cancel.">
+        <CancellationForecastingPanel timezone={timezone} />
+      </AdvisorySection>
     </DashboardLayout>
   );
 }

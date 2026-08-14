@@ -88,6 +88,17 @@ Colour never carries status alone — every chip also has a text label, because 
 1 in 12 men has a colour vision deficiency and the owner's calendar is the one screen
 where a misread is expensive.
 
+### Tint tokens
+
+Every status colour above has a pale-background counterpart — `tint-pending`,
+`tint-confirmed`, `tint-in-service`, `tint-completed`, `tint-cancelled`,
+`tint-no-show`, plus `tint-primary` and `tint-chart-1..5` — each a
+`color-mix()` of the saturated token into `card`, so it stays correct in both
+themes without a second set of hand-picked hex values. This is the
+background half of the "pale tint + saturated text" pairing used everywhere
+a small UI element needs to read as coloured without shouting: status pills,
+badges, stat tile icons, countdown chips. See §11.
+
 ## 4. Typography
 
 | Role                        | Family             | Notes                              |
@@ -171,3 +182,28 @@ wide 1440px.
 rows (`src/lib/icons.ts`). Import icons individually
 (`import { Calendar } from 'lucide-react'`) so unused icons are tree-shaken; never
 `import * as Icons`.
+
+## 11. Shared component patterns
+
+Three small components, all built on `Tone` (`src/lib/tone.ts` — `'pending' |
+'confirmed' | 'completed' | 'cancelled' | 'neutral'`, mapping to a
+`tint-*` background and a `status-*` text colour). One map means a token
+rename or a new tone changes in one place, not per component. Introduced
+building the Approvals screen (`docs/design/approval.png`); use these for
+every screen after it rather than re-deriving the same `bg-tint-*
+text-status-*` pair inline.
+
+- **`StatTile`** (`components/ui/StatTile.tsx`) — a dashboard headline
+  number: tinted icon square, bold value, muted label. Use for any "N
+  pending / N this week"-shaped stat row.
+- **`Badge`** (`components/ui/Badge.tsx`) — a short tinted pill for a fact
+  about a row that isn't its `AppointmentStatus` (that's
+  `StatusPill`/`StatusChip`, keyed by the status enum) — e.g. "First-time
+  customer", "Needs approval · 11h 24m remaining".
+- **`CountdownChip`** (`components/ui/CountdownChip.tsx`) — a boxed,
+  two-line deadline (`formatCountdown` value / "remaining") for a list row
+  where a deadline needs to read at a glance.
+
+Default tone is `neutral` (`bg-muted` / `text-muted-foreground`) for a stat
+or badge that isn't inherently status-coloured — not every tile needs to be
+orange.

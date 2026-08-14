@@ -140,6 +140,9 @@ export interface TimeSlot {
  */
 export type ServiceMenuItem = Tables['service_menu']['Row'];
 
+export type EmailTemplateRow = Tables['email_templates']['Row'];
+export type EmailTemplateUpdate = Tables['email_templates']['Update'];
+
 /** One group as `public_service_menu()` returns it. */
 export interface ServiceMenuGroup {
   group_name: string;

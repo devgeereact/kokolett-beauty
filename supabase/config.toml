@@ -308,9 +308,14 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
+# Enabled 2026-08-14 for the Settings > Security screen's real
+# supabase.auth.mfa.enroll()/challengeAndVerify() flow. Local file only —
+# the live project needs `supabase config push` (or the Dashboard toggle)
+# to actually pick this up; see SecurityCard.tsx's error handling for the
+# `mfa_totp_enroll_not_enabled` failure this fixes.
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]

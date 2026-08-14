@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  formatCountdown,
   formatMoney,
+  greetingForHour,
   minutesSinceMidnight,
   parseMoney,
   salonDayRange,
   salonInstant,
+  splitAddressLines,
   toSalonDate,
 } from '@/lib/format';
 
@@ -113,5 +116,53 @@ describe('minutesSinceMidnight', () => {
   it('treats local midnight as 0, not 24 times 60', () => {
     // 23:00 UTC in August is 00:00 BST the next day.
     expect(minutesSinceMidnight('2026-08-11T23:00:00Z', 'Europe/London')).toBe(0);
+  });
+});
+
+describe('formatCountdown', () => {
+  const now = new Date('2026-08-11T10:00:00Z');
+
+  it('shows hours and minutes remaining', () => {
+    expect(formatCountdown('2026-08-11T20:15:00Z', now)).toBe('10h 15m remaining');
+  });
+
+  it('drops the hours when there are none', () => {
+    expect(formatCountdown('2026-08-11T10:45:00Z', now)).toBe('45m remaining');
+  });
+
+  it('drops the minutes when the remainder is a whole hour', () => {
+    expect(formatCountdown('2026-08-11T13:00:00Z', now)).toBe('3h remaining');
+  });
+
+  it('reports a passed deadline as expired rather than a negative duration', () => {
+    expect(formatCountdown('2026-08-11T09:00:00Z', now)).toBe('Expired');
+  });
+});
+
+describe('splitAddressLines', () => {
+  it('puts the trailing UK postcode on its own line', () => {
+    expect(splitAddressLines('Redbourne Dr, London SE28 8RX')).toEqual([
+      'Redbourne Dr',
+      'London',
+      'SE28 8RX',
+    ]);
+  });
+
+  it('falls back to a plain comma split when there is no recognisable postcode', () => {
+    expect(splitAddressLines('123 High Street, Manchester')).toEqual([
+      '123 High Street',
+      'Manchester',
+    ]);
+  });
+});
+
+describe('greetingForHour', () => {
+  it('greets morning, afternoon and evening at the expected boundaries', () => {
+    expect(greetingForHour(0)).toBe('Good morning');
+    expect(greetingForHour(11)).toBe('Good morning');
+    expect(greetingForHour(12)).toBe('Good afternoon');
+    expect(greetingForHour(17)).toBe('Good afternoon');
+    expect(greetingForHour(18)).toBe('Good evening');
+    expect(greetingForHour(23)).toBe('Good evening');
   });
 });

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { CalendarCapacityTabs } from '@/components/dashboard/CalendarCapacityTabs';
 import { DayPanel } from '@/components/dashboard/DayPanel';
+import { OpeningHoursSummaryCard } from '@/components/dashboard/availability/OpeningHoursSummaryCard';
+import { NextWeeksGlanceCard } from '@/components/dashboard/availability/NextWeeksGlanceCard';
+import { BookingRulesCard } from '@/components/dashboard/availability/BookingRulesCard';
+import { BookingPageStatusCard } from '@/components/dashboard/availability/BookingPageStatusCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -20,6 +23,7 @@ import {
 } from '@/services/availabilityService';
 import { errorMessage } from '@/lib/errors';
 import { addDays, DAYS_OF_WEEK, formatDateLong, toSalonDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
 /** Monday first, because that is how a working week reads. */
@@ -52,7 +56,7 @@ function buildTimes(from: string, to: string, everyMinutes: number): string[] {
  * your afternoon off overnight would be worse than no pattern at all.
  */
 export function WeeklyDefaultPage(): JSX.Element {
-  const { timezone } = useBusinessSettings();
+  const { timezone, settings } = useBusinessSettings();
   const { services } = useServices(true);
   const appointmentMinutes = services[0]?.duration_min ?? 60;
   const [dayEditorDate, setDayEditorDate] = useState(() =>
@@ -70,6 +74,12 @@ export function WeeklyDefaultPage(): JSX.Element {
   const [weeks, setWeeks] = useState('8');
   const [newTime, setNewTime] = useState<Record<number, string>>({});
   const [confirmingReplace, setConfirmingReplace] = useState(false);
+  // Accordion: one day's editor open at a time, none by default — the
+  // reference's "Weekly schedule" is one compact row per day, not seven
+  // always-expanded chip editors stacked on top of each other.
+  const [openDayIndex, setOpenDayIndex] = useState<number | null>(null);
+  const [showSingleDayTool, setShowSingleDayTool] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const load = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -156,8 +166,7 @@ export function WeeklyDefaultPage(): JSX.Element {
 
   if (loading) {
     return (
-      <DashboardLayout title="Weekly hours">
-        <CalendarCapacityTabs />
+      <DashboardLayout title="Availability">
         <LoadingState />
       </DashboardLayout>
     );
@@ -167,70 +176,121 @@ export function WeeklyDefaultPage(): JSX.Element {
 
   return (
     <DashboardLayout
-      title="Weekly hours"
-      subtitle="A repeating week, so you are not typing times every day"
+      title="Availability"
+      subtitle="Set your working hours and booking preferences."
+      actions={
+        <a
+          href={routes.public.book}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"
+        >
+          Preview booking page
+        </a>
+      }
     >
-      <CalendarCapacityTabs />
-
       {error && <ErrorState error={error} onRetry={() => void load()} />}
 
-      <Card className="mb-6 p-5">
-        <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
-          Adjust a single day
-        </h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          Override the pattern for one date — a day off, an extra evening, a one-time
-          change. This is the same publish/remove tool the Calendar used to show inline;
-          it lives here now, next to the pattern it overrides.
-        </p>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card className="p-5">
+            <button
+              type="button"
+              onClick={() => setShowSingleDayTool((v) => !v)}
+              className="flex w-full items-center justify-between gap-2 text-left"
+            >
+              <span>
+                <h2 className="font-display text-lg font-semibold text-foreground">
+                  Adjust a single day
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Override the pattern for one date — a day off, an extra evening, a
+                  one-time change.
+                </p>
+              </span>
+              <span className="shrink-0 text-sm font-medium text-primary">
+                {showSingleDayTool ? 'Hide' : 'Show'}
+              </span>
+            </button>
 
-        <label
-          htmlFor="day-editor-date"
-          className="mb-1 block text-xs text-muted-foreground"
-        >
-          Date
-        </label>
-        <DatePicker
-          id="day-editor-date"
-          className="mb-4 w-56"
-          value={dayEditorDate}
-          onChange={setDayEditorDate}
-        />
+            {showSingleDayTool && (
+              <div className="mt-4 border-t border-border pt-4">
+                <label
+                  htmlFor="day-editor-date"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  Date
+                </label>
+                <DatePicker
+                  id="day-editor-date"
+                  className="mb-4 w-56"
+                  value={dayEditorDate}
+                  onChange={setDayEditorDate}
+                />
 
-        <DayPanel
-          date={dayEditorDate}
-          timezone={timezone}
-          appointmentMinutes={appointmentMinutes}
-          onChanged={() => void load()}
-        />
-      </Card>
+                <DayPanel
+                  date={dayEditorDate}
+                  timezone={timezone}
+                  appointmentMinutes={appointmentMinutes}
+                  onChanged={() => void load()}
+                />
+              </div>
+            )}
+          </Card>
 
-      <Card className="p-5">
-        <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
-          Your usual week
-        </h2>
-        <p className="mb-5 text-sm text-muted-foreground">
-          Set the times you normally work. A day with no times is a day you are normally
-          closed.
-        </p>
+          <Card className="p-5">
+            <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+              Weekly schedule
+            </h2>
+            <p className="mb-5 text-sm text-muted-foreground">
+              Set the times you normally work. A day with no times is a day you are normally
+              closed.
+            </p>
 
-        <div className="space-y-4">
-          {DAY_ORDER.map((dayIndex) => {
-            const day = days.find((d) => d.day_of_week === dayIndex);
-            const times = day?.times ?? [];
-            const name = DAYS_OF_WEEK[dayIndex]?.name ?? '';
+            <div className="space-y-4">
+              {DAY_ORDER.map((dayIndex) => {
+                const day = days.find((d) => d.day_of_week === dayIndex);
+                const times = day?.times ?? [];
+                const name = DAYS_OF_WEEK[dayIndex]?.name ?? '';
+                const open = times.length > 0;
 
-            return (
-              <div key={dayIndex} className="border-b border-border pb-4 last:border-0">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium text-foreground">{name}</p>
-                  <span className="text-xs text-muted-foreground">
-                    {times.length === 0
-                      ? 'Closed'
-                      : `${times.length} time${times.length === 1 ? '' : 's'}`}
-                  </span>
-                </div>
+                const sorted = [...times].sort();
+                const isEditing = openDayIndex === dayIndex;
 
+                return (
+                  <div key={dayIndex} className="border-b border-border py-3 last:border-0">
+                    <button
+                      type="button"
+                      onClick={() => setOpenDayIndex((cur) => (cur === dayIndex ? null : dayIndex))}
+                      className="flex w-full flex-wrap items-center justify-between gap-2 text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="w-24 font-medium text-foreground">{name}</p>
+                        <span
+                          className={cn(
+                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                            open
+                              ? 'bg-tint-completed text-status-completed'
+                              : 'bg-muted text-muted-foreground',
+                          )}
+                        >
+                          {open ? 'Open' : 'Closed'}
+                        </span>
+                        {open && (
+                          <span className="hidden text-sm text-muted-foreground sm:inline">
+                            {sorted[0]}–{sorted.at(-1)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {open &&
+                          `${times.length} time${times.length === 1 ? '' : 's'} · up to ${settings?.max_appointments_per_day ?? '—'} per day`}
+                        <span className="font-medium text-primary">{isEditing ? 'Close' : 'Edit'}</span>
+                      </span>
+                    </button>
+
+                {isEditing && (
+                  <div className="mt-3">
                 {times.length > 0 && (
                   <ul className="mb-2 flex flex-wrap gap-1.5">
                     {times.map((t) => (
@@ -302,11 +362,23 @@ export function WeeklyDefaultPage(): JSX.Element {
                     </Button>
                   )}
                 </div>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="mt-4 text-sm font-medium text-primary hover:underline"
+        >
+          {showAdvanced ? 'Hide advanced options' : 'Show advanced options'}
+        </button>
+
+        {showAdvanced && (
+        <>
         <div className="mt-5 rounded-md border border-border bg-muted p-3">
           <p className="mb-2 text-xs font-medium text-foreground">
             What &ldquo;Fill&rdquo; uses
@@ -361,8 +433,12 @@ export function WeeklyDefaultPage(): JSX.Element {
             </div>
           </div>
         </div>
+        </>
+        )}
       </Card>
 
+      {showAdvanced && (
+      <>
       <Card className="mt-6 p-5">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -485,6 +561,17 @@ export function WeeklyDefaultPage(): JSX.Element {
           </div>
         </div>
       </Card>
+      </>
+      )}
+        </div>
+
+        <div className="space-y-6">
+          <OpeningHoursSummaryCard days={days} />
+          <NextWeeksGlanceCard timezone={timezone} days={days} />
+          <BookingRulesCard settings={settings} />
+          <BookingPageStatusCard />
+        </div>
+      </div>
 
       <ConfirmDialog
         open={confirmingReplace}

@@ -13,6 +13,26 @@
 export const DEFAULT_TIMEZONE = 'Europe/London';
 export const LOCALE = 'en-GB';
 
+const TIME_FORMAT_KEY = 'kokolett-time-format';
+export type TimeFormatPreference = '24h' | '12h';
+
+function readTimeFormatPreference(): TimeFormatPreference {
+  if (typeof window === 'undefined') return '24h';
+  return window.localStorage.getItem(TIME_FORMAT_KEY) === '12h' ? '12h' : '24h';
+}
+
+let timeFormatPreference: TimeFormatPreference = readTimeFormatPreference();
+
+/** Settings > Preferences > Time format writes here; every `formatTime` call reads it. */
+export function setTimeFormatPreference(pref: TimeFormatPreference): void {
+  timeFormatPreference = pref;
+  if (typeof window !== 'undefined') window.localStorage.setItem(TIME_FORMAT_KEY, pref);
+}
+
+export function getTimeFormatPreference(): TimeFormatPreference {
+  return timeFormatPreference;
+}
+
 /** 1500 → "£15.00" */
 export function formatMoney(pence: number): string {
   return new Intl.NumberFormat(LOCALE, {
@@ -47,9 +67,13 @@ function fmt(
   return new Intl.DateTimeFormat(LOCALE, { ...options, timeZone }).format(date);
 }
 
-/** "10:15" in salon time. */
+/** "10:15" or "10:15 AM" in salon time, per the owner's Preferences > Time format choice. */
 export function formatTime(iso: string | Date, timeZone = DEFAULT_TIMEZONE): string {
-  return fmt(iso, timeZone, { hour: '2-digit', minute: '2-digit', hour12: false });
+  return fmt(iso, timeZone, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: timeFormatPreference === '12h',
+  });
 }
 
 /** "Thu 6 Aug" in salon time. */
@@ -92,6 +116,46 @@ export function formatRelative(iso: string | Date, now: Date = new Date()): stri
     if (Math.abs(diffMs) >= ms) return rtf.format(Math.round(diffMs / ms), unit);
   }
   return 'now';
+}
+
+/**
+ * "[DEMO] Amara Bello" → "Amara". Full tagged names stay visible everywhere
+ * a name is shown as itself — the "[DEMO] " prefix is the point, it's how
+ * seeded rows are found and cleaned up later. This is only for the couple of
+ * spots that *derive* something from a name (initials, a possessive greeting
+ * like "Reply to Amara's message?"), where the bracket would otherwise become
+ * part of the derived text instead of the name.
+ */
+export function firstNameOf(fullName: string): string {
+  const cleaned = fullName.replace(/^\[[^\]]*\]\s*/, '').trim();
+  return cleaned.split(/\s+/)[0] || cleaned;
+}
+
+/**
+ * "10h 15m remaining" / "45m remaining" / "Expired". Used for approval
+ * deadlines on the dashboard, where the owner needs the exact rope left, not
+ * a rounded-to-one-unit relative phrase.
+ */
+export function formatCountdown(iso: string | Date, now: Date = new Date()): string {
+  const date = typeof iso === 'string' ? new Date(iso) : iso;
+  if (Number.isNaN(date.getTime())) return '—';
+
+  const diffMs = date.getTime() - now.getTime();
+  if (diffMs <= 0) return 'Expired';
+
+  const totalMinutes = Math.round(diffMs / 60_000);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m remaining`;
+  if (m === 0) return `${h}h remaining`;
+  return `${h}h ${m}m remaining`;
+}
+
+/** Salon-local hour (0–23) → "Good morning" / "Good afternoon" / "Good evening". */
+export function greetingForHour(hour: number): string {
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 /**
@@ -247,3 +311,27 @@ export function dayName(dayOfWeek: number): string {
 }
 
 export const DAYS_OF_WEEK = DAY_NAMES.map((name, index) => ({ index, name }));
+
+/**
+ * `address_line` is a single free-text field (docs/SCHEMA.md §601) — no
+ * separate street/town/postcode columns. Split it into display lines by
+ * pulling the trailing UK postcode onto its own line, then splitting
+ * whatever remains on commas, so a sidebar card reads as a proper address
+ * block instead of one run-on line.
+ */
+export function splitAddressLines(addressLine: string): string[] {
+  const postcodePattern = /,?\s*([A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2})\s*$/;
+  const match = addressLine.match(postcodePattern);
+  if (!match) {
+    return addressLine
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+  const rest = addressLine.slice(0, match.index).trim();
+  const restLines = rest
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return [...restLines, match[1]!.toUpperCase()];
+}

@@ -11,9 +11,9 @@ Live at **https://www.kokolettbeauty.com**
 - **Marketing site** — services, gallery, testimonials, FAQs, contact, policies.
 - **Availability-first booking** — customers only ever see slots that are genuinely
   open, generated from the owner's hours, breaks, closures, buffers and booking rules.
-- **Hybrid confirmation** — returning customers (anyone with a completed appointment)
-  are confirmed instantly; first-time customers are held for owner approval, with the
-  slot reserved and the hold auto-released if the window elapses.
+- **Availability is the gate** — anything inside the owner's published hours books
+  instantly, for anyone, new or returning. When nothing is open, the customer submits
+  a request instead, and requests are offered slots first-come-first-served.
 - **No dead ends** — when nothing is available, the customer submits an availability
   request instead of hitting an empty calendar.
 - **Passwordless customers** — identity is an email address. Access to appointment
@@ -146,6 +146,8 @@ kokolett-beauty/
 ├── vite.config.ts        # build + PWA/Workbox config
 ├── tailwind.config.ts    # design tokens (see docs/DESIGN.md)
 ├── docs/                 # PRD, DESIGN, ARCHITECTURE, SCHEMA, RULES, HOOKS
+│   ├── planning/         # live/proposed engineering specs
+│   └── history/          # point-in-time audits & decisions (archival)
 ├── public/               # manifest icons, offline.html, robots.txt
 ├── supabase/migrations/  # SQL schema + RLS policies
 └── src/
@@ -171,6 +173,10 @@ Full details live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - [`docs/SCHEMA.md`](docs/SCHEMA.md) — Postgres tables & RLS
 - [`docs/RULES.md`](docs/RULES.md) — coding standards
 - [`docs/HOOKS.md`](docs/HOOKS.md) — custom hook contracts
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deploy playbook & safety rules
+- [`docs/plan.md`](docs/plan.md) — the living punch list of what's actually open
+- [`docs/planning/`](docs/planning/) — active engineering specs and plans
+- [`docs/history/`](docs/history/) — archived audits, reviews and decisions
 
 ## License
 MIT — do whatever you want, no warranty.

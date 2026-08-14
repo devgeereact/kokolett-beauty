@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import {
-  HOUR_ROW_PX,
+  CALENDAR_GRID_HEIGHT_CLASS,
+  hourGridlines,
   hourLabels,
   hourRange,
   offsetPercent,
@@ -12,6 +13,7 @@ import { useAppointmentDrag, type UseAppointmentDrag } from '@/hooks/useAppointm
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
 import { DragGhost } from '@/components/dashboard/calendar/DragGhost';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
+import { cn } from '@/lib/utils';
 import type { OwnerDaySlot } from '@/services/availabilityService';
 import type { AppointmentDetailed } from '@/types';
 
@@ -122,7 +124,7 @@ export function DayView({
   // stays a real dependency — see WeekView's identical guard: without "now"
   // in the fitted range, the live line can silently never show on a
   // sparsely-published day.
-  const { range, labels, gridHeight } = useMemo(() => {
+  const { range, labels } = useMemo(() => {
     const allMinutes = [
       ...appointments.flatMap((a) => [
         minutesSinceMidnight(a.starts_at, timezone),
@@ -132,12 +134,7 @@ export function DayView({
     ];
     if (isToday) allMinutes.push(nowMinutes);
     const computedRange = hourRange(allMinutes);
-    const computedLabels = hourLabels(computedRange);
-    return {
-      range: computedRange,
-      labels: computedLabels,
-      gridHeight: computedLabels.length * HOUR_ROW_PX,
-    };
+    return { range: computedRange, labels: hourLabels(computedRange) };
   }, [appointments, freeSlots, timezone, isToday, nowMinutes]);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
@@ -161,15 +158,19 @@ export function DayView({
           </button>
         </p>
       )}
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <table className="w-full border-collapse text-sm">
+      <div
+        className={cn(
+          'flex flex-col overflow-hidden rounded-xl border border-border bg-card',
+          CALENDAR_GRID_HEIGHT_CLASS,
+        )}
+      >
+        <table className="w-full flex-1 border-collapse text-sm">
           <caption className="sr-only">Schedule for {date}</caption>
-          <tbody>
+          <tbody className="h-full">
             {labels.map((label, i) => (
-              <tr key={label}>
+              <tr key={label} style={{ height: `${100 / labels.length}%` }}>
                 <th
                   scope="row"
-                  style={{ height: HOUR_ROW_PX }}
                   className="w-[52px] pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
                 >
                   {label}
@@ -189,11 +190,8 @@ export function DayView({
                     }
                   >
                     <div
-                      className="relative"
-                      style={{
-                        height: gridHeight,
-                        backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
-                      }}
+                      className="absolute inset-0"
+                      style={{ backgroundImage: hourGridlines(labels.length) }}
                     >
                       {freeSlots.map((slot) => (
                         <DayOpenSlotBlock

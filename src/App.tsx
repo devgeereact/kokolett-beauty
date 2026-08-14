@@ -28,6 +28,7 @@ import { ReportsPage } from '@/pages/dashboard/ReportsPage';
 import { NotificationsPage } from '@/pages/dashboard/NotificationsPage';
 import { EmailPage } from '@/pages/dashboard/EmailPage';
 import { TemplatesPage } from '@/pages/dashboard/TemplatesPage';
+import { TemplateEditorPage } from '@/pages/dashboard/TemplateEditorPage';
 import { ProfilePage } from '@/pages/dashboard/ProfilePage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
@@ -113,6 +114,7 @@ export function App(): JSX.Element {
               />
               <Route path={routes.owner.email} element={owner(<EmailPage />)} />
               <Route path={routes.owner.templates} element={owner(<TemplatesPage />)} />
+              <Route path="/dashboard/templates/:key/edit" element={owner(<TemplateEditorPage />)} />
               <Route path={routes.owner.profile} element={owner(<ProfilePage />)} />
 
               <Route path="*" element={<NotFoundPage />} />

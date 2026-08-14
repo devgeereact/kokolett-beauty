@@ -35,6 +35,9 @@ export interface MenuItemInput {
   note?: string | null;
   sortOrder?: number;
   active?: boolean;
+  durationMin?: number;
+  bufferMin?: number;
+  imagePath?: string | null;
 }
 
 export async function createMenuItem(input: MenuItemInput): Promise<ServiceMenuItem> {
@@ -46,6 +49,9 @@ export async function createMenuItem(input: MenuItemInput): Promise<ServiceMenuI
       note: input.note?.trim() || null,
       sort_order: input.sortOrder ?? 0,
       active: input.active ?? true,
+      duration_min: input.durationMin ?? 45,
+      buffer_min: input.bufferMin ?? 10,
+      image_path: input.imagePath?.trim() || null,
     })
     .select('*')
     .single();
@@ -66,6 +72,9 @@ export async function updateMenuItem(
       ...(patch.note !== undefined && { note: patch.note?.trim() || null }),
       ...(patch.sortOrder !== undefined && { sort_order: patch.sortOrder }),
       ...(patch.active !== undefined && { active: patch.active }),
+      ...(patch.durationMin !== undefined && { duration_min: patch.durationMin }),
+      ...(patch.bufferMin !== undefined && { buffer_min: patch.bufferMin }),
+      ...(patch.imagePath !== undefined && { image_path: patch.imagePath?.trim() || null }),
     })
     .eq('id', id)
     .select('*')

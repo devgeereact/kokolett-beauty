@@ -3,8 +3,10 @@
 **Kokolett Beauty UK** — the booking and operations platform for a single-owner UK
 **women's hair salon**. Marketing site, availability-first booking, passwordless
 customer identity (magic links, no accounts), owner dashboard, advisory AI
-assistant, and automated transactional email. Hybrid booking policy: returning
-customers are confirmed instantly, first-time customers are held for owner approval.
+assistant, and automated transactional email. Booking policy: availability is the
+gate — anything inside the owner's published hours books instantly for anyone, new
+or returning; when nothing is open, the customer submits a request instead
+(`docs/SCHEMA.md` §11).
 
 You are working inside a **static, offline-first PWA** deployed to cPanel at
 `https://www.kokolettbeauty.com`. Treat the constraints below as ground truth for every
@@ -32,6 +34,8 @@ Never in a file.
 | Visual/design tokens         | `docs/DESIGN.md`        |
 | Product scope & metrics      | `docs/PRD.md`           |
 | Deploy process & safety      | `docs/DEPLOYMENT.md`    |
+| Live/proposed engineering specs | `docs/planning/`     |
+| Point-in-time audits & decisions | `docs/history/`     |
 
 ## Hard constraints
 - **Static build only.** Output is `dist/`, deployed via Git/FTP to cPanel.

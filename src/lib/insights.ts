@@ -147,6 +147,83 @@ export function analyzeHourOfDayTrend(
   }));
 }
 
+export interface WeekdayBookings {
+  /** 0 = Sunday .. 6 = Saturday, matching `dayOfWeek` everywhere else. */
+  dayOfWeek: number;
+  newCount: number;
+  returningCount: number;
+}
+
+/**
+ * One week's bookings split by day and by new-vs-returning, for the
+ * dashboard's "Bookings overview" chart. Same returning definition as
+ * `summarizeBusiness` (a completed visit on record), same rescheduled/rejected
+ * exclusion as `analyzeDayOfWeekTrend` — a superseded or never-happened row
+ * isn't a real day the salon was busy.
+ */
+export function analyzeWeekBookings(
+  appointments: AppointmentDetailed[],
+  timezone: string,
+): WeekdayBookings[] {
+  const buckets = new Map<number, { newCount: number; returningCount: number }>();
+
+  for (const a of appointments) {
+    if (a.status === 'rescheduled' || a.status === 'rejected') continue;
+    const dow = dayOfWeek(toSalonDate(a.starts_at, timezone));
+    const bucket = buckets.get(dow) ?? { newCount: 0, returningCount: 0 };
+    if ((a.customer_completed_count ?? 0) > 0) {
+      bucket.returningCount += 1;
+    } else {
+      bucket.newCount += 1;
+    }
+    buckets.set(dow, bucket);
+  }
+
+  return Array.from({ length: 7 }, (_, dow) => ({
+    dayOfWeek: dow,
+    newCount: buckets.get(dow)?.newCount ?? 0,
+    returningCount: buckets.get(dow)?.returningCount ?? 0,
+  }));
+}
+
+/**
+ * Relative change from `previous` to `current`, as a percentage — the "+12%
+ * vs last week" style deltas on the dashboard. `null` when there is nothing
+ * to compare against, rather than a misleading "+100%" or divide-by-zero
+ * `Infinity`.
+ */
+export function percentChange(current: number, previous: number): number | null {
+  if (previous === 0) return null;
+  return ((current - previous) / previous) * 100;
+}
+
+/**
+ * The soonest appointment that hasn't started yet — what the owner needs to
+ * prep for next on the dashboard's "Next up" card.
+ */
+/** Chronological, not-yet-started appointments — the "Next up" card's list, capped at `limit`. */
+export function findNextUpcoming(
+  appointments: AppointmentDetailed[],
+  now: Date,
+  limit: number,
+): AppointmentDetailed[] {
+  return appointments
+    .filter(
+      (a) =>
+        (a.status === 'confirmed' || a.status === 'checked_in') &&
+        new Date(a.starts_at).getTime() > now.getTime(),
+    )
+    .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+    .slice(0, limit);
+}
+
+export function findNextUp(
+  appointments: AppointmentDetailed[],
+  now: Date,
+): AppointmentDetailed | null {
+  return findNextUpcoming(appointments, now, 1)[0] ?? null;
+}
+
 /* ------------------------------------------------ repeat customers --- */
 
 export interface RepeatCustomerInsight {

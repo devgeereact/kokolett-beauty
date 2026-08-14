@@ -109,8 +109,11 @@ export function ConfirmDialog({
 
   if (!open) return null;
 
+  // z-[60]: above Modal's z-50 — several call sites (AppointmentDetailModal)
+  // nest this inside a Modal, and both portal to document.body as siblings,
+  // so a lower z-index here would paint the confirm dialog underneath it.
   return createPortal(
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <button
         type="button"
         aria-label="Close dialog"

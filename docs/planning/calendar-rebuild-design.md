@@ -2,8 +2,9 @@
 
 **Date:** 2026-08-11
 **Status:** Approved, pending implementation plan
-**Scope:** Phase 1 of the owner-dashboard redesign (see `PROJECT-MEMORY.md` /
-session notes for the full 9-piece decomposition: Calendar → Nav/Today,
+**Scope:** Phase 1 of the owner-dashboard redesign (see
+`docs/history/2026-08-06-intake-decisions.md` / session notes for the full
+9-piece decomposition: Calendar → Nav/Today,
 Appointment merge, Customer card, Services polish → Settings redesign →
 Booking success screen + date picker).
 

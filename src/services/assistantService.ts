@@ -10,6 +10,7 @@ import { listQueuedRequests } from '@/services/requestService';
 import { addDays, salonDayRange, toSalonDate } from '@/lib/format';
 import {
   analyzeDayOfWeekTrend,
+  analyzeHourOfDayTrend,
   findScheduleConflicts,
   forecastCancellationRisk,
   rankRepeatCustomers,
@@ -17,6 +18,7 @@ import {
   type BusinessAnalyticsSummary,
   type CancellationRisk,
   type DayOfWeekTrend,
+  type HourOfDayTrend,
   type RepeatCustomerInsight,
   type ScheduleConflict,
 } from '@/lib/insights';
@@ -120,6 +122,17 @@ export async function getDayOfWeekTrend(timezone: string): Promise<DayOfWeekTren
     (a) => a.status !== 'rescheduled' && a.status !== 'rejected',
   );
   return analyzeDayOfWeekTrend(counted, template, timezone);
+}
+
+export async function getHourOfDayTrend(timezone: string): Promise<HourOfDayTrend[]> {
+  const today = toSalonDate(new Date(), timezone);
+  const from = salonDayRange(addDays(today, -90), timezone).start;
+  const to = salonDayRange(today, timezone).end;
+  const appointments = await listAppointments({ from, to });
+  const counted = appointments.filter(
+    (a) => a.status !== 'rescheduled' && a.status !== 'rejected',
+  );
+  return analyzeHourOfDayTrend(counted, timezone);
 }
 
 export async function getRepeatCustomers(

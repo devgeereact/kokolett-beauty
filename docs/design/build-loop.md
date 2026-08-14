@@ -12,30 +12,44 @@ against `docs/DESIGN.md`, `tailwind.config.ts`, and `src/index.css`. If a token 
 the reference isn't in the codebase yet, add it to `tailwind.config.ts` /
 `src/index.css` first — don't hardcode a raw hex value into a component.
 
+**Already shipped, don't redo:** the token reconciliation (card/popover shadow,
+spacing/grid/breakpoint docs), the `lucide-react` icon system
+(`src/lib/icons.ts`), the app icon/favicon set, and the grouped sidebar nav itself
+(`docs/planning/owner-console-rebuild-plan.md`, merged to `main`). This loop is
+purely the *content* of each screen — the shell around it is done.
+
 `@docs/design/logo.png` is a brand asset reference, not a screen — use it only to
 verify the logo/wordmark rendering wherever it appears (header, auth, marketing).
 
 ## 1. Screen list
 
-For each row: confirm the target page component is actually the right match
-before implementing (grep `src/pages/dashboard/` — some reference files map to
-more than one candidate page, noted below). Work top to bottom.
+Verified 2026-08-14 against the shipped nav (`src/components/dashboard/
+DashboardLayout.tsx`) and `src/lib/routes.ts` — every reference image now maps
+1:1 to a nav row, no ambiguity left. `AppointmentTypePage.tsx` (service length
+and price) has no reference image and no direct nav row by design (reached only
+via `CalendarCapacityTabs`'s in-page switcher from Calendar) — not in this list.
 
-| # | Reference image | Target page (verify first) | Notes |
-|---|---|---|---|
-| 1 | `dashboard.png` | `src/pages/dashboard/TodayPage.tsx` | Command-center / today view |
-| 2 | `calendar.png` | `src/pages/dashboard/CalendarPage.tsx` | |
-| 3 | `availability.png` | `src/pages/dashboard/WeeklyDefaultPage.tsx` | Compare against `avalability.png` too — likely the same screen, duplicate/typo filename. Confirm which is current before using both. |
-| 4 | `appointment.png` | `src/pages/dashboard/AppointmentsPage.tsx` | Could also be `AppointmentTypePage.tsx` — confirm which the reference actually shows (list view vs. type/duration config) |
-| 5 | `approval.png` | Approval queue — check `AppointmentsPage.tsx` / `InboxPage.tsx` | `pending_approval` requests view per booking policy (docs/SCHEMA.md §11) |
-| 6 | `customer.png` | `src/pages/dashboard/CustomersPage.tsx` | |
-| 7 | `service.png` | `src/pages/dashboard/ServiceMenuPage.tsx` | |
-| 8 | `reports.png` | `src/pages/dashboard/ReportsPage.tsx` | |
-| 9 | `settings.png` | `src/pages/dashboard/SettingsPage.tsx` | |
-| 10 | `notification.png` | `src/pages/dashboard/NotificationsPage.tsx` | |
-| 11 | `ai.png` | `src/pages/dashboard/AssistantPage.tsx` | Advisory only — no business-data mutation |
-| 12 | `email.png` | Check `InboxPage.tsx` vs. a transactional email surface | Confirm target before implementing |
-| 13 | `templetes.png` | Email/message templates — check `SettingsPage.tsx` or `InboxPage.tsx` | No dedicated route found yet; confirm where templates actually live before building |
+| # | Reference image | Nav group › item | Target page | Route |
+|---|---|---|---|---|
+| 1 | `dashboard.png` | Workspace › Dashboard | `TodayPage.tsx` | `/dashboard` |
+| 2 | `calendar.png` | Workspace › Calendar | `CalendarPage.tsx` | `/dashboard/calendar` |
+| 3 | `appointment.png` | Workspace › Appointments | `AppointmentsPage.tsx` | `/dashboard/appointments` |
+| 4 | `approval.png` | Bookings › Approvals | `InboxPage.tsx` (`tab=approvals`) | `/dashboard/inbox?tab=approvals` |
+| 5 | `availability-request.png` | Bookings › Availability Requests | `InboxPage.tsx` (`tab=requests`) | `/dashboard/inbox?tab=requests` |
+| 6 | `customer.png` | Customers › Customers | `CustomersPage.tsx` | `/dashboard/customers` |
+| 7 | `service.png` | Salon › Services | `ServiceMenuPage.tsx` | `/dashboard/services` |
+| 8 | `avalability.png` | Salon › Availability | `WeeklyDefaultPage.tsx` | `/dashboard/weekly` |
+| 9 | `reports.png` | Insights › Reports | `ReportsPage.tsx` | `/dashboard/reports` |
+| 10 | `ai.png` | Insights › AI Assistant | `AssistantPage.tsx` | `/dashboard/assistant` — advisory only, no business-data mutation |
+| 11 | `notification.png` | Communications › Notifications | `NotificationsPage.tsx` | `/dashboard/notifications` |
+| 12 | `email.png` | Communications › Email | `EmailPage.tsx` | `/dashboard/email` — **currently an `EmptyState` stub.** This row is real feature work (the `email_messages` outbox log, docs/SCHEMA.md §10), not pure visual polish — build the actual query/list, not just restyle the placeholder. |
+| 13 | `templetes.png` | Communications › Templates | `TemplatesPage.tsx` | `/dashboard/templates` — **currently an `EmptyState` stub**, same caveat as Email: real read-only template-list UI, not just a restyle. |
+| 14 | `settings.png` | Account › Settings | `SettingsPage.tsx` | `/dashboard/settings` |
+
+`avalability.png` is the only availability image that exists (filename typo, kept
+as-is — do not create/expect a correctly-spelled duplicate). Not to be confused
+with row 5, `availability-request.png`, which is a different, correctly-named
+file for a different screen.
 
 ## 2. Per-screen procedure (repeat for every row above)
 

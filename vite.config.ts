@@ -46,7 +46,7 @@ export default defineConfig({
       injectRegister: null, // registration handled manually in src/main.tsx
 
       // Files pulled into the precache manifest (the "app shell").
-      includeAssets: ['favicon.svg', 'offline.html', 'icons/*.png'],
+      includeAssets: ['offline.html', 'icons/*.png'],
 
       manifest: {
         name: 'Kokolett Beauty UK',

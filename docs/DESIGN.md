@@ -109,8 +109,12 @@ Never below 14px for anything a customer must read to book.
   `rounded-sm` step down; `rounded-xl` / `rounded-2xl` step up for hero cards.
 - **Spacing** — Tailwind's 4px scale. Section rhythm on the marketing site is
   `py-16` mobile / `py-24` desktop. Dashboard density is `p-4` cards, `gap-3` lists.
-- **Elevation** — one shadow only: `shadow-card` (`0 1px 3px rgb(0 0 0 / 0.1)`).
-  Depth comes from the card/ground contrast, not from stacked shadows.
+- **Elevation** — two shadows. `shadow-card` (`0 2px 8px rgb(17 24 39 / 0.06), 0 1px 2px
+  rgb(17 24 39 / 0.04)`) for cards and panels; `shadow-popover` (`0 6px 24px
+  rgb(17 24 39 / 0.08), 0 2px 6px rgb(17 24 39 / 0.08)`) for menus, dropdowns, and
+  popovers — a deliberate, singular addition beyond the card shadow, not an open-ended
+  shadow system. Depth otherwise comes from card/ground contrast, not from stacking
+  further shadows.
 
 ## 6. Motion
 
@@ -147,3 +151,23 @@ names are unchanged.
 One consequence: colour opacity modifiers (`bg-primary/50`) do **not** work against
 `var()` colours. Where a translucent fill is needed, add an explicit token or use
 `color-mix()` in a component class.
+
+## 9. Spacing, grid, breakpoints
+
+**Spacing** is an 8-point scale: `0 4 8 12 16 24 32 48 64 80` (px) — Tailwind's default
+scale already satisfies this; no config change, documented for reference.
+
+**Grid:** 12 columns, max width 1440px, 24px gutter.
+
+**Layout containers:** mobile 375px, mobile-large 414px, tablet 768px, desktop 1024px,
+wide 1440px.
+
+**Breakpoints (mobile-first):** mobile 0–767px, tablet 768–1023px, desktop
+1024–1439px, wide 1440px+.
+
+## 10. Icons
+
+`lucide-react` — 24×24px grid, 2px stroke, outline style. Used for primary sidebar nav
+rows (`src/lib/icons.ts`). Import icons individually
+(`import { Calendar } from 'lucide-react'`) so unused icons are tree-shaken; never
+`import * as Icons`.

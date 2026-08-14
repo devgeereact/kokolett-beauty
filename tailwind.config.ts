@@ -87,7 +87,8 @@ const config: Config = {
         '2xl': 'calc(var(--radius) + 12px)',
       },
       boxShadow: {
-        card: '0 1px 3px rgb(0 0 0 / 0.1)',
+        card: '0 2px 8px rgb(17 24 39 / 0.06), 0 1px 2px rgb(17 24 39 / 0.04)',
+        popover: '0 6px 24px rgb(17 24 39 / 0.08), 0 2px 6px rgb(17 24 39 / 0.08)',
       },
       keyframes: {
         'fade-up': {

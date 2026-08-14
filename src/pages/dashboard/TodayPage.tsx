@@ -77,7 +77,7 @@ export function TodayPage(): JSX.Element {
 
   // Replaces the page-local `lastAction` banner + hand-rolled 8s setTimeout
   // this used to be: a Toast with an Undo action generalises exactly that
-  // interaction (docs/plan.md Phase 2 step 10).
+  // interaction.
   const changeStatus = useCallback(
     async (id: string, status: AppointmentStatus): Promise<void> => {
       try {
@@ -175,11 +175,11 @@ export function TodayPage(): JSX.Element {
       title="Today"
       subtitle={formatDateLong(start, timezone)}
       badges={{
-        // Combined count for the sidebar's single Inbox entry — every
-        // pending approval plus every open request, matching both the
-        // "Awaiting approval" stat card directly below and InboxPage's own
-        // badge (rows.length + requestsCount).
-        inbox: (summary?.pending_approval_count ?? 0) + (summary?.new_request_count ?? 0),
+        // Separate counts for the sidebar's Approvals and Availability
+        // Requests rows — matches the "Awaiting approval" stat card directly
+        // below and InboxPage's own per-tab counts.
+        approvals: summary?.pending_approval_count ?? 0,
+        requests: summary?.new_request_count ?? 0,
       }}
       actions={
         <div className="flex items-center gap-3">

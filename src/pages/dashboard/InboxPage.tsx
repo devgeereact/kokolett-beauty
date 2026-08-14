@@ -182,7 +182,7 @@ export function InboxPage(): JSX.Element {
           ? 'First-time bookings holding a slot until you decide'
           : 'Answered oldest first — whoever asked first is served first'
       }
-      badges={{ inbox: effectiveApprovalsCount + effectiveRequestsCount }}
+      badges={{ approvals: effectiveApprovalsCount, requests: effectiveRequestsCount }}
       actions={
         <>
           <div className="inline-flex rounded-lg border border-border p-0.5">

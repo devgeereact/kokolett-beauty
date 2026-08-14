@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { reportError } from '@/lib/sentry';
@@ -7,30 +8,55 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { QuickActionLauncher } from '@/components/dashboard/QuickActionLauncher';
+import { NAV_ICONS } from '@/lib/icons';
 
 interface NavEntry {
   to: string;
   label: string;
+  icon: LucideIcon;
   /** Rendered as a count beside the label; omitted when zero. */
   badge?: number;
   /**
    * Extra paths that also count as "active" for this entry, for a single nav
-   * item that fronts more than one route — Calendar & Capacity groups
-   * `calendar`, `appointmentType` and `weeklyDefault` (docs/plan.md Phase 1
-   * step 6). When omitted, only `to` (and its sub-paths) count.
+   * item that fronts more than one route — Calendar also owns Appointment
+   * type (`CalendarCapacityTabs`'s in-page switcher). Availability
+   * (`weeklyDefault`) is deliberately NOT included here even though it's
+   * also reachable from that switcher — it has its own direct nav row under
+   * Salon, and including it here would double-highlight the sidebar.
    */
   activePaths?: string[];
+  /**
+   * For entries that deep-link into Inbox's `?tab=` param (Approvals,
+   * Availability Requests) rather than owning a distinct route.
+   */
+  matchTab?: 'approvals' | 'requests';
+}
+
+interface NavGroup {
+  label: string;
+  items: NavEntry[];
 }
 
 /** Mirrors `NavLink`'s own non-`end` matching: exact, or a path segment below. */
-function isEntryActive(entry: NavEntry, pathname: string): boolean {
+function isEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
+  if (entry.matchTab) {
+    return (
+      pathname === routes.owner.inbox &&
+      new URLSearchParams(search).get('tab') === entry.matchTab
+    );
+  }
   if (entry.activePaths) return entry.activePaths.includes(pathname);
   if (entry.to === routes.owner.dashboard) return pathname === entry.to;
   return pathname === entry.to || pathname.startsWith(`${entry.to}/`);
 }
 
 /**
- * The owner shell: a persistent sidebar on desktop, a slide-over on mobile.
+ * The owner shell: a persistent sidebar on desktop/tablet, a slide-over on
+ * phone. The sidebar visibility breakpoint is `md:` (768px), not the more
+ * common `lg:` (1024px) — a portrait salon tablet (~768–834px CSS width) is
+ * a real device this shell is designed for, and `lg:` would drop it into
+ * the phone-style "tap Menu" pattern (docs/planning/
+ * owner-console-nav-breakpoint-decision.md).
  *
  * The sidebar has its own colour ramp so it reads as chrome rather than
  * content (docs/DESIGN.md §3).
@@ -46,72 +72,105 @@ export function DashboardLayout({
   title: string;
   subtitle?: string;
   actions?: ReactNode;
-  badges?: { inbox?: number };
+  badges?: { approvals?: number; requests?: number };
 }): JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, signOut } = useSupabaseAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // The seven core owner workflows (docs/plan.md Phase 1 step 3).
-  const entries: NavEntry[] = [
-    { to: routes.owner.dashboard, label: 'Today' },
-    { to: routes.owner.inbox, label: 'Inbox', badge: badges?.inbox },
+  // Grouped Owner Console nav (docs/planning/owner-console-rebuild-plan.md §0).
+  const navGroups: NavGroup[] = [
     {
-      to: routes.owner.calendar,
-      label: 'Calendar & Capacity',
-      activePaths: [
-        routes.owner.calendar,
-        routes.owner.appointmentType,
-        routes.owner.weeklyDefault,
+      label: 'Workspace',
+      items: [
+        { to: routes.owner.dashboard, label: 'Dashboard', icon: NAV_ICONS.Dashboard },
+        {
+          to: routes.owner.calendar,
+          label: 'Calendar',
+          icon: NAV_ICONS.Calendar,
+          activePaths: [routes.owner.calendar, routes.owner.appointmentType],
+        },
+        { to: routes.owner.appointments, label: 'Appointments', icon: NAV_ICONS.Appointments },
       ],
     },
-    { to: routes.owner.appointments, label: 'Bookings' },
-    { to: routes.owner.customers, label: 'Customers' },
-    { to: routes.owner.serviceMenu, label: 'Growth' },
-    { to: routes.owner.settings, label: 'Settings' },
+    {
+      label: 'Bookings',
+      items: [
+        {
+          to: `${routes.owner.inbox}?tab=approvals`,
+          label: 'Approvals',
+          icon: NAV_ICONS.Approvals,
+          matchTab: 'approvals',
+          badge: badges?.approvals,
+        },
+        {
+          to: `${routes.owner.inbox}?tab=requests`,
+          label: 'Availability Requests',
+          icon: NAV_ICONS['Availability Requests'],
+          matchTab: 'requests',
+          badge: badges?.requests,
+        },
+      ],
+    },
+    {
+      label: 'Customers',
+      items: [{ to: routes.owner.customers, label: 'Customers', icon: NAV_ICONS.Customers }],
+    },
+    {
+      label: 'Salon',
+      items: [
+        { to: routes.owner.serviceMenu, label: 'Services', icon: NAV_ICONS.Services },
+        { to: routes.owner.weeklyDefault, label: 'Availability', icon: NAV_ICONS.Availability },
+      ],
+    },
+    {
+      label: 'Insights',
+      items: [
+        { to: routes.owner.reports, label: 'Reports', icon: NAV_ICONS.Reports },
+        { to: routes.owner.assistant, label: 'AI Assistant', icon: NAV_ICONS['AI Assistant'] },
+      ],
+    },
+    {
+      label: 'Communications',
+      items: [
+        { to: routes.owner.notifications, label: 'Notifications', icon: NAV_ICONS.Notifications },
+        { to: routes.owner.email, label: 'Email', icon: NAV_ICONS.Email },
+        { to: routes.owner.templates, label: 'Templates', icon: NAV_ICONS.Templates },
+      ],
+    },
+    {
+      label: 'Account',
+      items: [{ to: routes.owner.settings, label: 'Settings', icon: NAV_ICONS.Settings }],
+    },
   ];
 
-  // Real, shipped pages that sit outside the plan's 7-nav model — kept
-  // reachable, visually secondary rather than hidden or relabelled (see
-  // docs/BASELINE-AUDIT.md: neither is a stub or redirect).
-  const secondaryEntries: NavEntry[] = [
-    { to: routes.owner.reports, label: 'Reports' },
-    { to: routes.owner.assistant, label: 'AI Assistant' },
-  ];
-
-  const renderEntry = (entry: NavEntry, primary: boolean): JSX.Element => {
-    const active = isEntryActive(entry, location.pathname);
+  const renderEntry = (entry: NavEntry): JSX.Element => {
+    const active = isEntryActive(entry, location.pathname, location.search);
+    const Icon = entry.icon;
     return (
+      // Plain `Link`, not `NavLink`: `NavLink`'s own prefix-based matching
+      // computes `aria-current` from its *own* `isActive` (driven only by
+      // `to`), which can't express `activePaths` grouping or `matchTab`
+      // deep-linking into Inbox's `?tab=` param. A plain `Link` with
+      // `aria-current` set directly from the same `active`/`isEntryActive`
+      // boolean the styling below uses gives exactly one correct current
+      // entry on every path, including the grouped and tab-based ones.
       <Link
-        // Plain `Link`, not `NavLink`: `NavLink`'s own prefix-based matching
-        // computes `aria-current` from its *own* `isActive` (driven only by
-        // `to`), which either double-marks "Today" (`/dashboard`) as current
-        // on every dashboard sub-route, or — passing `aria-current` through
-        // as a prop merely supplies the *value* NavLink uses when its own
-        // `isActive` is true, so it still misses grouped paths like
-        // Calendar & Capacity's `appointmentType`/`weeklyDefault`, which
-        // never match `to="/dashboard/calendar"` under NavLink's own rules.
-        // A plain `Link` with `aria-current` set directly from the same
-        // `active`/`isEntryActive` boolean the styling below uses gives
-        // exactly one correct current entry on every path, including the
-        // grouped ones.
         key={entry.to}
         to={entry.to}
         onClick={() => setMenuOpen(false)}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium',
+          'flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-          !primary && 'py-2 text-[13px] font-normal',
           active
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-            : primary
-              ? 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+            ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold'
+            : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         )}
       >
-        <span>{entry.label}</span>
+        <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2} />
+        <span className="flex-1 truncate">{entry.label}</span>
         {entry.badge ? (
           <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
             {entry.badge}
@@ -122,10 +181,15 @@ export function DashboardLayout({
   };
 
   const nav = (
-    <nav className="flex flex-col gap-1" aria-label="Dashboard">
-      {entries.map((entry) => renderEntry(entry, true))}
-      <div className="my-2 border-t border-sidebar-border" aria-hidden="true" />
-      {secondaryEntries.map((entry) => renderEntry(entry, false))}
+    <nav className="flex flex-col gap-4" aria-label="Dashboard">
+      {navGroups.map((group) => (
+        <div key={group.label}>
+          <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
+            {group.label}
+          </p>
+          <div className="flex flex-col gap-1">{group.items.map(renderEntry)}</div>
+        </div>
+      ))}
     </nav>
   );
 
@@ -133,9 +197,8 @@ export function DashboardLayout({
    * The signed-in address and the way out.
    *
    * Rendered in the mobile drawer as well as the desktop sidebar. It used to
-   * live only inside the `hidden lg:flex` sidebar, so below that breakpoint —
-   * which includes an iPad in portrait, a plausible salon device — there was no
-   * way to sign out at all.
+   * live only inside the `hidden md:flex` sidebar, so below that breakpoint —
+   * which includes a phone — there was no way to sign out at all.
    */
   const account = (
     <div className="space-y-3 px-3">
@@ -169,8 +232,8 @@ export function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-sidebar-border bg-sidebar p-4 lg:flex">
+      {/* Desktop/tablet sidebar */}
+      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar p-4 md:flex">
         <p className="mb-6 px-3 font-display text-lg font-semibold text-sidebar-foreground">
           Kokolett
         </p>
@@ -181,14 +244,14 @@ export function DashboardLayout({
 
       {/* Mobile slide-over */}
       {menuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 md:hidden">
           <button
             type="button"
             aria-label="Close menu"
             className="absolute inset-0 bg-black/50"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 flex w-64 flex-col border-r border-sidebar-border bg-sidebar p-4">
+          <div className="absolute inset-y-0 left-0 flex w-64 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar p-4">
             <p className="mb-6 px-3 font-display text-lg font-semibold text-sidebar-foreground">
               Kokolett
             </p>
@@ -198,13 +261,13 @@ export function DashboardLayout({
         </div>
       )}
 
-      <div className="lg:pl-60">
+      <div className="md:pl-60">
         <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 py-4 backdrop-blur sm:px-6">
-          <div className="flex items-start gap-3">
+          <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden"
+              className="md:hidden"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(true)}
             >

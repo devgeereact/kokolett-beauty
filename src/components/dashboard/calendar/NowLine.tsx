@@ -8,7 +8,7 @@ export function NowLine({ topPercent }: { topPercent: number }): JSX.Element {
     <div
       aria-hidden="true"
       style={{ top: `${topPercent}%` }}
-      className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-destructive"
+      className="pointer-events-none absolute inset-x-0 z-base border-t-2 border-destructive"
     >
       <span className="absolute -left-1 -top-[5px] h-2 w-2 rounded-full bg-destructive" />
     </div>

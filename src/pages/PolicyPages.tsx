@@ -31,8 +31,8 @@ function LegalPage({
 }): JSX.Element {
   return (
     <SiteShell>
-      <article className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
-        <h1 className="font-display text-3xl font-semibold text-foreground">{title}</h1>
+      <article className="mx-auto max-w-2xl px-4 py-14 md:px-6">
+        <h1 className="font-serif text-3xl font-semibold text-foreground">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated {updated}</p>
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
           {children}
@@ -52,7 +52,7 @@ function LegalPage({
 
 function H2({ children }: { children: ReactNode }): JSX.Element {
   return (
-    <h2 className="font-display text-lg font-semibold text-foreground">{children}</h2>
+    <h2 className="font-serif text-lg font-semibold text-foreground">{children}</h2>
   );
 }
 

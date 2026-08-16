@@ -148,6 +148,44 @@ export function hourRange(minutesOfDay: number[]): HourRange {
   return { startMin, endMin };
 }
 
+/**
+ * The hour axis clamped to real published opening hours, not to whatever
+ * appointments happen to exist. `hourRange` (above) fits the axis to booked
+ * appointment times, which means one stray appointment outside the salon's
+ * actual published hours — a legacy row, a demo artifact, a since-changed
+ * schedule — stretches the whole grid to cover it. This instead only looks
+ * at published slot start times (booked or not — a booked slot's start time
+ * is still real evidence the salon is open then) and pads the close by the
+ * longest active service's duration, same math as the Dashboard's own
+ * schedule fit. An appointment outside this range still renders — clamped to
+ * the nearest edge by `offsetPercent`, never hidden — it just doesn't get a
+ * vote on how wide the axis is.
+ */
+export function openingHoursRange(
+  slotStartMinutes: number[],
+  maxServiceDurationMin: number,
+  nowMinutes?: number,
+): HourRange {
+  if (slotStartMinutes.length === 0) {
+    return nowMinutes === undefined ? FALLBACK_RANGE : hourRange([nowMinutes]);
+  }
+
+  const openMin = Math.floor(Math.min(...slotStartMinutes) / 60) * 60;
+  const closeMin = Math.min(
+    DAY_MIN,
+    Math.ceil((Math.max(...slotStartMinutes) + maxServiceDurationMin) / 60) * 60,
+  );
+
+  let startMin = openMin;
+  let endMin = closeMin;
+  if (nowMinutes !== undefined) {
+    if (nowMinutes < startMin) startMin = Math.floor(nowMinutes / 60) * 60;
+    if (nowMinutes > endMin) endMin = Math.min(DAY_MIN, Math.ceil(nowMinutes / 60) * 60);
+  }
+
+  return { startMin, endMin };
+}
+
 /** Where a time falls within the axis, as a percentage — clamped, never overflows. */
 export function offsetPercent(minutesOfDay: number, range: HourRange): number {
   const span = range.endMin - range.startMin;

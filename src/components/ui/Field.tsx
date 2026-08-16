@@ -16,11 +16,19 @@ import { cn } from '@/lib/utils';
  * border alone (docs/DESIGN.md §7).
  */
 
+// Error is driven by `aria-invalid` (already wired through `Field`'s
+// `controlProps`) rather than a separate style prop, so a field never
+// signals its state by border colour alone without also carrying the
+// ARIA/text pairing Field renders below (docs/DESIGN.md §7) — this is
+// purely the visual half of that pairing.
 const CONTROL = cn(
-  'w-full rounded-md border border-border bg-input px-3 py-2.5 text-foreground',
+  // 8px radius — docs/DESIGN.md §5 ("Inputs: 8px"), same tier as Button.
+  'w-full rounded-sm border border-border bg-input px-3 py-2.5 text-foreground',
   'placeholder:text-muted-foreground',
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
   'disabled:cursor-not-allowed disabled:opacity-60',
+  'aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive',
+  'data-[success=true]:border-success data-[success=true]:focus-visible:ring-success',
 );
 
 interface FieldShellProps {

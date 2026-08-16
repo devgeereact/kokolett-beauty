@@ -42,7 +42,7 @@ export function ReschedulePicker({
 
   return (
     <div className="mt-4 border-t border-border pt-4">
-      <h3 className="mb-1 font-display text-base font-semibold text-foreground">
+      <h3 className="mb-1 font-serif text-base font-semibold text-foreground">
         Pick a new time
       </h3>
       <p className="mb-4 text-sm text-muted-foreground">
@@ -91,7 +91,7 @@ export function ReschedulePicker({
               <p className="mb-2 text-sm font-medium text-foreground">
                 {formatDateLong(`${activeDate}T12:00:00Z`, 'UTC')}
               </p>
-              <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-5">
+              <div className="mb-4 grid grid-cols-3 gap-2 md:grid-cols-5">
                 {(slotsByDate[activeDate] ?? []).map((slot) => {
                   const isCurrent = slot.startsAt === currentStartsAt;
                   return (

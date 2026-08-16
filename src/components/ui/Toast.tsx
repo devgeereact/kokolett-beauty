@@ -49,8 +49,8 @@ function ToastCard({
       onFocus={clearTimer}
       onBlur={armTimer}
       className={cn(
-        'pointer-events-auto flex w-full items-start gap-3 rounded-lg border border-border',
-        'bg-popover p-4 text-popover-foreground shadow-card sm:w-96',
+        'pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-border',
+        'bg-popover p-4 text-popover-foreground shadow-card md:w-96',
       )}
     >
       <p className="flex-1 text-sm">{toast.message}</p>
@@ -109,12 +109,14 @@ export function ToastStack({
   return (
     <div
       className={cn(
-        // z-[60], not z-50: QuickActionLauncher's portal is also z-50, and
-        // when its panel is open the toast stack must render above it (e.g.
-        // an error toast fired by a launcher action) — otherwise it's
-        // painted behind the launcher's backdrop and invisible.
-        'pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col gap-2',
-        'sm:inset-x-auto sm:right-4',
+        // z-toast (100), the top of the stack: QuickActionLauncher's portal
+        // is z-modal, and when its panel is open the toast stack must render
+        // above it (e.g. an error toast fired by a launcher action) —
+        // otherwise it's painted behind the launcher's backdrop and invisible.
+        // Mobile 16px inset, desktop 24px right/bottom — global overlay
+        // rules §31.
+        'pointer-events-none fixed inset-x-4 bottom-4 z-toast flex flex-col gap-2',
+        'md:inset-x-auto md:bottom-6 md:right-6',
       )}
     >
       {toasts.map((toast) => (

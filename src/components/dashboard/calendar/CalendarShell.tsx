@@ -40,7 +40,7 @@ export function CalendarShell({ view, onViewChange }: CalendarShellProps): JSX.E
             'rounded-md px-3.5 py-1.5 text-sm font-medium',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             view === v.key
-              ? 'bg-card text-foreground shadow-card'
+              ? 'bg-tint-brand text-primary'
               : 'text-muted-foreground hover:text-foreground',
           )}
         >

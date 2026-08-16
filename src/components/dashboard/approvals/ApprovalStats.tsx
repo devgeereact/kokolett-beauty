@@ -1,4 +1,4 @@
-import { CalendarClock, CircleCheck, Hourglass, Inbox } from 'lucide-react';
+import { CalendarClock, CircleCheck, Download, Hourglass } from 'lucide-react';
 import { StatTile } from '@/components/ui/StatTile';
 import { formatDuration } from '@/lib/format';
 import type { Tone } from '@/lib/tone';
@@ -29,11 +29,11 @@ export function ApprovalStats({
       label: 'Approved',
       tone: 'completed',
     },
-    { icon: Inbox, value: String(thisWeekCount), label: 'This week', tone: 'neutral' },
+    { icon: Download, value: String(thisWeekCount), label: 'This week', tone: 'neutral' },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
       {tiles.map((tile) => (
         <StatTile key={tile.label} {...tile} />
       ))}

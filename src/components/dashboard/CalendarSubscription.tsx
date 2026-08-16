@@ -77,7 +77,7 @@ export function CalendarSubscription(): JSX.Element {
 
   return (
     <>
-      <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+      <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
         Your calendar
       </h2>
       <p className="mb-4 text-sm text-muted-foreground">

@@ -48,7 +48,7 @@ export function StatTrendTile({
           <Icon aria-hidden="true" className={cn('h-4 w-4', TONE_TEXT[tone])} strokeWidth={2} />
         </span>
       </div>
-      <p className="mb-1 font-display text-2xl font-semibold text-foreground">{value}</p>
+      <p className="mb-1 font-serif text-2xl font-semibold text-foreground">{value}</p>
       <p className="flex items-center gap-1 text-xs">
         {change !== null && (
           <span

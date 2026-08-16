@@ -51,11 +51,11 @@ export function OrganisationDetailsCard(): JSX.Element {
     <Card className="p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-tint-primary text-primary">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
             <Building2 aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="font-display text-base font-semibold text-foreground">Organisation details</h2>
+            <h2 className="font-serif text-base font-semibold text-foreground">Organisation details</h2>
             <p className="text-sm text-muted-foreground">Manage your salon business information.</p>
           </div>
         </div>
@@ -69,7 +69,7 @@ export function OrganisationDetailsCard(): JSX.Element {
 
       {editing ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <Field label="Business name" className="mb-0">
               {({ id }) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />}
             </Field>
@@ -98,7 +98,7 @@ export function OrganisationDetailsCard(): JSX.Element {
           </div>
         </>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-xs font-medium text-muted-foreground">Business name</p>
             <p className="text-sm text-foreground">{settings?.business_name ?? 'Kokolett Beauty UK'}</p>

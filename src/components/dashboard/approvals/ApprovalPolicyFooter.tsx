@@ -18,7 +18,7 @@ export function ApprovalPolicyFooter({
           strokeWidth={2}
         />
         <div>
-          <p className="font-display text-sm font-semibold text-foreground">Approval policy</p>
+          <p className="font-serif text-sm font-semibold text-foreground">Approval policy</p>
           <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-muted-foreground">
             <li>
               First-time customers are held for your approval within {approvalWindowHours} hours.
@@ -37,7 +37,7 @@ export function ApprovalPolicyFooter({
             strokeWidth={2}
           />
           <div>
-            <p className="font-display text-sm font-semibold text-foreground">
+            <p className="font-serif text-sm font-semibold text-foreground">
               Need a different time?
             </p>
             <p className="text-sm text-muted-foreground">

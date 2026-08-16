@@ -34,9 +34,11 @@ export function Pagination({
   const start = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalItems);
 
+  // 44px touch target on mobile (global overlay/pagination rules §13),
+  // stepping down to a denser 32px once there's a pointer to rely on.
   const buttonClass = (active: boolean): string =>
     cn(
-      'inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm font-medium',
+      'inline-flex h-11 min-w-11 items-center justify-center rounded-md px-2 text-sm font-medium md:h-8 md:min-w-8',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       active
         ? 'bg-primary text-primary-foreground'
@@ -44,7 +46,8 @@ export function Pagination({
     );
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-2">
+    <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+
       <p className="text-sm text-muted-foreground">
         Showing {start} to {end} of {totalItems} {itemLabel}
       </p>

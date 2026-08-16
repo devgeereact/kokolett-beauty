@@ -29,11 +29,11 @@ export function AccountSummaryCard(): JSX.Element {
     <Card className="p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-tint-primary text-primary">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
             <UserCircle aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="font-display text-base font-semibold text-foreground">Account</h2>
+            <h2 className="font-serif text-base font-semibold text-foreground">Account</h2>
             <p className="text-sm text-muted-foreground">Your profile and login details.</p>
           </div>
         </div>
@@ -46,7 +46,7 @@ export function AccountSummaryCard(): JSX.Element {
       <div className="flex items-center gap-3">
         <Avatar name={profile?.full_name ?? user?.email ?? '?'} size="lg" />
         <div className="min-w-0">
-          <p className="truncate font-display text-base font-semibold text-foreground">
+          <p className="truncate font-serif text-base font-semibold text-foreground">
             {profile?.full_name ?? 'Owner'}
           </p>
           <p className="text-sm text-primary">Owner</p>

@@ -64,9 +64,9 @@ export function Reviews({ reviewUrl }: { reviewUrl: string | null }): JSX.Elemen
 
   return (
     <section className="border-t border-border bg-card">
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-5xl px-4 py-16 md:px-6">
         <div className="mb-8 text-center">
-          <h2 className="font-display text-3xl font-semibold text-foreground">
+          <h2 className="font-serif text-3xl font-semibold text-foreground">
             What our clients say
           </h2>
 

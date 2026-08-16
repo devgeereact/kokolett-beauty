@@ -75,9 +75,9 @@ export function NotificationBellPopover({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-40 w-96 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover shadow-lg">
+        <div className="absolute right-0 top-11 z-layer-popover w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover shadow-popover">
           <div className="flex items-center justify-between border-b border-border p-3">
-            <p className="font-display text-sm font-semibold text-foreground">Notifications</p>
+            <p className="font-serif text-sm font-semibold text-foreground">Notifications</p>
             <button
               type="button"
               onClick={() => markAllRead((events ?? []).map((e) => e.id))}
@@ -99,7 +99,7 @@ export function NotificationBellPopover({
                   const meta = metaFor(e.kind);
                   const read = isRead(e.id);
                   return (
-                    <li key={e.id} className={cn('flex items-start gap-3 p-3', !read && 'bg-tint-primary/40')}>
+                    <li key={e.id} className={cn('flex items-start gap-3 p-3', !read && 'bg-tint-brand/40')}>
                       <span
                         className={cn(
                           'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',

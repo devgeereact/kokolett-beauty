@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppointmentDetailModal } from '@/components/dashboard/AppointmentDetailModal';
 import { ScheduleTimeline } from '@/components/dashboard/today/ScheduleTimeline';
@@ -8,7 +9,6 @@ import { GlanceGrid } from '@/components/dashboard/today/GlanceGrid';
 import { ApprovalsQueueCard } from '@/components/dashboard/today/ApprovalsQueueCard';
 import { BookingsOverviewChart } from '@/components/dashboard/today/BookingsOverviewChart';
 import { AvailabilityRequestsCard } from '@/components/dashboard/today/AvailabilityRequestsCard';
-import { RecentActivityCard } from '@/components/dashboard/today/RecentActivityCard';
 import { AssistantInsightsRow } from '@/components/dashboard/today/AssistantInsightsRow';
 import { ReschedulePicker } from '@/components/public/ReschedulePicker';
 import {
@@ -70,8 +70,8 @@ export function TodayPage(): JSX.Element {
       .catch(() => setFirstName(null));
   }, [user]);
 
-  // Header bell badge — same "last 24h of activity" source as
-  // RecentActivityCard, since there's no read/unread state to count instead.
+  // Header bell badge — last 24h of activity, since there's no read/unread
+  // state to count instead.
   const [recentNotificationCount, setRecentNotificationCount] = useState(0);
   useEffect(() => {
     getRecentActivity(timezone, 1)
@@ -241,13 +241,13 @@ export function TodayPage(): JSX.Element {
       actions={
         <div className="flex items-center gap-3">
           <span
-            className="hidden font-mono text-sm font-medium tabular-nums text-foreground sm:inline"
+            className="hidden font-mono text-sm font-medium tabular-nums text-foreground md:inline"
             aria-label="Current time"
           >
             {formatTime(now, timezone)}
           </span>
           <span
-            className="hidden items-center gap-2 text-xs text-muted-foreground sm:inline-flex"
+            className="hidden items-center gap-2 text-xs text-muted-foreground md:inline-flex"
             title={connected ? 'Live updates connected' : 'Live updates unavailable'}
           >
             <span
@@ -275,6 +275,7 @@ export function TodayPage(): JSX.Element {
                 setBooking(true);
               }}
             >
+              <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
               New booking
             </Button>
           </div>
@@ -295,7 +296,7 @@ export function TodayPage(): JSX.Element {
         <Card className="flex h-full flex-col p-4 lg:col-span-3 lg:row-span-2">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <h2 className="font-display text-base font-semibold text-foreground">
+              <h2 className="font-serif text-base font-semibold text-foreground">
                 Today&rsquo;s schedule
               </h2>
               <p className="text-xs text-muted-foreground">
@@ -390,17 +391,14 @@ export function TodayPage(): JSX.Element {
             the row boundary and its bottom edge stops lining up with theirs. */}
         <ApprovalsQueueCard className="lg:col-span-3" />
 
-        {/* h-full on the wrapper itself, not just the Card inside it — a
-            percentage height only resolves against the grid row track when
-            it's set on the direct grid item; nested one level deeper it just
-            resolves against an auto-sized ancestor and does nothing. */}
+        {/* h-full: stretches to match Availability requests beside it, now
+            that Recent notifications is gone that's only ~20px of headroom
+            (not the old multi-card stack), so the chart's own centring
+            absorbs it invisibly instead of leaving a dead zone. */}
         <div className="h-full lg:col-span-6">
           <BookingsOverviewChart timezone={timezone} />
         </div>
-        <div className="grid h-full gap-4 lg:col-span-3 lg:grid-rows-2">
-          <AvailabilityRequestsCard />
-          <RecentActivityCard timezone={timezone} />
-        </div>
+        <AvailabilityRequestsCard className="lg:col-span-3" />
       </div>
 
       <div className="mt-4">
@@ -411,7 +409,7 @@ export function TodayPage(): JSX.Element {
         open={expandedId !== null && movingId === null}
         onClose={() => setExpandedId(null)}
         ariaLabel="Edit appointment"
-        className="max-w-3xl"
+        className="max-w-modal-lg"
       >
         {expandedAppointment && (
           <AppointmentDetailModal

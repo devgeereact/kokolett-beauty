@@ -6,7 +6,11 @@ import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed } from '@/types';
 
-const DELETABLE = new Set(['cancelled', 'rejected', 'no_show']);
+/** Statuses that already mean "this is over" — deleting one of these is
+ * pure housekeeping. Anything else (confirmed, in service, completed, …)
+ * is still deletable — the owner asked for that — but gets a stronger
+ * warning below, since the customer won't be notified the way Cancel does. */
+const ALREADY_CLOSED = new Set(['cancelled', 'rejected', 'no_show']);
 
 /**
  * The row's "…" quick actions — a plain absolutely-positioned popover closed
@@ -62,7 +66,7 @@ export function AppointmentRowMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-20 mt-1 w-52 rounded-lg border border-border bg-popover p-1 shadow-card"
+          className="absolute right-0 top-full z-dropdown mt-1 w-52 rounded-xl border border-border bg-popover p-1 shadow-popover"
         >
           <button
             type="button"
@@ -77,26 +81,28 @@ export function AppointmentRowMenu({
           >
             View customer profile
           </button>
-          {DELETABLE.has(appointment.status) && (
-            <button
-              type="button"
-              role="menuitem"
-              className={cn(itemClass, 'text-destructive')}
-              onClick={() => {
-                setOpen(false);
-                setConfirming(true);
-              }}
-            >
-              Delete appointment
-            </button>
-          )}
+          <button
+            type="button"
+            role="menuitem"
+            className={cn(itemClass, 'text-destructive')}
+            onClick={() => {
+              setOpen(false);
+              setConfirming(true);
+            }}
+          >
+            Delete appointment
+          </button>
         </div>
       )}
 
       <ConfirmDialog
         open={confirming}
         title="Delete this appointment?"
-        message="This removes it entirely — not the same as cancelling. There is no undo."
+        message={
+          ALREADY_CLOSED.has(appointment.status)
+            ? 'This removes it entirely — not the same as cancelling. There is no undo.'
+            : `This appointment is still ${appointment.status.replace('_', ' ')} — deleting it removes the record entirely and, unlike Cancel, does not notify the customer. There is no undo.`
+        }
         tone="destructive"
         confirmLabel="Delete appointment"
         onConfirm={() => {

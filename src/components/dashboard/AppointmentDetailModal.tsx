@@ -15,7 +15,10 @@ import {
 } from '@/lib/format';
 import type { AppointmentDetailed, AppointmentStatus } from '@/types';
 
-const DELETABLE = new Set(['cancelled', 'rejected', 'no_show']);
+/** Statuses that already mean "this is over" — deleting one of these is
+ * pure housekeeping. Anything else is still deletable, just with a
+ * stronger warning below (see `deleteWarning`). */
+const ALREADY_CLOSED = new Set(['cancelled', 'rejected', 'no_show']);
 
 /**
  * The Appointments / Calendar popup's full editor — a stacked, spacious
@@ -43,14 +46,16 @@ export function AppointmentDetailModal({
   onBookFollowUp?: (appointment: AppointmentDetailed) => void;
   /** Opens the reschedule step in place. Omit to hide "Change time". */
   onMove?: (appointment: AppointmentDetailed) => void;
-  /** Omit to hide "Delete appointment" — only offered for cancelled/rejected/no-show anyway. */
+  /** Omit to hide "Delete appointment" entirely. */
   onDelete?: (id: string) => Promise<void>;
 }): JSX.Element {
   const a = useAppointmentActions({ appointment, onStatusChange, onNoteSave, onLogPayment });
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const deletable = DELETABLE.has(appointment.status);
+  const deleteWarning = ALREADY_CLOSED.has(appointment.status)
+    ? 'This removes it entirely — not the same as cancelling. There is no undo.'
+    : `This appointment is still ${appointment.status.replace('_', ' ')} — deleting it removes the record entirely and, unlike Cancel, does not notify the customer. There is no undo.`;
 
   return (
     <Card className="flex flex-col gap-5 p-5">
@@ -59,7 +64,7 @@ export function AppointmentDetailModal({
           <Avatar name={appointment.customer_name ?? 'Customer'} size="lg" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="truncate font-display text-lg font-semibold text-foreground">
+              <p className="truncate font-serif text-lg font-semibold text-foreground">
                 {appointment.customer_name}
               </p>
               <StatusChip status={appointment.status} />
@@ -107,7 +112,7 @@ export function AppointmentDetailModal({
         )}
       </div>
 
-      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+      <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Service
@@ -256,12 +261,18 @@ export function AppointmentDetailModal({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+      {/* nowrap + overflow-x-auto, not flex-wrap: up to five buttons here
+          (four status actions plus Book follow-up) — wrapping put a lone
+          button stranded on its own row depending on exactly how many were
+          showing. One line always, scrolling sideways on a narrow viewport
+          instead of reflowing unpredictably. */}
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto border-t border-border pt-4">
         {onStatusChange &&
           a.actions.map((status) => (
             <Button
               key={status}
               size="sm"
+              className="shrink-0"
               variant={
                 status === 'completed'
                   ? 'primary'
@@ -276,13 +287,13 @@ export function AppointmentDetailModal({
             </Button>
           ))}
         {onBookFollowUp && (
-          <Button size="sm" variant="ghost" onClick={() => onBookFollowUp(appointment)}>
+          <Button size="sm" variant="ghost" className="shrink-0" onClick={() => onBookFollowUp(appointment)}>
             Book follow-up
           </Button>
         )}
       </div>
 
-      {onDelete && deletable && (
+      {onDelete && (
         <div className="border-t border-border pt-4">
           <Button
             size="sm"
@@ -317,7 +328,7 @@ export function AppointmentDetailModal({
       <ConfirmDialog
         open={confirmingDelete}
         title="Delete this appointment?"
-        message="This removes it entirely — not the same as cancelling. There is no undo."
+        message={deleteWarning}
         tone="destructive"
         confirmLabel="Delete appointment"
         onConfirm={() => {

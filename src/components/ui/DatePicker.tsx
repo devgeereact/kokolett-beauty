@@ -126,7 +126,7 @@ export function DatePicker({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-20 mt-1 rounded-lg border border-border bg-popover shadow-card">
+        <div className="absolute left-0 top-full z-dropdown mt-1 rounded-xl border border-border bg-popover shadow-popover">
           <Calendar
             mode="single"
             selected={selected}

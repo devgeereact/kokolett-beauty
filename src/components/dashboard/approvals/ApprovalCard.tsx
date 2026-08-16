@@ -1,9 +1,10 @@
+import { Calendar, Clock } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CountdownChip } from '@/components/ui/CountdownChip';
-import { formatDateShort, formatDuration, formatTime } from '@/lib/format';
+import { formatDateShort, formatDateTime, formatDuration, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed } from '@/types';
 
@@ -38,7 +39,7 @@ export function ApprovalCard({
 
         <div className="min-w-[11rem] flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-display text-base font-semibold text-foreground">
+            <p className="font-serif text-base font-semibold text-foreground">
               {row.customer_name}
             </p>
             <Badge tone="pending">First-time customer</Badge>
@@ -47,6 +48,9 @@ export function ApprovalCard({
           {row.customer_mobile && (
             <p className="text-sm text-muted-foreground">{row.customer_mobile}</p>
           )}
+          <p className="text-xs text-muted-foreground">
+            Requested {formatDateTime(row.created_at, timezone)}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-start gap-4">
@@ -57,9 +61,13 @@ export function ApprovalCard({
 
           <div className="min-w-[6rem] text-sm">
             <p className="flex items-center gap-1.5 text-foreground">
+              <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
               {formatDateShort(row.starts_at, timezone)}
             </p>
-            <p className="text-muted-foreground">{formatTime(row.starts_at, timezone)}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+              <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+              {formatTime(row.starts_at, timezone)}
+            </p>
           </div>
 
           {row.approval_deadline && <CountdownChip deadline={row.approval_deadline} />}

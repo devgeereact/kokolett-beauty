@@ -46,7 +46,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Eleme
     return (
       <main className="grid min-h-screen place-items-center bg-background px-4">
         <div className="max-w-md text-center">
-          <h1 className="mb-2 font-display text-2xl font-semibold text-foreground">
+          <h1 className="mb-2 font-serif text-2xl font-semibold text-foreground">
             Cannot reach the salon right now
           </h1>
           <p className="mb-6 text-muted-foreground">
@@ -68,7 +68,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Eleme
     return (
       <main className="grid min-h-screen place-items-center bg-background px-4">
         <div className="max-w-md text-center">
-          <h1 className="mb-2 font-display text-2xl font-semibold text-foreground">
+          <h1 className="mb-2 font-serif text-2xl font-semibold text-foreground">
             No access
           </h1>
           <p className="mb-6 text-muted-foreground">

@@ -26,7 +26,7 @@ export function StatusDonutChart({
 
   return (
     <Card className="p-5">
-      <h2 className="mb-4 font-display text-base font-semibold text-foreground">
+      <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
         Appointments by status
       </h2>
       {total === 0 ? (

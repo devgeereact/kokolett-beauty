@@ -1,21 +1,11 @@
-import { useState } from 'react';
 import { Calendar as CalendarIcon, Clock, Hash, Mail, Phone, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Avatar } from '@/components/ui/Avatar';
 import { formatDateLong, formatDuration, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { AppointmentDetailed, AppointmentStatus } from '@/types';
-
-const CANCELLABLE = new Set<AppointmentStatus>([
-  'pending_approval',
-  'confirmed',
-  'checked_in',
-  'in_service',
-]);
-const RESCHEDULABLE = new Set<AppointmentStatus>(['pending_approval', 'confirmed']);
+import type { AppointmentDetailed } from '@/types';
 
 /**
  * The calendar's persistent right rail: the currently-selected appointment,
@@ -24,23 +14,20 @@ const RESCHEDULABLE = new Set<AppointmentStatus>(['pending_approval', 'confirmed
  *
  * "Edit appointment" doesn't invent a new editing surface: it asks the page
  * to reveal the real `AppointmentCard` (status actions, note, payment,
- * follow-up) full-width in the main column, reusing every control that
- * already exists rather than duplicating that logic here. It can't render
- * inline in this rail — `AppointmentCard`'s `sm:` layout switch is a
- * viewport-width media query, not a container query, so at this rail's
+ * reschedule, cancel, follow-up) full-width in the main column, reusing
+ * every control that already exists rather than duplicating it here — this
+ * panel is a summary, not a second copy of the edit surface. It can't render
+ * inline in this rail either way — `AppointmentCard`'s `sm:` layout switch
+ * is a viewport-width media query, not a container query, so at this rail's
  * ~320px column it would fire full-row layout sized for a much wider box
- * and overlap. Reschedule and Cancel are pulled up front because the
- * reference treats them as the two things done from this panel without
- * opening the full card.
+ * and overlap.
  */
 export function AppointmentDetailPanel({
   appointment,
   contextLabel,
   timezone,
   onClose,
-  onStatusChange,
   onEdit,
-  onMove,
   className,
 }: {
   appointment: AppointmentDetailed | null;
@@ -53,19 +40,17 @@ export function AppointmentDetailPanel({
   timezone: string;
   /** Omit when `appointment` is an automatic default, not a real selection — hides the X. */
   onClose?: () => void;
-  onStatusChange: (id: string, status: AppointmentStatus) => Promise<void>;
-  /** Opens the full `AppointmentCard` full-width in the main column. */
+  /** Opens the full `AppointmentCard` full-width in the main column — status
+   * actions, reschedule ("Change time"), cancel, notes, payment, follow-up
+   * all live there now, not as separate buttons on this panel. */
   onEdit: (appointment: AppointmentDetailed) => void;
-  onMove: (appointment: AppointmentDetailed) => void;
   className?: string;
 }): JSX.Element {
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
-
   return (
     <Card className={cn('flex flex-col gap-4 p-5', className)}>
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h2 className="font-display text-base font-semibold text-foreground">
+          <h2 className="font-serif text-base font-semibold text-foreground">
             Appointment details
           </h2>
           {contextLabel && (
@@ -94,13 +79,11 @@ export function AppointmentDetailPanel({
         <>
           <div className="flex items-start gap-3">
             <Avatar name={appointment.customer_name ?? 'Customer'} size="lg" />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                <p className="truncate font-display text-base font-semibold text-foreground">
-                  {appointment.customer_name}
-                </p>
-                <StatusChip status={appointment.status} />
-              </div>
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <p className="font-serif text-base font-semibold leading-snug text-foreground">
+                {appointment.customer_name}
+              </p>
+              <StatusChip status={appointment.status} />
             </div>
           </div>
 
@@ -170,42 +153,12 @@ export function AppointmentDetailPanel({
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 border-t border-border pt-4">
-            <Button size="sm" onClick={() => onEdit(appointment)}>
+          <div className="border-t border-border pt-4">
+            <Button size="sm" className="w-full" onClick={() => onEdit(appointment)}>
               Edit appointment
             </Button>
-            {RESCHEDULABLE.has(appointment.status) && (
-              <Button size="sm" variant="ghost" onClick={() => onMove(appointment)}>
-                Reschedule
-              </Button>
-            )}
-            {CANCELLABLE.has(appointment.status) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => setConfirmingCancel(true)}
-              >
-                Cancel appointment
-              </Button>
-            )}
           </div>
         </>
-      )}
-
-      {appointment && (
-        <ConfirmDialog
-          open={confirmingCancel}
-          title="Cancel this appointment?"
-          message="The customer will be emailed."
-          tone="destructive"
-          confirmLabel="Cancel appointment"
-          onConfirm={() => {
-            setConfirmingCancel(false);
-            void onStatusChange(appointment.id, 'cancelled');
-          }}
-          onCancel={() => setConfirmingCancel(false)}
-        />
       )}
     </Card>
   );

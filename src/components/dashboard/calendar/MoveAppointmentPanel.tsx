@@ -71,7 +71,7 @@ export function MoveAppointmentPanel({
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-start justify-between gap-2">
-        <h3 className="font-display text-base font-semibold text-foreground">
+        <h3 className="font-serif text-base font-semibold text-foreground">
           Move {appointment.customer_name ?? 'this appointment'}&rsquo;s time
         </h3>
         <Button variant="ghost" size="sm" onClick={onClose}>
@@ -93,7 +93,7 @@ export function MoveAppointmentPanel({
       )}
 
       {!loading && freeSlots.length > 0 && (
-        <ul className="mb-4 grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+        <ul className="mb-4 grid grid-cols-3 gap-1.5 md:grid-cols-4">
           {freeSlots.map((slot) => (
             <li key={slot.starts_at}>
               <button

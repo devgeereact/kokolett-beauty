@@ -43,7 +43,7 @@ export function MonthView({
   return (
     <div
       className={cn(
-        'flex flex-col overflow-hidden rounded-xl border border-border bg-card',
+        'flex flex-col overflow-hidden rounded-md border border-border bg-card',
         CALENDAR_GRID_HEIGHT_CLASS,
       )}
     >
@@ -79,7 +79,7 @@ export function MonthView({
               aria-current={isToday ? 'date' : undefined}
               className={cn(
                 'flex min-h-0 flex-col items-start gap-0.5 overflow-hidden border-b border-r border-border p-2 text-left',
-                'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'focus-visible:relative focus-visible:z-sticky focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 inMonth ? 'bg-card hover:bg-muted' : 'bg-muted',
               )}
             >

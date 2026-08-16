@@ -22,12 +22,13 @@ const VARIANTS: Record<Variant, string> = {
   destructive: 'bg-destructive text-destructive-foreground hover:brightness-110',
 };
 
+// Control heights (docs/DESIGN.md §10): sm/md sit below the 44px touch
+// minimum by design — dense owner tables on a pointer device, never the
+// customer booking path. `lg` is the one size that meets it.
 const SIZES: Record<Size, string> = {
-  // sm is below the 44px touch minimum by design: it is for dense owner tables
-  // on a pointer device, never for anything on the customer booking path.
-  sm: 'h-9 px-3 text-sm',
-  md: 'h-11 px-5 text-base',
-  lg: 'h-12 px-6 text-base',
+  sm: 'h-control-sm px-3 text-sm',
+  md: 'h-control px-5 text-base',
+  lg: 'h-control-lg px-6 text-base',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -48,7 +49,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled={disabled ?? loading}
       aria-busy={loading || undefined}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-semibold',
+        'inline-flex items-center justify-center gap-2 rounded-sm font-semibold',
         'transition-[filter,background-color,transform] duration-150 ease-out active:scale-[0.98]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50',

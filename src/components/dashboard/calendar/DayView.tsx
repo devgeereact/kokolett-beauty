@@ -3,7 +3,7 @@ import {
   CALENDAR_GRID_HEIGHT_CLASS,
   hourGridlines,
   hourLabels,
-  hourRange,
+  openingHoursRange,
   offsetPercent,
   type HourRange,
 } from '@/lib/calendar';
@@ -23,6 +23,8 @@ export interface DayViewProps {
   timezone: string;
   appointments: AppointmentDetailed[];
   openSlots: OwnerDaySlot[];
+  /** Longest active service's duration, in minutes — pads the axis close time. */
+  maxServiceDurationMin: number;
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
   onSelectOpenSlot: (slot: OwnerDaySlot) => void;
   /** Reload after a drag successfully reschedules an appointment. */
@@ -106,6 +108,7 @@ export function DayView({
   timezone,
   appointments,
   openSlots,
+  maxServiceDurationMin,
   onSelectAppointment,
   onSelectOpenSlot,
   onChanged,
@@ -124,18 +127,19 @@ export function DayView({
   // stays a real dependency — see WeekView's identical guard: without "now"
   // in the fitted range, the live line can silently never show on a
   // sparsely-published day.
+  //
+  // Fitted to published slot times (any status, not just `freeSlots`), same
+  // reasoning as WeekView: an appointment outside currently-published hours
+  // doesn't get to stretch the axis to cover it.
   const { range, labels } = useMemo(() => {
-    const allMinutes = [
-      ...appointments.flatMap((a) => [
-        minutesSinceMidnight(a.starts_at, timezone),
-        minutesSinceMidnight(a.ends_at, timezone),
-      ]),
-      ...freeSlots.map((s) => minutesSinceMidnight(s.starts_at, timezone)),
-    ];
-    if (isToday) allMinutes.push(nowMinutes);
-    const computedRange = hourRange(allMinutes);
+    const slotStartMinutes = openSlots.map((s) => minutesSinceMidnight(s.starts_at, timezone));
+    const computedRange = openingHoursRange(
+      slotStartMinutes,
+      maxServiceDurationMin,
+      isToday ? nowMinutes : undefined,
+    );
     return { range: computedRange, labels: hourLabels(computedRange) };
-  }, [appointments, freeSlots, timezone, isToday, nowMinutes]);
+  }, [openSlots, maxServiceDurationMin, timezone, isToday, nowMinutes]);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
 
@@ -160,7 +164,7 @@ export function DayView({
       )}
       <div
         className={cn(
-          'flex flex-col overflow-hidden rounded-xl border border-border bg-card',
+          'flex flex-col overflow-hidden rounded-md border border-border bg-card',
           CALENDAR_GRID_HEIGHT_CLASS,
         )}
       >

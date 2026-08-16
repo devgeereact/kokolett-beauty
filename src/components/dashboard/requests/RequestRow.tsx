@@ -1,8 +1,8 @@
-import { Calendar, Clock, MoreHorizontal } from 'lucide-react';
+import { Calendar, CalendarCheck, Clock, MoreHorizontal } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
-import { formatDateShort, formatRelative } from '@/lib/format';
+import { formatDateShort, formatDateTime, formatRelative } from '@/lib/format';
 import {
   PRIORITY_LABELS,
   PRIORITY_TONE,
@@ -11,6 +11,7 @@ import {
   laneForStatus,
   priorityFromWaitingHours,
 } from '@/lib/requestStatus';
+import { TONE_TEXT } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import type { QueuedRequest } from '@/services/requestService';
 
@@ -48,7 +49,7 @@ export function RequestRow({
 
         <div className="min-w-[11rem] flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-display text-base font-semibold text-foreground">
+            <p className="font-serif text-base font-semibold text-foreground">
               {request.full_name}
             </p>
             <Badge tone={REQUEST_STATUS_TONE[request.status]}>
@@ -64,16 +65,49 @@ export function RequestRow({
         </div>
 
         <div className="min-w-[10rem] text-sm">
-          <p className="flex items-center gap-1.5 text-foreground">
-            <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
-            {request.preferred_dates.length > 0
-              ? request.preferred_dates.map((d) => formatDateShort(`${d}T00:00:00Z`)).join(' – ')
-              : 'Any date'}
-          </p>
-          <p className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
-            <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-            {FLEXIBILITY_LABELS[request.flexibility] ?? request.flexibility}
-          </p>
+          {isOpen ? (
+            <>
+              <p className="flex items-center gap-1.5 font-medium text-foreground">
+                <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                Preferred
+              </p>
+              <p className="mb-1.5 ml-5 text-muted-foreground">
+                {request.preferred_dates.length > 0
+                  ? request.preferred_dates.map((d) => formatDateShort(`${d}T00:00:00Z`)).join(' – ')
+                  : 'Any date'}
+              </p>
+              <p className="flex items-center gap-1.5 text-muted-foreground">
+                <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                {FLEXIBILITY_LABELS[request.flexibility] ?? request.flexibility}
+              </p>
+            </>
+          ) : lane === 'converted' ? (
+            <>
+              <p className="flex items-center gap-1.5 font-medium text-foreground">
+                <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                Offered
+              </p>
+              <p className="mb-1.5 ml-5 text-muted-foreground">
+                {request.responded_at ? formatDateTime(request.responded_at) : '—'}
+              </p>
+              <p className={cn('flex items-center gap-1.5 font-medium', TONE_TEXT.completed)}>
+                <CalendarCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                Booked
+              </p>
+              <p className="ml-5 text-muted-foreground">
+                {request.converted_starts_at ? formatDateTime(request.converted_starts_at) : '—'}
+              </p>
+            </>
+          ) : (
+            // declined / expired — no offer was ever made, just when they asked.
+            <>
+              <p className="flex items-center gap-1.5 font-medium text-foreground">
+                <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                Requested
+              </p>
+              <p className="ml-5 text-muted-foreground">{formatDateTime(request.created_at)}</p>
+            </>
+          )}
         </div>
 
         <div className="min-w-[7rem] text-sm">

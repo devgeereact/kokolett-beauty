@@ -58,7 +58,7 @@ export function ApprovalDetailPanel({
             <Avatar name={row.customer_name ?? 'Customer'} size="lg" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="truncate font-display text-base font-semibold text-foreground">
+                <p className="truncate font-serif text-base font-semibold text-foreground">
                   {row.customer_name}
                 </p>
                 <Badge tone="pending">First-time customer</Badge>

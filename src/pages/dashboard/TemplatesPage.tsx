@@ -98,11 +98,11 @@ export function TemplatesPage(): JSX.Element {
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="h-fit p-5">
             <div className="mb-3 flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-tint-primary text-primary">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
                 <selected.icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
               </span>
               <div>
-                <h2 className="font-display text-lg font-semibold text-foreground">{selected.label}</h2>
+                <h2 className="font-serif text-lg font-semibold text-foreground">{selected.label}</h2>
                 <Badge tone="primary">Email</Badge>
               </div>
             </div>
@@ -126,7 +126,7 @@ export function TemplatesPage(): JSX.Element {
           </Card>
 
           <Card className="p-5 lg:col-span-2">
-            <h3 className="mb-4 font-display text-base font-semibold text-foreground">
+            <h3 className="mb-4 font-serif text-base font-semibold text-foreground">
               {example ? 'Most recent example' : 'Preview'}
             </h3>
             {!example ? (
@@ -181,7 +181,7 @@ export function TemplatesPage(): JSX.Element {
             <span
               className={cn(
                 'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                lane === l ? 'bg-tint-primary text-primary' : 'bg-muted text-muted-foreground',
+                lane === l ? 'bg-tint-brand text-primary' : 'bg-muted text-muted-foreground',
               )}
             >
               {laneCounts[l]}
@@ -201,14 +201,14 @@ export function TemplatesPage(): JSX.Element {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search templates…"
-          className="h-11 w-full rounded-lg border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-11 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </div>
 
       {!usage ? (
         <LoadingState label="Loading template usage…" />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((t) => {
             const u = usage.get(t.key);
             return (
@@ -217,10 +217,10 @@ export function TemplatesPage(): JSX.Element {
                 className="cursor-pointer p-5 transition-colors hover:border-foreground/20"
                 onClick={() => setSelectedKey(t.key)}
               >
-                <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-tint-primary text-primary">
+                <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-tint-brand text-primary">
                   <t.icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
                 </span>
-                <h3 className="mb-1 font-display text-base font-semibold text-foreground">{t.label}</h3>
+                <h3 className="mb-1 font-serif text-base font-semibold text-foreground">{t.label}</h3>
                 <p className="mb-3 text-sm text-muted-foreground">{t.description}</p>
                 <div className="mb-3">
                   <Badge tone="primary">Email</Badge>

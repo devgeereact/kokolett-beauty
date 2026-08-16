@@ -5,12 +5,12 @@ import {
   dayOfWeek,
   hourGridlines,
   hourLabels,
-  hourRange,
+  openingHoursRange,
   offsetPercent,
   WEEKDAY_HEADINGS,
   type HourRange,
 } from '@/lib/calendar';
-import { formatTime, minutesSinceMidnight } from '@/lib/format';
+import { formatTime, gmtOffsetLabel, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
 import { useAppointmentDrag, type UseAppointmentDrag } from '@/hooks/useAppointmentDrag';
 import { EventBlock } from '@/components/dashboard/calendar/EventBlock';
@@ -26,6 +26,8 @@ export interface WeekViewProps {
   timezone: string;
   appointmentsByDate: Map<string, AppointmentDetailed[]>;
   openSlotsByDate: Map<string, OwnerDaySlot[]>;
+  /** Longest active service's duration, in minutes — pads the axis close time. */
+  maxServiceDurationMin: number;
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
   onSelectDate: (date: string) => void;
   onSelectOpenSlot: (date: string, slot: OwnerDaySlot) => void;
@@ -120,6 +122,7 @@ export function WeekView({
   timezone,
   appointmentsByDate,
   openSlotsByDate,
+  maxServiceDurationMin,
   onSelectAppointment,
   onSelectDate,
   onSelectOpenSlot,
@@ -136,25 +139,30 @@ export function WeekView({
   // cache-busting): the live "now" line needs the axis to actually widen to
   // cover the current time as the day goes on, or it can silently stop
   // appearing once "now" drifts outside a range fitted at mount.
+  //
+  // Fitted to published slot times (any status — a booked slot's start is
+  // still real evidence the salon is open then), not to appointment times —
+  // an appointment sitting outside currently-published hours (a legacy row,
+  // a demo artifact) doesn't get to stretch the whole week's grid to cover
+  // it; it still renders, just clamped to the nearest edge.
   const { range, labels } = useMemo(() => {
-    const allMinutes: number[] = [];
+    const slotStartMinutes: number[] = [];
     for (const date of dates) {
-      for (const a of appointmentsByDate.get(date) ?? []) {
-        allMinutes.push(minutesSinceMidnight(a.starts_at, timezone));
-        allMinutes.push(minutesSinceMidnight(a.ends_at, timezone));
-      }
       for (const s of openSlotsByDate.get(date) ?? []) {
-        allMinutes.push(minutesSinceMidnight(s.starts_at, timezone));
+        slotStartMinutes.push(minutesSinceMidnight(s.starts_at, timezone));
       }
     }
     // The live "now" line needs the axis to actually cover the current time
     // — otherwise a day with only sparse published slots can auto-fit a
     // range that excludes "now" entirely, and the line silently never
     // appears.
-    if (dates.includes(today)) allMinutes.push(nowMinutes);
-    const computedRange = hourRange(allMinutes);
+    const computedRange = openingHoursRange(
+      slotStartMinutes,
+      maxServiceDurationMin,
+      dates.includes(today) ? nowMinutes : undefined,
+    );
     return { range: computedRange, labels: hourLabels(computedRange) };
-  }, [dates, appointmentsByDate, openSlotsByDate, timezone, today, nowMinutes]);
+  }, [dates, openSlotsByDate, maxServiceDurationMin, timezone, today, nowMinutes]);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
 
@@ -177,7 +185,7 @@ export function WeekView({
       )}
       <div
         className={cn(
-          'flex flex-col overflow-hidden rounded-xl border border-border bg-card',
+          'flex flex-col overflow-hidden rounded-md border border-border bg-card',
           CALENDAR_GRID_HEIGHT_CLASS,
         )}
       >
@@ -188,8 +196,11 @@ export function WeekView({
           </caption>
           <thead>
             <tr className="border-b border-border">
-              <th scope="col" className="w-[52px]">
-                <span className="sr-only">Time</span>
+              <th scope="col" className="w-[52px] py-2.5 text-center">
+                <span className="text-[11px] font-medium text-muted-foreground">Time</span>
+                <span className="block text-[10px] text-muted-foreground">
+                  {gmtOffsetLabel(timezone)}
+                </span>
               </th>
               {dates.map((date) => (
                 <th

@@ -18,13 +18,19 @@ const TONE_LABELS: Record<ReplyTone, string> = {
  * The closest thing this app has to an inbox: recent free-text notes left
  * on a booking or a waitlist request. No reply-tracking exists, so this is
  * "what customers have said lately", not a threaded conversation.
+ *
+ * `customerEmail`, when given, scopes this to one customer's messages —
+ * used embedded in `CustomerDetailPanel` so replying is a click away from
+ * their profile instead of hunting for them in the salon-wide list.
  */
 export function CommunicationAssistancePanel({
   timezone,
+  customerEmail,
 }: {
   timezone: string;
+  customerEmail?: string;
 }): JSX.Element {
-  const [messages, setMessages] = useState<RecentMessage[] | null>(null);
+  const [allMessages, setAllMessages] = useState<RecentMessage[] | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tone, setTone] = useState<ReplyTone>('friendly');
@@ -34,11 +40,27 @@ export function CommunicationAssistancePanel({
   const load = (): void => {
     setError(null);
     getRecentMessages(timezone)
-      .then(setMessages)
+      .then(setAllMessages)
       .catch((e: unknown) => setError(e instanceof Error ? e : new Error(String(e))));
   };
 
   useEffect(load, [timezone]);
+
+  const messages = useMemo(() => {
+    if (!allMessages) return null;
+    if (!customerEmail) return allMessages;
+    const email = customerEmail.trim().toLowerCase();
+    return allMessages.filter((m) => m.customerEmail.trim().toLowerCase() === email);
+  }, [allMessages, customerEmail]);
+
+  // Scoped to one customer, there's rarely more than one message to pick
+  // from — skip the "choose a message" step and go straight to a draft.
+  useEffect(() => {
+    if (customerEmail && messages && messages.length > 0 && selectedId === null) {
+      setSelectedId(messages[0]!.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerEmail, messages]);
 
   const selected = useMemo(
     () => messages?.find((m) => m.id === selectedId) ?? null,
@@ -60,7 +82,11 @@ export function CommunicationAssistancePanel({
     return (
       <EmptyState
         title="Nothing recent"
-        description="Notes customers leave when booking, or on a waitlist request, show up here."
+        description={
+          customerEmail
+            ? 'Nothing from them yet — notes left when booking, or on a waitlist request, show up here.'
+            : 'Notes customers leave when booking, or on a waitlist request, show up here.'
+        }
       />
     );
   }
@@ -78,7 +104,7 @@ export function CommunicationAssistancePanel({
             type="button"
             onClick={() => setSelectedId(m.id)}
             className={cn(
-              'w-full rounded-xl border p-4 text-left transition-colors',
+              'w-full rounded-md border p-4 text-left transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               selectedId === m.id
                 ? 'border-primary bg-card'

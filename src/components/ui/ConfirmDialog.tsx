@@ -109,16 +109,17 @@ export function ConfirmDialog({
 
   if (!open) return null;
 
-  // z-[60]: above Modal's z-50 — several call sites (AppointmentDetailModal)
-  // nest this inside a Modal, and both portal to document.body as siblings,
-  // so a lower z-index here would paint the confirm dialog underneath it.
+  // z-layer-popover (90): above Modal's z-modal (80) — several call sites
+  // (AppointmentDetailModal) nest this inside a Modal, and both portal to
+  // document.body as siblings, so a lower z-index here would paint the
+  // confirm dialog underneath it.
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-layer-popover flex items-center justify-center p-4">
       <button
         type="button"
         aria-label="Close dialog"
         tabIndex={-1}
-        className="absolute inset-0 bg-black/50"
+        className="overlay-backdrop absolute inset-0"
         onClick={onCancel}
       />
       <div
@@ -129,10 +130,10 @@ export function ConfirmDialog({
         aria-describedby={messageId}
         className={cn(
           'relative w-full max-w-sm rounded-xl border border-border bg-popover p-5',
-          'text-popover-foreground shadow-card',
+          'text-popover-foreground shadow-modal',
         )}
       >
-        <h2 id={titleId} className="font-display text-lg font-semibold text-foreground">
+        <h2 id={titleId} className="font-serif text-lg font-semibold text-foreground">
           {title}
         </h2>
         <p

@@ -149,7 +149,7 @@ export function AssistantInsightsRow({ timezone }: { timezone: string }): JSX.El
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center gap-2">
-        <h2 className="font-display text-base font-semibold text-foreground">
+        <h2 className="font-serif text-base font-semibold text-foreground">
           AI assistant
         </h2>
         <span className="rounded-full bg-tint-no-show px-2 py-0.5 text-xs font-medium text-status-no-show">

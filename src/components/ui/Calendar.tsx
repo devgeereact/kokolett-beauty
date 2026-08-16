@@ -28,7 +28,7 @@ export function Calendar({
     size === 'lg'
       ? {
           month_caption: 'flex items-center justify-center pt-1',
-          caption_label: 'text-base font-semibold text-foreground sm:text-lg',
+          caption_label: 'text-base font-semibold text-foreground md:text-lg',
           button_previous: cn(
             'inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground',
             'hover:bg-muted hover:text-foreground',
@@ -40,8 +40,8 @@ export function Calendar({
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           ),
           weekday:
-            'flex-1 text-center text-xs font-medium uppercase text-muted-foreground sm:text-sm',
-          day: 'flex-1 aspect-square p-0.5 text-center text-sm relative sm:text-base',
+            'flex-1 text-center text-xs font-medium uppercase text-muted-foreground md:text-sm',
+          day: 'flex-1 aspect-square p-0.5 text-center text-sm relative md:text-base',
           day_button: cn(
             'flex h-full w-full items-center justify-center rounded-lg font-normal text-foreground',
             'hover:bg-muted',
@@ -75,7 +75,7 @@ export function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       weekStartsOn={1}
-      className={cn(size === 'lg' ? 'w-full p-4 sm:p-6' : 'p-3', className)}
+      className={cn(size === 'lg' ? 'w-full p-4 md:p-6' : 'p-3', className)}
       classNames={{
         months: 'flex flex-col gap-4',
         month: 'w-full space-y-3',

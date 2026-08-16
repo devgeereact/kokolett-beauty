@@ -135,10 +135,10 @@ const TimelineBlock = memo(function TimelineBlock({
       aria-expanded={expanded}
       style={{ top: `${top}%`, height: `${height}%` }}
       className={cn(
-        // z-20: above NowLine's z-10, so an opaque block occludes the live
-        // time line where they overlap — the line should only ever be
+        // z-sticky: above NowLine's z-base, so an opaque block occludes the
+        // live time line where they overlap — the line should only ever be
         // visible in an empty gap, never cutting across a block's text.
-        'absolute inset-x-1 z-20 flex flex-col justify-between overflow-hidden rounded-lg',
+        'absolute inset-x-1 z-sticky flex flex-col justify-between overflow-hidden rounded-lg',
         'border border-border px-2.5 py-1.5 text-left',
         'transition-colors duration-150 ease-out hover:brightness-95',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

@@ -154,16 +154,16 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
   return (
     <div>
       <div className="mb-2">
-        <h1 className="font-display text-2xl font-semibold text-foreground">Hi {firstName} 👋</h1>
+        <h1 className="font-serif text-2xl font-semibold text-foreground">Hi {firstName} 👋</h1>
         <p className="text-sm text-muted-foreground">
           Your AI assistant is here to help you manage your business, create content, and get things done faster.
         </p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         {CATEGORY_CARDS.map((c) => (
           <Card key={c.title} className="flex items-center gap-3 p-4">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-primary text-primary">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
               <c.icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             </span>
             <span className="min-w-0">
@@ -192,8 +192,8 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                   )}
                   <div
                     className={cn(
-                      'max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap',
-                      m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-tint-primary text-foreground',
+                      'max-w-[80%] rounded-lg px-4 py-3 text-sm whitespace-pre-wrap',
+                      m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-tint-brand text-foreground',
                     )}
                   >
                     {m.content}
@@ -263,7 +263,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
         <div className="space-y-6">
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-base font-semibold text-foreground">Quick actions</h2>
+              <h2 className="font-serif text-base font-semibold text-foreground">Quick actions</h2>
               <button
                 type="button"
                 onClick={startNewConversation}
@@ -289,7 +289,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-3 font-display text-base font-semibold text-foreground">Popular prompts</h2>
+            <h2 className="mb-3 font-serif text-base font-semibold text-foreground">Popular prompts</h2>
             <ul className="space-y-1">
               {POPULAR_PROMPTS.map((p) => (
                 <li key={p}>
@@ -309,7 +309,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-3 font-display text-base font-semibold text-foreground">Recent conversations</h2>
+            <h2 className="mb-3 font-serif text-base font-semibold text-foreground">Recent conversations</h2>
             {conversations.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nothing yet — ask something to start one.</p>
             ) : (
@@ -335,6 +335,32 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                 ))}
               </ul>
             )}
+          </Card>
+
+          {/*
+            The reference's matching card ends in an "Explore AI features"
+            button — dropped here, not just restyled. This page *is* the
+            AI features; there's no separate features page to send someone
+            to, so a button here would point nowhere real. Kept the
+            information half as a plain tip card instead, same
+            icon+heading+description shape `ReportsPage`'s Insights cards
+            already use for a card with no action.
+          */}
+          <Card className="bg-tint-brand p-5">
+            <div className="flex items-start gap-3">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-card text-primary">
+                <Sparkles aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+              </span>
+              <div>
+                <p className="font-serif text-sm font-semibold text-foreground">
+                  Smarter business. More time for you.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Let AI handle the busy work, so you can focus on what you do best — creating
+                  beauty.
+                </p>
+              </div>
+            </div>
           </Card>
         </div>
       </div>

@@ -45,10 +45,10 @@ export function SubscribePage(): JSX.Element {
 
   return (
     <SiteShell>
-      <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-lg px-4 py-16 md:px-6">
         {done ? (
           <Card className="p-6 text-center">
-            <h1 className="font-display text-2xl font-semibold text-foreground">
+            <h1 className="font-serif text-2xl font-semibold text-foreground">
               You are on the list
             </h1>
             <p className="mt-2 text-muted-foreground">
@@ -64,7 +64,7 @@ export function SubscribePage(): JSX.Element {
           </Card>
         ) : (
           <>
-            <h1 className="font-display text-3xl font-semibold text-foreground">
+            <h1 className="font-serif text-3xl font-semibold text-foreground">
               Keep in touch
             </h1>
             <p className="mb-8 mt-2 text-muted-foreground">

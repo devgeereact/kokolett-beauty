@@ -21,9 +21,9 @@ export function BookingRulesCard({ settings }: { settings: BookingSettings | nul
   ];
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-3 font-display text-base font-semibold text-foreground">Booking rules</h2>
-      <dl className="space-y-2.5">
+    <Card className="p-4">
+      <h2 className="mb-2 font-serif text-base font-semibold text-foreground">Booking rules</h2>
+      <dl className="space-y-1.5">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between gap-3 text-sm">
             <dt className="flex items-center gap-2 text-muted-foreground">
@@ -36,7 +36,7 @@ export function BookingRulesCard({ settings }: { settings: BookingSettings | nul
       </dl>
       <Link
         to={routes.owner.settings}
-        className="mt-4 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
       >
         Edit booking settings
         <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />

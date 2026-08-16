@@ -6,7 +6,6 @@ import {
   buildAppointmentActivity,
   findNextUp,
   findScheduleConflicts,
-  forecastCancellationRisk,
   percentChange,
   rankRepeatCustomers,
   summarizeBusiness,
@@ -229,58 +228,6 @@ describe('rankRepeatCustomers', () => {
     expect(ranked.map((r) => r.customer.id)).toEqual(['alice', 'bob']);
     expect(ranked[0]!.completedCount).toBe(2);
     expect(ranked[0]!.lastVisitAt).toBe('2026-03-01T09:00:00.000Z');
-  });
-});
-
-describe('forecastCancellationRisk', () => {
-  it('scores a first-time, short-notice, walk-in booking higher than a routine one', () => {
-    const risky = appt({
-      id: 'risky',
-      customer_id: 'newcomer',
-      customer_completed_count: 0,
-      source: 'owner',
-      created_at: '2026-08-11T08:00:00.000Z',
-      starts_at: '2026-08-11T09:00:00.000Z', // 1 hour lead time
-    });
-    const routine = appt({
-      id: 'routine',
-      customer_id: 'regular',
-      customer_completed_count: 5,
-      source: 'web',
-      created_at: '2026-07-01T09:00:00.000Z',
-      starts_at: '2026-08-11T09:00:00.000Z', // weeks of lead time
-    });
-
-    const ranked = forecastCancellationRisk([routine, risky], new Map([['newcomer', 2]]));
-    const first = ranked[0]!;
-    const second = ranked[1]!;
-    expect(first.appointment.id).toBe('risky');
-    expect(first.reasons).toEqual(
-      expect.arrayContaining([
-        'First-time customer',
-        'Booked with very little notice',
-        'Has missed appointments before',
-        'Booked by phone, not online',
-      ]),
-    );
-    expect(second.appointment.id).toBe('routine');
-    expect(second.score).toBe(0);
-  });
-
-  it('caps the score at 1', () => {
-    const risk = forecastCancellationRisk(
-      [
-        appt({
-          customer_id: 'x',
-          customer_completed_count: 0,
-          source: 'owner',
-          created_at: '2026-08-11T08:59:00.000Z',
-          starts_at: '2026-08-11T09:00:00.000Z',
-        }),
-      ],
-      new Map([['x', 3]]),
-    )[0]!;
-    expect(risk.score).toBeLessThanOrEqual(1);
   });
 });
 

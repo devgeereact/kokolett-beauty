@@ -1,0 +1,221 @@
+/* ============================================================================
+ * Kokolett Beauty UK — token layer
+ * Source of truth for every colour, radius, shadow and overlay value.
+ * Consumed by tailwind.config.ts. Documented in docs/DESIGN.md.
+ *
+ * FORMAT: colour tokens are stored as space-separated sRGB channels, not hex,
+ * so Tailwind can inject an alpha channel — `bg-primary/50` works because the
+ * config resolves to `rgb(var(--primary) / <alpha-value>)`. Storing `#c24d2c`
+ * would break every opacity modifier in the codebase.
+ * ========================================================================= */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* --- Surfaces ------------------------------------------------------- */
+    --background: 232 235 237;        /* #e8ebed */
+    --foreground: 51 51 51;           /* #333333 */
+    --card: 255 255 255;              /* #ffffff */
+    --card-foreground: 51 51 51;
+    --popover: 255 255 255;
+    --popover-foreground: 51 51 51;
+    --muted: 241 243 245;             /* #f1f3f5 — reads as recessed on card */
+    --muted-foreground: 91 99 112;    /* #5b6370 — 5.45:1 on muted */
+    --secondary: 243 244 246;         /* #f3f4f6 */
+    --secondary-foreground: 75 85 99; /* #4b5563 */
+
+    /* --- Brand ---------------------------------------------------------- */
+    /* --brand is identity: display type ≥24px, marketing, focus ring.
+       --primary is interactive: any fill that carries a text label.
+       They differ because #e05d38 cannot hold white label text at AA. */
+    --brand: 224 93 56;               /* #e05d38 */
+    --primary: 194 77 44;             /* #c24d2c — 4.78:1 with white */
+    --primary-foreground: 255 255 255;
+
+    /* --- Accent (selection, menu hover) --------------------------------- */
+    /* Warm, not blue: blue is reserved for status-confirmed on the calendar. */
+    --accent: 246 230 224;            /* #f6e6e0 */
+    --accent-foreground: 138 58 31;   /* #8a3a1f — 6.4:1 */
+
+    /* --- Destructive ---------------------------------------------------- */
+    --destructive: 220 38 38;         /* #dc2626 — 4.83:1 with white */
+    --destructive-foreground: 255 255 255;
+
+    /* --- Lines and fields ----------------------------------------------- */
+    --border: 220 223 226;            /* #dcdfe2 */
+    --input: 244 245 247;             /* #f4f5f7 */
+    --ring: 224 93 56;                /* brand — 3.63:1, passes 1.4.11 */
+
+    /* --- Appointment status (TEXT and ICON only, never a fill) ---------- */
+    --status-pending: 180 83 9;       /* #b45309 — 5.02:1 */
+    --status-confirmed: 37 99 235;    /* #2563eb — 5.17:1 */
+    --status-in-service: 124 58 237;  /* #7c3aed — 5.70:1 */
+    --status-completed: 4 120 87;     /* #047857 — 5.48:1 */
+    --status-cancelled: 107 114 128;  /* #6b7280 — 4.83:1 */
+    --status-no-show: 220 38 38;      /* #dc2626 — 4.83:1 */
+
+    /* --- Charts (fills; use in declared order) -------------------------- */
+    --chart-1: 134 167 200;           /* #86a7c8 */
+    --chart-2: 238 165 145;           /* #eea591 */
+    --chart-3: 90 124 166;            /* #5a7ca6 */
+    --chart-4: 70 100 148;            /* #466494 */
+    --chart-5: 51 76 130;             /* #334c82 */
+
+    /* --- Dashboard chrome ----------------------------------------------- */
+    --sidebar: 221 223 226;           /* #dddfe2 */
+    --sidebar-foreground: 51 51 51;
+    --sidebar-primary: 194 77 44;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 246 230 224;
+    --sidebar-accent-foreground: 138 58 31;
+    --sidebar-border: 205 208 212;
+    --sidebar-ring: 224 93 56;
+
+    /* --- Overlay and elevation ------------------------------------------ */
+    --overlay: 17 24 39;              /* #111827 backdrop base */
+    --overlay-alpha: 0.4;
+    --shadow: 0 0 0;
+    --shadow-a1: 0.10;                /* card   */
+    --shadow-a2: 0.10;                /* popover */
+    --shadow-a3: 0.14;                /* modal  */
+
+    /* --- Tint mix ratio -------------------------------------------------- */
+    /* Every tint below is exactly this much saturated colour mixed into card.
+       One number, so tints are reproducible rather than hand-picked. */
+    --tint-mix: 12%;
+
+    /* --- Shape ----------------------------------------------------------- */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --background: 28 36 51;           /* #1c2433 */
+    --foreground: 229 229 229;        /* #e5e5e5 */
+    --card: 42 48 64;                 /* #2a3040 — raised above background */
+    --card-foreground: 229 229 229;
+    --popover: 38 43 56;              /* #262b38 */
+    --popover-foreground: 229 229 229;
+    --muted: 35 41 54;                /* #232936 — recessed below card */
+    --muted-foreground: 163 163 163;  /* #a3a3a3 — 5.2:1 on card */
+    --secondary: 42 48 62;            /* #2a303e */
+    --secondary-foreground: 229 229 229;
+
+    /* Saturated fills go LIGHTER in dark mode and take a dark foreground.
+       A terracotta dark enough to hold white text at 4.5:1 would fall below
+       3:1 against the card it sits on. See DESIGN.md §3.4. */
+    --brand: 224 93 56;               /* #e05d38 */
+    --primary: 240 128 94;            /* #f0805e */
+    --primary-foreground: 26 31 43;   /* #1a1f2b — 6.46:1 */
+
+    --accent: 59 42 35;               /* #3b2a23 */
+    --accent-foreground: 246 203 184; /* #f6cbb8 */
+
+    --destructive: 248 113 113;       /* #f87171 */
+    --destructive-foreground: 26 31 43;
+
+    --border: 61 67 84;               /* #3d4354 */
+    --input: 61 67 84;
+    --ring: 224 93 56;
+
+    --status-pending: 245 158 11;     /* #f59e0b */
+    --status-confirmed: 96 165 250;   /* #60a5fa */
+    --status-in-service: 167 139 250; /* #a78bfa */
+    --status-completed: 52 211 153;   /* #34d399 */
+    --status-cancelled: 156 163 175;  /* #9ca3af */
+    --status-no-show: 248 113 113;    /* #f87171 */
+
+    --chart-1: 134 167 200;
+    --chart-2: 230 160 143;           /* #e6a08f — lifted for dark ground */
+    --chart-3: 90 124 166;
+    --chart-4: 70 100 148;
+    --chart-5: 51 76 130;
+
+    --sidebar: 42 48 63;              /* #2a303f */
+    --sidebar-foreground: 229 229 229;
+    --sidebar-primary: 240 128 94;
+    --sidebar-primary-foreground: 26 31 43;
+    --sidebar-accent: 59 42 35;
+    --sidebar-accent-foreground: 246 203 184;
+    --sidebar-border: 61 67 84;
+    --sidebar-ring: 224 93 56;
+
+    --overlay: 8 11 18;
+    --overlay-alpha: 0.6;
+    /* Black at 10% is invisible on #1c2433 — dark elevation needs depth. */
+    --shadow: 0 0 0;
+    --shadow-a1: 0.30;
+    --shadow-a2: 0.40;
+    --shadow-a3: 0.55;
+
+    --tint-mix: 18%;                  /* dark tints need more presence */
+  }
+
+  /* --- Derived tints -----------------------------------------------------
+   * The pale-background half of the "pale tint + saturated text" pairing.
+   * Derived from the tokens above, so a palette change propagates and a
+   * theme switch is automatic. Never hand-pick a tint hex. */
+  :root,
+  .dark {
+    --tint-pending:    color-mix(in srgb, rgb(var(--status-pending))    var(--tint-mix), rgb(var(--card)));
+    --tint-confirmed:  color-mix(in srgb, rgb(var(--status-confirmed))  var(--tint-mix), rgb(var(--card)));
+    --tint-in-service: color-mix(in srgb, rgb(var(--status-in-service)) var(--tint-mix), rgb(var(--card)));
+    --tint-completed:  color-mix(in srgb, rgb(var(--status-completed))  var(--tint-mix), rgb(var(--card)));
+    --tint-cancelled:  color-mix(in srgb, rgb(var(--status-cancelled))  var(--tint-mix), rgb(var(--card)));
+    --tint-no-show:    color-mix(in srgb, rgb(var(--status-no-show))    var(--tint-mix), rgb(var(--card)));
+    --tint-brand:      color-mix(in srgb, rgb(var(--brand))             var(--tint-mix), rgb(var(--card)));
+    --tint-chart-1:    color-mix(in srgb, rgb(var(--chart-1))           var(--tint-mix), rgb(var(--card)));
+    --tint-chart-2:    color-mix(in srgb, rgb(var(--chart-2))           var(--tint-mix), rgb(var(--card)));
+    --tint-chart-3:    color-mix(in srgb, rgb(var(--chart-3))           var(--tint-mix), rgb(var(--card)));
+    --tint-chart-4:    color-mix(in srgb, rgb(var(--chart-4))           var(--tint-mix), rgb(var(--card)));
+    --tint-chart-5:    color-mix(in srgb, rgb(var(--chart-5))           var(--tint-mix), rgb(var(--card)));
+  }
+
+  /* --- Global rules ------------------------------------------------------ */
+
+  * {
+    border-color: rgb(var(--border));
+  }
+
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Defined once. Removing it from a component is a review blocker. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* WCAG 2.2 — 2.4.11 Focus Not Obscured. Any sticky header or sidebar must
+     leave the focused element visible when tabbing into a scroll region. */
+  :root {
+    scroll-padding-top: 5rem;
+    scroll-padding-bottom: 2rem;
+  }
+
+  /* Not optional. Must not be overridden per component. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

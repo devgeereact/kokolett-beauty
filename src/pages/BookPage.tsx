@@ -102,13 +102,13 @@ export function BookPage(): JSX.Element {
   if (result) {
     return (
       <SiteShell>
-        <div className="mx-auto max-w-md px-4 py-10 sm:px-6">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+        <div className="mx-auto max-w-md px-4 py-10 md:px-6">
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-card">
             <div className="bg-primary px-6 py-6 text-center text-primary-foreground">
               <p className="text-xs font-semibold uppercase tracking-[0.2em]">
                 Kokolett Beauty
               </p>
-              <p className="mt-2 font-display text-2xl font-semibold">
+              <p className="mt-2 font-serif text-2xl font-semibold">
                 {result.status === 'confirmed'
                   ? 'You are booked in'
                   : 'Your slot is held'}
@@ -180,8 +180,8 @@ export function BookPage(): JSX.Element {
 
   return (
     <SiteShell>
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-        <h1 className="font-display text-3xl font-semibold text-foreground">
+      <div className="mx-auto max-w-5xl px-4 py-10 md:px-6">
+        <h1 className="font-serif text-3xl font-semibold text-foreground">
           Book an appointment
         </h1>
         <p className="mb-8 mt-2 text-muted-foreground">
@@ -207,8 +207,8 @@ export function BookPage(): JSX.Element {
 
         {!loading && openDates.length > 0 && !slot && (
           <Card className="mb-8 overflow-hidden p-0">
-            <div className="grid sm:grid-cols-2">
-              <div className="border-b border-border sm:border-b-0 sm:border-r">
+            <div className="grid md:grid-cols-2">
+              <div className="border-b border-border md:border-b-0 md:border-r">
                 <Calendar
                   size="lg"
                   mode="single"
@@ -219,10 +219,10 @@ export function BookPage(): JSX.Element {
                 />
               </div>
 
-              <div className="min-w-0 flex-1 p-5 sm:p-6">
+              <div className="min-w-0 flex-1 p-5 md:p-6">
                 {activeDate ? (
                   <>
-                    <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+                    <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
                       {formatDateLong(`${activeDate}T12:00:00Z`, 'UTC')}
                     </h2>
                     <p className="mb-4 text-sm text-muted-foreground">

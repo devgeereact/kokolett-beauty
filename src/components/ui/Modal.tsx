@@ -77,12 +77,12 @@ export function Modal({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-[8vh] sm:items-center sm:pt-4">
+    <div className="fixed inset-0 z-modal flex items-start justify-center overflow-y-auto p-4 pt-[8vh] md:items-center md:pt-4">
       <button
         type="button"
         aria-label="Close dialog"
         tabIndex={-1}
-        className="fixed inset-0 bg-black/50"
+        className="overlay-backdrop fixed inset-0"
         onClick={onClose}
       />
       <div
@@ -90,7 +90,9 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
-        className={cn('relative w-full max-w-lg', className)}
+        // modal-md (520px) is the default width (§18) — call sites pass
+        // `max-w-modal-sm`/`-lg` to override, never an ad-hoc max-w-*.
+        className={cn('relative w-full max-w-modal-md shadow-modal', className)}
       >
         {children}
       </div>

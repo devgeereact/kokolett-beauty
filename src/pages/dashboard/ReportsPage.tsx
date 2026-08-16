@@ -35,12 +35,20 @@ import { routes } from '@/lib/routes';
  * from the previous version of this page — real, already-shipped features
  * not in the reference image, not worth deleting.
  */
+const RANGE_OPTIONS = [
+  { days: 7, label: 'Last 7 days' },
+  { days: 14, label: 'Last 14 days' },
+  { days: 28, label: 'Last 28 days' },
+  { days: 90, label: 'Last 90 days' },
+] as const;
+
 export function ReportsPage(): JSX.Element {
   const { settings, timezone } = useBusinessSettings();
-  const [range] = useState(() => {
+  const [rangeDays, setRangeDays] = useState<number>(28);
+  const range = (() => {
     const today = toSalonDate(new Date(), timezone);
-    return { from: addDays(today, -27), to: today };
-  });
+    return { from: addDays(today, -(rangeDays - 1)), to: today };
+  })();
   const [overview, setOverview] = useState<ReportsOverview | null>(null);
   const [legacy, setLegacy] = useState<ReportsData | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -56,7 +64,7 @@ export function ReportsPage(): JSX.Element {
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(load, [timezone]);
+  useEffect(load, [timezone, rangeDays]);
 
   const reviewsConfigured = Boolean(settings?.google_place_id);
 
@@ -81,7 +89,26 @@ export function ReportsPage(): JSX.Element {
       actions={
         overview && (
           <>
-            <span className="hidden text-sm text-muted-foreground sm:inline">
+            <div className="relative">
+              <Calendar
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                strokeWidth={2}
+              />
+              <select
+                aria-label="Report period"
+                value={rangeDays}
+                onChange={(e) => setRangeDays(Number(e.target.value))}
+                className="h-9 rounded-sm border border-border bg-input py-2 pl-9 pr-8 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {RANGE_OPTIONS.map((o) => (
+                  <option key={o.days} value={o.days}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span className="hidden text-sm text-muted-foreground md:inline">
               {formatDateShort(`${overview.from}T00:00:00Z`)} – {formatDateShort(`${overview.to}T00:00:00Z`)}
             </span>
             <Button variant="ghost" size="sm" onClick={exportReport}>
@@ -164,7 +191,7 @@ export function ReportsPage(): JSX.Element {
             <StatusDonutChart data={overview.byStatus} />
 
             <Card className="p-5 lg:col-span-2">
-              <h2 className="mb-4 font-display text-base font-semibold text-foreground">
+              <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
                 Appointments by service
               </h2>
               {overview.byService.length === 0 ? (
@@ -195,7 +222,7 @@ export function ReportsPage(): JSX.Element {
 
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="p-5 lg:col-span-2">
-              <h2 className="mb-4 font-display text-base font-semibold text-foreground">
+              <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
                 Recent bookings
               </h2>
               {overview.recentBookings.length === 0 ? (
@@ -238,7 +265,7 @@ export function ReportsPage(): JSX.Element {
             </Card>
 
             <Card className="p-5">
-              <h2 className="mb-4 font-display text-base font-semibold text-foreground">
+              <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
                 Top customers by visits
               </h2>
               {overview.topCustomers.length === 0 ? (
@@ -262,8 +289,8 @@ export function ReportsPage(): JSX.Element {
           </div>
 
           <Card className="p-5">
-            <h2 className="mb-4 font-display text-base font-semibold text-foreground">Insights</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <h2 className="mb-4 font-serif text-base font-semibold text-foreground">Insights</h2>
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="flex items-start gap-3">
                 <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-in-service text-status-in-service">
                   <TrendingUp aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
@@ -311,14 +338,14 @@ export function ReportsPage(): JSX.Element {
           {legacy && (
             <div className="grid gap-6 lg:grid-cols-2">
               <Card className="p-5">
-                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">
+                <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">
                   Bookings by day of week
                 </h2>
                 <DayOfWeekChart trend={legacy.dayOfWeek} />
               </Card>
 
               <Card className="p-5">
-                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">
+                <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">
                   Bookings by hour of day
                 </h2>
                 <HourOfDayChart trend={legacy.hourOfDay} />
@@ -327,7 +354,7 @@ export function ReportsPage(): JSX.Element {
           )}
 
           <Card className="p-5">
-            <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+            <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
               Google reviews
             </h2>
             {reviewsConfigured ? (

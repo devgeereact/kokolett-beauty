@@ -174,6 +174,21 @@ export async function softDeleteCustomer(id: string): Promise<void> {
 }
 
 /**
+ * A genuine hard delete — the customer row and every one of their
+ * appointments removed outright, not anonymised in place. `soft_delete`
+ * above is still the right tool for a real customer's GDPR erasure request
+ * (keeps appointment history for accounting, per its own doc comment); this
+ * is for the opposite case — a duplicate, test, or mistaken profile with no
+ * history worth keeping. `delete_customer_as_owner` (migration 0035) refuses
+ * outright if any of their appointments has a logged payment, so this can
+ * never silently erase billing history.
+ */
+export async function hardDeleteCustomer(id: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_customer_as_owner', { p_customer_id: id });
+  if (error) throw error;
+}
+
+/**
  * Whether an email already belongs to an existing customer — the "First
  * visit" / "Returning customer" signal on an availability request's detail
  * panel. `citext` makes the match case-insensitive without a `lower()` call.

@@ -8,12 +8,10 @@ import { reportError } from '@/lib/sentry';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { getProfile } from '@/services/profileService';
-import { splitAddressLines } from '@/lib/format';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { QuickActionLauncher } from '@/components/dashboard/QuickActionLauncher';
 import { NotificationBellPopover } from '@/components/dashboard/NotificationBellPopover';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { NAV_ICONS } from '@/lib/icons';
 
 const SIDEBAR_COLLAPSED_KEY = 'kokolett-sidebar-collapsed';
@@ -91,7 +89,7 @@ export function DashboardLayout({
     }
   });
   const { user, signOut } = useSupabaseAuth();
-  const { settings, timezone } = useBusinessSettings();
+  const { timezone } = useBusinessSettings();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -288,54 +286,14 @@ export function DashboardLayout({
         </button>
       </div>
     ) : (
-      <div className="space-y-3 px-3">
-        <Link
-          to={routes.owner.profile}
-          onClick={() => setMenuOpen(false)}
-          className="flex items-center gap-2.5 rounded-md hover:bg-sidebar-accent"
-        >
-          <Avatar name={ownerName ?? user?.email ?? '?'} size="sm" />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium text-sidebar-foreground">
-              {ownerName ?? user?.email}
-            </span>
-            <span className="block text-xs text-sidebar-foreground/60">Owner</span>
-          </span>
-        </Link>
-
-        {/* Kokolett Beauty UK is a single-owner salon (docs/PRD.md) — one
-            business, so this block is a constant identity card, not per-page
-            data. Address/phone are the real `booking_settings` row; nothing
-            here is placeholder copy. Each fact (address block, phone, email,
-            link) gets its own breathing room; only the address's own lines
-            stack tight. */}
-        <div className="space-y-2 text-xs text-sidebar-foreground/80">
-          <p className="font-medium text-sidebar-foreground">Kokolett Beauty UK</p>
-          {settings?.address_line && (
-            <div className="space-y-0.5">
-              {splitAddressLines(settings.address_line).map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </div>
-          )}
-          {settings?.phone && <p>{settings.phone}</p>}
-          {user?.email && <p className="truncate">{user.email}</p>}
-          <a
-            href={routes.public.home}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block font-medium text-primary hover:underline"
-          >
-            View public site ↗
-          </a>
-        </div>
-
-        <ThemeToggle />
-
-        <Button variant="ghost" size="sm" className="w-full" onClick={doSignOut}>
-          Sign out
-        </Button>
-      </div>
+      // Profile (avatar, name, business address/phone/email, theme) and the
+      // public-site link all live one click away on Settings/Profile now —
+      // keeping them out of the sidebar footer is what lets the sidebar
+      // render statically, full height, every nav row visible with no
+      // internal scroll.
+      <Button variant="ghost" size="sm" className="w-full" onClick={doSignOut}>
+        Sign out
+      </Button>
     );
 
   const buildWordmark = (rail: boolean): JSX.Element => (
@@ -343,13 +301,13 @@ export function DashboardLayout({
       {rail ? (
         <span
           title="Kokolett Beauty UK"
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-display text-sm font-bold text-primary-foreground"
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-serif text-sm font-bold text-primary-foreground"
         >
           K
         </span>
       ) : (
         <div className="min-w-0">
-          <p className="truncate font-display text-lg font-semibold leading-tight text-sidebar-foreground">
+          <p className="truncate font-serif text-lg font-semibold leading-tight text-sidebar-foreground">
             Kokolett
           </p>
           <p className="text-xs font-semibold tracking-wide text-primary">BEAUTY UK</p>
@@ -361,7 +319,7 @@ export function DashboardLayout({
         aria-label={rail ? 'Expand sidebar' : 'Collapse sidebar'}
         className={cn(
           'hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground md:flex',
-          rail && 'absolute -right-3 top-4 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-sm',
+          rail && 'absolute -right-3 top-4 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-popover',
         )}
       >
         {rail ? (
@@ -374,89 +332,109 @@ export function DashboardLayout({
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Desktop/tablet sidebar — nav scrolls independently so the owner
-          footer (profile, theme, sign out) always stays reachable without
-          scrolling, no matter how many nav rows there are. Collapses to an
-          icon-only rail (`collapsed`, persisted in localStorage) for more
-          content width on a small laptop. */}
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 hidden flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-150 md:flex',
-          collapsed ? 'w-16' : 'w-60',
-        )}
-      >
-        <div className={cn('relative min-h-0 flex-1 overflow-y-auto', collapsed ? 'overflow-x-visible px-2 py-4' : 'p-4')}>
-          {buildWordmark(collapsed)}
-          {buildNav(collapsed)}
-        </div>
-        <div className={cn('shrink-0 border-t border-sidebar-border', collapsed ? 'p-2' : 'p-4')}>
-          {buildAccount(collapsed)}
-        </div>
-      </aside>
+    <>
+      {/* The one scroll region is `<main>` below (docs/DESIGN.md §15 —
+          dashboard scroll architecture is a hard requirement): the browser
+          viewport itself never scrolls, so the sidebar and header can never
+          drift, double-scroll, or leave pagination looking detached. */}
+      <div className="koko-app bg-background">
+        {/* Desktop/tablet sidebar — a real flex sibling now, not a `fixed`
+            overlay, so it participates in `koko-app`'s row layout instead of
+            needing a matching `md:pl-*` offset on the content column. Static,
+            no internal scroll — nav + footer fit one viewport without their
+            own scroll region. Collapses to an icon-only rail (`collapsed`,
+            persisted in localStorage) for more content width on a small
+            laptop. */}
+        <aside
+          className={cn(
+            'z-sidebar hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-150 md:flex',
+            collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
+          )}
+        >
+          <div className={cn('relative', collapsed ? 'overflow-x-visible px-2 py-4' : 'p-4')}>
+            {buildWordmark(collapsed)}
+            {buildNav(collapsed)}
+          </div>
+          <div className={cn('mt-auto shrink-0 border-t border-sidebar-border', collapsed ? 'p-2' : 'p-4')}>
+            {buildAccount(collapsed)}
+          </div>
+        </aside>
 
-      {/* Mobile slide-over — always the full, uncollapsed nav. */}
+        <div className="koko-content flex flex-col">
+          {/* `min-h-header`, not a hard `h-header`: 64px (docs/DESIGN.md's
+              locked header height) is the target, but a page with a long
+              subtitle or several action buttons wrapping to a second row on
+              mobile must still be able to grow past it rather than clip —
+              flexbox gives `<main>` exactly what's left either way. */}
+          <header className="z-sticky flex min-h-header shrink-0 items-center border-b border-border bg-background px-4 py-3 md:px-6 lg:px-8">
+            <div className="flex w-full flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2">
+              <div className="flex min-w-0 items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="md:hidden"
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen(true)}
+                >
+                  Menu
+                </Button>
+                <div className="min-w-0 flex-1">
+                  <h1 className="flex min-w-0 items-center gap-2 font-serif text-2xl font-semibold text-foreground">
+                    {HeaderIcon && (
+                      <HeaderIcon
+                        aria-hidden="true"
+                        className="h-6 w-6 shrink-0 text-primary"
+                        strokeWidth={2}
+                      />
+                    )}
+                    <span className="truncate">{title}</span>
+                  </h1>
+                  {subtitle && (
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                      {subtitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <div className="hidden md:block">
+                  <QuickActionLauncher />
+                </div>
+                {actions}
+                <NotificationBellPopover timezone={timezone} badgeCount={badges?.notifications ?? 0} />
+              </div>
+            </div>
+          </header>
+
+          <main className="koko-scroll scroll-bottom-gap px-4 pt-6 md:px-6 lg:px-8">{children}</main>
+        </div>
+      </div>
+
+      {/* Mobile slide-over — always the full, uncollapsed nav. A sibling of
+          `koko-app`, not nested inside it: `koko-app` is `overflow-hidden`,
+          which clips a `position: fixed` descendant in every major browser
+          despite `fixed` supposedly escaping normal containing blocks — the
+          same reason `Modal`/`ConfirmDialog`/`QuickActionLauncher` portal to
+          `document.body` instead of rendering in place. */}
       {menuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-drawer md:hidden">
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-black/50"
+            className="overlay-backdrop absolute inset-0"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 flex w-64 flex-col border-r border-sidebar-border bg-sidebar">
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="absolute inset-y-0 left-0 flex w-64 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar">
+            <div className="p-4">
               {buildWordmark(false)}
               {buildNav(false)}
             </div>
-            <div className="shrink-0 border-t border-sidebar-border p-4">{buildAccount(false)}</div>
+            <div className="mt-auto shrink-0 border-t border-sidebar-border p-4">
+              {buildAccount(false)}
+            </div>
           </div>
         </div>
       )}
-
-      <div className={cn(collapsed ? 'md:pl-16' : 'md:pl-60', 'transition-[padding] duration-150')}>
-        <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 py-4 backdrop-blur sm:px-6">
-          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-x-3 md:gap-y-2">
-            <div className="flex min-w-0 items-start gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="md:hidden"
-                aria-expanded={menuOpen}
-                onClick={() => setMenuOpen(true)}
-              >
-                Menu
-              </Button>
-              <div className="min-w-0 flex-1">
-                <h1 className="flex min-w-0 items-center gap-2 font-display text-2xl font-semibold text-foreground">
-                  {HeaderIcon && (
-                    <HeaderIcon
-                      aria-hidden="true"
-                      className="h-6 w-6 shrink-0 text-primary"
-                      strokeWidth={2}
-                    />
-                  )}
-                  <span className="truncate">{title}</span>
-                </h1>
-                {subtitle && (
-                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <div className="hidden sm:block">
-                <QuickActionLauncher />
-              </div>
-              {actions}
-              <NotificationBellPopover timezone={timezone} badgeCount={badges?.notifications ?? 0} />
-            </div>
-          </div>
-        </header>
-
-        <main className="px-4 py-6 sm:px-6">{children}</main>
-      </div>
-    </div>
+    </>
   );
 }

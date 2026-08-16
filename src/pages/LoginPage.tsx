@@ -130,7 +130,7 @@ export function LoginPage(): JSX.Element {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-4 py-10">
       <Card className="w-full max-w-md p-6">
-        <h1 className="mb-1 font-display text-2xl font-semibold text-foreground">
+        <h1 className="mb-1 font-serif text-2xl font-semibold text-foreground">
           Kokolett Beauty
         </h1>
         <p className="mb-6 text-sm text-muted-foreground">
@@ -228,7 +228,7 @@ export function LoginPage(): JSX.Element {
               </p>
             )}
 
-            <Button type="submit" className="w-full" loading={busy}>
+            <Button type="submit" size="lg" className="w-full" loading={busy}>
               {mode === 'link' ? 'Email me a sign-in link' : 'Sign in'}
             </Button>
 

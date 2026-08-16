@@ -34,7 +34,7 @@ export function TrendAnalysisPanel({ timezone }: { timezone: string }): JSX.Elem
 
   return (
     <Card className="p-5">
-      <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+      <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
         Bookings by day of week
       </h2>
       <p className="mb-5 text-sm text-muted-foreground">

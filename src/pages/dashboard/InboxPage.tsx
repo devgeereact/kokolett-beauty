@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Zap } from 'lucide-react';
+import { Plus, Zap } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { ApprovalCard } from '@/components/dashboard/approvals/ApprovalCard';
 import { ApprovalDetailPanel } from '@/components/dashboard/approvals/ApprovalDetailPanel';
@@ -10,11 +10,13 @@ import {
   buildDemoApprovalStats,
   buildDemoApprovals,
 } from '@/components/dashboard/approvals/demoApprovals';
+import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import {
   RequestsQueue,
   type RequestsQueueHandle,
 } from '@/components/dashboard/requests/RequestsQueue';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -100,6 +102,11 @@ export function InboxPage(): JSX.Element {
   const [decliningId, setDecliningId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // Same "take a booking on the owner's behalf" entry point every other
+  // dashboard page carries in its header — walk-ins and phone bookings can
+  // happen while the owner is triaging this queue, not just from Today.
+  const [booking, setBooking] = useState(false);
 
   const loadApprovals = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -297,6 +304,10 @@ export function InboxPage(): JSX.Element {
           <Button variant="ghost" size="sm" onClick={refreshActive}>
             Refresh
           </Button>
+          <Button size="sm" onClick={() => setBooking(true)}>
+            <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+            New booking
+          </Button>
         </>
       }
     >
@@ -328,7 +339,7 @@ export function InboxPage(): JSX.Element {
                 </p>
               )}
 
-              <h2 className="font-display text-lg font-semibold text-foreground">
+              <h2 className="font-serif text-lg font-semibold text-foreground">
                 Pending approvals ({displayRows.length})
               </h2>
 
@@ -372,6 +383,17 @@ export function InboxPage(): JSX.Element {
       ) : (
         <RequestsQueue ref={requestsRef} onCountChange={handleRequestsCountChange} />
       )}
+
+      <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="Take a booking">
+        <NewBookingPanel
+          prefill={null}
+          onClose={() => setBooking(false)}
+          onBooked={() => {
+            setBooking(false);
+            refreshActive();
+          }}
+        />
+      </Modal>
     </DashboardLayout>
   );
 }

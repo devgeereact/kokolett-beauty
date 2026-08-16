@@ -133,7 +133,19 @@ export function NotificationsPage(): JSX.Element {
   }
 
   return (
-    <DashboardLayout title="Notifications" subtitle="Stay updated with your business activity.">
+    <DashboardLayout
+      title={
+        <span className="flex items-center gap-2">
+          Notifications
+          {unreadCount > 0 && (
+            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
+              {unreadCount}
+            </span>
+          )}
+        </span>
+      }
+      subtitle="Stay updated with your business activity."
+    >
       {!events ? (
         <LoadingState label="Gathering recent activity…" />
       ) : (
@@ -164,7 +176,7 @@ export function NotificationsPage(): JSX.Element {
                     <span
                       className={cn(
                         'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                        lane === key ? 'bg-tint-primary text-primary' : 'bg-muted text-muted-foreground',
+                        lane === key ? 'bg-tint-brand text-primary' : 'bg-muted text-muted-foreground',
                       )}
                     >
                       {count}
@@ -199,7 +211,7 @@ export function NotificationsPage(): JSX.Element {
                             onClick={() => !read && markRead(event.id)}
                             className={cn(
                               'flex cursor-pointer items-start gap-3 p-4 hover:bg-muted',
-                              !read && 'bg-tint-primary/40',
+                              !read && 'bg-tint-brand/40',
                             )}
                           >
                             <span
@@ -258,14 +270,14 @@ export function NotificationsPage(): JSX.Element {
 
           <div className="space-y-6">
             <Card className="p-5">
-              <h2 className="mb-3 font-display text-base font-semibold text-foreground">Filter notifications</h2>
+              <h2 className="mb-3 font-serif text-base font-semibold text-foreground">Filter notifications</h2>
               <div className="space-y-1">
                 <button
                   type="button"
                   onClick={() => setCategoryFilter('all')}
                   className={cn(
                     'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
-                    categoryFilter === 'all' ? 'bg-tint-primary text-primary' : 'text-foreground hover:bg-muted',
+                    categoryFilter === 'all' ? 'bg-tint-brand text-primary' : 'text-foreground hover:bg-muted',
                   )}
                 >
                   All notifications
@@ -278,7 +290,7 @@ export function NotificationsPage(): JSX.Element {
                     onClick={() => setCategoryFilter(cat)}
                     className={cn(
                       'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
-                      categoryFilter === cat ? 'bg-tint-primary text-primary' : 'text-foreground hover:bg-muted',
+                      categoryFilter === cat ? 'bg-tint-brand text-primary' : 'text-foreground hover:bg-muted',
                     )}
                   >
                     {CATEGORY_LABELS[cat]}
@@ -289,7 +301,7 @@ export function NotificationsPage(): JSX.Element {
             </Card>
 
             <Card className="p-5">
-              <h2 className="mb-1 font-display text-base font-semibold text-foreground">Notification preferences</h2>
+              <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Notification preferences</h2>
               <p className="mb-4 text-sm text-muted-foreground">Choose how you want to be notified.</p>
               <div className="space-y-4">
                 {[
@@ -317,7 +329,7 @@ export function NotificationsPage(): JSX.Element {
             </Card>
 
             <Card className="bg-tint-pending p-5">
-              <p className="mb-1 flex items-center gap-1.5 font-display text-base font-semibold text-foreground">
+              <p className="mb-1 flex items-center gap-1.5 font-serif text-base font-semibold text-foreground">
                 {unreadCount === 0 ? (
                   <>
                     You're all caught up! <PartyPopper aria-hidden="true" className="h-4 w-4" strokeWidth={2} />

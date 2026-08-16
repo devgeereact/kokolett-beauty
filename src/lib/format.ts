@@ -227,6 +227,12 @@ function zoneOffsetMs(at: Date, timeZone: string): number {
   return asIfUtc - at.getTime();
 }
 
+/** "GMT+1" / "GMT" — the salon's current UTC offset, BST-aware. */
+export function gmtOffsetLabel(timeZone: string, at: Date = new Date()): string {
+  const hours = Math.round(zoneOffsetMs(at, timeZone) / 3_600_000);
+  return hours === 0 ? 'GMT' : `GMT${hours > 0 ? '+' : ''}${hours}`;
+}
+
 /**
  * The UTC instants bounding one salon-local day.
  *

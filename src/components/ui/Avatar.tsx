@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils';
 // Every avatar in the reference is a rounded-square photo tile — none are
 // circular, at any size.
 const SIZES = {
-  sm: 'h-8 w-8 rounded-lg',
-  md: 'h-10 w-10 rounded-lg',
-  lg: 'h-14 w-14 rounded-xl',
+  sm: 'h-8 w-8 rounded-sm',
+  md: 'h-10 w-10 rounded-sm',
+  lg: 'h-14 w-14 rounded-md',
 } as const;
 
 const ICON_SIZES = {
@@ -45,7 +45,7 @@ export function Avatar({
     <span
       aria-hidden="true"
       className={cn(
-        'inline-flex shrink-0 items-center justify-center overflow-hidden text-white',
+        'inline-flex shrink-0 items-center justify-center overflow-hidden text-primary-foreground',
         SIZES[size],
         TILES[tileIndex(cleaned)],
         className,

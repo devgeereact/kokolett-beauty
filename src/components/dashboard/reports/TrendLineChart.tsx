@@ -42,7 +42,7 @@ export function TrendLineChart({
 
   return (
     <Card className="p-5">
-      <h2 className="mb-3 font-display text-base font-semibold text-foreground">{title}</h2>
+      <h2 className="mb-3 font-serif text-base font-semibold text-foreground">{title}</h2>
       {points.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">No data in this period.</p>
       ) : (

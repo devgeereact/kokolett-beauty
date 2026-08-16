@@ -41,8 +41,8 @@ export function EmptyState({
   action?: ReactNode;
 }): JSX.Element {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border px-6 py-14 text-center">
-      <p className="font-display text-lg font-semibold text-foreground">{title}</p>
+    <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border px-6 py-14 text-center">
+      <p className="font-serif text-lg font-semibold text-foreground">{title}</p>
       {description && (
         <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
       )}
@@ -62,9 +62,9 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-6 py-10 text-center"
+      className="flex flex-col items-center gap-3 rounded-md border border-border bg-card px-6 py-10 text-center"
     >
-      <p className="font-display text-lg font-semibold text-foreground">
+      <p className="font-serif text-lg font-semibold text-foreground">
         That didn&rsquo;t load
       </p>
       <p className="max-w-md text-sm text-muted-foreground">{message}</p>

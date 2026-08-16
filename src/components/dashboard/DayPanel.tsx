@@ -168,7 +168,7 @@ export function DayPanel({
   return (
     <Card className="p-5">
       <div className="mb-1 flex items-start justify-between gap-2">
-        <h2 className="font-display text-lg font-semibold text-foreground">
+        <h2 className="font-serif text-lg font-semibold text-foreground">
           {formatDateLong(`${date}T12:00:00Z`, 'UTC')}
         </h2>
         {loading && <Spinner className="h-4 w-4" />}
@@ -180,7 +180,7 @@ export function DayPanel({
       </p>
 
       {slots.length > 0 && (
-        <ul className="mb-4 grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+        <ul className="mb-4 grid grid-cols-3 gap-1.5 md:grid-cols-4">
           {slots.map((slot) => (
             <li key={slot.starts_at}>
               <button

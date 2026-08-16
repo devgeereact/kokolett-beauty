@@ -1247,6 +1247,10 @@ export type Database = {
         Args: { p_appointment_id: string }
         Returns: undefined
       }
+      delete_customer_as_owner: {
+        Args: { p_customer_id: string }
+        Returns: undefined
+      }
       drain_email_queue: { Args: never; Returns: number }
       expire_pending_approvals: { Args: never; Returns: number }
       extend_weekly_template: { Args: never; Returns: number }

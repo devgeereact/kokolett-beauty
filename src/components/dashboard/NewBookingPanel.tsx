@@ -137,7 +137,7 @@ export function NewBookingPanel({
     <Card className="mb-6 p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">
+          <h2 className="font-serif text-lg font-semibold text-foreground">
             Take a booking
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -150,7 +150,7 @@ export function NewBookingPanel({
         </Button>
       </div>
 
-      <div className="grid gap-x-4 sm:grid-cols-3">
+      <div className="grid gap-x-4 md:grid-cols-3">
         <Field label="Date" required>
           {({ id }) => <DatePicker id={id} value={date} onChange={setDate} />}
         </Field>
@@ -185,7 +185,7 @@ export function NewBookingPanel({
         </Field>
       </div>
 
-      <div className="grid gap-x-4 sm:grid-cols-2">
+      <div className="grid gap-x-4 md:grid-cols-2">
         <Field label="Full name" required hint="First and last, as they would say it.">
           {({ id, describedBy }) => (
             <Input

@@ -48,8 +48,8 @@ export function NextWeeksGlanceCard({
   });
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-3 font-display text-base font-semibold text-foreground">
+    <Card className="p-4">
+      <h2 className="mb-2 font-serif text-base font-semibold text-foreground">
         Next 4 weeks at a glance
       </h2>
 
@@ -101,7 +101,7 @@ export function NextWeeksGlanceCard({
 
       <Link
         to={routes.owner.calendar}
-        className="mt-4 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
       >
         View full calendar
         <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />

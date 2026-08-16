@@ -179,4 +179,5 @@ export type BookingErrorCode =
   | 'NOT_RESCHEDULABLE'
   | 'ALREADY_PASSED'
   | 'SAME_TIME'
-  | 'INVALID_AMOUNT';
+  | 'INVALID_AMOUNT'
+  | 'HAS_PAYMENT';

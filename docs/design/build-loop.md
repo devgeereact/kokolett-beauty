@@ -1,42 +1,31 @@
-# Build Loop — Owner Dashboard Visual Rebuild
+# Kokolett Beauty — Design-Match Loop Prompt
 
-You are an expert Senior Frontend Engineer, UI Engineer, Design Systems
-Engineer, and Pixel-Perfect UI Specialist working inside the **Kokolett
-Beauty** codebase — a static, offline-first PWA for a single-owner UK women's
-hair salon. Your task is to faithfully implement one owner-dashboard screen at
-a time using its reference design in `docs/design/` as the single source of
-truth. The objective is visual parity, not reinterpretation.
+Paste the block below into `/loop`. Swap `<SCREEN>` and `<REF>` per screen.
 
-Do not redesign. Do not simplify. Do not substitute components. Do not
-introduce personal design decisions. If a detail is visible in the reference,
-reproduce it. Each finished screen should be indistinguishable from its
-reference at normal viewing distance — on a real phone and a real desktop, in
-both themes.
+## Screens with a design reference
 
----
-
-## SCREENS TO BUILD
-
+Every screen below has a mockup PNG in `docs/design/` to match pixel-for-pixel.
 Verified 2026-08-14 against the shipped nav (`src/components/dashboard/DashboardLayout.tsx`)
-and `src/lib/routes.ts` — every reference image maps 1:1 to a nav row, no
+and `src/lib/routes.ts` — every reference image maps 1:1 to a nav row or sub-route, no
 ambiguity left.
 
-| # | Reference image | Nav group › item | Target page | Route |
+| `<SCREEN>` | `<REF>` | Target page | Route | state |
 |---|---|---|---|---|
-| 1 | `dashboard.png` | Workspace › Dashboard | `TodayPage.tsx` | `/dashboard` |
-| 2 | `calendar.png` | Workspace › Calendar | `CalendarPage.tsx` | `/dashboard/calendar` |
-| 3 | `appointment.png` | Workspace › Appointments | `AppointmentsPage.tsx` | `/dashboard/appointments` |
-| 4 | `approval.png` | Bookings › Approvals | `InboxPage.tsx` (`tab=approvals`) | `/dashboard/inbox?tab=approvals` |
-| 5 | `availability-request.png` | Bookings › Availability Requests | `InboxPage.tsx` (`tab=requests`) | `/dashboard/inbox?tab=requests` |
-| 6 | `customer.png` | Customers › Customers | `CustomersPage.tsx` | `/dashboard/customers` |
-| 7 | `service.png` | Salon › Services | `ServiceMenuPage.tsx` | `/dashboard/services` |
-| 8 | `avalability.png` | Salon › Availability | `WeeklyDefaultPage.tsx` | `/dashboard/weekly` |
-| 9 | `reports.png` | Insights › Reports | `ReportsPage.tsx` | `/dashboard/reports` |
-| 10 | `ai.png` | Insights › AI Assistant | `AssistantPage.tsx` | `/dashboard/assistant` — advisory only, no business-data mutation |
-| 11 | `notification.png` | Communications › Notifications | `NotificationsPage.tsx` | `/dashboard/notifications` |
-| 12 | `email.png` | Communications › Email | `EmailPage.tsx` | `/dashboard/email` — **currently an `EmptyState` stub.** Real feature work (the `email_messages` outbox log, `docs/SCHEMA.md` §10) — build the actual query/list, not just restyle the placeholder |
-| 13 | `templetes.png` | Communications › Templates | `TemplatesPage.tsx` | `/dashboard/templates` — **currently an `EmptyState` stub**, same caveat as Email |
-| 14 | `settings.png` | Account › Settings | `SettingsPage.tsx` | `/dashboard/settings` |
+| dashboard | `docs/design/dashboard.png` | `TodayPage.tsx` | `/dashboard` | done — see `docs/design/.loop/dashboard-log.md` |
+| calendar | `docs/design/calendar.png` | `CalendarPage.tsx` | `/dashboard/calendar` | done — see `docs/design/.loop/calendar-log.md` |
+| appointments | `docs/design/appointment.png` | `AppointmentsPage.tsx` | `/dashboard/appointments` | done — see `docs/design/.loop/appointment-log.md` |
+| approvals | `docs/design/approval.png` | `InboxPage.tsx` (`tab=approvals`) | `/dashboard/inbox?tab=approvals` | done — see `docs/design/.loop/approval-log.md` |
+| availability-requests | `docs/design/availability-request.png` | `InboxPage.tsx` (`tab=requests`) | `/dashboard/inbox?tab=requests` | done — see `docs/design/.loop/availability-request-log.md` |
+| customers | `docs/design/customer.png` | `CustomersPage.tsx` | `/dashboard/customers` | done (card grid, not list — owner request) — see `docs/design/.loop/customer-log.md` |
+| services | `docs/design/service.png` | `ServiceMenuPage.tsx` | `/dashboard/services` | done (cards, already built that way — owner confirmed) — see `docs/design/.loop/service-log.md` |
+| availability | `docs/design/avalability.png` | `WeeklyDefaultPage.tsx` | `/dashboard/weekly` | done — see `docs/design/.loop/availability-log.md` |
+| reports | `docs/design/reports.png` | `ReportsPage.tsx` | `/dashboard/reports` | done — see `docs/design/.loop/reports-log.md` |
+| assistant | `docs/design/ai.png` | `AssistantPage.tsx` | `/dashboard/assistant` — advisory only, no business-data mutation | done — see `docs/design/.loop/assistant-log.md` |
+| notifications | `docs/design/notification.png` | `NotificationsPage.tsx` | `/dashboard/notifications` | done — see `docs/design/.loop/notification-log.md` |
+| email | `docs/design/email.png` | `EmailPage.tsx` | `/dashboard/email` | done — see `docs/design/.loop/email-log.md` |
+| templates | `docs/design/templetes.png` | `TemplatesPage.tsx` | `/dashboard/templates` | done — see `docs/design/.loop/templates-log.md` |
+| template editor | `docs/design/Email-Template-Editor.png` | `TemplateEditorPage.tsx` | `/dashboard/templates/:key/edit` | done — see `docs/design/.loop/templates-log.md` |
+| settings | `docs/design/settings.png` | `SettingsPage.tsx` | `/dashboard/settings` | done — see `docs/design/.loop/settings-log.md` |
 
 `AppointmentTypePage.tsx` (service length and price) has no reference image
 and no direct nav row by design (reached only via `CalendarCapacityTabs`'s
@@ -47,239 +36,106 @@ reference that doesn't exist.
 to verify the logo/wordmark rendering wherever it appears (header, auth,
 marketing).
 
-**Application:** Kokolett Beauty — Owner Dashboard (`kokolett-beauty`, port `5082`)
-
 ---
 
-## OBJECTIVE
+| app shell (sidebar · top bar · header) | already shipped — `docs/planning/owner-console-rebuild-plan.md`, merged to `main`. This loop is purely per-screen content. |
+| tokens only | `docs/design/design-system.png` + `docs/design/design-token.png` |
 
-Recreate every reference above as accurately as possible using the existing
-project architecture, component library, design system, and styling
-conventions. The finished implementation should be indistinguishable from the
-reference at normal viewing distance, in light and dark theme, on mobile and
-desktop.
+## The prompt
 
----
+ONE SCREEN AT A TIME.
 
-## STEP 0 — LOAD THE DESIGN SYSTEM FIRST (once, before any screen)
+PICK A SCREEN AND BUILD
 
-Read `docs/design/design-system.png` and `docs/design/design-token.png`
-before touching any screen. Cross-check every colour, spacing, radius, and
-type value against `docs/DESIGN.md`, `tailwind.config.ts`, and `src/index.css`.
-If a token in the reference isn't in the codebase yet, add it to
-`tailwind.config.ts` / `src/index.css` first — **never hardcode a raw hex
-value into a component.**
+Build the **<SCREEN>** screen so it visually matches `<REF>` as closely as possible.
 
-**Already shipped, don't redo:** token reconciliation (card/popover shadow,
-spacing/grid/breakpoint docs), the `lucide-react` icon system
-(`src/lib/icons.ts`), the app icon/favicon set, and the grouped sidebar nav
-itself (`docs/planning/owner-console-rebuild-plan.md`, merged to `main`). This
-loop is purely the *content* of each screen — the shell around it is done.
+### Ground rules (read before writing code)
 
----
+1. Read `CLAUDE.md`. It is binding. Notably: this is a **static, offline-first PWA** —
+   **React + TypeScript strict + Vite**, styled with **NativeWind/Tailwind classes only**,
+   tokens from `tailwind.config.ts` / `src/index.css` — no inline styles, no raw hex.
+   Import app code with `@/…` (maps to `src/`). SDK setup lives in `src/lib`, data calls in
+   `src/services`, reusable logic in `src/hooks`. **Booking writes go through
+   `book_appointment()`** — never a direct client insert. `pending_approval` holds a slot —
+   availability logic must treat it as occupied. Money is integer pence, displayed in GBP;
+   time is stored UTC, shown `Europe/London`. Copy is British English. **Women's hair
+   only** — no nails, brows, lashes, or unisex services. The AI assistant
+   (`AssistantPage.tsx`) is advisory only and must never mutate business data.
+2. **Tokens before pixels.** Before touching any screen, read `docs/design/design-system.png`
+   and `docs/design/design-token.png` and cross-check every colour, spacing, radius, and
+   type value against `docs/DESIGN.md` and `tailwind.config.ts`. Every value you use
+   afterwards must resolve to a token — no raw hex, no arbitrary `padding: 13px`. If a
+   reference value isn't in the codebase yet, add it to `tailwind.config.ts` /
+   `src/index.css` first and note it in the log (below) as an inferred value.
+3. **You may run the app for this task.** Reuse an already-running `npm run dev` (port
+   `5082`, `strictPort`) if one exists; do not boot a second. This is a static PWA — no
+   native shell, no simulator — verification only counts if it happened in a real browser.
+   Use the `/browse` skill to load the route and screenshot the implemented screen.
 
-## IMPLEMENTATION REQUIREMENTS
+### Match target
 
-Match every visual detail in the reference:
+Layout · spacing · typography (family, size, weight, line height, letter spacing) ·
+colours and status semantics (approvals/requests/booked/cancelled) · button styles and
+heights · input fields · border radius · shadows and elevation · icons (`lucide-react` via
+`src/lib/icons.ts` only, consistent size/weight/spacing) · alignment and padding · the
+sidebar/top-bar chrome · tables, charts, cards, dialogs, empty/loading states · visual
+hierarchy.
 
-**Layout**
-Grid · columns · rows · container widths · margins · padding · alignment ·
-whitespace · safe areas · overflow behaviour.
+Populate every screen with realistic salon data — never empty containers or generic
+Lorem-ipsum placeholders. Money in GBP pence, times in `Europe/London`, services are
+women's hair only, `pending_approval` bookings shown as occupying a slot.
 
-**Typography**
-Font family · font size · weight · letter spacing · line height · text
-alignment · hierarchy · text colour · truncation · wrapping.
+Do not redesign or improvise. Never duplicate an existing component or invent a one-off
+variant — reuse what's already in the design system. If the reference is ambiguous or
+something is missing from it, implement the closest reasonable thing **and log it**
+rather than inventing a different layout.
 
-**Colour**
-Backgrounds · cards · borders · buttons · icons · links · charts · tags ·
-alerts · status colours · hover/focus/disabled states · opacity · gradients.
-Every value must resolve to a token from `tailwind.config.ts` / `src/index.css`
-— never a raw hex.
+### The loop
 
-**Components**
-Buttons · inputs · dropdowns · checkboxes · radio buttons · switches · tables
-· cards · charts · tabs · dialogs · drawers · breadcrumbs · pagination ·
-badges · tags · search · toolbars · the AI assistant panel · notifications ·
-menus — everything visible in the reference, built from existing components.
-Never duplicate an existing component or invent a one-off variant.
+Each iteration:
 
-**Visual styling**
-Border radius · stroke width · elevation/shadow · blur · glass effects ·
-dividers · corner treatment · depth/layering · transparency · hover/focus/
-pressed/disabled states.
+1. Implement / refine the screen. TypeScript strict, explicit return types on every
+   function and hook.
+2. `npm run build` (catches TypeScript/build errors) — must be clean before you
+   screenshot. A build error means the iteration is not done.
+3. Start the dev server if not already running (`npm run dev`, port `5082`), then use the
+   `/browse` skill to load the route and screenshot the implemented screen into
+   `docs/design/.loop/<SCREEN>-<N>.png` (`<N>` = iteration number, starting at 1. Create
+   `docs/design/.loop/` if absent).
+4. **Read your own screenshot back** with the Read tool, side by side with `<REF>`. Do not
+   trust the code — trust the pixels.
+5. Write the diffs to `docs/design/.loop/<SCREEN>-log.md`, appending a section per
+   iteration: what differed, what you changed, what is still off, what you deliberately
+   inferred. Read this log at the start of every iteration so you do not re-fix the same
+   thing or oscillate between two wrong values.
+6. Repeat.
 
-**Icons & graphics**
-`lucide-react` via `src/lib/icons.ts` only — matching size, weight, spacing,
-and alignment from the reference. Maintain consistent visual weight across
-the screen.
+Be strict. Look for: text baseline and vertical centering, button height and horizontal
+padding, gap between stacked elements, corner radius (4 vs 8 vs 12 is visible), shadow
+spread and opacity, icon weight and size, exact font weight (500 vs 600 is visible),
+tabular-nums on money/timestamps, and colour accuracy (sample the hex from both images, do
+not eyeball it) — and confirm status colours match their semantic meaning consistently
+across cards, badges, and calendar cells.
 
-**Data**
-Populate with realistic data that fits this business — never empty
-containers or generic Lorem-ipsum-style placeholders:
-- Money as integer pence, displayed in GBP.
-- Times stored UTC, displayed `Europe/London`.
-- Services are **women's hair only** — cuts, colour, styling, treatments. No
-  nails, brows, lashes, or unisex services.
-- Copy is British English.
-- `pending_approval` bookings occupy a slot — reflect that in any
-  availability/calendar view.
-- Tables, charts, cards, notifications, customer records — everything should
-  feel like a real salon's data, not sample rows.
+### Repeat for both themes and both breakpoints
 
----
+Do not consider a screen done after the first pass in one theme/breakpoint combination.
+Once Steps 1–6 converge, repeat the whole verification pass for:
+- Light theme and dark theme
+- Mobile breakpoint (used stall-side during the day) and desktop breakpoint (used at
+  close-out) — check real breakpoints, not just a squeezed browser window
 
-## RESPONSIVENESS
+### Stop conditions — stop when ANY of these is true
 
-Maintain the same layout behaviour as the reference across:
-- Mobile (used stall-side during the day)
-- Desktop (used at close-out)
-- Window resizing, overflow, scrolling, sticky regions
+- The screenshot and the reference are indistinguishable at a glance, in all four
+  theme/breakpoint combinations, and the last two iterations produced no new fixable
+  diffs.
+- You have completed **8 iterations**.
+- The remaining diffs are all things you cannot fix from code (e.g. the reference uses an
+  asset you do not have, or a font not in the project).
 
-This dashboard genuinely runs on both — check real breakpoints, not just
-squeeze the browser window.
-
----
-
-## DESIGN SYSTEM
-
-Always reuse existing components, tokens, spacing scale, typography, colours,
-utilities, and variants. Never duplicate an existing component. Never invent a
-new ad hoc style. Styling is NativeWind/Tailwind classes only — no inline
-styles, no raw hex.
-
----
-
-## IMPLEMENTATION PROCESS (repeat for every row in the screen table)
-
-### Step 1 — Study the reference
-Open `docs/design/[FILE]` for the current row. Break it into logical sections
-— header/toolbar, sidebar, primary content, cards, tables, forms, charts,
-dialogs, empty/loading states — before writing any code.
-
-### Step 2 — Implement
-Build the screen using the existing project structure and styling system.
-TypeScript strict, explicit return types on every function and hook. Reuse
-components wherever possible; do not redesign or improvise unless something
-is genuinely missing from the reference.
-
-### Step 3 — Run the application and capture a screenshot
-This is a static PWA — no native shell, no simulator. Verification only
-counts if it happened in an actual browser:
-1. Start the dev server (`npm run dev`, port `5082`, `strictPort`) if not
-   already running.
-2. Use the `/browse` skill to load the route and screenshot the implemented
-   screen.
-
-### Step 4 — Compare against the reference
-Perform a strict visual audit of the screenshot against `docs/design/[FILE]`.
-Evaluate layout, spacing, alignment, typography, colours, icons, shadows,
-sizing, hierarchy, consistency, visual rhythm.
-
-### Step 5 — Produce a difference report
-For every discrepancy, note: location, issue, severity, recommended fix.
-
-### Step 6 — Implement every correction
-Fix everything found in Step 5 before moving on — don't batch fixes across
-screens.
-
-### Step 7 — Re-verify, then check both themes and both breakpoints
-Re-screenshot with `/browse`. Compare again. Repeat Steps 4–6 until no
-meaningful difference remains — then repeat the whole verification pass for:
-- Light theme and dark theme (`ThemeProvider`, `.dark` on `<html>`)
-- Mobile breakpoint and desktop breakpoint
-
-Do not consider a screen done after the first pass in one theme/breakpoint
-combination — all four must be checked.
-
----
-
-## ITERATION LOOP
-
-```
-Implement
-↓
-Run
-↓
-Screenshot
-↓
-Compare
-↓
-Analyse
-↓
-Fix
-↓
-Screenshot
-↓
-Compare
-↓
-Repeat
-```
-
-Do not stop after the first successful build. Continue refining until visual
-parity is achieved in all four theme/breakpoint combinations.
-
----
-
-## PIXEL-PERFECT CHECKLIST (per screen, per theme, per breakpoint)
-
-- [ ] Typography matches (family, size, weight, spacing, line height)
-- [ ] Colours resolve to tokens and match the reference
-- [ ] Shadows and elevation match
-- [ ] Border radius matches
-- [ ] Padding and margins match
-- [ ] Alignment matches
-- [ ] Component sizes match
-- [ ] Icons match (style, size, weight)
-- [ ] Images/avatars/logo match
-- [ ] Card/section spacing matches
-- [ ] Navigation spacing matches
-- [ ] Chart proportions match (where applicable)
-- [ ] Form spacing matches (where applicable)
-- [ ] Scroll behaviour matches
-- [ ] Empty, loading, and error states match or are sensibly implied
-- [ ] Hover, focus, and disabled states are implemented
-- [ ] Responsive behaviour matches at both breakpoints
-- [ ] Overall visual hierarchy matches
-
----
-
-## QUALITY STANDARD
-
-The implementation should feel like it was built by the same designers who
-created the reference.
-
-Avoid:
-- ❌ Approximation or guessing at a detail instead of checking the reference
-- ❌ Missing details
-- ❌ Inconsistent spacing
-- ❌ Incorrect colours or raw hex values
-- ❌ Different typography or component sizing
-- ❌ Alternative layouts
-- ❌ Unnecessary creativity
-- ❌ Empty or generic placeholder data
-
-Be strict — spacing, text positioning, button height, shadows, image
-cropping, colour accuracy, and icon weight are all in scope, not just gross
-layout.
-
----
-
-## COMPLETION CRITERIA
-
-Do not consider a screen complete until:
-- [ ] The browser screenshot is visually indistinguishable from its reference,
-      in both themes, at both breakpoints
-- [ ] Every item in the pixel-perfect checklist passes
-- [ ] The screen reuses existing design-system components and tokens — no new
-      ad hoc styles or raw hex values introduced
-- [ ] `Email` and `Templates` have their real data layer built, not just a
-      restyled `EmptyState`
-- [ ] TypeScript strict passes — no implicit `any`, explicit return types
-      everywhere
-- [ ] Money is integer pence in GBP; times are UTC in storage, `Europe/London`
-      on screen; copy is British English; services are women's hair only
-
-Only then mark the screen COMPLETE and automatically proceed to the next row
-in the screen table, repeating this entire process until every row is built
-and verified. Keep a running checklist of completed and remaining screens so
-progress can resume seamlessly if interrupted.
+On stop, output: a short list of what still differs and why, plus every value you
+inferred rather than read from the design system. Then automatically proceed to the next
+row in the screen table, repeating this entire process until every row is built and
+verified. Keep a running checklist of completed and remaining screens so progress can
+resume seamlessly if interrupted.

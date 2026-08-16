@@ -111,7 +111,7 @@ export function GlanceGrid({
             const Icon = stat.icon;
             return (
               <div key={stat.key} className="rounded-lg border border-border p-3.5">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-tint-primary text-primary">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-tint-brand text-primary">
                   <Icon aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2} />
                 </span>
                 <p className="mt-2.5 font-sans text-3xl font-semibold tabular-nums leading-none text-foreground">

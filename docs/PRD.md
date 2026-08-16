@@ -139,10 +139,10 @@ managed separately, on their own settings page.
 rate, popular services, peak hours, review requests, trends.
 
 **AI assistant (advisory only)** — flags conflicts and reschedule opportunities,
-drafts customer email replies, and surfaces messages, analytics, trends, repeat
-customers and cancellation risk. Computed live in the browser from data the
-dashboard already has (`src/lib/insights.ts`) — not a queued recommendation an Edge
-Function writes. Nothing it produces executes without an explicit owner action; see
+drafts customer email replies, and surfaces messages, analytics, trends and repeat
+customers. Computed live in the browser from data the dashboard already has
+(`src/lib/insights.ts`) — not a queued recommendation an Edge Function writes.
+Nothing it produces executes without an explicit owner action; see
 `docs/ARCHITECTURE.md` §6b for the mechanism.
 
 **Email automation** — booking held, booking confirmed, booking declined, reminder,

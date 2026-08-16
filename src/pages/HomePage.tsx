@@ -132,11 +132,11 @@ export function HomePage(): JSX.Element {
   return (
     <SiteShell>
       {/* ---- Hero ---------------------------------------------------- */}
-      <section className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6 sm:py-28">
+      <section className="mx-auto max-w-3xl px-4 py-20 text-center md:px-6 md:py-28">
         <p className="mb-5 inline-block rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Women&rsquo;s hair salon, South East London
         </p>
-        <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-6xl">
+        <h1 className="font-serif text-4xl font-semibold leading-[1.1] tracking-tight text-foreground md:text-6xl">
           Hair that feels like <span className="text-primary">you</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
@@ -169,14 +169,14 @@ export function HomePage(): JSX.Element {
       {/* ---- Next available ------------------------------------------ */}
       {!loading && nextDays.length > 0 && (
         <section className="border-t border-border bg-card">
-          <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-            <h2 className="mb-2 text-center font-display text-3xl font-semibold text-foreground">
+          <div className="mx-auto max-w-5xl px-4 py-16 md:px-6">
+            <h2 className="mb-2 text-center font-serif text-3xl font-semibold text-foreground">
               Next available
             </h2>
             <p className="mb-8 text-center text-muted-foreground">
               Straight from the salon diary. These times are free right now.
             </p>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
               {nextDays.map((date) => (
                 <Card key={date} className="p-5 text-center">
                   <p className="font-medium text-foreground">
@@ -216,8 +216,8 @@ export function HomePage(): JSX.Element {
           Straight from the salon's own menu, which she edits in the
           dashboard. Nothing renders until there is something to show. */}
       {menu.length > 0 && (
-        <section id="services" className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-          <h2 className="mb-2 text-center font-display text-3xl font-semibold text-foreground">
+        <section id="services" className="mx-auto max-w-5xl px-4 py-16 md:px-6">
+          <h2 className="mb-2 text-center font-serif text-3xl font-semibold text-foreground">
             What we do
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-center text-muted-foreground">
@@ -226,7 +226,7 @@ export function HomePage(): JSX.Element {
             knotless braids and a trim are not the same afternoon.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {menu.map((group) => (
               <Card key={group.group_name} className="p-0">
                 {/* Collapsed by default: a category name answers "do you do
@@ -235,7 +235,7 @@ export function HomePage(): JSX.Element {
                     each was a very long, low-signal scroll before this,
                     worst on mobile where it dominated the whole page. */}
                 <details className="group p-5">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-display text-lg font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-serif text-lg font-semibold text-foreground [&::-webkit-details-marker]:hidden">
                     {group.group_name}
                     <svg
                       viewBox="0 0 24 24"
@@ -287,17 +287,17 @@ export function HomePage(): JSX.Element {
 
       {/* ---- How booking works --------------------------------------- */}
       <section className="border-t border-border bg-card">
-        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-          <h2 className="mb-10 text-center font-display text-3xl font-semibold text-foreground">
+        <div className="mx-auto max-w-5xl px-4 py-16 md:px-6">
+          <h2 className="mb-10 text-center font-serif text-3xl font-semibold text-foreground">
             Booking, without the phone tag
           </h2>
-          <ol className="grid gap-8 sm:grid-cols-3">
+          <ol className="grid gap-8 md:grid-cols-3">
             {HOW_IT_WORKS.map((item) => (
               <li key={item.step}>
                 <span className="grid h-9 w-9 place-items-center rounded-full bg-primary font-semibold text-primary-foreground">
                   {item.step}
                 </span>
-                <h3 className="mt-4 font-display text-lg font-semibold text-foreground">
+                <h3 className="mt-4 font-serif text-lg font-semibold text-foreground">
                   {item.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -313,8 +313,8 @@ export function HomePage(): JSX.Element {
       <Reviews reviewUrl={settings?.google_review_url ?? null} />
 
       {/* ---- Closing ------------------------------------------------- */}
-      <section className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
-        <h2 className="font-display text-3xl font-semibold text-foreground">
+      <section className="mx-auto max-w-3xl px-4 py-20 text-center md:px-6">
+        <h2 className="font-serif text-3xl font-semibold text-foreground">
           Come and see us
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-muted-foreground">

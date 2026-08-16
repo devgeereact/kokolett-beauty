@@ -104,7 +104,7 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
   return (
     <Card className="flex h-full flex-col p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-display text-base font-semibold text-foreground">
+        <h2 className="font-serif text-base font-semibold text-foreground">
           Bookings overview
         </h2>
         <span className="text-xs text-muted-foreground">This week</span>
@@ -121,7 +121,7 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
           <div className="mb-6 grid grid-cols-3 gap-4">
             <div>
               <p className="text-xs text-muted-foreground">Bookings</p>
-              <p className="font-display text-2xl font-semibold tabular-nums text-foreground">
+              <p className="font-serif text-2xl font-semibold tabular-nums text-foreground">
                 {metrics.bookings}
               </p>
               <p className="text-xs text-status-completed">
@@ -130,7 +130,7 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Returning rate</p>
-              <p className="font-display text-2xl font-semibold tabular-nums text-foreground">
+              <p className="font-serif text-2xl font-semibold tabular-nums text-foreground">
                 {Math.round(metrics.returningRate * 100)}%
               </p>
               <p className="text-xs text-status-completed">
@@ -139,7 +139,7 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
             </div>
             <div>
               <p className="text-xs text-muted-foreground">No-show rate</p>
-              <p className="font-display text-2xl font-semibold tabular-nums text-foreground">
+              <p className="font-serif text-2xl font-semibold tabular-nums text-foreground">
                 {Math.round(metrics.noShowRate * 100)}%
               </p>
               <p className="text-xs text-muted-foreground">
@@ -160,10 +160,12 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
           </div>
 
           {/* A fixed, compact chart centred in whatever leftover height the
-              card has (it's still bottom-aligned with the taller column
-              beside it) rather than the bars themselves stretching taller
-              to fill it — a bar chart that grows to match an unrelated
-              neighbour's height stops reading as "this week at a glance". */}
+              card has, rather than the bars themselves stretching taller to
+              fill it — a bar chart that grows to match a neighbour's height
+              stops reading as "this week at a glance". The card only
+              stretches to match Availability requests beside it now (row2
+              has no other card), so that leftover is a few px, not a dead
+              zone. */}
           <div className="flex flex-1 flex-col justify-center">
             <div className="flex gap-3" style={{ height: 160 }}>
               <div className="flex h-full shrink-0 flex-col-reverse justify-between text-right text-xs text-muted-foreground">

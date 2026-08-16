@@ -28,6 +28,10 @@ export interface QueuedRequest {
   owner_response: string | null;
   /** Private, never emailed to the customer — migration 0030. */
   owner_note: string | null;
+  /** Set when the owner answers (offers a slot or declines) — the reference's "Offered"/"Requested" timestamp for a resolved row. */
+  responded_at: string | null;
+  /** The resulting booking's start time — the reference's "Booked" timestamp. `null` until `converted`. */
+  converted_starts_at: string | null;
   created_at: string;
   updated_at: string;
   waiting_hours: number;
@@ -35,8 +39,8 @@ export interface QueuedRequest {
 
 const REQUEST_COLUMNS =
   'id, full_name, email, mobile, service_id, preferred_dates, preferred_times, ' +
-  'flexibility, notes, status, owner_response, owner_note, created_at, updated_at, ' +
-  'services(name)';
+  'flexibility, notes, status, owner_response, owner_note, responded_at, created_at, updated_at, ' +
+  'services(name), appointments(starts_at)';
 
 type RequestRow = {
   id: string;
@@ -51,13 +55,16 @@ type RequestRow = {
   status: AvailabilityRequestStatus;
   owner_response: string | null;
   owner_note: string | null;
+  responded_at: string | null;
   created_at: string;
   updated_at: string;
   services: { name: string } | { name: string }[] | null;
+  appointments: { starts_at: string } | { starts_at: string }[] | null;
 };
 
 function toQueuedRequest(row: RequestRow, queuePosition: number | null): QueuedRequest {
   const service = Array.isArray(row.services) ? row.services[0] : row.services;
+  const appointment = Array.isArray(row.appointments) ? row.appointments[0] : row.appointments;
   return {
     id: row.id,
     queue_position: queuePosition,
@@ -73,6 +80,8 @@ function toQueuedRequest(row: RequestRow, queuePosition: number | null): QueuedR
     status: row.status,
     owner_response: row.owner_response,
     owner_note: row.owner_note,
+    responded_at: row.responded_at,
+    converted_starts_at: appointment?.starts_at ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     waiting_hours: Math.round(((Date.now() - new Date(row.created_at).getTime()) / 3_600_000) * 10) / 10,

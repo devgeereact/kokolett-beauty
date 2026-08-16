@@ -1,22 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Download, Search } from 'lucide-react';
+import { Download, Plus, Search } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AdvisorySection } from '@/components/dashboard/assistant/AdvisorySection';
-import { CommunicationAssistancePanel } from '@/components/dashboard/assistant/CommunicationAssistancePanel';
-import { RepeatCustomerInsightsPanel } from '@/components/dashboard/assistant/RepeatCustomerInsightsPanel';
-import { CancellationForecastingPanel } from '@/components/dashboard/assistant/CancellationForecastingPanel';
-import { CustomerTable } from '@/components/dashboard/customers/CustomerTable';
+import { CustomerCard } from '@/components/dashboard/customers/CustomerCard';
 import { CustomerDetailPanel } from '@/components/dashboard/customers/CustomerDetailPanel';
 import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Modal } from '@/components/ui/Modal';
+import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
   getCustomer,
+  hardDeleteCustomer,
   listCustomersWithStats,
   setCustomerNote,
   softDeleteCustomer,
@@ -71,6 +69,12 @@ export function CustomersPage(): JSX.Element {
   const [savingContact, setSavingContact] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
   const [pendingErase, setPendingErase] = useState<CustomerWithStats | null>(null);
+  const [pendingHardDelete, setPendingHardDelete] = useState<CustomerWithStats | null>(null);
+  const [page, setPage] = useState(1);
+  // 12, not 9: the grid is 1/2/3 columns (mobile/tablet/desktop) — 12 is the
+  // smallest count divisible by both 2 and 3, so the last row is never
+  // ragged at any breakpoint (same reasoning as ServicesCatalogue).
+  const PAGE_SIZE = 12;
 
   const load = useCallback(async (term: string): Promise<void> => {
     setLoading(true);
@@ -95,6 +99,15 @@ export function CustomersPage(): JSX.Element {
     if (statusFilter === 'inactive') return customers.filter(isInactive);
     return customers.filter((c) => !isInactive(c));
   }, [customers, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
+  const pageCustomers = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  );
 
   const open = async (customer: CustomerWithStats): Promise<void> => {
     setSelected(customer);
@@ -188,6 +201,21 @@ export function CustomersPage(): JSX.Element {
     }
   };
 
+  const hardDelete = async (customer: CustomerWithStats): Promise<void> => {
+    try {
+      await hardDeleteCustomer(customer.id);
+      setSelected(null);
+      setDetailOpen(false);
+      showToast({ message: `${customer.full_name} deleted.` });
+      await load(search);
+    } catch (e) {
+      // HAS_PAYMENT (migration 0035) is the one expected failure — everything
+      // else is a real error, but both surface the same way here since
+      // there's nothing more the owner can do about either from this dialog.
+      showToast({ message: errorMessage(e) });
+    }
+  };
+
   const exportCsv = (): void => {
     const header = ['Name', 'Email', 'Mobile', 'Total visits', 'Last visit', 'Status', 'Marketing consent'];
     const rows = filtered.map((c) => [
@@ -204,18 +232,33 @@ export function CustomersPage(): JSX.Element {
   };
 
   return (
-    <DashboardLayout title="Customers" subtitle="View your clients, their history and preferences.">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {loading ? 'Loading…' : `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`}
-        </p>
-        <Button variant="ghost" size="sm" onClick={exportCsv}>
-          <Download aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-          Export
-        </Button>
-      </div>
+    <DashboardLayout
+      title="Customers"
+      subtitle="View your clients, their history and preferences."
+      actions={
+        <>
+          <Button variant="ghost" size="sm" onClick={exportCsv}>
+            <Download aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+            Export
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              setSelected(null);
+              setBooking(true);
+            }}
+          >
+            <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+            New booking
+          </Button>
+        </>
+      }
+    >
+      <p className="mb-2 text-sm text-muted-foreground">
+        {loading ? 'Loading…' : `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`}
+      </p>
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
         <div className="relative max-w-sm flex-1">
           <Search
             aria-hidden="true"
@@ -227,13 +270,13 @@ export function CustomersPage(): JSX.Element {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search customers, email, phone…"
-            className="h-11 w-full rounded-lg border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="h-11 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-11 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="all">All customers</option>
           <option value="active">Active</option>
@@ -257,19 +300,33 @@ export function CustomersPage(): JSX.Element {
       )}
 
       {!loading && !error && filtered.length > 0 && (
-        <CustomerTable
-          customers={filtered}
-          selectedId={selected?.id ?? null}
-          onSelect={(c) => void open(c)}
-          timezone={timezone}
-        />
+        <>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {pageCustomers.map((customer) => (
+              <CustomerCard
+                key={customer.id}
+                customer={customer}
+                selected={customer.id === selected?.id}
+                onSelect={() => void open(customer)}
+                timezone={timezone}
+              />
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalItems={filtered.length}
+            onPageChange={setPage}
+            itemLabel="customers"
+          />
+        </>
       )}
 
       <Modal
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
         ariaLabel="Customer details"
-        className="max-w-3xl"
+        className="max-w-modal-lg"
       >
         {selected && (
           <CustomerDetailPanel
@@ -297,6 +354,7 @@ export function CustomersPage(): JSX.Element {
               setBooking(true);
             }}
             onErase={() => setPendingErase(selected)}
+            onHardDelete={() => setPendingHardDelete(selected)}
             onConsentChange={(consent) =>
               setCustomers((prev) => prev.map((c) => (c.id === selected.id ? { ...c, marketing_consent: consent } : c)))
             }
@@ -305,20 +363,19 @@ export function CustomersPage(): JSX.Element {
       </Modal>
 
       <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="New booking">
-        {selected && (
-          <NewBookingPanel
-            prefill={{
-              fullName: selected.full_name,
-              email: selected.email,
-              mobile: selected.mobile ?? '',
-            }}
-            onClose={() => setBooking(false)}
-            onBooked={() => {
-              setBooking(false);
-              void open(selected);
-            }}
-          />
-        )}
+        <NewBookingPanel
+          prefill={
+            selected
+              ? { fullName: selected.full_name, email: selected.email, mobile: selected.mobile ?? '' }
+              : null
+          }
+          onClose={() => setBooking(false)}
+          onBooked={() => {
+            setBooking(false);
+            if (selected) void open(selected);
+            else void load(search);
+          }}
+        />
       </Modal>
 
       <ConfirmDialog
@@ -340,15 +397,41 @@ export function CustomersPage(): JSX.Element {
         onCancel={() => setPendingErase(null)}
       />
 
-      <AdvisorySection title="Customer messages" description="AI-assisted replies for a customer's message.">
-        <CommunicationAssistancePanel timezone={timezone} />
-      </AdvisorySection>
-      <AdvisorySection title="Repeat customers" description="Who books again and again, and who's gone quiet.">
-        <RepeatCustomerInsightsPanel timezone={timezone} />
-      </AdvisorySection>
-      <AdvisorySection title="Cancellation risk" description="Bookings more likely than usual to no-show or cancel.">
-        <CancellationForecastingPanel timezone={timezone} />
-      </AdvisorySection>
+      <ConfirmDialog
+        open={pendingHardDelete !== null}
+        title="Delete this customer permanently?"
+        message={
+          pendingHardDelete
+            ? `This removes ${pendingHardDelete.full_name} and every one of their appointments from the database entirely — not the same as Erase, which keeps appointment history for your records. There is no undo. Refused if any of their appointments has a logged payment.`
+            : ''
+        }
+        tone="destructive"
+        confirmLabel="Delete permanently"
+        onConfirm={() => {
+          if (!pendingHardDelete) return;
+          const customer = pendingHardDelete;
+          setPendingHardDelete(null);
+          void hardDelete(customer);
+        }}
+        onCancel={() => setPendingHardDelete(null)}
+      />
+
+      {/*
+        "Customer messages" moved into CustomerDetailPanel's own Message tab
+        — replying from a specific customer's profile, not a salon-wide
+        inbox, per owner request.
+
+        "Repeat customers" (RepeatCustomerInsightsPanel, still in
+        src/components/dashboard/assistant/) is deliberately not shown here
+        — not a priority for a single-owner salon today. Revisit and re-add
+        an <AdvisorySection> for it if repeat-customer targeting becomes a
+        real priority.
+
+        "Cancellation risk" is removed outright, not deprioritised — not a
+        fit for this app. Its code
+        (CancellationForecastingPanel/forecastCancellationRisk/
+        getCancellationForecast) was deleted, not hidden.
+      */}
     </DashboardLayout>
   );
 }

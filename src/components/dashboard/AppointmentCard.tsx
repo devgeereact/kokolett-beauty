@@ -52,7 +52,7 @@ export function AppointmentCard({
     <>
       <article
         className={cn(
-          'rounded-xl border border-border bg-card p-4',
+          'rounded-md border border-border bg-card p-4',
           appointment.status === 'completed' && 'border-l-4 border-l-status-completed',
           className,
         )}
@@ -62,8 +62,8 @@ export function AppointmentCard({
             name/email column for space squeezed that column down to a sliver
             and truncated it hard, worst in the wider Edit-appointment popup
             where there was no `sm:` stacking to fall back on. */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-          <div className="shrink-0 sm:w-20">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
+          <div className="shrink-0 md:w-20">
             <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
               {formatTime(appointment.starts_at, timezone)}
             </p>

@@ -331,7 +331,7 @@ export function QuickActionLauncher(): JSX.Element {
       // the 4-action launcher, not a live-filtering search field.
       aria-label="Quick actions"
       className={cn(
-        'inline-flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-border px-3 text-sm sm:w-64',
+        'inline-flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-border px-3 text-sm md:w-64',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         open ? 'bg-muted text-foreground' : 'bg-input text-muted-foreground hover:bg-muted',
       )}
@@ -367,12 +367,12 @@ export function QuickActionLauncher(): JSX.Element {
        * sometimes scroll *this* wrapper instead of the panel.
        */}
       {createPortal(
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[8vh] sm:items-center sm:pt-4">
+        <div className="fixed inset-0 z-modal flex items-start justify-center p-4 pt-[8vh] md:items-center md:pt-4">
           <button
             type="button"
             aria-label="Close quick actions"
             tabIndex={-1}
-            className="fixed inset-0 bg-black/50"
+            className="overlay-backdrop fixed inset-0"
             onClick={close}
           />
           <div
@@ -382,21 +382,21 @@ export function QuickActionLauncher(): JSX.Element {
             aria-label={dialogLabel(step)}
             onKeyDown={handleArrowKeys}
             className={cn(
-              'relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-y-auto',
+              'relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-y-auto shadow-modal',
               // The two NewBookingPanel steps render their own Card chrome
               // (border/shadow/background) — giving this wrapper the same
               // chrome around it would nest one card inside another instead
               // of the single clean surface every other popup shows.
               step.kind === 'new-booking' || step.kind === 'rebook-booking'
                 ? undefined
-                : 'rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-card',
+                : 'rounded-xl border border-border bg-popover p-5 text-popover-foreground',
             )}
           >
             {step.kind === 'menu' && (
               <div>
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="font-display text-lg font-semibold text-foreground">
+                    <h2 className="font-serif text-lg font-semibold text-foreground">
                       Quick actions
                     </h2>
                     <p className="text-sm text-muted-foreground">

@@ -44,7 +44,10 @@ function overlapsPreferredWindow(dates: string[], from: string, to: string): boo
   return dates.some((d) => (!from || d >= from) && (!to || d <= to));
 }
 
-const PAGE_SIZE = 7;
+// A single-column row list, so no grid-divisibility constraint — 8 is just
+// the same round page size as the other single-column list screens
+// (Notifications), not a one-off number.
+const PAGE_SIZE = 8;
 
 /**
  * The requests queue, rebuilt onto `docs/design/availability-request.png` —
@@ -247,7 +250,7 @@ export const RequestsQueue = forwardRef<
             <span
               className={cn(
                 'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                lane === l ? 'bg-tint-primary text-primary' : 'bg-muted text-muted-foreground',
+                lane === l ? 'bg-tint-brand text-primary' : 'bg-muted text-muted-foreground',
               )}
             >
               {laneCounts[l]}
@@ -268,14 +271,14 @@ export const RequestsQueue = forwardRef<
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search requests, clients, notes…"
-            className="h-9 w-full rounded-lg border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <select
           aria-label="Sort by date"
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-          className="h-9 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="newest">Date: Newest</option>
           <option value="oldest">Date: Oldest</option>
@@ -284,7 +287,7 @@ export const RequestsQueue = forwardRef<
           aria-label="Service"
           value={serviceId}
           onChange={(e) => setServiceId(e.target.value)}
-          className="h-9 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="all">All services</option>
           {services.map((s) => (
@@ -297,7 +300,7 @@ export const RequestsQueue = forwardRef<
           aria-label="Priority"
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value as PriorityFilter)}
-          className="h-9 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="all">Priority: All</option>
           <option value="high">High priority</option>

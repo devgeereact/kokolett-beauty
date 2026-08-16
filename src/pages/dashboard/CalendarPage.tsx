@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, ChevronDown } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AdvisorySection } from '@/components/dashboard/assistant/AdvisorySection';
-import { ConflictDetectionPanel } from '@/components/dashboard/assistant/ConflictDetectionPanel';
-import { RescheduleSuggestionsPanel } from '@/components/dashboard/assistant/RescheduleSuggestionsPanel';
 import { CalendarShell } from '@/components/dashboard/calendar/CalendarShell';
 import { WeekView } from '@/components/dashboard/calendar/WeekView';
 import { DayView } from '@/components/dashboard/calendar/DayView';
@@ -33,6 +30,7 @@ import {
   setOwnerNote,
 } from '@/services/appointmentService';
 import { logPayment } from '@/services/paymentService';
+import { listActiveServices } from '@/services/serviceCatalogService';
 import { errorMessage } from '@/lib/errors';
 import {
   formatDateLong,
@@ -97,7 +95,6 @@ export function CalendarPage(): JSX.Element {
   const [anchor, setAnchor] = useState(today);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [moving, setMoving] = useState(false);
   const [newBooking, setNewBooking] = useState<{ date: string; time: string } | null>(
     null,
   );
@@ -106,6 +103,21 @@ export function CalendarPage(): JSX.Element {
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
   const [daySlots, setDaySlots] = useState<Map<string, OwnerDaySlot[]>>(new Map());
   const [error, setError] = useState<Error | null>(null);
+
+  // For fitting the grid's hour axis to real published hours (below) rather
+  // than to whatever appointments happen to be booked.
+  const [maxServiceDurationMin, setMaxServiceDurationMin] = useState(60);
+  useEffect(() => {
+    listActiveServices()
+      .then((services) => {
+        if (services.length > 0) {
+          setMaxServiceDurationMin(Math.max(60, ...services.map((s) => s.duration_min)));
+        }
+      })
+      .catch(() => {
+        // Keep the 60-minute default — the grid still fits, just less precisely.
+      });
+  }, []);
 
   // Rail filters — client-side only, over whatever `load()` already fetched.
   const [visibleCategories, setVisibleCategories] = useState<Set<StatusCategory>>(
@@ -190,7 +202,6 @@ export function CalendarPage(): JSX.Element {
   useEffect(() => {
     setSelectedId(null);
     setEditing(false);
-    setMoving(false);
     setNewBooking(null);
   }, [view, anchor]);
 
@@ -305,7 +316,6 @@ export function CalendarPage(): JSX.Element {
   const selectOpenSlot = useCallback((date: string, slot: OwnerDaySlot): void => {
     setSelectedId(null);
     setEditing(false);
-    setMoving(false);
     setNewBooking({ date, time: slot.local_time });
   }, []);
 
@@ -423,6 +433,7 @@ export function CalendarPage(): JSX.Element {
               timezone={timezone}
               appointmentsByDate={appointmentsByDate}
               openSlotsByDate={daySlots}
+              maxServiceDurationMin={maxServiceDurationMin}
               onSelectAppointment={selectAppointment}
               onSelectDate={goToDay}
               onSelectOpenSlot={selectOpenSlot}
@@ -437,6 +448,7 @@ export function CalendarPage(): JSX.Element {
               timezone={timezone}
               appointments={appointmentsByDate.get(anchor) ?? []}
               openSlots={daySlots.get(anchor) ?? []}
+              maxServiceDurationMin={maxServiceDurationMin}
               onSelectAppointment={selectAppointment}
               onSelectOpenSlot={(slot) => selectOpenSlot(anchor, slot)}
               onChanged={() => void load()}
@@ -446,7 +458,7 @@ export function CalendarPage(): JSX.Element {
           {view === 'agenda' && (
             <div
               className={cn(
-                'overflow-y-auto rounded-xl border border-border bg-card p-4',
+                'overflow-y-auto rounded-md border border-border bg-card p-4',
                 CALENDAR_GRID_HEIGHT_CLASS,
               )}
             >
@@ -474,14 +486,9 @@ export function CalendarPage(): JSX.Element {
             contextLabel={displayedContextLabel}
             timezone={timezone}
             onClose={selected ? () => setSelectedId(null) : undefined}
-            onStatusChange={changeStatus}
             onEdit={() => setEditing(true)}
-            onMove={() => {
-              setEditing(true);
-              setMoving(true);
-            }}
           />
-          <div className="rounded-xl border border-border bg-card p-3">
+          <div className="rounded-md border border-border bg-card p-3">
             <MiniMonthCalendar anchor={anchor} onSelect={setAnchor} />
           </div>
           <CalendarFiltersCard
@@ -500,12 +507,8 @@ export function CalendarPage(): JSX.Element {
       <AppointmentEditModal
         appointment={displayed}
         open={editing}
-        initialMoving={moving}
         timezone={timezone}
-        onClose={() => {
-          setEditing(false);
-          setMoving(false);
-        }}
+        onClose={() => setEditing(false)}
         onStatusChange={changeStatus}
         onNoteSave={saveNote}
         onLogPayment={logPaymentHandler}
@@ -534,13 +537,6 @@ export function CalendarPage(): JSX.Element {
           />
         )}
       </Modal>
-
-      <AdvisorySection title="Schedule conflicts" description="Overlapping live appointments on the same day.">
-        <ConflictDetectionPanel timezone={timezone} />
-      </AdvisorySection>
-      <AdvisorySection title="Reschedule suggestions" description="Better times for appointments worth moving.">
-        <RescheduleSuggestionsPanel timezone={timezone} />
-      </AdvisorySection>
     </DashboardLayout>
   );
 }

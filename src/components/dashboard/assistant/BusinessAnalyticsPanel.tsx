@@ -37,10 +37,10 @@ export function BusinessAnalyticsPanel({ timezone }: { timezone: string }): JSX.
       <Card className="p-5">
         <p className="text-sm text-foreground">{sentence}</p>
       </Card>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label} className="p-4">
-            <p className="font-display text-2xl font-semibold text-foreground">
+            <p className="font-serif text-2xl font-semibold text-foreground">
               {s.value}
             </p>
             <p className="text-xs text-muted-foreground">{s.label}</p>

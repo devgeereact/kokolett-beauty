@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Download, Inbox, Mail, Search, Send, XCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Download, Inbox, Mail, Search, Send, XCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AdvisorySection } from '@/components/dashboard/assistant/AdvisorySection';
 import { EmailDraftingPanel } from '@/components/dashboard/assistant/EmailDraftingPanel';
@@ -12,6 +13,7 @@ import { listEmailMessages } from '@/services/emailService';
 import { downloadCsv } from '@/lib/csv';
 import { formatDateTime } from '@/lib/format';
 import { templateLabel } from '@/lib/emailTemplates';
+import { routes } from '@/lib/routes';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { cn } from '@/lib/utils';
 import type { EmailMessage } from '@/types';
@@ -128,7 +130,7 @@ export function EmailPage(): JSX.Element {
                 onClick={() => setLane(l.key)}
                 className={cn(
                   'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
-                  lane === l.key ? 'bg-tint-primary text-primary' : 'text-foreground hover:bg-muted',
+                  lane === l.key ? 'bg-tint-brand text-primary' : 'text-foreground hover:bg-muted',
                 )}
               >
                 <span className="flex items-center gap-2">
@@ -153,7 +155,7 @@ export function EmailPage(): JSX.Element {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search emails…"
-                  className="h-10 w-full rounded-lg border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-10 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
             </div>
@@ -168,7 +170,7 @@ export function EmailPage(): JSX.Element {
                     onClick={() => setSelectedId(m.id)}
                     className={cn(
                       'flex w-full items-start gap-3 p-3 text-left hover:bg-muted',
-                      selected?.id === m.id && 'bg-tint-primary',
+                      selected?.id === m.id && 'bg-tint-brand',
                     )}
                   >
                     <Avatar name={m.to_email} size="sm" />
@@ -195,14 +197,25 @@ export function EmailPage(): JSX.Element {
             <Card className="p-5">
               <div className="mb-4 flex items-start justify-between gap-3 border-b border-border pb-4">
                 <div className="min-w-0">
-                  <h2 className="mb-1 truncate font-display text-lg font-semibold text-foreground">
+                  <h2 className="mb-1 truncate font-serif text-lg font-semibold text-foreground">
                     {selected.subject}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     To <span className="text-foreground">{selected.to_email}</span>
                   </p>
                 </div>
-                <EmailStatusBadge status={selected.status} />
+                <div className="flex shrink-0 items-center gap-3">
+                  {selected.customer_id && (
+                    <Link
+                      to={`${routes.owner.customers}?customer=${selected.customer_id}`}
+                      className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                    >
+                      View customer
+                      <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                    </Link>
+                  )}
+                  <EmailStatusBadge status={selected.status} />
+                </div>
               </div>
 
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">

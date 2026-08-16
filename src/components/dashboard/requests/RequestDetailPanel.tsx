@@ -132,7 +132,13 @@ export function RequestDetailPanel({
       slotLimit,
     )
       .then((found) => {
-        if (!cancelled) setSlots(found);
+        if (cancelled) return;
+        setSlots(found);
+        // Pre-select the top suggestion, same as the reference — one click
+        // to "Offer this slot" for the common case. Only when nothing is
+        // selected yet, so "View more slots" (which re-fetches with a
+        // higher limit) never yanks away a slot the owner already picked.
+        setSelectedSlot((prev) => prev ?? found[0] ?? null);
       })
       .catch(() => {
         if (!cancelled) setSlots([]);
@@ -170,7 +176,7 @@ export function RequestDetailPanel({
         <Avatar name={request.full_name} size="lg" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-display text-base font-semibold text-foreground">
+            <p className="truncate font-serif text-base font-semibold text-foreground">
               {request.full_name}
             </p>
             <Badge tone={REQUEST_STATUS_TONE[request.status]}>
@@ -348,7 +354,7 @@ export function RequestDetailPanel({
             </div>
           ) : customOffer.open ? (
             <div className="space-y-2">
-              <div className="grid gap-x-3 sm:grid-cols-2">
+              <div className="grid gap-x-3 md:grid-cols-2">
                 <Field label="Date">
                   {({ id }) => (
                     <DatePicker

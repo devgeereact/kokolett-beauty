@@ -61,9 +61,9 @@ export function RequestAvailabilityPage(): JSX.Element {
   if (sent) {
     return (
       <SiteShell>
-        <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-2xl px-4 py-16 md:px-6">
           <Card className="p-6 text-center">
-            <h1 className="font-display text-2xl font-semibold text-foreground">
+            <h1 className="font-serif text-2xl font-semibold text-foreground">
               Thank you, that is with the salon
             </h1>
             <p className="mt-2 text-muted-foreground">
@@ -87,8 +87,8 @@ export function RequestAvailabilityPage(): JSX.Element {
 
   return (
     <SiteShell>
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-        <h1 className="font-display text-3xl font-semibold text-foreground">
+      <div className="mx-auto max-w-2xl px-4 py-10 md:px-6">
+        <h1 className="font-serif text-3xl font-semibold text-foreground">
           Tell us when suits
         </h1>
         <p className="mb-8 mt-2 text-muted-foreground">
@@ -147,7 +147,7 @@ export function RequestAvailabilityPage(): JSX.Element {
             )}
           </Field>
 
-          <div className="grid gap-x-4 sm:grid-cols-2">
+          <div className="grid gap-x-4 md:grid-cols-2">
             <Field label="Preferred date">
               {({ id }) => (
                 <DatePicker

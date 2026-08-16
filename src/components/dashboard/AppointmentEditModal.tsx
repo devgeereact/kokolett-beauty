@@ -54,7 +54,7 @@ export function AppointmentEditModal({
         setMoving(false);
       }}
       ariaLabel={moving ? 'Reschedule appointment' : 'Edit appointment'}
-      className="max-w-3xl"
+      className="max-w-modal-lg"
     >
       {appointment &&
         (moving ? (

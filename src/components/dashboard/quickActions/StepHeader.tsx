@@ -23,7 +23,7 @@ export function StepHeader({
         >
           ← Back to quick actions
         </button>
-        <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
+        <h2 className="font-serif text-lg font-semibold text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Button variant="ghost" size="sm" onClick={onClose}>

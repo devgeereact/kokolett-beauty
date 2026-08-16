@@ -78,9 +78,9 @@ export function MyBookingsPage(): JSX.Element {
   if (!hasSession && !loading) {
     return (
       <SiteShell>
-        <div className="mx-auto max-w-md px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-md px-4 py-16 md:px-6">
           <Card className="p-6">
-            <h1 className="font-display text-2xl font-semibold text-foreground">
+            <h1 className="font-serif text-2xl font-semibold text-foreground">
               Your bookings
             </h1>
 
@@ -124,6 +124,7 @@ export function MyBookingsPage(): JSX.Element {
                   )}
                 </Field>
                 <Button
+                  size="lg"
                   className="w-full"
                   onClick={() => {
                     void requestLink(email).then(() => setLinkSent(true));
@@ -186,10 +187,10 @@ export function MyBookingsPage(): JSX.Element {
 
   return (
     <SiteShell>
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 py-10 md:px-6">
         <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl font-semibold text-foreground">
+            <h1 className="font-serif text-3xl font-semibold text-foreground">
               Your bookings
             </h1>
             {customer && (
@@ -239,7 +240,7 @@ export function MyBookingsPage(): JSX.Element {
 
         {upcoming.length > 0 && (
           <section className="mb-10">
-            <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
+            <h2 className="mb-3 font-serif text-lg font-semibold text-foreground">
               Coming up
             </h2>
             <div className="space-y-3">
@@ -319,7 +320,7 @@ export function MyBookingsPage(): JSX.Element {
 
         {past.length > 0 && (
           <section>
-            <h2 className="mb-3 font-display text-lg font-semibold text-foreground">
+            <h2 className="mb-3 font-serif text-lg font-semibold text-foreground">
               Previously
             </h2>
             <div className="space-y-2">

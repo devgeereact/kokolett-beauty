@@ -1,16 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Plus, ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
+import { Calendar, Download, Plus, ChevronDown, Search } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppointmentEditModal } from '@/components/dashboard/AppointmentEditModal';
-import {
-  AppointmentsFilterPanel,
-  type PaymentStatusFilter,
-} from '@/components/dashboard/appointments/AppointmentsFilterPanel';
+import { AppointmentDetailPanel } from '@/components/dashboard/calendar/AppointmentDetailPanel';
 import {
   AppointmentsTable,
   type AppointmentTableGroup,
 } from '@/components/dashboard/appointments/AppointmentsTable';
-import { Pagination } from '@/components/ui/Pagination';
 import {
   NewBookingPanel,
   type PrefilledCustomer,
@@ -33,14 +29,8 @@ import { listActiveServices } from '@/services/serviceCatalogService';
 import { errorMessage } from '@/lib/errors';
 import { downloadCsv } from '@/lib/csv';
 import { formatMoney, formatTime, toSalonDate } from '@/lib/format';
-import {
-  computeDateRange,
-  dateRangeLabel,
-  stepDateMode,
-  type DateMode,
-} from '@/lib/appointmentsDateRange';
+import { computeDateRange, type DateMode } from '@/lib/appointmentsDateRange';
 import { STATUS_CATEGORIES, STATUS_CATEGORY, STATUS_LABELS, type StatusCategory } from '@/lib/status';
-import { cn } from '@/lib/utils';
 import type { AppointmentDetailed, AppointmentStatus, Service } from '@/types';
 
 type Tab = 'all' | 'upcoming' | 'today' | 'in_service' | 'completed' | 'cancelled_no_show';
@@ -89,26 +79,24 @@ export function AppointmentsPage(): JSX.Element {
 
   const [tab, setTab] = useState<Tab>('all');
   const [dateMode, setDateMode] = useState<DateMode>('week');
-  const [anchor, setAnchor] = useState(today);
   const [visibleCategories, setVisibleCategories] = useState<Set<StatusCategory>>(
     () => new Set(STATUS_CATEGORIES),
   );
   const [todayOnly, setTodayOnly] = useState(false);
   const [upcomingOnly, setUpcomingOnly] = useState(false);
   const [serviceId, setServiceId] = useState('all');
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatusFilter>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [booking, setBooking] = useState(false);
   const [prefill, setPrefill] = useState<PrefilledCustomer | null>(null);
   const [justBooked, setJustBooked] = useState<string | null>(null);
-  const [viewing, setViewing] = useState<AppointmentDetailed | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const { from, to } = useMemo(
-    () => computeDateRange(dateMode, anchor, today, timezone),
-    [dateMode, anchor, today, timezone],
+    () => computeDateRange(dateMode, today, today, timezone),
+    [dateMode, today, timezone],
   );
 
   // Every status is fetched — the tabs, the side panel's per-status counts,
@@ -118,7 +106,7 @@ export function AppointmentsPage(): JSX.Element {
 
   useEffect(() => {
     setPage(1);
-  }, [tab, dateMode, anchor, visibleCategories, serviceId, paymentStatus, search]);
+  }, [tab, dateMode, visibleCategories, serviceId, search]);
 
   const applyTab = (next: Tab): void => {
     setTab(next);
@@ -128,18 +116,6 @@ export function AppointmentsPage(): JSX.Element {
     else if (next === 'completed') setVisibleCategories(new Set(['completed']));
     else if (next === 'cancelled_no_show') setVisibleCategories(new Set(['cancelled', 'no_show']));
     else setVisibleCategories(new Set(STATUS_CATEGORIES));
-  };
-
-  const toggleCategory = (category: StatusCategory, visible: boolean): void => {
-    setTab('all');
-    setTodayOnly(false);
-    setUpcomingOnly(false);
-    setVisibleCategories((prev) => {
-      const next = new Set(prev);
-      if (visible) next.add(category);
-      else next.delete(category);
-      return next;
-    });
   };
 
   const nowMs = Date.now();
@@ -162,19 +138,6 @@ export function AppointmentsPage(): JSX.Element {
     [appointments, timezone, today],
   );
 
-  const categoryCounts: Record<StatusCategory, number> = useMemo(() => {
-    const counts: Record<StatusCategory, number> = {
-      pending_approval: 0,
-      confirmed: 0,
-      in_service: 0,
-      completed: 0,
-      cancelled: 0,
-      no_show: 0,
-    };
-    for (const a of appointments) counts[STATUS_CATEGORY[a.status]] += 1;
-    return counts;
-  }, [appointments]);
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return appointments.filter((a) => {
@@ -182,8 +145,6 @@ export function AppointmentsPage(): JSX.Element {
       if (todayOnly && toSalonDate(a.starts_at, timezone) !== today) return false;
       if (upcomingOnly && new Date(a.starts_at).getTime() < nowMs) return false;
       if (serviceId !== 'all' && a.service_id !== serviceId) return false;
-      if (paymentStatus === 'paid' && !((a.paid_pence ?? 0) > 0)) return false;
-      if (paymentStatus === 'unpaid' && (a.paid_pence ?? 0) > 0) return false;
       if (
         q &&
         ![a.customer_name, a.customer_email, a.customer_mobile, a.reference]
@@ -199,7 +160,6 @@ export function AppointmentsPage(): JSX.Element {
     todayOnly,
     upcomingOnly,
     serviceId,
-    paymentStatus,
     search,
     timezone,
     today,
@@ -230,6 +190,49 @@ export function AppointmentsPage(): JSX.Element {
     }
     return [...map.entries()].map(([date, rows]) => ({ date, rows }));
   }, [pageRows, timezone]);
+
+  const selected = appointments.find((a) => a.id === selectedId) ?? null;
+
+  // The rail is never empty when there's something to show, and it's always
+  // about *today*: scoped to today's own bookings, not just whichever
+  // appointment anywhere in the loaded week happens to still say
+  // "in_service" (stale demo/edge-case data from an earlier day was winning
+  // here before). With nothing explicitly clicked: today's live appointment
+  // first, else today's next upcoming one, else — once today's list is
+  // exhausted — stay on today's last appointment rather than falling back to
+  // nothing or drifting to a different day.
+  const defaultAppointment = useMemo((): AppointmentDetailed | null => {
+    const byStartsAt = (a: AppointmentDetailed, b: AppointmentDetailed): number =>
+      a.starts_at.localeCompare(b.starts_at);
+    const todays = appointments.filter((a) => toSalonDate(a.starts_at, timezone) === today);
+
+    const inService = [...todays].filter((a) => a.status === 'in_service').sort(byStartsAt)[0];
+    if (inService) return inService;
+
+    const upcoming = [...todays]
+      .filter(
+        (a) =>
+          (a.status === 'confirmed' ||
+            a.status === 'pending_approval' ||
+            a.status === 'checked_in') &&
+          new Date(a.starts_at).getTime() >= nowMs,
+      )
+      .sort(byStartsAt)[0];
+    if (upcoming) return upcoming;
+
+    return [...todays].sort(byStartsAt).at(-1) ?? null;
+  }, [appointments, timezone, today, nowMs]);
+
+  const displayed = selected ?? defaultAppointment;
+  const displayedContextLabel = selected
+    ? undefined
+    : !displayed
+      ? undefined
+      : displayed.status === 'in_service'
+        ? 'Currently in service'
+        : new Date(displayed.starts_at).getTime() >= nowMs
+          ? "Today's next appointment"
+          : "Today's last appointment";
 
   const changeStatus = async (id: string, status: AppointmentStatus): Promise<void> => {
     try {
@@ -271,18 +274,6 @@ export function AppointmentsPage(): JSX.Element {
     } catch (e) {
       showToast({ message: errorMessage(e) });
     }
-  };
-
-  const clearAll = (): void => {
-    setDateMode('week');
-    setAnchor(today);
-    setVisibleCategories(new Set(STATUS_CATEGORIES));
-    setTodayOnly(false);
-    setUpcomingOnly(false);
-    setServiceId('all');
-    setPaymentStatus('all');
-    setSearch('');
-    setTab('all');
   };
 
   const exportCsv = (): void => {
@@ -357,27 +348,34 @@ export function AppointmentsPage(): JSX.Element {
             placeholder="Search appointments, clients, reference…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 w-full rounded-lg border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
-        <select
-          aria-label="Date range"
-          value={dateMode}
-          onChange={(e) => setDateMode(e.target.value as DateMode)}
-          className="h-9 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="today">Today</option>
-          <option value="week">This week</option>
-          <option value="month">This month</option>
-          <option value="last7">Last 7 days</option>
-          <option value="last30">Last 30 days</option>
-          <option value="all">All time</option>
-        </select>
+        <div className="relative">
+          <Calendar
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            strokeWidth={2}
+          />
+          <select
+            aria-label="Date range"
+            value={dateMode}
+            onChange={(e) => setDateMode(e.target.value as DateMode)}
+            className="h-9 rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="last7">Last 7 days</option>
+            <option value="last30">Last 30 days</option>
+            <option value="all">All time</option>
+          </select>
+        </div>
         <select
           aria-label="Service"
           value={serviceId}
           onChange={(e) => setServiceId(e.target.value)}
-          className="h-9 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="all">All services</option>
           {services.map((s) => (
@@ -386,23 +384,14 @@ export function AppointmentsPage(): JSX.Element {
             </option>
           ))}
         </select>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="lg:hidden"
-          onClick={() => setFiltersOpen((v) => !v)}
-        >
-          <SlidersHorizontal aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-          More filters
-        </Button>
         <Button variant="ghost" size="sm" onClick={exportCsv}>
           <Download aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
           Export
         </Button>
       </div>
 
-      <div className="flex flex-col gap-6 lg:h-[calc(100vh-19rem)] lg:min-h-[420px] lg:flex-row lg:items-stretch">
-        <div className="flex min-w-0 flex-1 flex-col gap-4 lg:overflow-hidden">
+      <div className="flex flex-col gap-6 lg:h-[calc(100vh-21rem)] lg:min-h-[420px] lg:flex-row lg:items-stretch">
+        <div className="min-w-0 flex-1">
           {loading && <LoadingState label="Loading appointments…" />}
           {error && <ErrorState error={error} onRetry={() => void refresh()} />}
 
@@ -417,64 +406,47 @@ export function AppointmentsPage(): JSX.Element {
             />
           )}
 
+          {/* Fills the row's own height, matching the Appointment details
+              card beside it (both h-full against the same row) — Pagination
+              lives inside this same bordered box, as its footer, not as a
+              separate element below the row. */}
           {!loading && !error && sorted.length > 0 && (
-            <>
-              <div className="min-h-0 flex-1 lg:overflow-y-auto">
-                <AppointmentsTable
-                  groups={groups}
-                  timezone={timezone}
-                  ownerName={ownerName}
-                  onView={setViewing}
-                  onDelete={handleDelete}
-                />
-              </div>
-              <div className="shrink-0">
-                <Pagination
-                  page={page}
-                  pageSize={PAGE_SIZE}
-                  totalItems={sorted.length}
-                  onPageChange={setPage}
-                />
-              </div>
-            </>
+            <AppointmentsTable
+              groups={groups}
+              timezone={timezone}
+              ownerName={ownerName}
+              onView={(a) => setSelectedId(a.id)}
+              onDelete={handleDelete}
+              page={page}
+              pageSize={PAGE_SIZE}
+              totalItems={sorted.length}
+              onPageChange={setPage}
+            />
           )}
         </div>
 
-        <aside
-          className={cn(
-            filtersOpen ? 'block' : 'hidden lg:block',
-            'w-full lg:h-full lg:w-80 lg:shrink-0 lg:overflow-y-auto',
-          )}
-        >
-          <AppointmentsFilterPanel
-            dateMode={dateMode}
-            onDateModeChange={setDateMode}
-            dateLabel={dateRangeLabel(dateMode, anchor)}
-            onPrevDate={() => setAnchor((a) => stepDateMode(dateMode, a, -1))}
-            onNextDate={() => setAnchor((a) => stepDateMode(dateMode, a, 1))}
-            visibleCategories={visibleCategories}
-            categoryCounts={categoryCounts}
-            onToggleCategory={toggleCategory}
-            serviceId={serviceId}
-            onServiceChange={setServiceId}
-            services={services}
-            paymentStatus={paymentStatus}
-            onPaymentStatusChange={setPaymentStatus}
-            onClearAll={clearAll}
+        <aside className="w-full lg:h-full lg:w-80 lg:shrink-0">
+          <AppointmentDetailPanel
+            appointment={displayed}
+            contextLabel={displayedContextLabel}
+            timezone={timezone}
+            onClose={selected ? () => setSelectedId(null) : undefined}
+            onEdit={() => setEditing(true)}
+            className="h-full"
           />
         </aside>
       </div>
 
       <AppointmentEditModal
-        appointment={viewing}
-        open={!!viewing}
+        appointment={displayed}
+        open={editing}
         timezone={timezone}
-        onClose={() => setViewing(null)}
+        onClose={() => setEditing(false)}
         onStatusChange={changeStatus}
         onNoteSave={saveNote}
         onLogPayment={logPaymentHandler}
         onBookFollowUp={(a) => {
-          setViewing(null);
+          setEditing(false);
           setPrefill({
             fullName: a.customer_name ?? '',
             email: a.customer_email ?? '',
@@ -484,7 +456,10 @@ export function AppointmentsPage(): JSX.Element {
           setBooking(true);
         }}
         onDelete={handleDelete}
-        onMoved={() => void refresh()}
+        onMoved={() => {
+          setSelectedId(null);
+          void refresh();
+        }}
       />
 
       <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="Take a booking">

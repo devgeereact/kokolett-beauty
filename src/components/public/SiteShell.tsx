@@ -39,16 +39,16 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4">
+      <header className="sticky top-0 z-sticky border-b border-border bg-card/95 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 md:gap-4 md:px-6 md:py-4">
           <Link
             to={routes.public.home}
-            className="whitespace-nowrap font-display text-base font-semibold tracking-tight text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-lg"
+            className="whitespace-nowrap font-serif text-base font-semibold tracking-tight text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-lg"
           >
             Kokolett <span className="text-primary">Beauty</span>
           </Link>
 
-          <nav aria-label="Main" className="flex items-center gap-0.5 sm:gap-2">
+          <nav aria-label="Main" className="flex items-center gap-0.5 md:gap-2">
             {links.map((link) => (
               <NavLink
                 key={link.to}
@@ -56,9 +56,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 end={link.to === routes.public.home}
                 className={({ isActive }) =>
                   cn(
-                    'whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium sm:px-3',
+                    'whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium md:px-3',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    link.phone ? 'inline-flex' : 'hidden sm:inline-flex',
+                    link.phone ? 'inline-flex' : 'hidden md:inline-flex',
                     isActive
                       ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground',
@@ -70,7 +70,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             ))}
             <Link
               to={routes.public.book}
-              className="ml-1 inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-10"
+              className="ml-1 inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-10"
             >
               Book
             </Link>
@@ -81,11 +81,11 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
       <main className="flex-1">{children}</main>
 
       <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-5xl px-4 py-14 md:px-6">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
             {/* Who we are, and how to reach us. */}
             <div>
-              <p className="font-display text-lg font-semibold text-foreground">
+              <p className="font-serif text-lg font-semibold text-foreground">
                 Kokolett <span className="text-primary">Beauty</span> UK
               </p>
               <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
@@ -236,7 +236,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
             <p>&copy; {year} Kokolett Beauty UK. All rights reserved.</p>
             <nav
               aria-label="Legal"

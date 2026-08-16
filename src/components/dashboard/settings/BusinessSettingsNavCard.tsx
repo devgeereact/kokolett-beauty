@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
 import type { SettingsTab } from './tabs';
 
-const ICON_TONE = 'bg-tint-primary text-primary';
+const ICON_TONE = 'bg-tint-brand text-primary';
 
 function Row({
   icon: Icon,
@@ -46,7 +46,7 @@ export function BusinessSettingsNavCard({ onTab }: { onTab: (tab: SettingsTab) =
           <Settings2 aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <h2 className="font-display text-base font-semibold text-foreground">Business settings</h2>
+          <h2 className="font-serif text-base font-semibold text-foreground">Business settings</h2>
           <p className="text-sm text-muted-foreground">Configure your salon operations.</p>
         </div>
       </div>

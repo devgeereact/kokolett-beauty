@@ -4,6 +4,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { CommunicationAssistancePanel } from '@/components/dashboard/assistant/CommunicationAssistancePanel';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Switch } from '@/components/ui/Switch';
@@ -13,11 +14,12 @@ import { listEmailsForCustomer } from '@/services/emailService';
 import type { AppointmentDetailed, EmailMessage } from '@/types';
 import { cn } from '@/lib/utils';
 
-type Tab = 'overview' | 'history' | 'notes' | 'email';
+type Tab = 'overview' | 'history' | 'notes' | 'message' | 'email';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'history', label: 'History' },
   { key: 'notes', label: 'Notes' },
+  { key: 'message', label: 'Message' },
   { key: 'email', label: 'Email history' },
 ];
 
@@ -54,6 +56,7 @@ export function CustomerDetailPanel({
   onClose,
   onBookFollowUp,
   onErase,
+  onHardDelete,
   onConsentChange,
 }: {
   customer: CustomerWithStats;
@@ -73,7 +76,10 @@ export function CustomerDetailPanel({
   onCancelEdit: () => void;
   onClose: () => void;
   onBookFollowUp: () => void;
+  /** UK GDPR erasure — anonymises in place, keeps appointment history. */
   onErase: () => void;
+  /** A genuine hard delete — the row and their appointments gone outright. */
+  onHardDelete: () => void;
   onConsentChange: (consent: boolean) => void;
 }): JSX.Element {
   const [tab, setTab] = useState<Tab>('overview');
@@ -165,7 +171,7 @@ export function CustomerDetailPanel({
             <Avatar name={customer.full_name} size="lg" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="truncate font-display text-base font-semibold text-foreground">
+                <p className="truncate font-serif text-base font-semibold text-foreground">
                   {customer.full_name}
                 </p>
                 <Badge tone={inactive ? 'neutral' : 'completed'}>
@@ -206,7 +212,7 @@ export function CustomerDetailPanel({
                 <MoreHorizontal aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-9 z-10 w-44 rounded-lg border border-border bg-popover p-1 shadow-lg">
+                <div className="absolute right-0 top-9 z-dropdown w-44 rounded-xl border border-border bg-popover p-1 shadow-popover">
                   <button
                     type="button"
                     onClick={() => {
@@ -226,6 +232,16 @@ export function CustomerDetailPanel({
                     className="block w-full rounded-md px-3 py-2 text-left text-sm text-destructive hover:bg-muted"
                   >
                     Erase personal details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onHardDelete();
+                    }}
+                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-destructive hover:bg-muted"
+                  >
+                    Delete permanently
                   </button>
                 </div>
               )}
@@ -281,7 +297,7 @@ export function CustomerDetailPanel({
                   { label: 'No-shows', value: String(customer.no_show_count) },
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-lg border border-border p-3">
-                    <p className="font-display text-xl font-semibold text-foreground">{stat.value}</p>
+                    <p className="font-serif text-xl font-semibold text-foreground">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>
                 ))}
@@ -393,6 +409,10 @@ export function CustomerDetailPanel({
                 Save note
               </Button>
             </div>
+          )}
+
+          {tab === 'message' && (
+            <CommunicationAssistancePanel timezone={timezone} customerEmail={customer.email} />
           )}
 
           {tab === 'email' && (

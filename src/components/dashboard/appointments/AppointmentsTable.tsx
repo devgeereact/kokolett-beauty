@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { Eye } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
+import { Pagination } from '@/components/ui/Pagination';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { AppointmentRowMenu } from '@/components/dashboard/appointments/AppointmentRowMenu';
 import { formatDateLong, formatDuration, formatTime } from '@/lib/format';
@@ -25,17 +26,29 @@ export function AppointmentsTable({
   ownerName,
   onView,
   onDelete,
+  page,
+  pageSize,
+  totalItems,
+  onPageChange,
 }: {
   groups: AppointmentTableGroup[];
   timezone: string;
   ownerName: string;
   onView: (appointment: AppointmentDetailed) => void;
   onDelete: (id: string) => Promise<void>;
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
 }): JSX.Element {
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
+  const showPagination = pageCount > 1 || totalItems > pageSize;
+
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card">
+    <div className="flex h-full flex-col overflow-hidden rounded-md border border-border bg-card">
+      <div className="flex-1 overflow-auto">
       <table className="w-full min-w-[720px] border-collapse text-sm">
-        <thead>
+        <thead className="sticky top-0 z-sticky bg-card">
           <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <th scope="col" className="px-3 py-3">
               Time
@@ -139,6 +152,10 @@ export function AppointmentsTable({
           ))}
         </tbody>
       </table>
+      </div>
+      {showPagination && (
+        <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={onPageChange} />
+      )}
     </div>
   );
 }

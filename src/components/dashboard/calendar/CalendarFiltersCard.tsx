@@ -26,7 +26,7 @@ export function CalendarFiltersCard({
 }): JSX.Element {
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <h2 className="font-display text-base font-semibold text-foreground">Filters</h2>
+      <h2 className="font-serif text-base font-semibold text-foreground">Filters</h2>
 
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

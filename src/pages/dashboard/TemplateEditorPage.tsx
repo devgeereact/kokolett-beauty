@@ -353,7 +353,7 @@ export function TemplateEditorPage(): JSX.Element {
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-4 font-display text-base font-semibold text-foreground">Template settings</h2>
+            <h2 className="mb-4 font-serif text-base font-semibold text-foreground">Template settings</h2>
             <div className="space-y-4">
               {[
                 { key: 'active' as const, label: 'Active', desc: 'This template is active and can be used.', value: active, set: setActive },
@@ -386,7 +386,7 @@ export function TemplateEditorPage(): JSX.Element {
 
         <Card className="h-fit p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-base font-semibold text-foreground">Preview</h2>
+            <h2 className="font-serif text-base font-semibold text-foreground">Preview</h2>
           </div>
           <div className="mb-4 flex gap-1 border-b border-border">
             {(['email', 'mobile'] as const).map((m) => (
@@ -404,29 +404,53 @@ export function TemplateEditorPage(): JSX.Element {
             ))}
           </div>
 
+          {/*
+            Deliberately fixed hex, not theme tokens — this pane previews
+            the actual email HTML the customer's inbox renders, not this
+            dashboard's own UI. The real template
+            (`supabase/functions/_shared/templates.ts`) hardcodes its own
+            colours (no dark-mode media query — transactional email has no
+            concept of the owner's dashboard theme), so a token-based
+            preview would silently lie about how the send looks whenever
+            the owner is in dark mode. Values below are copied from that
+            file's own PAPER/INK/MUTED/LINE/BRAND constants.
+          */}
           <div
+            style={{ background: '#e8ebed', borderColor: '#dcdfe2' }}
             className={cn(
-              'overflow-hidden rounded-lg border border-border bg-card',
+              'overflow-hidden rounded-lg border',
               previewMode === 'mobile' && 'mx-auto max-w-[320px]',
             )}
           >
-            <div className="bg-tint-pending px-6 py-6 text-center">
-              <p className="font-display text-lg font-bold text-primary">Kokolett</p>
-              <p className="text-xs tracking-wide text-muted-foreground">BEAUTY UK</p>
+            <div
+              style={{ background: '#ffffff', borderColor: '#dcdfe2' }}
+              className="flex items-center justify-between border-b px-6 py-5"
+            >
+              <p style={{ color: '#333333' }} className="font-serif text-lg font-bold">
+                Kokolett <span style={{ color: '#e05d38' }}>Beauty</span> UK
+              </p>
+              <p style={{ color: '#6b7280' }} className="text-[11px] uppercase tracking-wide">
+                Women&rsquo;s hair salon
+              </p>
             </div>
-            <div className="p-5 text-sm text-foreground">
-              <p className="mb-3 font-display text-base font-semibold">{renderPreview(subject)}</p>
+            <div style={{ background: '#ffffff', color: '#333333' }} className="p-5 text-sm">
+              <p className="mb-3 font-serif text-base font-semibold">{renderPreview(subject)}</p>
               <div
-                className="[&_p]:mb-3 [&_a]:text-primary [&_a]:underline"
+                style={{ color: '#333333' }}
+                className="[&_a]:underline [&_a]:[color:#e05d38] [&_p]:mb-3"
                 dangerouslySetInnerHTML={{ __html: renderPreview(bodyHtml) }}
               />
             </div>
-            <div className="space-y-3 border-t border-border bg-muted/40 p-4 text-center text-muted-foreground">
+            <div
+              style={{ borderColor: '#dcdfe2', background: '#fafbfc', color: '#6b7280' }}
+              className="space-y-3 border-t p-4 text-center"
+            >
               <div className="flex justify-center gap-3">
                 {[MessageCircle, Globe, Share2].map((Icon, i) => (
                   <span
                     key={i}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-card text-foreground"
+                    style={{ background: '#ffffff', color: '#333333' }}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full"
                   >
                     <Icon aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
                   </span>

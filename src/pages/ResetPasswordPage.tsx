@@ -91,7 +91,7 @@ export function ResetPasswordPage(): JSX.Element {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-4 py-10">
       <Card className="w-full max-w-md p-6">
-        <h1 className="mb-1 font-display text-2xl font-semibold text-foreground">
+        <h1 className="mb-1 font-serif text-2xl font-semibold text-foreground">
           {phase === 'done' ? 'Password changed' : 'Choose a new password'}
         </h1>
 
@@ -101,7 +101,7 @@ export function ResetPasswordPage(): JSX.Element {
               This link is no longer valid. Recovery links work once and expire after an
               hour, so this one has probably already been used.
             </p>
-            <Button onClick={() => void navigate(routes.auth.login)}>
+            <Button size="lg" onClick={() => void navigate(routes.auth.login)}>
               Back to sign in
             </Button>
           </>
@@ -112,7 +112,7 @@ export function ResetPasswordPage(): JSX.Element {
             <p className="mb-6 text-sm text-muted-foreground">
               You are signed in on this device. Use the new password next time.
             </p>
-            <Button onClick={() => void navigate(routes.owner.dashboard)}>
+            <Button size="lg" onClick={() => void navigate(routes.owner.dashboard)}>
               Go to the dashboard
             </Button>
           </>
@@ -149,7 +149,7 @@ export function ResetPasswordPage(): JSX.Element {
               )}
             </Field>
 
-            <Button type="submit" disabled={busy} className="w-full">
+            <Button type="submit" size="lg" disabled={busy} className="w-full">
               {busy ? 'Saving…' : 'Save new password'}
             </Button>
           </form>

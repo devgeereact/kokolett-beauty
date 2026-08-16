@@ -93,7 +93,7 @@ export function ProfilePage(): JSX.Element {
     <DashboardLayout title="Profile" subtitle="Your identity and how the dashboard looks">
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="h-fit p-5">
-          <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
             Identity
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">{user.email}</p>
@@ -130,7 +130,7 @@ export function ProfilePage(): JSX.Element {
         </Card>
 
         <Card className="h-fit p-5">
-          <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
             Appearance
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">
@@ -141,7 +141,7 @@ export function ProfilePage(): JSX.Element {
         </Card>
 
         <Card className="h-fit p-5 lg:col-span-2">
-          <h2 className="mb-1 font-display text-lg font-semibold text-foreground">
+          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
             Change password
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">

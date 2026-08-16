@@ -12,11 +12,9 @@ import {
   analyzeDayOfWeekTrend,
   analyzeHourOfDayTrend,
   findScheduleConflicts,
-  forecastCancellationRisk,
   rankRepeatCustomers,
   summarizeBusiness,
   type BusinessAnalyticsSummary,
-  type CancellationRisk,
   type DayOfWeekTrend,
   type HourOfDayTrend,
   type RepeatCustomerInsight,
@@ -146,34 +144,6 @@ export async function getRepeatCustomers(
     listAppointments({ from, to, statuses: ['completed'] }),
   ]);
   return rankRepeatCustomers(customers, completed);
-}
-
-export async function getCancellationForecast(
-  timezone: string,
-): Promise<CancellationRisk[]> {
-  const today = toSalonDate(new Date(), timezone);
-  const upcomingFrom = salonDayRange(today, timezone).start;
-  const upcomingTo = salonDayRange(addDays(today, 30), timezone).end;
-  const historyFrom = salonDayRange(addDays(today, -730), timezone).start;
-
-  const [upcoming, history] = await Promise.all([
-    listAppointments({
-      from: upcomingFrom,
-      to: upcomingTo,
-      statuses: ['confirmed', 'pending_approval'],
-    }),
-    listAppointments({ from: historyFrom, to: upcomingFrom, statuses: ['no_show'] }),
-  ]);
-
-  const noShowCountByCustomer = new Map<string, number>();
-  for (const a of history) {
-    noShowCountByCustomer.set(
-      a.customer_id,
-      (noShowCountByCustomer.get(a.customer_id) ?? 0) + 1,
-    );
-  }
-
-  return forecastCancellationRisk(upcoming, noShowCountByCustomer);
 }
 
 export interface RecentMessage {

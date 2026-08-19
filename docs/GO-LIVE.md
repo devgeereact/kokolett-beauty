@@ -1,9 +1,12 @@
 # Go-live checklist — everything that has to be keyed in by hand
 
-> **Status: done, 2026-08-19 21:00 UTC.** Sections 1 to 6 have been carried out and
-> verified against the live project. What is left is in
-> [After the handover](#after-the-handover) at the bottom. The sections below are kept
-> as the record of what was done and how it was checked, not as outstanding work.
+> **Status, re-verified 2026-08-19 21:40 UTC.** Most of this is done and checked
+> against the live project. **Three things are not**, and one of them stops the owner
+> signing in. They are listed in [Not done](#not-done) directly below. Everything else
+> is confirmed in [After the handover](#after-the-handover) at the bottom.
+>
+> An earlier version of this banner claimed sections 1 to 6 were complete. That was
+> wrong: it was written from a summary rather than from checking each claim.
 
 Generated 2026-08-19, alongside `docs/FEATURE_FIX.md`. That document records what was
 changed in the repository; this one is the part no amount of code could supply. Work
@@ -11,6 +14,56 @@ through it top to bottom: the order matters in section 3, and section 4 is what 
 the rest of it landed.
 
 Anything written `<like this>` is a value only you have.
+
+---
+
+## Not done
+
+### 1. The Supabase redirect allow-list is missing `www.` — the owner cannot sign in
+
+This is the one that matters. `.env` now sets
+`VITE_APP_URL=https://www.kokolettbeauty.com`, so `LoginPage` asks GoTrue to redirect
+a magic link to `https://www.kokolettbeauty.com/dashboard`. The allow-list, read from
+the Management API on 2026-08-19, is:
+
+```
+https://koko.gakinz.com/**        <- the dead domain, migrated away from on 2026-08-11
+http://localhost:5082/**
+https://kokolettbeauty.com/**     <- apex only
+https://kokolettbeauty.com/
+```
+
+`www.` is a different host, so nothing matches, and GoTrue falls back to `site_url` —
+which is stored as `kokolettbeauty.com`, with no scheme at all.
+
+**Fix it in the dashboard:** Authentication → URL Configuration.
+
+- Site URL: `https://www.kokolettbeauty.com`
+- Redirect URLs: `https://www.kokolettbeauty.com/**`,
+  `https://kokolettbeauty.com/**`, `http://localhost:5082/**`
+- Remove `https://koko.gakinz.com/**`.
+
+Then request a magic link and confirm it lands on the dashboard rather than a broken
+address. Nothing else in this document is blocking; this is.
+
+### 2. `.env.example` still carries the `VITE_SALON_*` block
+
+Section 1 asked for those keys to be deleted. They were given new values instead. They
+are inert — `src/lib/env.ts` reads none of them, and now that it uses static
+`import.meta.env.VITE_*` members Vite no longer inlines them — so nothing ships and
+nothing breaks. They only mislead whoever sets this project up next.
+
+Delete: `VITE_APP_NAME`, `VITE_IMAGEKIT_PUBLIC_KEY`, `VITE_INNGEST_EVENT_KEY`,
+`VITE_SALON_ADDRESS`, `VITE_SALON_PHONE`, `VITE_SALON_EMAIL`, `VITE_SALON_CURRENCY`,
+`VITE_SALON_TIMEZONE`, `VITE_GOOGLE_REVIEW_URL`.
+
+### 3. Section 4.7, the structured data, was never added
+
+`index.html` has no `address`, `telephone` or `openingHoursSpecification` in its
+`HairSalon` block. Its precondition is now met: the database holds
+`Redbourne Dr, London SE28 8RX` and `07707 906408`. Opening hours still need to come
+from the published weekly template. Until it is added the block cannot produce a full
+local rich result.
 
 ---
 
@@ -311,11 +364,20 @@ describes what they want in a sentence.
 - **Price (£)** — see below
 - **Description** — shown on the booking page
 
-On price: the customer-facing pages quote no price anywhere, on purpose. A full head of
-knotless braids and a trim are not the same appointment. `appointments.price_pence` is
-a placeholder that defaults to 0, and what was actually taken is logged per appointment
-in the `payments` table. The Today dashboard's money tile now reads that, which is why
-it used to say £0.00 every day.
+On price: the customer-facing pages quote no price anywhere, on purpose, and a check of
+`HomePage`, `BookPage`, `MyBookingsPage` and `src/components/public/` confirms none
+renders one. A full head of knotless braids and a trim are not the same appointment.
+
+The appointment type is nonetheless set to £42.50, and `book_appointment()` copies that
+onto every booking, so `appointments.price_pence` is 4250 rather than 0. The Today
+money tile used to sum it and call the result "Est. revenue" — a nominal figure the
+salon does not actually charge. It now reads `today_collected_pence` from the
+`payments` table and is labelled "Taken today", which is money genuinely recorded.
+
+**It will read £0.00 until the owner starts logging payments.** `payments` is empty
+today. She records one from the Calendar, Appointments or Today screen when marking an
+appointment complete. That is the intended flow, but it is a change from a tile that
+always showed a number, so it is worth telling her.
 
 ### 4.6 Services → the menu shown on the website
 
@@ -457,7 +519,8 @@ Not blockers for this week, but do not let them fade from view.
 
 ## After the handover
 
-Everything in sections 1 to 6 is done. Verified on 2026-08-19:
+Verified against the live project on 2026-08-19. Read this with
+[Not done](#not-done) above, which lists the three things that are not:
 
 |                         |                                                                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -485,6 +548,8 @@ first week of sending.
 
 ### Still open
 
+- **The redirect allow-list, `.env.example` and the structured data** — see
+  [Not done](#not-done). The allow-list is the only one that blocks anything.
 - **The end-to-end test with the owner watching.** Take a real booking on a phone,
   confirm the email arrives with the reference in the subject, open the magic link,
   reschedule, cancel. Nothing else substitutes for this.

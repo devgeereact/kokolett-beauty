@@ -118,10 +118,10 @@ later.
 
 ### `VITE_IMAGEKIT_URL_ENDPOINT`
 
-Currently `https://ik.imagekit.io/your_imagekit_id`. Only one screen uses it: the
-service images in the dashboard's Services catalogue. If you are not going to upload
-service photographs this week, leave it and nothing breaks — no customer-facing page
-requests an ImageKit URL.
+Still `https://ik.imagekit.io/your_imagekit_id`, and that is fine. Only one screen
+uses it, the service images in the dashboard's Services catalogue, and all 49 menu
+items have a null `image_path`, so nothing anywhere builds an ImageKit URL. Set it
+when the salon starts uploading photographs.
 
 ---
 
@@ -360,9 +360,22 @@ npm run typecheck && npm run lint && npm run format:check && npm test && npm run
 Before uploading, check the artefact rather than the `.env` file:
 
 ```bash
-grep -o 'your_imagekit_id\|your-dsn\|your-inngest' dist/assets/index-*.js   # must print nothing
-grep -o 'VITE_APP_URL:"[^"]*"' dist/assets/index-*.js                       # must contain www.
+MAIN=$(ls -S dist/assets/index-*.js | grep -v '\.map$' | head -1)
+
+grep -c 'https://kokolettbeauty\.com' "$MAIN"        # 0  (the apex must not appear)
+grep -c 'https://www\.kokolettbeauty\.com' "$MAIN"   # 1 or more
+grep -oE '[a-z0-9]+\.ingest\.[a-z.]*sentry\.io' "$MAIN" | head -1   # a real DSN host
 ```
+
+Two traps here, both of which caught me when I ran it:
+
+- **`ls dist/assets/index-*.js | head -1` picks the wrong file.** There are two,
+  and the one that sorts first is a 138-byte stub, not the entry chunk. Sort by
+  size with `ls -S`.
+- **Grepping for `your-dsn` always matches.** `src/lib/sentry.ts` carries that
+  string inside the regex it uses to _detect_ a placeholder DSN, and that regex
+  is compiled into the bundle. A hit proves the guard exists, not that the DSN
+  is fake. Look for a real ingest host instead.
 
 Then upload **everything inside `dist/`, plus the repo-root `.htaccess`**, into
 `~/kokolettbeauty.com/`.

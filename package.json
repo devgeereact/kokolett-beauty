@@ -22,7 +22,7 @@
     "test:hooks": "python3 scripts/test-hookify-rules.py"
   },
   "dependencies": {
-    "@sentry/react": "^8.45.0",
+    "@sentry/react": "^8.55.2",
     "@supabase/supabase-js": "^2.47.10",
     "clsx": "^2.1.1",
     "lucide-react": "^1.31.0",

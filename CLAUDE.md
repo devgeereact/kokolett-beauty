@@ -43,8 +43,10 @@ Never in a file.
 - **TypeScript strict.** No implicit `any`; explicit return types on functions
   and hooks.
 - **Styling:** NativeWind / Tailwind classes, tokens from `tailwind.config.ts`.
-- **Offloaded systems:** Supabase (Auth/DB + RLS), ImageKit (media), Sentry
-  (monitoring), Inngest (background workflows).
+- **Offloaded systems:** Supabase (Auth/DB + RLS, seven Deno Edge Functions,
+  `pg_cron` jobs), ImageKit (transformed URLs for service images only), Sentry
+  (monitoring). There is no Inngest — the email pipeline is a Postgres trigger plus
+  a `pg_cron` drain job.
 - **Path alias:** import app code with `@/…` (maps to `src/`).
 - **Booking writes go through `book_appointment()`** — never a direct client insert.
 - **`pending_approval` holds a slot.** Availability logic must treat it as occupied.

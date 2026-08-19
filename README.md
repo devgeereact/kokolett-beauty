@@ -1,14 +1,18 @@
 # Kokolett Beauty UK
 
-The booking and operations platform for **Kokolett Beauty UK**, a single-owner salon.
-An offline-first Progressive Web App served as static files from cPanel, with all
-heavy lifting offloaded to managed services.
+The booking and operations platform for **Kokolett Beauty UK**, a single-owner UK
+women's hair salon: cutting, colouring, styling, braids, locs, weaves and treatments.
+Not nails, brows, lashes or aesthetics, and not unisex. An offline-first Progressive
+Web App served as static files from cPanel, with all heavy lifting offloaded to
+Supabase.
 
 Live at **https://www.kokolettbeauty.com**
 
 ### What it does
 
-- **Marketing site** — services, gallery, testimonials, FAQs, contact, policies.
+- **Marketing site** — one page carrying the service menu, next available times,
+  Google reviews and how booking works, plus the three policy pages. There is
+  deliberately no separate About, Gallery, Testimonials, FAQs or Contact page.
 - **Availability-first booking** — customers only ever see slots that are genuinely
   open, generated from the owner's hours, breaks, closures, buffers and booking rules.
 - **Availability is the gate** — anything inside the owner's published hours books
@@ -37,10 +41,10 @@ Live at **https://www.kokolettbeauty.com**
 | Styling          | Tailwind CSS (NativeWind-ready) | Utility-first, portable to Expo later          |
 | PWA              | `vite-plugin-pwa` (Workbox)     | Precached app shell + runtime caching          |
 | Auth + DB        | Supabase (PostgreSQL + RLS)     | Managed Postgres, row-level security           |
-| Media            | ImageKit                        | Real-time image resize/compress over a CDN     |
-| Background jobs  | Inngest                         | Event-driven workflows, cron, retries          |
-| Monitoring       | Sentry                          | Error + performance tracking with source maps  |
-| Motion           | Framer Motion                   | Micro-interactions & page transitions          |
+| Server logic     | Supabase Edge Functions (Deno)  | Seven functions: email, reviews, AI, access    |
+| Scheduling       | `pg_cron` + `pg_net`            | Drains the email outbox, refreshes reviews     |
+| Media            | ImageKit                        | Transformed URLs for service images            |
+| Monitoring       | Sentry                          | Error tracking, magic-link tokens redacted     |
 | Realtime         | Supabase Realtime               | Live calendar without polling                  |
 | AI code review   | CodeRabbit                      | PR checks against `docs/RULES.md`              |
 | Hosting          | cPanel (static `dist/`)         | Low cost, no server runtime                    |
@@ -72,10 +76,12 @@ Run the migrations **in order**, in the Supabase SQL editor or via
 ```
 supabase/migrations/0001_init.sql    # profiles, app_settings, auth triggers
 supabase/migrations/0002_salon.sql   # the salon domain schema
+...                                  # through 0039, applied in filename order
 ```
 
 `0002` requires the `btree_gist` extension (it creates it) for the exclusion
-constraint that makes double-booking impossible.
+constraint that makes double-booking impossible. Migrations are immutable once
+applied: fix a mistake with a follow-up file, never by editing one in place.
 
 Then grant yourself owner access after signing in once:
 
@@ -93,13 +99,15 @@ supabase gen types typescript --project-id <ref> --schema public \
 
 ### 4. Develop
 ```bash
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:5082
 ```
 
 ### 5. Verify before shipping
 ```bash
 npm run typecheck
 npm run lint
+npm run format:check
+npm test
 npm run build      # emits ./dist
 npm run preview    # smoke-test the production bundle
 ```
@@ -112,8 +120,15 @@ The server has **no Node** — build locally, ship only the artifacts.
    `public_html/<app>/` for a subpath. The `.htaccess` handles HTTPS, SPA routing,
    MIME types, and cache/security headers.
 3. Load the site over HTTPS and confirm the install prompt appears.
-4. Verify a booking end to end: pick a service, take a slot, and confirm the
-   confirmation email and `.ics` invite arrive.
+4. Verify a booking end to end: take a slot, say what you want doing, and confirm the
+   confirmation email arrives. There is no per-service selection step; one appointment
+   covers whatever the customer describes.
+
+> ⚠️ A **200 proves nothing** on this host. The SPA rewrite plus
+> `ErrorDocument 404 /index.html` answers *every* path with `index.html`, including a
+> missing JS bundle. Check the content type of the hashed entry chunk:
+> `curl -sI https://www.kokolettbeauty.com/assets/index-<hash>.js | grep -i content-type`
+> must say `text/javascript`, not `text/html`.
 
 > ⚠️ **Never deploy into a shared docroot** (one that also serves other sites or holds
 > loose `api.php` / `config.php`), and **never mirror-with-delete** without a dry-run
@@ -130,8 +145,14 @@ The server has **no Node** — build locally, ship only the artifacts.
 | `npm run build`        | Type-check, then build the static PWA to `dist/` |
 | `npm run preview`      | Serve the production build locally               |
 | `npm run typecheck`    | `tsc --noEmit` strict check                      |
-| `npm run lint`         | ESLint (zero-warning policy)                     |
-| `npm run format`       | Prettier write                                   |
+| `npm run lint`         | ESLint (zero-warning policy)                      |
+| `npm run lint:fix`     | ESLint with `--fix`                               |
+| `npm run format`       | Prettier write                                    |
+| `npm run format:check` | Prettier check (CI gate — fails the build)        |
+| `npm test`             | Vitest, single run                                |
+| `npm run test:watch`   | Vitest in watch mode                              |
+| `npm run test:coverage`| Vitest with V8 coverage                           |
+| `npm run test:hooks`   | Verifies the tracked hookify safety rules         |
 
 ---
 

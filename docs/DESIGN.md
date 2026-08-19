@@ -1,11 +1,11 @@
 # Design System — Kokolett Beauty UK
 
-| | |
-|---|---|
-| **Version** | 1.0.0 |
-| **Status** | Stable |
-| **Source** | `design-token/` (DESIGN.md, index.css, tailwind.config.ts) — the locked reference. That folder is never edited from the app; this file, `src/index.css` and `tailwind.config.ts` are kept in sync with it by hand. |
-| **Applies to** | `src/index.css`, `tailwind.config.ts`, `src/components/ui/*` |
+|                |                                                                                                          |
+| -------------- | -------------------------------------------------------------------------------------------------------- |
+| **Version**    | 1.0.0                                                                                                    |
+| **Status**     | Stable                                                                                                   |
+| **Source**     | This file is the reference. Values live in `src/index.css`; `tailwind.config.ts` maps them to utilities. |
+| **Applies to** | `src/index.css`, `tailwind.config.ts`, `src/components/ui/*`                                             |
 
 Values live in `src/index.css` as CSS custom properties. `tailwind.config.ts` maps them to
 utilities and nothing else. **A component never contains a raw colour, radius, shadow or
@@ -13,10 +13,16 @@ z-index value** — and that is enforced by the config rather than requested by 
 (§11).
 
 Sections marked **RULE** are normative and blocking at review. Everything else is rationale.
-§1–§13 are copied from `design-token/DESIGN.md` verbatim (that folder is the reference and is
-never edited directly). §15 is app-specific: mechanics `design-token/` doesn't cover because
-they aren't visual tokens (app shell scroll architecture, control heights, sidebar/drawer
-widths).
+
+§1–§13 are the visual token system. §15 is app-shell mechanics that are not visual tokens
+(scroll architecture, control heights, sidebar and drawer widths).
+
+There used to be a `design-token/` folder described here as "the locked reference", kept in
+sync with this file by hand. It was not in sync: 252 lines of this document, 121 of
+`tailwind.config.ts` and 161 of `src/index.css` differed from their supposed source, and
+because the folder sat outside `tsconfig.json` it was also the direct cause of a lint failure
+that kept CI red. A reference that has drifted from the thing it references is worse than no
+reference, so it was deleted and this file took its place.
 
 ---
 
@@ -39,7 +45,7 @@ rhythm.
 Colour tokens are stored as **space-separated sRGB channels**, not hex:
 
 ```css
---primary: 194 77 44;   /* not #c24d2c */
+--primary: 194 77 44; /* not #c24d2c */
 ```
 
 The config wraps them as `rgb(var(--primary) / <alpha-value>)`, which restores Tailwind's
@@ -54,17 +60,17 @@ comment. Never add a hex-valued colour custom property.
 
 `--{role}` and `--{role}-foreground` for anything that carries text on top of itself.
 `--status-*` for text/icon colours. `--tint-*` for the derived pale backgrounds.
-Role names describe *purpose*, never appearance: there is no `--orange` or `--grey-100`.
+Role names describe _purpose_, never appearance: there is no `--orange` or `--grey-100`.
 
 ### 2.3 Fills and text are different jobs
 
 This is the rule that most of §3 exists to serve.
 
-| | Contrast requirement | Tokens |
-|---|---|---|
-| **Fill** carrying a label | 3:1 vs adjacent surface; its `-foreground` ≥ 4.5:1 on it | `primary`, `secondary`, `destructive`, `accent` |
-| **Text / icon** on a light surface | ≥ 4.5:1 against its own background | `foreground`, `muted-foreground`, `status-*` |
-| **Identity** | ≥ 3:1 only (large text and non-text UI) | `brand`, `ring` |
+|                                    | Contrast requirement                                     | Tokens                                          |
+| ---------------------------------- | -------------------------------------------------------- | ----------------------------------------------- |
+| **Fill** carrying a label          | 3:1 vs adjacent surface; its `-foreground` ≥ 4.5:1 on it | `primary`, `secondary`, `destructive`, `accent` |
+| **Text / icon** on a light surface | ≥ 4.5:1 against its own background                       | `foreground`, `muted-foreground`, `status-*`    |
+| **Identity**                       | ≥ 3:1 only (large text and non-text UI)                  | `brand`, `ring`                                 |
 
 **RULE** — Never use a `status-*` token as a background. Never use `brand` behind text
 smaller than 24px. Never use `primary` as body text on a light surface.
@@ -75,45 +81,45 @@ smaller than 24px. Never use `primary` as body text on a light surface.
 
 ### 3.1 Light
 
-| Token | Hex | Use |
-|---|---|---|
-| `background` | `#e8ebed` | Page ground |
-| `foreground` | `#333333` | Body text — 10.6:1 |
-| `card` / `-foreground` | `#ffffff` / `#333333` | Cards, panels, sheets |
-| `popover` / `-foreground` | `#ffffff` / `#333333` | Menus, dialogs |
-| `brand` | `#e05d38` | Identity: display ≥24px, marketing, focus ring |
-| `primary` / `-foreground` | `#c24d2c` / `#ffffff` | Primary action — 4.78:1 |
-| `secondary` / `-foreground` | `#f3f4f6` / `#4b5563` | Secondary action — 6.9:1 |
-| `muted` / `-foreground` | `#f1f3f5` / `#5b6370` | Recessed surfaces, hint text — 5.45:1 |
-| `accent` / `-foreground` | `#f6e6e0` / `#8a3a1f` | Selection, menu hover — 6.4:1 |
-| `destructive` / `-foreground` | `#dc2626` / `#ffffff` | Cancel, delete — 4.83:1 |
-| `border` | `#dcdfe2` | Hairlines |
-| `input` | `#f4f5f7` | Field fill |
-| `ring` | `#e05d38` | Focus ring — 3.63:1 (non-text, passes 1.4.11) |
+| Token                         | Hex                   | Use                                            |
+| ----------------------------- | --------------------- | ---------------------------------------------- |
+| `background`                  | `#e8ebed`             | Page ground                                    |
+| `foreground`                  | `#333333`             | Body text — 10.6:1                             |
+| `card` / `-foreground`        | `#ffffff` / `#333333` | Cards, panels, sheets                          |
+| `popover` / `-foreground`     | `#ffffff` / `#333333` | Menus, dialogs                                 |
+| `brand`                       | `#e05d38`             | Identity: display ≥24px, marketing, focus ring |
+| `primary` / `-foreground`     | `#c24d2c` / `#ffffff` | Primary action — 4.78:1                        |
+| `secondary` / `-foreground`   | `#f3f4f6` / `#4b5563` | Secondary action — 6.9:1                       |
+| `muted` / `-foreground`       | `#f1f3f5` / `#5b6370` | Recessed surfaces, hint text — 5.45:1          |
+| `accent` / `-foreground`      | `#f6e6e0` / `#8a3a1f` | Selection, menu hover — 6.4:1                  |
+| `destructive` / `-foreground` | `#dc2626` / `#ffffff` | Cancel, delete — 4.83:1                        |
+| `border`                      | `#dcdfe2`             | Hairlines                                      |
+| `input`                       | `#f4f5f7`             | Field fill                                     |
+| `ring`                        | `#e05d38`             | Focus ring — 3.63:1 (non-text, passes 1.4.11)  |
 
 ### 3.2 Dark
 
-| Token | Hex |
-|---|---|
-| `background` | `#1c2433` |
-| `foreground` | `#e5e5e5` |
-| `card` / `-foreground` | `#2a3040` / `#e5e5e5` |
-| `popover` / `-foreground` | `#262b38` / `#e5e5e5` |
-| `brand` | `#e05d38` |
-| `primary` / `-foreground` | `#f0805e` / `#1a1f2b` |
-| `secondary` / `-foreground` | `#2a303e` / `#e5e5e5` |
-| `muted` / `-foreground` | `#232936` / `#a3a3a3` |
-| `accent` / `-foreground` | `#3b2a23` / `#f6cbb8` |
+| Token                         | Hex                   |
+| ----------------------------- | --------------------- |
+| `background`                  | `#1c2433`             |
+| `foreground`                  | `#e5e5e5`             |
+| `card` / `-foreground`        | `#2a3040` / `#e5e5e5` |
+| `popover` / `-foreground`     | `#262b38` / `#e5e5e5` |
+| `brand`                       | `#e05d38`             |
+| `primary` / `-foreground`     | `#f0805e` / `#1a1f2b` |
+| `secondary` / `-foreground`   | `#2a303e` / `#e5e5e5` |
+| `muted` / `-foreground`       | `#232936` / `#a3a3a3` |
+| `accent` / `-foreground`      | `#3b2a23` / `#f6cbb8` |
 | `destructive` / `-foreground` | `#f87171` / `#1a1f2b` |
-| `border` / `input` | `#3d4354` |
-| `ring` | `#e05d38` |
+| `border` / `input`            | `#3d4354`             |
+| `ring`                        | `#e05d38`             |
 
-**RULE** — In dark mode, saturated fills go *lighter* and take a *dark* foreground. This is
+**RULE** — In dark mode, saturated fills go _lighter_ and take a _dark_ foreground. This is
 not a stylistic preference: a terracotta dark enough to hold white text at 4.5:1 falls below
 3:1 against `card`, so white-on-orange cannot pass AA on a dark ground. `primary-foreground`
 is `#1a1f2b` in dark for that reason.
 
-Note `muted` sits *below* `card` in dark and *below* `card` but *above* `background` in
+Note `muted` sits _below_ `card` in dark and _below_ `card` but _above_ `background` in
 light, so the `subtle` Card variant reads as recessed in both themes.
 
 ### 3.3 Appointment status
@@ -121,14 +127,14 @@ light, so the `subtle` Card variant reads as recessed in both themes.
 Text and icon colours. Every value clears 4.5:1 on both `card` and its own tint, in both
 themes, because these appear at 12–14px inside pills.
 
-| Status | Light | Dark |
-|---|---|---|
-| `pending` | `#b45309` | `#f59e0b` |
-| `confirmed` | `#2563eb` | `#60a5fa` |
+| Status       | Light     | Dark      |
+| ------------ | --------- | --------- |
+| `pending`    | `#b45309` | `#f59e0b` |
+| `confirmed`  | `#2563eb` | `#60a5fa` |
 | `in-service` | `#7c3aed` | `#a78bfa` |
-| `completed` | `#047857` | `#34d399` |
-| `cancelled` | `#6b7280` | `#9ca3af` |
-| `no-show` | `#dc2626` | `#f87171` |
+| `completed`  | `#047857` | `#34d399` |
+| `cancelled`  | `#6b7280` | `#9ca3af` |
+| `no-show`    | `#dc2626` | `#f87171` |
 
 The `AppointmentStatus` enum has seven members and the palette has six. The mapping is
 explicit, not conventional — see the `TONE_BY_STATUS` map in §9.1.
@@ -174,11 +180,11 @@ The owner dashboard shell has its own ramp so it reads as chrome rather than con
 
 ## 4. Typography
 
-| Role | Family | Weights |
-|---|---|---|
-| UI, body | Inter | 400 / 500 / 600 |
+| Role                        | Family         | Weights                        |
+| --------------------------- | -------------- | ------------------------------ |
+| UI, body                    | Inter          | 400 / 500 / 600                |
 | Display, marketing headings | Source Serif 4 | 400 / 600, optical sizing 8–60 |
-| Numerals, references, times | JetBrains Mono | 400 |
+| Numerals, references, times | JetBrains Mono | 400                            |
 
 Loaded from Google Fonts via `@import` at the top of `src/index.css`, preconnected in
 `index.html`, cached by the service worker (StaleWhileRevalidate).
@@ -186,16 +192,16 @@ Loaded from Google Fonts via `@import` at the top of `src/index.css`, preconnect
 Scale — line-height is baked into each step in `tailwind.config.ts`, so §4 is enforced rather
 than remembered:
 
-| Class | Size | Line-height |
-|---|---|---|
-| `text-xs` | 12px | 16px |
-| `text-sm` | 14px | 20px |
-| `text-base` | 16px | 1.6 |
-| `text-lg` | 18px | 1.6 |
-| `text-xl` | 20px | 1.3 |
-| `text-2xl` | 24px | 1.2 |
-| `text-3xl` | 30px | 1.2 |
-| `text-4xl` | 36px | 1.2 |
+| Class       | Size | Line-height |
+| ----------- | ---- | ----------- |
+| `text-xs`   | 12px | 16px        |
+| `text-sm`   | 14px | 20px        |
+| `text-base` | 16px | 1.6         |
+| `text-lg`   | 18px | 1.6         |
+| `text-xl`   | 20px | 1.3         |
+| `text-2xl`  | 24px | 1.2         |
+| `text-3xl`  | 30px | 1.2         |
+| `text-4xl`  | 36px | 1.2         |
 
 **RULE** — Nothing a customer must read to complete a booking may be below 14px.
 `text-xs` is for dashboard metadata only. There is no step above `text-4xl`.
@@ -225,12 +231,12 @@ value (§15).
 
 Mobile-first, four ranges, three breakpoints:
 
-| Name | Range | Class |
-|---|---|---|
-| mobile | 0–767px | *(base)* |
-| tablet | 768–1023px | `md:` |
-| desktop | 1024–1439px | `lg:` |
-| wide | 1440px+ | `wide:` |
+| Name    | Range       | Class    |
+| ------- | ----------- | -------- |
+| mobile  | 0–767px     | _(base)_ |
+| tablet  | 768–1023px  | `md:`    |
+| desktop | 1024–1439px | `lg:`    |
+| wide    | 1440px+     | `wide:`  |
 
 **RULE** — `sm:`, `xl:` and `2xl:` no longer resolve. If a layout needs a range this table
 doesn't define, that's a design conversation, not a config edit.
@@ -255,11 +261,11 @@ Four visible steps: `--radius-sm 4px`, `--radius-md 8px`, `--radius-lg 12px`,
 
 Three tiers, chosen by how far a surface floats above the page:
 
-| Token | Value | Used by |
-|---|---|---|
-| `shadow-card` | `0 1px 3px` | Default Card — normal document flow |
-| `shadow-popover` | `0 4px 10px` | Dropdowns, row/tab menus, notification popover, DatePicker, toasts, PWA banners |
-| `shadow-modal` | `0 10px 30px` | Modal, ConfirmDialog, QuickActionLauncher — anything blocking the page |
+| Token            | Value         | Used by                                                                         |
+| ---------------- | ------------- | ------------------------------------------------------------------------------- |
+| `shadow-card`    | `0 1px 3px`   | Default Card — normal document flow                                             |
+| `shadow-popover` | `0 4px 10px`  | Dropdowns, row/tab menus, notification popover, DatePicker, toasts, PWA banners |
+| `shadow-modal`   | `0 10px 30px` | Modal, ConfirmDialog, QuickActionLauncher — anything blocking the page          |
 
 Shadow alpha is tokenised per theme (`--shadow-a1..a3`) and rises sharply in dark mode,
 because 10% black is effectively invisible on `#1c2433`.
@@ -277,7 +283,7 @@ and focus states) · `z-dropdown 40` (menus, DatePicker) · `z-sidebar 50` · `z
 `z-layer-popover 90` (ConfirmDialog, which must paint above the Modal that opened it;
 NotificationBellPopover) · `z-toast 100`.
 
-*Naming note:* the stacking token is `z-layer-popover`, not `z-popover`, because
+_Naming note:_ the stacking token is `z-layer-popover`, not `z-popover`, because
 `shadow-popover` means "dropdown-height surface" while this layer means "above a modal".
 Two different concepts should not share a name.
 
@@ -337,25 +343,25 @@ export type Tone =
  * `bg-tint-${tone}` compiles in dev and silently produces no CSS in prod.
  */
 export const TONE_CLASSES: Record<Tone, string> = {
-  pending:      'bg-tint-pending text-status-pending',
-  confirmed:    'bg-tint-confirmed text-status-confirmed',
+  pending: 'bg-tint-pending text-status-pending',
+  confirmed: 'bg-tint-confirmed text-status-confirmed',
   'in-service': 'bg-tint-in-service text-status-in-service',
-  completed:    'bg-tint-completed text-status-completed',
-  cancelled:    'bg-tint-cancelled text-status-cancelled',
-  'no-show':    'bg-tint-no-show text-status-no-show',
-  brand:        'bg-tint-brand text-primary',
-  neutral:      'bg-muted text-muted-foreground',
+  completed: 'bg-tint-completed text-status-completed',
+  cancelled: 'bg-tint-cancelled text-status-cancelled',
+  'no-show': 'bg-tint-no-show text-status-no-show',
+  brand: 'bg-tint-brand text-primary',
+  neutral: 'bg-muted text-muted-foreground',
 };
 
 /** Seven enum members, six palettes. The collapse is explicit, not implied. */
 export const TONE_BY_STATUS: Record<AppointmentStatus, Tone> = {
   pending_approval: 'pending',
-  confirmed:        'confirmed',
-  in_service:       'in-service',
-  completed:        'completed',
-  cancelled:        'cancelled',
-  rejected:         'cancelled', // shares cancelled's palette; label distinguishes
-  no_show:          'no-show',
+  confirmed: 'confirmed',
+  in_service: 'in-service',
+  completed: 'completed',
+  cancelled: 'cancelled',
+  rejected: 'cancelled', // shares cancelled's palette; label distinguishes
+  no_show: 'no-show',
 };
 ```
 
@@ -363,12 +369,12 @@ export const TONE_BY_STATUS: Record<AppointmentStatus, Tone> = {
 
 ### 9.2 Components
 
-| Component | Purpose |
-|---|---|
-| `StatTile` | Dashboard headline number: tinted icon square, bold value, muted label. Any "N pending / N this week" stat row. |
-| `Badge` | Short tinted pill for a fact about a row that is *not* its `AppointmentStatus` — "First-time customer", "Needs approval · 11h 24m remaining". |
-| `StatusPill` / `StatusChip` | Keyed by the `AppointmentStatus` enum via `TONE_BY_STATUS`. The only components allowed to render status colour. |
-| `CountdownChip` | Boxed two-line deadline (`formatCountdown` value / "remaining") for a list row. |
+| Component                   | Purpose                                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StatTile`                  | Dashboard headline number: tinted icon square, bold value, muted label. Any "N pending / N this week" stat row.                               |
+| `Badge`                     | Short tinted pill for a fact about a row that is _not_ its `AppointmentStatus` — "First-time customer", "Needs approval · 11h 24m remaining". |
+| `StatusPill` / `StatusChip` | Keyed by the `AppointmentStatus` enum via `TONE_BY_STATUS`. The only components allowed to render status colour.                              |
+| `CountdownChip`             | Boxed two-line deadline (`formatCountdown` value / "remaining") for a list row.                                                               |
 
 Default tone is `neutral`. Not every tile needs to be orange.
 
@@ -402,14 +408,14 @@ Default tone is `neutral`. Not every tile needs to be orange.
 
 What the config now guarantees rather than requests:
 
-| Rule | Mechanism |
-|---|---|
-| No raw colours | `theme.colors` replaces the default palette. `bg-red-500`, `text-white` produce nothing. |
-| No arbitrary z-index | `theme.zIndex` replaces defaults. `z-50` produces nothing. |
-| Three shadow tiers | `theme.boxShadow` replaces defaults. `shadow-lg` produces nothing. |
-| Radius scale is closed | `theme.borderRadius` replaces defaults. `rounded-3xl` produces nothing. |
-| Type scale carries line-height | `theme.fontSize` replaces defaults. |
-| Only four layout ranges | `theme.screens` replaces defaults. |
+| Rule                           | Mechanism                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------------- |
+| No raw colours                 | `theme.colors` replaces the default palette. `bg-red-500`, `text-white` produce nothing. |
+| No arbitrary z-index           | `theme.zIndex` replaces defaults. `z-50` produces nothing.                               |
+| Three shadow tiers             | `theme.boxShadow` replaces defaults. `shadow-lg` produces nothing.                       |
+| Radius scale is closed         | `theme.borderRadius` replaces defaults. `rounded-3xl` produces nothing.                  |
+| Type scale carries line-height | `theme.fontSize` replaces defaults.                                                      |
+| Only four layout ranges        | `theme.screens` replaces defaults.                                                       |
 
 **Still not machine-enforced** — arbitrary values (`bg-[#ff0000]`, `z-[999]`, `text-[11px]`).
 Add `eslint-plugin-tailwindcss` with `no-arbitrary-value` to close this. Until then it is a
@@ -419,10 +425,9 @@ review item.
 
 1. No hex, rgb or arbitrary bracket values in a component.
 2. Status colour goes through `Tone`, never inline.
-3. New interactive fill: measured against its foreground *and* its neighbour, both themes.
+3. New interactive fill: measured against its foreground _and_ its neighbour, both themes.
 4. `:focus-visible` intact; nothing overrides reduced motion.
-5. Any new token added to `index.css` **and** documented in `design-token/DESIGN.md` in the
-   same PR, then mirrored here.
+5. Any new token added to `src/index.css` **and** documented here in the same PR.
 
 ---
 
@@ -430,7 +435,7 @@ review item.
 
 - **Tailwind 3.4 pin.** Tokens are custom properties referenced from the config rather than
   Tailwind v4's `@theme inline`; names and intent match the v4 source this system was
-  specified against. *Migration trigger: when the app's other v4 blockers clear.*
+  specified against. _Migration trigger: when the app's other v4 blockers clear._
 - **`color-mix()` support.** Tints require Chrome 111+ / Safari 16.2+ / Firefox 113+. Below
   that, tinted backgrounds fall back to transparent — the saturated text still renders
   legibly on `card`, so this degrades safely, but it is a known limit.
@@ -444,16 +449,15 @@ review item.
 
 ### 1.0.0
 
-Adopted `design-token/` as the locked design system, replacing the prior ad-hoc token set
-(hex-only custom properties, two-tier shadow scale, `success`/`warning`/`info` colours that
-were declared but unused, Tailwind's default `sm`/`xl`/`2xl` breakpoints left active
-alongside the documented four-range scale). See `design-token/DESIGN.md` §13 for the
-contrast-fix history baked into the palette itself.
+Adopted the closed token system, replacing the prior ad-hoc set (hex-only custom
+properties, two-tier shadow scale, `success`/`warning`/`info` colours that were declared but
+unused, Tailwind's default `sm`/`xl`/`2xl` breakpoints left active alongside the documented
+four-range scale).
 
 **What changed in the app to adopt it:**
 
 - `tailwind.config.ts` and `src/index.css` rewritten to the closed `colors` / `screens` /
-  `fontSize` / `borderRadius` / `boxShadow` / `zIndex` theme keys from `design-token/`,
+  `fontSize` / `borderRadius` / `boxShadow` / `zIndex` theme keys,
   merged with the app's own non-visual shell mechanics (control heights, sidebar/drawer
   widths, page gutters — §15) which stay on `extend`.
 - `bg-tint-primary` renamed to `bg-tint-brand` throughout (matches the `Tone.brand` mapping
@@ -477,16 +481,15 @@ contrast-fix history baked into the palette itself.
 
 ## 14. See also
 
-`design-token/DESIGN.md` for the full rationale behind every value above (contrast ratios,
-changelog from the pre-1.0 palette, roadmap). §15 below covers what that file intentionally
-doesn't: this app's shell mechanics.
+`src/index.css` for the values themselves, `tailwind.config.ts` for how they become
+utilities. §15 below covers this app's shell mechanics, which are not visual tokens.
 
 ---
 
 ## 15. Application shell (app-specific, not a design-system token)
 
-This section covers layout mechanics `design-token/` doesn't define because they aren't
-visual tokens — they live in `tailwind.config.ts`'s `extend` block and `src/index.css`'s
+This section covers layout mechanics that are not visual tokens — they live in
+`tailwind.config.ts`'s `extend` block and `src/index.css`'s
 `:root` alongside the token layer, not inside the closed scales in §5–§6.
 
 ### 15.1 Scroll architecture

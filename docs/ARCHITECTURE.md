@@ -10,16 +10,22 @@
 └──────┬───────────────┬───────────────┬───────────────┬────────────┘
        │               │               │               │
        ▼               ▼               ▼               ▼
-┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────────────┐
-│  Supabase  │  │  ImageKit  │  │   Sentry   │  │   Inngest (ingest) │
-│ Auth + DB  │  │  media CDN │  │ monitoring │  │  event dispatch    │
-│  + RLS     │  │ transforms │  │            │  │                    │
-└─────┬──────┘  └────────────┘  └────────────┘  └─────────┬──────────┘
-      │                                                    │
-      ▼                                                    ▼
- PostgreSQL  ·  Edge Functions                  Inngest invokes a Supabase
- (row-level security)                           Edge Function (NOT cPanel)
+┌────────────┐  ┌────────────┐  ┌────────────┐
+│  Supabase  │  │  ImageKit  │  │   Sentry   │
+│ Auth + DB  │  │  media CDN │  │ monitoring │
+│  + RLS     │  │ transforms │  │            │
+└─────┬──────┘  └────────────┘  └────────────┘
+      │
+      ▼
+ PostgreSQL  ·  7 Deno Edge Functions  ·  pg_cron + pg_net
+ (row-level security)
 ```
+
+There is no Inngest. An earlier design routed the post-booking work through it; the
+shipped mechanism is a Postgres trigger writing to `email_messages` and a `pg_cron` job
+calling `drain_email_queue()` every five minutes, which POSTs to the `send-emails` Edge
+Function with a shared secret. Nothing in the app dispatches an Inngest event and the
+package is not a dependency.
 
 The static bundle talks to each managed service directly over HTTPS. cPanel only
 serves files — it never runs application logic.
@@ -60,7 +66,7 @@ src/
 │   ├── profileService.ts            # owner account profile
 │   ├── reviewService.ts             # Google review sync
 │   ├── subscriberService.ts         # mailing-list subscribe
-│   └── notificationsService.ts      # Inngest event dispatch
+│   └── notificationsService.ts      # owner notification feed
 ├── types/         # shared + generated DB types
 ├── App.tsx        # providers + router
 ├── main.tsx       # bootstrap: Sentry, SW registration, render
@@ -80,13 +86,13 @@ every path is declared once in `src/lib/routes.ts` — two exceptions, `/login` 
 
 **Public (anonymous)**
 
-| Route                                 | Purpose                                                          |
-| -------------------------------------- | ------------------------------------------------------------------ |
-| `/`                                    | Marketing home — one scrolling page (hero, next-available, services, how-it-works, closing CTA), not a multi-page site |
-| `/book`                                | The booking flow — no per-service step; one appointment type      |
-| `/request-availability`                | Enquiry when nothing's open                                       |
-| `/subscribe`                           | Mailing-list opt-in — not linked in-app; meant to be pasted externally (e.g. an Instagram bio) |
-| `/privacy` `/booking-policy` `/terms`  | Policies                                                           |
+| Route                                 | Purpose                                                                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `/`                                   | Marketing home — one scrolling page (hero, next-available, services, how-it-works, closing CTA), not a multi-page site |
+| `/book`                               | The booking flow — no per-service step; one appointment type                                                           |
+| `/request-availability`               | Enquiry when nothing's open                                                                                            |
+| `/subscribe`                          | Mailing-list opt-in — not linked in-app; meant to be pasted externally (e.g. an Instagram bio)                         |
+| `/privacy` `/booking-policy` `/terms` | Policies                                                                                                               |
 
 `routes.public` also declares `about`, `gallery`, `testimonials`, `faqs` and `contact`
 — none are mounted in `App.tsx`. They're unused constants, not pages; don't build
@@ -94,29 +100,29 @@ against them without checking `App.tsx` first.
 
 **Customer (magic-link session)**
 
-| Route                       | Purpose                                                            |
-| ---------------------------- | -------------------------------------------------------------------- |
-| `/access/:token`            | Exchanges a single-use token for a 30-day session, then redirects   |
-| `/my` · `/my/appointments`  | Same component (`MyBookingsPage`) for both; no distinct behaviour   |
+| Route                      | Purpose                                                           |
+| -------------------------- | ----------------------------------------------------------------- |
+| `/access/:token`           | Exchanges a single-use token for a 30-day session, then redirects |
+| `/my` · `/my/appointments` | Same component (`MyBookingsPage`) for both; no distinct behaviour |
 
 **Owner (Supabase session + `is_owner()`)** — grouped by sidebar nav entry
 (`DashboardLayout.tsx`'s `entries`/`secondaryEntries`):
 
-| Route                      | Nav                      | Purpose                                                    |
-| --------------------------- | ------------------------- | ------------------------------------------------------------ |
-| `/dashboard`                | Today                    | Today at a glance                                            |
-| `/dashboard/inbox`          | Inbox                    | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
-| `/dashboard/calendar`       | Calendar & Capacity      | Day / week / month, drag-to-reschedule                    |
-| `/dashboard/appointment`    | Calendar & Capacity      | The single appointment type's length and price             |
-| `/dashboard/weekly`         | Calendar & Capacity      | The repeating week that generates calendar days            |
-| `/dashboard/appointments`   | Bookings                 | Searchable list                                              |
-| `/dashboard/customers`      | Customers                | CRM                                                           |
-| `/dashboard/services`       | Growth                   | Service-menu content (descriptive, not priced/bookable)      |
-| `/dashboard/settings`       | Settings                 | Salon profile, email, policies                                |
-| `/dashboard/reports`        | Reports (secondary)      | Revenue and utilisation                                    |
-| `/dashboard/assistant`      | AI Assistant (secondary) | Advisory insights queue                                    |
-| `/dashboard/notifications`  | — (header bell)          | Not in sidebar                                                |
-| `/dashboard/profile`        | — (account link)         | Not in sidebar                                                |
+| Route                      | Nav                      | Purpose                                                           |
+| -------------------------- | ------------------------ | ----------------------------------------------------------------- |
+| `/dashboard`               | Today                    | Today at a glance                                                 |
+| `/dashboard/inbox`         | Inbox                    | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
+| `/dashboard/calendar`      | Calendar & Capacity      | Day / week / month, drag-to-reschedule                            |
+| `/dashboard/appointment`   | Calendar & Capacity      | The single appointment type's length and price                    |
+| `/dashboard/weekly`        | Calendar & Capacity      | The repeating week that generates calendar days                   |
+| `/dashboard/appointments`  | Bookings                 | Searchable list                                                   |
+| `/dashboard/customers`     | Customers                | CRM                                                               |
+| `/dashboard/services`      | Growth                   | Service-menu content (descriptive, not priced/bookable)           |
+| `/dashboard/settings`      | Settings                 | Salon profile, email, policies                                    |
+| `/dashboard/reports`       | Reports (secondary)      | Revenue and utilisation                                           |
+| `/dashboard/assistant`     | AI Assistant (secondary) | Advisory insights queue                                           |
+| `/dashboard/notifications` | — (header bell)          | Not in sidebar                                                    |
+| `/dashboard/profile`       | — (account link)         | Not in sidebar                                                    |
 
 `/dashboard/approvals` and `/dashboard/requests` render nothing themselves — both are kept
 mounted purely as redirects (`/dashboard/inbox?tab=approvals` / `?tab=requests`) so old
@@ -181,14 +187,16 @@ BookingPage (/book/:serviceSlug)
   → on SLOT_TAKEN: refresh availability, keep the form, show a recoverable message
   → on other coded errors: map the code to human copy (never surface Postgres text)
 
-  → useInngestDispatch().send('appointment/booked', { appointmentId })
-      → POST https://inn.gs/e/<VITE_INNGEST_EVENT_KEY>       (write-only key)
-      → Inngest invokes the Supabase Edge Function, which:
-          • renders and SMTP-sends the confirmation or "held" email
-          • attaches the .ics invite
-          • rows into email_messages for delivery tracking
-          • schedules the 24h and 2h reminders
-          • notifies the owner if approval is required
+  → a Postgres trigger on `appointments` calls queue_email(), which writes
+    a row per message into `email_messages` (status 'queued'):
+          • the customer's confirmation, or the "held for approval" email
+          • the owner's "new booking" / "approval needed" notification
+          • the 24h and 2h reminders, scheduled ahead
+
+  → pg_cron runs drain_email_queue() every 5 minutes. It reads the shared
+    secret from Supabase Vault and POSTs to the send-emails Edge Function
+    via pg_net, which claims each row, renders it from _shared/templates.ts
+    and sends over SMTP, with retry and backoff recorded on the row.
 ```
 
 The browser never sends email, never signs a token, and never holds an SMTP or AI
@@ -210,14 +218,24 @@ credential. Everything requiring a secret happens in a Supabase Edge Function.
 
 ## 6b. AI boundary
 
-The assistant is **not** an LLM in an Edge Function — it's a deterministic,
-statistical TypeScript module, `src/lib/insights.ts`, computed client-side on page
-load from data `assistantService.ts` already fetched (conflicts, reschedule
-opportunities, drafted replies, messages, analytics, trends, repeat customers,
-cancellation risk). Nothing in that module talks to Supabase or mutates data. The
-`ai_recommendations` table and a `pending`-status recommendation queue exist in the
-generated types but nothing reads or writes them — an earlier design called for an
-Edge Function + queue; the shipped mechanism is simpler.
+Two separate things wear the word "assistant", and conflating them is how this
+section was wrong for a while.
+
+**The advisory modules** are a deterministic, statistical TypeScript module,
+`src/lib/insights.ts`, computed client-side on page load from data
+`assistantService.ts` already fetched (conflicts, reschedule opportunities, drafted
+replies, analytics, trends, repeat customers). Nothing in that module talks to
+Supabase or mutates data.
+
+**The chat assistant** is a real LLM. `supabase/functions/ai-assistant-chat` calls
+OpenRouter (`openai/gpt-5-nano`) with tool calling, invoked from
+`src/services/aiChatService.ts`. It runs under the caller's own Authorization header
+and the anon key, so every read it makes is governed by that caller's RLS: a non-owner
+gets a working chat that can read nothing.
+
+The `ai_recommendations` table and a `pending`-status recommendation queue exist in
+the generated types but nothing reads or writes them — an earlier design called for a
+queue; the shipped mechanism does not use one.
 
 The safety property is unchanged: the assistant has **no write access to
 `appointments`, `customers`, or `availability_*`**, and acting on anything it
@@ -240,10 +258,10 @@ artifacts are shipped. Full playbook + safety rules: **`docs/DEPLOYMENT.md`**.
 
 ## 8. Security posture
 
-- Only browser-safe keys ship: Supabase **anon** (RLS-guarded), ImageKit **public**,
-  Inngest **write-only event** key.
-- `service_role`, Inngest **signing** key, SMTP credentials, the AI provider key, and
-  the magic-link signing secret never touch the client. They are Supabase Edge Function
+- Only browser-safe keys ship: Supabase **anon** (RLS is the boundary), the ImageKit
+  URL endpoint, and the Sentry DSN.
+- `service_role`, SMTP credentials, the AI provider key, the Google Places key and the
+  two cron secrets never touch the client. They are Supabase Edge Function
   secrets (`supabase secrets set`).
 - There is no anonymous read policy on `appointments` or `customers`. Public writes go
   through `book_appointment()`, which validates server-side; the client's own checks

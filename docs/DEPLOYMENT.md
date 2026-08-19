@@ -22,7 +22,8 @@ leaks.
 
 ## 0. Before the first deploy
 
-- [ ] Both migrations applied (`0001_init.sql`, then `0002_salon.sql`).
+- [ ] All migrations applied, in filename order (`0001_init.sql` through `0039_*`).
+      `supabase db push --linked`.
 - [ ] `0027_payment_log.sql` pushed (`supabase db push --linked`) before or together with
       any build that reads `today_collected_pence` — otherwise the Today page's
       "Collected today" stat renders `£0.00` instead of a real figure until the
@@ -31,8 +32,16 @@ leaks.
 - [ ] Owner row inserted into `public.staff`.
 - [ ] `booking_settings` reviewed — lead time, horizon, daily cap, `approve_first_time`,
       `approval_window_h`, and the Google review URL.
-- [ ] Opening hours entered in `availability_rules`; known closures added.
-- [ ] Services entered with real durations, buffers and prices.
+- [ ] Opening hours published. `availability_rules` was dropped in
+      `0011_slots_are_the_model.sql`; hours now come from `weekly_template` applied
+      into `availability_slots`, with `day_decided` recording deliberate closures.
+- [ ] Business identity filled in (`booking_settings`): address line, phone,
+      Instagram, Google review URL. The public footer and the policy pages render
+      nothing where these are blank.
+- [ ] Services entered with real durations and buffers. **No prices**: the salon does
+      not quote a fixed price for a hair appointment, and `appointments.price_pence` is
+      a placeholder that defaults to 0 (see `0027_payment_log.sql`). What was actually
+      taken is logged per appointment in `payments`.
 - [ ] Edge Function secrets set (`supabase secrets set`): SMTP credentials,
       `MAGIC_LINK_SECRET`, AI provider key, service-role key.
 - [ ] **Sending domain authenticated — SPF, DKIM and DMARC.** This is not optional.
@@ -116,9 +125,9 @@ after upload). See `docs/ARCHITECTURE.md` §8 for the security posture.
   the EU region with PII scrubbing on. Only browser-safe DSN ships to the client.
 - **CodeRabbit only reviews pull requests.** Use branch → PR → merge; work pushed
   straight to the default branch is never reviewed.
-- **Supabase / ImageKit / Inngest keys shipped to the browser must be write-only or
-  RLS-guarded** (Supabase anon, ImageKit public, Inngest write-only event key). The
-  `service_role` key and Inngest signing key are server-only and never touch this
+- **Keys shipped to the browser must be RLS-guarded or otherwise public by design**
+  (the Supabase anon key, the ImageKit URL endpoint, the Sentry DSN). The
+  `service_role` key is server-only and never touches this
   static bundle.
 
 ## Transactional email — how it actually runs

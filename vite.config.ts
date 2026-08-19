@@ -162,8 +162,13 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           supabase: ['@supabase/supabase-js'],
-          motion: ['framer-motion'],
-          calendar: ['react-day-picker', 'date-fns'],
+          // `framer-motion` used to have a chunk here. Nothing in src/ ever
+          // imported it, so rollup emitted a 1,053-byte empty file and the
+          // package sat in the dependency tree collecting Dependabot PRs.
+          // `date-fns` is not listed either: no app code imports it directly,
+          // it arrives transitively through react-day-picker, so naming it
+          // here only split a dependency of the chunk it already belongs to.
+          calendar: ['react-day-picker'],
         },
       },
     },

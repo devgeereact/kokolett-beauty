@@ -40,14 +40,11 @@ export function Pagination({
     cn(
       'inline-flex h-11 min-w-11 items-center justify-center rounded-md px-2 text-sm font-medium md:h-8 md:min-w-8',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-      active
-        ? 'bg-primary text-primary-foreground'
-        : 'text-foreground hover:bg-muted',
+      active ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted',
     );
 
   return (
     <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
-
       <p className="text-sm text-muted-foreground">
         Showing {start} to {end} of {totalItems} {itemLabel}
       </p>
@@ -57,7 +54,10 @@ export function Pagination({
           aria-label="Previous page"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className={cn(buttonClass(false), 'disabled:pointer-events-none disabled:opacity-40')}
+          className={cn(
+            buttonClass(false),
+            'disabled:pointer-events-none disabled:opacity-40',
+          )}
         >
           ‹
         </button>
@@ -83,7 +83,10 @@ export function Pagination({
           aria-label="Next page"
           disabled={page >= pageCount}
           onClick={() => onPageChange(page + 1)}
-          className={cn(buttonClass(false), 'disabled:pointer-events-none disabled:opacity-40')}
+          className={cn(
+            buttonClass(false),
+            'disabled:pointer-events-none disabled:opacity-40',
+          )}
         >
           ›
         </button>

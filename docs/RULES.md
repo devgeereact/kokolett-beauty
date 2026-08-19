@@ -5,8 +5,12 @@ do not merge.
 
 ## 1. Architecture
 
-- **Static-first.** All code runs client-side or hits a managed API. No Node
-  server, no SSR, no serverless functions inside this repo.
+- **Static-first.** The shipped artefact is `dist/`, served as files. No Node
+  server, no SSR, nothing that needs a runtime on the web host.
+- **Server logic lives in `supabase/functions/`**, as Deno Edge Functions, plus
+  Postgres triggers and `pg_cron` jobs. There are seven functions. They are outside
+  the Vite build and outside `npm run typecheck`, so they are checked separately with
+  `deno check` (CI does this).
 - **Respect the folder map** in `docs/ARCHITECTURE.md`. No new top-level folders
   without updating that doc first.
 - **No import cycles.** Direction is `pages → services → lib`; components use
@@ -29,9 +33,12 @@ do not merge.
 
 ## 4. Styling
 
-- Tailwind / NativeWind utilities **only**. Tokens from `tailwind.config.ts`.
-- **No** inline `style={{}}`, no `.css`/`.module.css`, no CSS-in-JS.
-- Mobile-first: base styles, then `sm:` / `md:` / `lg:` overrides.
+- Tailwind utilities **only**. Tokens from `tailwind.config.ts` and `src/index.css`.
+- **No** `.module.css`, no CSS-in-JS. `style={{}}` only for genuinely dynamic geometry
+  (a chart bar's height, a calendar block's offset).
+- Mobile-first: base styles, then `md:` / `lg:` / `wide:` overrides. **There is no
+  `sm:`, `xl:` or `2xl:`** — `tailwind.config.ts` declares exactly four ranges and
+  removes the rest, so those prefixes emit nothing at all.
 - Compose conditional classes with `cn()` (never string-concatenate classes).
 
 ## 5. Data & security
@@ -40,7 +47,7 @@ do not merge.
   don't build raw queries inline.
 - Assume RLS is the last line of defense — still scope every query to the user.
 - Never ship a secret. Browser-exposed keys must be write-only or RLS-guarded.
-  The `service_role` key and Inngest signing key are server-only.
+  The `service_role` key is server-only.
 
 ## 6. Errors & logging
 

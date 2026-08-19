@@ -9,10 +9,14 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
-import { listEmailMessages } from '@/services/emailService';
+import {
+  listEmailMessages,
+  previewEmailMessage,
+  type EmailPreview,
+} from '@/services/emailService';
 import { downloadCsv } from '@/lib/csv';
 import { formatDateTime } from '@/lib/format';
-import { templateLabel } from '@/lib/emailTemplates';
+import { templateLabel } from '@/lib/templateCatalog';
 import { routes } from '@/lib/routes';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { cn } from '@/lib/utils';
@@ -42,6 +46,9 @@ export function EmailPage(): JSX.Element {
   const [lane, setLane] = useState<Lane>('all');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<EmailPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const load = useCallback((): void => {
     setError(null);
@@ -56,7 +63,14 @@ export function EmailPage(): JSX.Element {
   useEffect(load, [load]);
 
   const counts = useMemo(() => {
-    const c: Record<Lane, number> = { all: 0, queued: 0, sending: 0, sent: 0, failed: 0, bounced: 0 };
+    const c: Record<Lane, number> = {
+      all: 0,
+      queued: 0,
+      sending: 0,
+      sent: 0,
+      failed: 0,
+      bounced: 0,
+    };
     for (const m of messages ?? []) {
       c.all += 1;
       c[m.status] += 1;
@@ -79,8 +93,42 @@ export function EmailPage(): JSX.Element {
 
   const selected = filtered.find((m) => m.id === selectedId) ?? filtered[0] ?? null;
 
+  useEffect(() => {
+    if (!selected) {
+      setPreview(null);
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    previewEmailMessage(selected.id)
+      .then((p) => {
+        if (!cancelled) setPreview(p);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setPreviewError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Re-fetch only when the selected message changes, not on every re-render `selected` is recomputed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
   const exportCsv = (): void => {
-    const header = ['To', 'Subject', 'Template', 'Status', 'Created', 'Sent', 'Attempts', 'Last error'];
+    const header = [
+      'To',
+      'Subject',
+      'Template',
+      'Status',
+      'Created',
+      'Sent',
+      'Attempts',
+      'Last error',
+    ];
     const rows = filtered.map((m) => [
       m.to_email,
       m.subject,
@@ -91,7 +139,10 @@ export function EmailPage(): JSX.Element {
       String(m.attempts),
       m.last_error ?? '',
     ]);
-    downloadCsv(`email-outbox-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+    downloadCsv(`email-outbox-${new Date().toISOString().slice(0, 10)}.csv`, [
+      header,
+      ...rows,
+    ]);
   };
 
   if (error) {
@@ -130,7 +181,9 @@ export function EmailPage(): JSX.Element {
                 onClick={() => setLane(l.key)}
                 className={cn(
                   'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
-                  lane === l.key ? 'bg-tint-brand text-primary' : 'text-foreground hover:bg-muted',
+                  lane === l.key
+                    ? 'bg-tint-brand text-primary'
+                    : 'text-foreground hover:bg-muted',
                 )}
               >
                 <span className="flex items-center gap-2">
@@ -176,7 +229,9 @@ export function EmailPage(): JSX.Element {
                     <Avatar name={m.to_email} size="sm" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm font-medium text-foreground">{m.to_email}</span>
+                        <span className="truncate text-sm font-medium text-foreground">
+                          {m.to_email}
+                        </span>
                         <span className="shrink-0 text-xs text-muted-foreground">
                           {formatDateTime(m.sent_at ?? m.created_at, timezone)}
                         </span>
@@ -184,7 +239,9 @@ export function EmailPage(): JSX.Element {
                       <p className="truncate text-sm text-foreground">{m.subject}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <EmailStatusBadge status={m.status} />
-                        <span className="truncate text-xs text-muted-foreground">{templateLabel(m.template)}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {templateLabel(m.template)}
+                        </span>
                       </div>
                     </div>
                   </button>
@@ -211,7 +268,11 @@ export function EmailPage(): JSX.Element {
                       className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                     >
                       View customer
-                      <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                      <ArrowRight
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5"
+                        strokeWidth={2}
+                      />
                     </Link>
                   )}
                   <EmailStatusBadge status={selected.status} />
@@ -222,17 +283,23 @@ export function EmailPage(): JSX.Element {
                 <dt className="text-muted-foreground">Template</dt>
                 <dd className="text-foreground">{templateLabel(selected.template)}</dd>
                 <dt className="text-muted-foreground">Created</dt>
-                <dd className="text-foreground">{formatDateTime(selected.created_at, timezone)}</dd>
+                <dd className="text-foreground">
+                  {formatDateTime(selected.created_at, timezone)}
+                </dd>
                 {selected.scheduled_for && (
                   <>
                     <dt className="text-muted-foreground">Scheduled for</dt>
-                    <dd className="text-foreground">{formatDateTime(selected.scheduled_for, timezone)}</dd>
+                    <dd className="text-foreground">
+                      {formatDateTime(selected.scheduled_for, timezone)}
+                    </dd>
                   </>
                 )}
                 {selected.sent_at && (
                   <>
                     <dt className="text-muted-foreground">Sent</dt>
-                    <dd className="text-foreground">{formatDateTime(selected.sent_at, timezone)}</dd>
+                    <dd className="text-foreground">
+                      {formatDateTime(selected.sent_at, timezone)}
+                    </dd>
                   </>
                 )}
                 <dt className="text-muted-foreground">Attempts</dt>
@@ -246,33 +313,43 @@ export function EmailPage(): JSX.Element {
                 </div>
               )}
 
-              {selected.payload && Object.keys(selected.payload as object).length > 0 && (
-                <div className="mt-4 border-t border-border pt-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Message data
+              <div className="mt-4 border-t border-border pt-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Message
+                </p>
+                {previewLoading ? (
+                  <p className="text-sm text-muted-foreground">Rendering…</p>
+                ) : previewError ? (
+                  <p className="text-sm text-status-no-show">{previewError}</p>
+                ) : preview && preview.available ? (
+                  <iframe
+                    title="Email preview"
+                    srcDoc={preview.html}
+                    sandbox=""
+                    className="h-[480px] w-full rounded-lg border border-border bg-card"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {preview?.reason ??
+                      'This message was sent before the outbox started keeping its contents, so there is nothing left to render.'}
                   </p>
-                  <dl className="space-y-1.5 text-sm">
-                    {Object.entries(selected.payload as Record<string, unknown>)
-                      .filter(([, v]) => v !== null && v !== undefined && v !== '')
-                      .map(([key, value]) => (
-                        <div key={key} className="flex justify-between gap-3">
-                          <dt className="shrink-0 text-muted-foreground">{key.replace(/_/g, ' ')}</dt>
-                          <dd className="truncate text-right text-foreground">{String(value)}</dd>
-                        </div>
-                      ))}
-                  </dl>
-                </div>
-              )}
+                )}
+              </div>
             </Card>
           ) : (
             <Card className="p-5">
-              <p className="text-sm text-muted-foreground">Select an email to see its details.</p>
+              <p className="text-sm text-muted-foreground">
+                Select an email to see its details.
+              </p>
             </Card>
           )}
         </div>
       )}
 
-      <AdvisorySection title="Email drafting" description="AI-drafted copy for a one-off message to a customer.">
+      <AdvisorySection
+        title="Email drafting"
+        description="AI-drafted copy for a one-off message to a customer."
+      >
         <EmailDraftingPanel timezone={timezone} />
       </AdvisorySection>
     </DashboardLayout>

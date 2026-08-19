@@ -74,7 +74,9 @@ export async function updateMenuItem(
       ...(patch.active !== undefined && { active: patch.active }),
       ...(patch.durationMin !== undefined && { duration_min: patch.durationMin }),
       ...(patch.bufferMin !== undefined && { buffer_min: patch.bufferMin }),
-      ...(patch.imagePath !== undefined && { image_path: patch.imagePath?.trim() || null }),
+      ...(patch.imagePath !== undefined && {
+        image_path: patch.imagePath?.trim() || null,
+      }),
     })
     .eq('id', id)
     .select('*')

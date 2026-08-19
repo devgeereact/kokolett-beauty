@@ -1,13 +1,30 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only:
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0039`,
+applied in filename order. **Never edit an applied migration**; correct it with a
+follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
+redid the fix properly.)
 
-| File                                 | Contents                                                            |
-| ------------------------------------ | ------------------------------------------------------------------- |
-| `supabase/migrations/0001_init.sql`  | `profiles`, `app_settings`, `set_updated_at()`, `handle_new_user()` |
-| `supabase/migrations/0002_salon.sql` | Everything below                                                    |
+`0001_init.sql` creates `profiles`, `app_settings`, `set_updated_at()` and
+`handle_new_user()`. `0002_salon.sql` creates the salon domain. Everything after that
+reshapes it, and some of it is load-bearing for reading the rest of this document:
 
-Never edit an applied migration. Add `0003_*.sql`.
+| Migration                                     | What it changed                                                                                                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `0011_slots_are_the_model.sql`                | **Dropped `availability_rules` and `availability_exceptions`.** Published availability is now explicit rows in `availability_slots`. The two sections below describing those tables are history. |
+| `0022_slots_and_mail_keep_their_promises.sql` | Rewrote `book_appointment()` to its current 6-argument form (no `p_service_id`) and fixed the BST slot-alignment bug.                                                                            |
+| `0027_payment_log.sql`                        | Added `payments`. `appointments.price_pence` is a placeholder that defaults to 0; money actually taken lives in `payments`.                                                                      |
+| `0032_email_templates.sql`                    | Added `email_templates`, the owner's editable overlay.                                                                                                                                           |
+| `0037_email_templates_opt_in.sql`             | Made that overlay opt-in, so a seeded draft cannot replace tested copy.                                                                                                                          |
+| `0038_close_privileged_grants.sql`            | Revoked `drain_email_queue()`, `sync_google_reviews()` and `booked_times_on()` from every client role; dropped the public read on `google_place_snapshot`.                                       |
+| `0039_book_appointment_input_rules.sql`       | Email validation, length ceilings and a per-address rate limit on the public booking path.                                                                                                       |
+
+**This document is behind the migrations.** It describes twelve tables; twenty-four
+exist. Undocumented, all created after `0002`: `availability_slots`, `weekly_template`,
+`day_decided`, `service_menu`, `payments`, `email_templates`, `google_reviews`,
+`google_place_snapshot`, `calendar_feeds`, `subscribers`. Read
+`supabase/migrations/` for those, and treat the sections below as accurate only where
+they agree with it.
 
 ---
 
@@ -188,7 +205,7 @@ working links. `purpose` ∈ `manage` | `booking_offer`. Single use (`used_at`),
 Delivery log and retry queue: `template`, `to_email`, `subject`, optional
 `appointment_id` / `customer_id`, `status` (`queued`/`sending`/`sent`/`failed`/
 `bounced`), `attempts`, `last_error`, `provider_id`, `scheduled_for`, `sent_at`.
-Indexed on `(status, scheduled_for)` so the Inngest worker can claim due rows cheaply.
+Indexed on `(status, scheduled_for)` so the scheduled `drain_email_queue()` job (pg_cron + pg_net) can claim due rows cheaply.
 
 ### `ai_recommendations`
 
@@ -255,11 +272,11 @@ select id, 'owner' from public.profiles where email = 'owner@example.com';
 
 ## 7. Scheduled jobs (`pg_cron`)
 
-| Schedule     | Job                                                                  |
-| ------------ | -------------------------------------------------------------------- |
-| hourly       | `select public.expire_pending_approvals();`                          |
-| every 15 min | drain due `email_messages` (via the Inngest endpoint)                |
-| daily 06:00  | `ai/daily-insights` — utilisation, waitlist matches, demand patterns |
+| Schedule    | Job                                                                  |
+| ----------- | -------------------------------------------------------------------- |
+| hourly      | `select public.expire_pending_approvals();`                          |
+| every 5 min | drain due `email_messages` (`pg_cron` calls `drain_email_queue()`)   |
+| daily 06:00 | `ai/daily-insights` — utilisation, waitlist matches, demand patterns |
 
 ## 8. Migration `0003_owner_ops.sql`
 

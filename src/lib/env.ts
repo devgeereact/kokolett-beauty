@@ -1,32 +1,52 @@
 /**
  * Central, validated access to environment variables.
  * Nothing else in the app should read `import.meta.env` directly.
+ *
+ * Every lookup below is a STATIC `import.meta.env.VITE_*` member expression,
+ * never a dynamic `import.meta.env[key]`. Vite replaces static members at
+ * build time and drops the rest; a dynamic key forces it to inline the whole
+ * env object instead, which shipped every `VITE_*` value — including ones the
+ * app never reads — into the public bundle.
  */
 
 interface AppEnv {
-  appName: string;
   appUrl: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
   imagekitUrlEndpoint: string;
-  imagekitPublicKey: string;
   sentryDsn: string;
-  inngestEventKey: string;
   isProd: boolean;
   mode: string;
 }
 
-function read(key: keyof ImportMetaEnv, fallback = ''): string {
-  // vite/client augments ImportMetaEnv with an `any` index signature,
-  // so funnel the lookup through `unknown` and narrow it safely.
-  const value: unknown = import.meta.env[key];
-  return typeof value === 'string' && value.length > 0 ? value : fallback;
+/** Empty string for anything unset, so callers can test truthiness. */
+function value(raw: string | undefined, fallback = ''): string {
+  return typeof raw === 'string' && raw.length > 0 ? raw : fallback;
 }
 
-/** Warn loudly (once) in dev if a critical key is missing. */
-function requireKeys(keys: (keyof ImportMetaEnv)[]): void {
-  if (import.meta.env.PROD) return;
-  const missing = keys.filter((k) => read(k).length === 0);
+export const env: AppEnv = {
+  appUrl: value(import.meta.env.VITE_APP_URL),
+  supabaseUrl: value(import.meta.env.VITE_SUPABASE_URL),
+  supabaseAnonKey: value(import.meta.env.VITE_SUPABASE_ANON_KEY),
+  imagekitUrlEndpoint: value(import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT),
+  sentryDsn: value(import.meta.env.VITE_SENTRY_DSN),
+  isProd: import.meta.env.PROD,
+  mode: import.meta.env.MODE,
+};
+
+/* Warn loudly (once, in dev only) if a credential the app cannot work without
+   is missing. Production must not log this: the message would name the
+   variables to anyone reading the console. */
+if (!import.meta.env.PROD) {
+  const missing = (
+    [
+      ['VITE_SUPABASE_URL', env.supabaseUrl],
+      ['VITE_SUPABASE_ANON_KEY', env.supabaseAnonKey],
+    ] as const
+  )
+    .filter(([, v]) => v.length === 0)
+    .map(([k]) => k);
+
   if (missing.length > 0) {
     console.warn(
       `[env] Missing env vars: ${missing.join(', ')}. ` +
@@ -34,18 +54,3 @@ function requireKeys(keys: (keyof ImportMetaEnv)[]): void {
     );
   }
 }
-
-requireKeys(['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY']);
-
-export const env: AppEnv = {
-  appName: read('VITE_APP_NAME', 'Kokolett Beauty UK'),
-  appUrl: read('VITE_APP_URL'),
-  supabaseUrl: read('VITE_SUPABASE_URL'),
-  supabaseAnonKey: read('VITE_SUPABASE_ANON_KEY'),
-  imagekitUrlEndpoint: read('VITE_IMAGEKIT_URL_ENDPOINT'),
-  imagekitPublicKey: read('VITE_IMAGEKIT_PUBLIC_KEY'),
-  sentryDsn: read('VITE_SENTRY_DSN'),
-  inngestEventKey: read('VITE_INNGEST_EVENT_KEY'),
-  isProd: import.meta.env.PROD,
-  mode: import.meta.env.MODE,
-};

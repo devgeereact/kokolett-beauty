@@ -10,7 +10,7 @@ and closed the remaining gaps rather than building from scratch.
 **Shell divergence, not fixed (per `build-loop.md`: shell already shipped).**
 The reference's sidebar (flat list, dark charcoal, profile card, salon footer
 card, theme toggle) and top bar (contextual search placeholder, no Refresh
-button, notification badge) reflect the *old* pre-rebuild mockup. The shipped
+button, notification badge) reflect the _old_ pre-rebuild mockup. The shipped
 `DashboardLayout` (grouped nav sections, global ⌘K command palette with a
 fixed "Search anything…" placeholder, Refresh button, bell badge wired only
 on Today) is deliberately different and consistent across every already-built
@@ -23,6 +23,7 @@ banner, demo-data notice, card list + detail panel, policy footer + "need a
 different time" card all present and reading correctly.
 
 Real gaps found (page content, not shell):
+
 - `ApprovalCard` was missing the "Requested {date}" line the reference shows
   as a 4th line under the customer's phone number.
 - The date/time block had no calendar/clock icons — reference pairs each
@@ -37,7 +38,7 @@ Real gaps found (page content, not shell):
 ## Iteration 2 — fixed the three gaps above
 
 - `ApprovalCard.tsx`: added `Requested {formatDateTime(row.created_at,
-  timezone)}` (reusing the exact helper + phrasing already used by
+timezone)}` (reusing the exact helper + phrasing already used by
   `ApprovalDetailPanel` and `RequestDetailPanel`'s own "Requested:" lines —
   not the reference's literal "22 May 2025 at 09:40" wording, which isn't
   this app's date format anywhere else). Added `Calendar`/`Clock` icons
@@ -107,6 +108,7 @@ Converged after 4 iterations. Nothing left that's fixable from code:
   in this loop already carries the new shell — not re-litigated per-screen.
 
 Inferred/deliberate values (not read directly off the reference):
+
 - "Requested {date}" line reuses the app's existing `formatDateTime` output
   and phrasing (already used twice elsewhere) instead of the reference's
   one-off "22 May 2025 at 09:40" format.

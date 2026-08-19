@@ -16,9 +16,10 @@ internally past the viewport — confirmed `Filters` card renders correctly, jus
 below the fold at this data state).
 
 Diffs found and fixed:
+
 1. **Active view tab (Week) used a neutral white/shadow pill** (`CalendarShell.tsx`)
    instead of ref's tinted-orange active state. Changed to `bg-tint-primary
-   text-primary`.
+text-primary`.
 2. **Name + status badge wrapped onto two lines** in `AppointmentDetailPanel.tsx`
    instead of sitting on one row with the name truncating — the `<p>` lacked
    `min-w-0 flex-1` inside its `flex justify-between` row, so the browser refused
@@ -30,6 +31,7 @@ Diffs found and fixed:
    made the header visible in `WeekView.tsx`.
 
 Diffs found and deliberately left alone (log only):
+
 - **Today/prev/next duplicated in ref's page header row**, absent from this app's
   header (`DashboardLayout`'s `actions` slot only holds "New booking"). Already a
   documented decision in `CalendarPage.tsx`: "the header row above only starts a
@@ -91,8 +93,7 @@ only consumer was this page. Kept `AdvisorySection` (the wrapper) and
 `assistantService`'s `getScheduleConflicts`/`suggestOpenSlots` — both used
 elsewhere (`AssistantPage.tsx` and other dashboard pages).
 
-Verified: `document.documentElement.scrollHeight === window.innerHeight` (1024 =
-1024) at 1536×1024 — the page now fits one screen exactly, no scroll, matching
+Verified: `document.documentElement.scrollHeight === window.innerHeight` (1024 = 1024) at 1536×1024 — the page now fits one screen exactly, no scroll, matching
 the reference's own single-screen layout. Screenshot: `calendar-4.png`. Build
 clean.
 

@@ -9,23 +9,23 @@ Verified 2026-08-14 against the shipped nav (`src/components/dashboard/Dashboard
 and `src/lib/routes.ts` — every reference image maps 1:1 to a nav row or sub-route, no
 ambiguity left.
 
-| `<SCREEN>` | `<REF>` | Target page | Route | state |
-|---|---|---|---|---|
-| dashboard | `docs/design/dashboard.png` | `TodayPage.tsx` | `/dashboard` | done — see `docs/design/.loop/dashboard-log.md` |
-| calendar | `docs/design/calendar.png` | `CalendarPage.tsx` | `/dashboard/calendar` | done — see `docs/design/.loop/calendar-log.md` |
-| appointments | `docs/design/appointment.png` | `AppointmentsPage.tsx` | `/dashboard/appointments` | done — see `docs/design/.loop/appointment-log.md` |
-| approvals | `docs/design/approval.png` | `InboxPage.tsx` (`tab=approvals`) | `/dashboard/inbox?tab=approvals` | done — see `docs/design/.loop/approval-log.md` |
-| availability-requests | `docs/design/availability-request.png` | `InboxPage.tsx` (`tab=requests`) | `/dashboard/inbox?tab=requests` | done — see `docs/design/.loop/availability-request-log.md` |
-| customers | `docs/design/customer.png` | `CustomersPage.tsx` | `/dashboard/customers` | done (card grid, not list — owner request) — see `docs/design/.loop/customer-log.md` |
-| services | `docs/design/service.png` | `ServiceMenuPage.tsx` | `/dashboard/services` | done (cards, already built that way — owner confirmed) — see `docs/design/.loop/service-log.md` |
-| availability | `docs/design/avalability.png` | `WeeklyDefaultPage.tsx` | `/dashboard/weekly` | done — see `docs/design/.loop/availability-log.md` |
-| reports | `docs/design/reports.png` | `ReportsPage.tsx` | `/dashboard/reports` | done — see `docs/design/.loop/reports-log.md` |
-| assistant | `docs/design/ai.png` | `AssistantPage.tsx` | `/dashboard/assistant` — advisory only, no business-data mutation | done — see `docs/design/.loop/assistant-log.md` |
-| notifications | `docs/design/notification.png` | `NotificationsPage.tsx` | `/dashboard/notifications` | done — see `docs/design/.loop/notification-log.md` |
-| email | `docs/design/email.png` | `EmailPage.tsx` | `/dashboard/email` | done — see `docs/design/.loop/email-log.md` |
-| templates | `docs/design/templetes.png` | `TemplatesPage.tsx` | `/dashboard/templates` | done — see `docs/design/.loop/templates-log.md` |
-| template editor | `docs/design/Email-Template-Editor.png` | `TemplateEditorPage.tsx` | `/dashboard/templates/:key/edit` | done — see `docs/design/.loop/templates-log.md` |
-| settings | `docs/design/settings.png` | `SettingsPage.tsx` | `/dashboard/settings` | done — see `docs/design/.loop/settings-log.md` |
+| `<SCREEN>`            | `<REF>`                                 | Target page                       | Route                                                             | state                                                                                           |
+| --------------------- | --------------------------------------- | --------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| dashboard             | `docs/design/dashboard.png`             | `TodayPage.tsx`                   | `/dashboard`                                                      | done — see `docs/design/.loop/dashboard-log.md`                                                 |
+| calendar              | `docs/design/calendar.png`              | `CalendarPage.tsx`                | `/dashboard/calendar`                                             | done — see `docs/design/.loop/calendar-log.md`                                                  |
+| appointments          | `docs/design/appointment.png`           | `AppointmentsPage.tsx`            | `/dashboard/appointments`                                         | done — see `docs/design/.loop/appointment-log.md`                                               |
+| approvals             | `docs/design/approval.png`              | `InboxPage.tsx` (`tab=approvals`) | `/dashboard/inbox?tab=approvals`                                  | done — see `docs/design/.loop/approval-log.md`                                                  |
+| availability-requests | `docs/design/availability-request.png`  | `InboxPage.tsx` (`tab=requests`)  | `/dashboard/inbox?tab=requests`                                   | done — see `docs/design/.loop/availability-request-log.md`                                      |
+| customers             | `docs/design/customer.png`              | `CustomersPage.tsx`               | `/dashboard/customers`                                            | done (card grid, not list — owner request) — see `docs/design/.loop/customer-log.md`            |
+| services              | `docs/design/service.png`               | `ServiceMenuPage.tsx`             | `/dashboard/services`                                             | done (cards, already built that way — owner confirmed) — see `docs/design/.loop/service-log.md` |
+| availability          | `docs/design/avalability.png`           | `WeeklyDefaultPage.tsx`           | `/dashboard/weekly`                                               | done — see `docs/design/.loop/availability-log.md`                                              |
+| reports               | `docs/design/reports.png`               | `ReportsPage.tsx`                 | `/dashboard/reports`                                              | done — see `docs/design/.loop/reports-log.md`                                                   |
+| assistant             | `docs/design/ai.png`                    | `AssistantPage.tsx`               | `/dashboard/assistant` — advisory only, no business-data mutation | done — see `docs/design/.loop/assistant-log.md`                                                 |
+| notifications         | `docs/design/notification.png`          | `NotificationsPage.tsx`           | `/dashboard/notifications`                                        | done — see `docs/design/.loop/notification-log.md`                                              |
+| email                 | `docs/design/email.png`                 | `EmailPage.tsx`                   | `/dashboard/email`                                                | done — see `docs/design/.loop/email-log.md`                                                     |
+| templates             | `docs/design/templetes.png`             | `TemplatesPage.tsx`               | `/dashboard/templates`                                            | done — see `docs/design/.loop/templates-log.md`                                                 |
+| template editor       | `docs/design/Email-Template-Editor.png` | `TemplateEditorPage.tsx`          | `/dashboard/templates/:key/edit`                                  | done — see `docs/design/.loop/templates-log.md`                                                 |
+| settings              | `docs/design/settings.png`              | `SettingsPage.tsx`                | `/dashboard/settings`                                             | done — see `docs/design/.loop/settings-log.md`                                                  |
 
 `AppointmentTypePage.tsx` (service length and price) has no reference image
 and no direct nav row by design (reached only via `CalendarCapacityTabs`'s
@@ -121,6 +121,7 @@ across cards, badges, and calendar cells.
 
 Do not consider a screen done after the first pass in one theme/breakpoint combination.
 Once Steps 1–6 converge, repeat the whole verification pass for:
+
 - Light theme and dark theme
 - Mobile breakpoint (used stall-side during the day) and desktop breakpoint (used at
   close-out) — check real breakpoints, not just a squeezed browser window

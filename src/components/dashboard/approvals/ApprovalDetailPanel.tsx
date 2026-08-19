@@ -1,4 +1,12 @@
-import { Calendar, Clock, History, Mail, MessageSquareQuote, Phone, Scissors } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  History,
+  Mail,
+  MessageSquareQuote,
+  Phone,
+  Scissors,
+} from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -75,7 +83,11 @@ export function ApprovalDetailPanel({
                 </p>
                 {row.customer_mobile && (
                   <p className="flex items-center gap-2">
-                    <Phone aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
+                    <Phone
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0"
+                      strokeWidth={2}
+                    />
                     <a
                       href={`tel:${row.customer_mobile.replace(/\s/g, '')}`}
                       className="truncate text-foreground hover:underline hover:underline-offset-4"
@@ -100,19 +112,36 @@ export function ApprovalDetailPanel({
             </p>
             <div className="space-y-1.5 text-sm text-foreground">
               <p className="flex items-center gap-2">
-                <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+                <Calendar
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  strokeWidth={2}
+                />
                 {formatDateLong(row.starts_at, timezone)}
               </p>
               <p className="flex items-center gap-2">
-                <Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-                {formatTime(row.starts_at, timezone)} – {formatTime(row.ends_at, timezone)}
+                <Clock
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  strokeWidth={2}
+                />
+                {formatTime(row.starts_at, timezone)} –{' '}
+                {formatTime(row.ends_at, timezone)}
               </p>
               <p className="flex items-center gap-2">
-                <Scissors aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+                <Scissors
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  strokeWidth={2}
+                />
                 {row.service_name} ({formatDuration(row.service_duration_min ?? 0)})
               </p>
               <p className="flex items-center gap-2 text-muted-foreground">
-                <MessageSquareQuote aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <MessageSquareQuote
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0"
+                  strokeWidth={2}
+                />
                 Requested: {formatDateTime(row.created_at, timezone)}
               </p>
             </div>
@@ -134,7 +163,11 @@ export function ApprovalDetailPanel({
               Customer history
             </p>
             <p className="flex items-center gap-2 text-sm text-foreground">
-              <History aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <History
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                strokeWidth={2}
+              />
               {(row.customer_completed_count ?? 0) === 0
                 ? 'First booking'
                 : `${row.customer_completed_count} completed booking${row.customer_completed_count === 1 ? '' : 's'}`}

@@ -15,8 +15,18 @@ export function ApprovalStats({
   approvedPercent: number | null;
   thisWeekCount: number;
 }): JSX.Element {
-  const tiles: { icon: typeof CalendarClock; value: string; label: string; tone: Tone }[] = [
-    { icon: CalendarClock, value: String(pendingCount), label: 'Pending approval', tone: 'pending' },
+  const tiles: {
+    icon: typeof CalendarClock;
+    value: string;
+    label: string;
+    tone: Tone;
+  }[] = [
+    {
+      icon: CalendarClock,
+      value: String(pendingCount),
+      label: 'Pending approval',
+      tone: 'pending',
+    },
     {
       icon: Hourglass,
       value: avgWaitMinutes === null ? '—' : formatDuration(avgWaitMinutes),

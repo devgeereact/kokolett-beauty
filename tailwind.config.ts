@@ -5,8 +5,8 @@ import plugin from 'tailwindcss/plugin';
  * Kokolett Beauty UK — Tailwind configuration.
  *
  * Values live in src/index.css as CSS custom properties; this file only maps
- * them to utilities. Rules are documented in docs/DESIGN.md, sourced from
- * design-token/DESIGN.md — do not edit that folder; it is the reference.
+ * them to utilities. Rules are documented in docs/DESIGN.md, which is the
+ * reference — src/index.css holds the values, docs/DESIGN.md explains them.
  *
  * `colors`, `screens`, `fontSize`, `borderRadius`, `boxShadow` and `zIndex`
  * are declared at THEME level, not inside `extend`. That is deliberate:
@@ -21,10 +21,10 @@ import plugin from 'tailwindcss/plugin';
  */
 
 /** Colour tokens carry an alpha slot so `bg-primary/50` works. See DESIGN.md §2. */
-const rgb = (token: string) => `rgb(var(${token}) / <alpha-value>)`;
+const rgb = (token: string): string => `rgb(var(${token}) / <alpha-value>)`;
 
 /** Tints are pre-mixed color-mix() values and cannot take an alpha modifier. */
-const raw = (token: string) => `var(${token})`;
+const raw = (token: string): string => `var(${token})`;
 
 const config: Config = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -143,6 +143,19 @@ const config: Config = {
      * is enforced rather than hoped for. Nothing below 14px is legal for
      * customer-facing booking copy; `text-xs` is metadata only. */
     fontSize: {
+      /**
+       * Dense dashboard chrome only: the hour labels down a calendar axis,
+       * the day number in a month cell, a chart's tick marks. Never body
+       * copy, never anything a customer reads, never the only place a piece
+       * of information appears.
+       *
+       * It exists because eighteen `text-[9px]`/`text-[10px]`/`text-[11px]`
+       * arbitrary values had already accumulated across the calendar views
+       * in defiance of the 14px floor below. A rule nobody can follow is not
+       * a rule; one legal step for the case that actually needed it keeps the
+       * scale closed and makes the exception visible in review.
+       */
+      '2xs': ['0.6875rem', { lineHeight: '0.875rem' }],
       xs: ['0.75rem', { lineHeight: '1rem' }],
       sm: ['0.875rem', { lineHeight: '1.25rem' }],
       base: ['1rem', { lineHeight: '1.6' }],
@@ -268,10 +281,19 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'clock-blink': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.25' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 150ms ease-out both',
         'fade-up': 'fade-up 300ms cubic-bezier(0, 0, 0.2, 1) both',
+        /* The Today dashboard's live clock — a seconds-per-beat colon, the
+           one ambient motion touch on an otherwise-static page. Covered by
+           index.css's global prefers-reduced-motion rule like every other
+           animation utility, no per-component opt-out needed. */
+        'clock-blink': 'clock-blink 2s ease-in-out infinite',
       },
     },
   },
@@ -283,8 +305,8 @@ const config: Config = {
   },
 
   plugins: [
-    plugin(({ addUtilities, addComponents }) => {
-      addUtilities({
+    plugin((api) => {
+      api.addUtilities({
         /* One backdrop for every overlay, rather than each surface choosing
            its own darkness. */
         '.overlay-backdrop': {
@@ -292,7 +314,7 @@ const config: Config = {
         },
       });
 
-      addComponents({
+      api.addComponents({
         /* The documented grid, as one class instead of a re-derived wrapper. */
         '.layout-grid': {
           display: 'grid',

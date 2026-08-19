@@ -1,23 +1,67 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/icons/favicon-32.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#e05d38" />
-    <meta name="description" content="Salon booking and operations for Kokolett Beauty UK — passwordless for customers, one dashboard for the owner." />
+    <!--
+      Customer-facing, because this is the sentence Google prints under the
+      result. It used to describe the software ("passwordless for customers,
+      one dashboard for the owner") — accurate for a developer, meaningless to
+      somebody looking for a hairdresser.
+    -->
+    <meta
+      name="description"
+      content="Kokolett Beauty UK is a women's hair salon in South East London. Braids, locs, weaves, natural hair, colour, cutting and treatments, by appointment."
+    />
+    <link rel="canonical" href="https://www.kokolettbeauty.com/" />
 
     <!-- iOS PWA support -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="/icons/pwa-192.png" />
 
-    <!-- Preconnect for the Google Fonts request src/index.css makes via
-         @import (Inter, Source Serif 4, JetBrains Mono) -->
+    <!--
+      Open Graph and Twitter cards. Without these, every share of the salon's
+      link on WhatsApp, Instagram or Facebook renders as a bare URL with no
+      title, no description and no image. The retired holding page had them;
+      they were lost when the real app replaced it.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kokolett Beauty UK" />
+    <meta property="og:title" content="Kokolett Beauty UK — women's hair salon" />
+    <meta
+      property="og:description"
+      content="Braids, locs, weaves, natural hair, colour, cutting and treatments. Book a real, free time online — no account, no password."
+    />
+    <meta property="og:url" content="https://www.kokolettbeauty.com/" />
+    <meta property="og:image" content="https://www.kokolettbeauty.com/icons/pwa-512.png" />
+    <meta property="og:locale" content="en_GB" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Kokolett Beauty UK — women's hair salon" />
+    <meta
+      name="twitter:description"
+      content="Braids, locs, weaves, natural hair, colour, cutting and treatments. Book a real, free time online — no account, no password."
+    />
+    <meta name="twitter:image" content="https://www.kokolettbeauty.com/icons/pwa-512.png" />
+
+    <!--
+      Fonts (Inter, Source Serif 4, JetBrains Mono).
+
+      Requested here rather than through an `@import` at the top of
+      src/index.css. An `@import` cannot begin until the stylesheet containing
+      it has itself downloaded and parsed, so the fonts sat at the end of a
+      serial chain on every cold load. A `<link>` in the head starts as soon as
+      the HTML is parsed, and the preload ahead of it raises the priority of a
+      request the browser would otherwise treat as low.
+    -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Source+Serif+4:wght@400;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Source+Serif+4:wght@400;600&display=swap" />
 
-    <title>Kokolett Beauty UK</title>
+    <title>Kokolett Beauty UK — women's hair salon in South East London</title>
     <!--
       Paint the right theme before the first frame.
 

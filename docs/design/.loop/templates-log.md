@@ -22,16 +22,16 @@ sending/Include in automation) all wired to real columns. Verified Save
 live — "Template saved." toast, real persistence.
 
 This reconciles what first looked like a contradiction: the catalog
-(*which* templates exist) is fixed and hard-coded; each template's
-*content* (subject/body/settings) is a real, separately editable DB row.
+(_which_ templates exist) is fixed and hard-coded; each template's
+_content_ (subject/body/settings) is a real, separately editable DB row.
 Both facts are true at once, and the build already reflected that
 correctly.
 
 ## Iteration 1 — one real accuracy bug: the preview lied in dark mode
 
 The Preview pane used this app's own theme tokens (`bg-card`,
-`text-foreground`, `bg-tint-pending`, etc.), so switching the *dashboard*
-into dark mode also darkened the *email preview* — but the real email
+`text-foreground`, `bg-tint-pending`, etc.), so switching the _dashboard_
+into dark mode also darkened the _email preview_ — but the real email
 (`supabase/functions/_shared/templates.ts`) hardcodes its own colours with
 no dark-mode branch at all (`<meta name="color-scheme" content="light">`,
 literal hex throughout: `PAPER #e8ebed`, `INK #333333`, `MUTED #6b7280`,

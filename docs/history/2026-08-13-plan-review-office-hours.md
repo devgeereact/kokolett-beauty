@@ -70,28 +70,28 @@ Direct evidence, read from this repo, not inferred:
   1–2 — exist on disk, dated 2026-08-13, and are thorough (they cite
   file:line evidence for every claim).
 - `git log --oneline` shows Phase 1's core move already merged: `5012def
-  Restructure owner dashboard nav to 7-nav model, surface orphaned pages`
+Restructure owner dashboard nav to 7-nav model, surface orphaned pages`
   and `52a25dc Consolidate Approvals and Requests into a tabbed Inbox` —
   both committed **after** the baseline audit, which itself documents the
-  *old* 9-entry nav as the then-current state. The plan's own before/after
+  _old_ 9-entry nav as the then-current state. The plan's own before/after
   is visible in two consecutive git states in the same repo.
 - Reading `src/components/dashboard/DashboardLayout.tsx` right now confirms
   the live primary nav is exactly the plan's 7 items — Today, Inbox,
   Calendar & Capacity, Bookings, Customers, Growth, Settings — with Reports
   and AI Assistant kept reachable as secondary entries rather than hidden,
-  which is a *better* resolution of Phase 1 Step 7 ("temporarily remove or
+  which is a _better_ resolution of Phase 1 Step 7 ("temporarily remove or
   relabel dead-nav entries") than the plan itself proposed, because it turns
   out those aren't dead — they're real, working modules.
 - Phase 3's "missing production modules" (Reports, AI Assistant) are not
   missing. `85f199a Build the AI Assistant: 8 advisory modules, wired to
-  real data` and `3d8a11f Build the Reports page` both predate the Phase 0
-  baseline audit itself — they were built *before* the plan's own
+real data` and `3d8a11f Build the Reports page` both predate the Phase 0
+  baseline audit itself — they were built _before_ the plan's own
   dependency chain says Phase 3 is unlocked (`_depends on Phase 2_`, which
   depends on Phase 1, which depends on Phase 0).
 - Phase 2's cross-nav quick actions (Step 9) and blocking-dialog removal
   (Step 10) are also already shipped: `75b1dbf Add the cross-nav
-  quick-action launcher (Cmd+K)`, `8f3d71c Replace blocking
-  window.confirm/alert with ConfirmDialog/Toast in the owner dashboard`.
+quick-action launcher (Cmd+K)`, `8f3d71c Replace blocking
+window.confirm/alert with ConfirmDialog/Toast in the owner dashboard`.
 - The two specs cited for cross-reference (`2026-08-13-today-command-center…`
   and `2026-08-11-calendar-rebuild-design.md`) are exactly Phase 5's "2026
   design-system modernization" and part of Phase 1/2's workflow redesign —
@@ -137,7 +137,7 @@ remaining items (below) are worth keeping.
    not a matter of interpretation.
 4. `docs/RULES.md` already mandates `typecheck` + `lint` (zero warnings) +
    CodeRabbit review on every PR (§7, confirmed: `"strict": true`, `npm run
-   typecheck`/`lint` in `package.json`). Plan Step 24's "Quality gates
+typecheck`/`lint` in `package.json`). Plan Step 24's "Quality gates
    before each release wave: typecheck, lint, test suite, UAT sign-off" is
    substantially already standing practice, not a new phase to build.
    **Agree.**
@@ -176,9 +176,9 @@ everything from Phase 2 onward:
 > empty).**
 
 This is a classic "solution in search of validated demand" pattern in
-miniature: the plan is thorough and well-evidenced about *what exists in
-the code*, and almost entirely silent on *what the owner's actual day
-costs her right now*, which is the only number that would tell you whether
+miniature: the plan is thorough and well-evidenced about _what exists in
+the code_, and almost entirely silent on _what the owner's actual day
+costs her right now_, which is the only number that would tell you whether
 Phase 4–6's remaining ~15 steps are worth six more weeks versus, say, one
 week fixing the two concrete revenue-adjacent gaps the capability matrix
 already found (Growth's orphaned `AppointmentTypePage`/`WeeklyDefaultPage` —
@@ -200,7 +200,7 @@ covered by existing practice):
 - Step 22 — dedicated production ops dashboards/alerts for email queue
   health, realtime subscription health, error trends. Sentry is already the
   monitoring stack (`docs/ARCHITECTURE.md` topology diagram, `src/lib/
-  sentry.ts`). Building a second observability surface for one operator to
+sentry.ts`). Building a second observability surface for one operator to
   check is process theatre; extend Sentry alerting/dashboards instead of
   standing up a new module.
 - Step 24's four-wave phased release choreography (Wave A/B/C/D). There is
@@ -234,7 +234,7 @@ correctness bugs the audits already found, not process:
 scoped**: the spec-driven pattern demonstrated by the Today/payment-log spec
 and the Calendar rebuild spec. Don't replace this with the plan's phase
 structure — extend it. Phase 5 ("2026 design-system modernization") is
-*already happening*, one page at a time, through exactly this mechanism.
+_already happening_, one page at a time, through exactly this mechanism.
 
 ## Fastest Way To Validate The Phase 1 Nav Bet
 
@@ -261,13 +261,14 @@ question for one user who is reachable by walking over and asking.
 ## Approaches Considered
 
 ### Approach A: Follow `docs/plan.md` literally as written
+
 Continue Phases 4–6 exactly as scoped: contract-level RPC guards across all
 write paths, new ops-dashboard module, formal phased release waves A–D,
 structured UAT scripts, recurring capability-matrix audits.
 
 - Effort: XL (human: several weeks / CC: several days of agent time across
   many sessions)
-- Risk: Medium — not a correctness risk, a *process* risk: it slows the
+- Risk: Medium — not a correctness risk, a _process_ risk: it slows the
   demonstrably faster spec→plan→ship loop already working, and duplicates
   effort (a fresh capability matrix will be stale again within days, as
   this one already is for the nav).
@@ -277,6 +278,7 @@ structured UAT scripts, recurring capability-matrix audits.
   release waves with; several "missing module" premises are already false.
 
 ### Approach B: Cut hard, fold survivors into the existing spec-driven loop (recommended)
+
 Retire `docs/plan.md`'s phase-gate structure as a literal backlog. Pull the
 concrete, still-real items (reschedule split-brain bug, orphaned-page
 discoverability check, any genuinely missing Phase 4 guard) into the same
@@ -300,6 +302,7 @@ this team size needs.
   of a phased plan.
 
 ### Approach C: Split the plan into two tracks — "bug fixes" and "growth," drop "ops governance" entirely
+
 Same spirit as B, but explicit about the scope-imbalance premise (#5
 above): open a second, thin track for the PRD's under-served money-losers
 (booking-abandonment, empty-slot visibility) alongside the bug-fix track,
@@ -380,4 +383,4 @@ else in this document combined.
   `CAPABILITY-MATRIX.md`) are genuinely excellent work — file:line grounded,
   explicit about what wasn't checked ("Doubts / not fully verified"
   sections in both). That rigor is real and worth keeping; it's the
-  *phase-gated packaging* around it that doesn't fit a team of one.
+  _phase-gated packaging_ around it that doesn't fit a team of one.

@@ -13,6 +13,7 @@ insights row) — this loop is refinement, not a from-scratch build.
 Screenshot: `dashboard-1.png`.
 
 Diffs found vs ref:
+
 1. **"New booking" button had no leading `+` icon** — ref shows `+ New booking ⌄`.
    Fixed: added a `Plus` icon (`lucide-react`, `h-4 w-4`) before the label in
    `TodayPage.tsx`. Did **not** add the trailing chevron/dropdown — ref implies a
@@ -33,7 +34,7 @@ Diffs found vs ref:
    siblings and squeezed the title onto two lines"). Left as-is — reverting would
    undo an intentional consistency fix for a cosmetic ref mismatch.
 5. **Avatars are tinted silhouette placeholders, not photos.** Also documented and
-   intentional (`Avatar.tsx`: "No customer photo exists anywhere in the schema... 
+   intentional (`Avatar.tsx`: "No customer photo exists anywhere in the schema...
    without fabricating anyone's likeness"). Left as-is.
 6. **"Next up" card's client-notes callout (⭐ box) never renders** in the current
    demo data — the component (`NextUpCard.tsx`) already conditionally renders it
@@ -67,7 +68,7 @@ overview". Measured via `browse js` bounding rects rather than guessing:
   `lg:items-stretch`, forced to stretch across both grid rows (`lg:row-span-2`) to
   match the taller neighbouring column. `ScheduleTimeline` itself is deliberately
   fixed-height ("does not stretch to match a neighbouring card" — its own comment).
-  Stretching the *card* while the *timeline* refused to stretch left ~240px of blank
+  Stretching the _card_ while the _timeline_ refused to stretch left ~240px of blank
   space trailing after the "3 appointments / View full day" footer.
 - **Bookings overview**: same root cause. The chart's `flex-1 justify-center` wrapper
   was centering correctly (measured: 137px equal padding top and bottom) — not a bug

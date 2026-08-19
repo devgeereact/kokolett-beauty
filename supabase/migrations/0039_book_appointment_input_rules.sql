@@ -1,0 +1,201 @@
+-- =====================================================================
+-- 0039_book_appointment_input_rules.sql — validate and bound what the
+-- public booking form is allowed to put in the database.
+--
+-- `book_appointment()` is the one function anon can call that writes. It
+-- checked the name (two words) and the mobile (seven digits) and nothing
+-- else: no email format, no length ceilings, no rate limit. The comparison
+-- is `validate_availability_request()` (0021), which guards the *enquiry*
+-- form far more carefully than this guards real bookings.
+--
+-- Four additions, all before any write:
+--   * the email must look like an address, so a booking cannot mint a
+--     permanently-failing outbox row;
+--   * name and note have length ceilings;
+--   * the note has control characters stripped;
+--   * one address may make at most five bookings in 24 hours.
+--
+-- The name was already whitespace-collapsed, which is what kept CR and LF
+-- out of the email Subject header it is concatenated into. That is now
+-- stated rather than incidental, because the AI assistant reads these
+-- names back into a model context and a name is the one field a stranger
+-- can write freely.
+--
+-- Everything else is 0022's function unchanged, including the wall-clock
+-- slot alignment and the advisory-lock capacity check.
+-- =====================================================================
+
+create or replace function public.book_appointment(
+  p_starts_at  timestamptz,
+  p_full_name  text,
+  p_email      text,
+  p_mobile     text default null,
+  p_note       text default null,
+  p_consent    boolean default false
+)
+returns table (appointment_id uuid, reference text, status public.appointment_status)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_settings   public.booking_settings%rowtype;
+  v_service    public.services%rowtype;
+  v_local_date date;
+  v_local_time time;
+  -- Whitespace collapsed, which also removes CR and LF: the name is
+  -- concatenated into an email Subject header downstream, and a raw newline
+  -- there is header injection.
+  v_name       text := trim(regexp_replace(coalesce(p_full_name, ''), '\s+', ' ', 'g'));
+  v_email      text := lower(trim(coalesce(p_email, '')));
+  -- Control characters stripped, ordinary newlines kept: a note is free text
+  -- the owner reads, but nothing in it should be able to steer a downstream
+  -- consumer that treats control bytes as structure.
+  v_note       text := regexp_replace(
+                         coalesce(p_note, ''),
+                         E'[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]', '', 'g');
+  v_mobile     text := trim(coalesce(p_mobile, ''));
+  v_customer   uuid;
+  v_ref        text;
+  v_id         uuid;
+  v_returning  boolean;
+  v_status     public.appointment_status;
+  v_deadline   timestamptz;
+begin
+  select * into v_settings from public.booking_settings where id;
+  select * into v_service from public.hair_appointment();
+
+  if v_service.id is null then
+    raise exception 'SERVICE_UNAVAILABLE' using errcode = 'P0001';
+  end if;
+
+  -- A first name alone is not enough to tell two customers apart in a diary.
+  if array_length(string_to_array(v_name, ' '), 1) is null
+     or array_length(string_to_array(v_name, ' '), 1) < 2
+     or length(v_name) < 3 then
+    raise exception 'NAME_INCOMPLETE' using errcode = 'P0001';
+  end if;
+
+  -- Enough digits to be a real number, ignoring spaces, brackets and +.
+  if length(regexp_replace(v_mobile, '\D', '', 'g')) < 7 then
+    raise exception 'MOBILE_REQUIRED' using errcode = 'P0001';
+  end if;
+
+  -- The address the confirmation and the manage link both go to. This was
+  -- never checked here at all: `customers.email` is citext with no CHECK, so a
+  -- booking could create a customer row with an unroutable address, which then
+  -- became an outbox row that failed five times and stopped. Same expression
+  -- validate_availability_request() has used since 0021.
+  if v_email !~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' then
+    raise exception 'EMAIL_INVALID' using errcode = 'P0001';
+  end if;
+
+  -- Upper bounds. Nothing legitimate is near these; without them a single
+  -- request could put a megabyte of text into a name and carry it into every
+  -- email, the dashboard and the AI assistant's context.
+  if length(v_name) > 120 then
+    raise exception 'NAME_TOO_LONG' using errcode = 'P0001';
+  end if;
+  if length(v_note) > 2000 then
+    raise exception 'NOTE_TOO_LONG' using errcode = 'P0001';
+  end if;
+
+  -- Cap how often one address can book. `availability_requests` has had this
+  -- since 0021 and the reasoning is identical, only the stakes are higher: a
+  -- script could otherwise fill the published diary up to
+  -- max_appointments_per_day and generate two emails per booking on the way.
+  -- Counted on completed inserts, so a customer who genuinely rebooks after a
+  -- cancellation is unaffected.
+  if (
+    select count(*) from public.appointments a
+      join public.customers c on c.id = a.customer_id
+     where lower(c.email::text) = lower(v_email)
+       and a.created_at > now() - interval '24 hours'
+  ) >= 5 then
+    raise exception 'TOO_MANY_BOOKINGS' using errcode = 'P0001';
+  end if;
+
+  v_local_date := (p_starts_at at time zone v_settings.timezone)::date;
+  v_local_time := (p_starts_at at time zone v_settings.timezone)::time;
+
+  -- Against the salon's clock, exactly as the publish side checks it.
+  if (extract(hour from v_local_time) * 60 + extract(minute from v_local_time))::integer
+       % v_settings.slot_granularity_min <> 0
+     or extract(second from v_local_time) <> 0 then
+    raise exception 'SLOT_MISALIGNED' using errcode = 'P0001';
+  end if;
+
+  if p_starts_at < now() + make_interval(mins => v_settings.lead_time_min) then
+    raise exception 'LEAD_TIME_VIOLATION' using errcode = 'P0001';
+  end if;
+  if p_starts_at > now() + make_interval(days => v_settings.max_horizon_days) then
+    raise exception 'BEYOND_BOOKING_HORIZON' using errcode = 'P0001';
+  end if;
+
+  if not exists (
+    select 1 from public.availability_slots sl
+     where sl.on_date = v_local_date and sl.starts_at = v_local_time
+  ) then
+    raise exception 'OUTSIDE_AVAILABILITY' using errcode = 'P0001';
+  end if;
+
+  -- Serialise the capacity check against other bookings on the same local day.
+  -- Transaction-scoped, so it is released on commit or rollback either way.
+  -- Single-argument (bigint) form; the two-argument form takes int4s.
+  perform pg_advisory_xact_lock(hashtext('book_day:' || v_local_date::text)::bigint);
+
+  if (
+    select count(*) from public.appointments a
+    where a.status in ('pending_approval','confirmed','checked_in','in_service','completed')
+      and (a.starts_at at time zone v_settings.timezone)::date = v_local_date
+  ) >= v_settings.max_appointments_per_day then
+    raise exception 'DAILY_CAPACITY_REACHED' using errcode = 'P0001';
+  end if;
+
+  insert into public.customers (email, full_name, mobile, marketing_consent, consent_updated_at, last_seen_at)
+  values (v_email, v_name, v_mobile, p_consent,
+          case when p_consent then now() end, now())
+  on conflict (lower(email::text)) where deleted_at is null
+  do update set
+    full_name         = excluded.full_name,
+    mobile            = coalesce(excluded.mobile, public.customers.mobile),
+    marketing_consent = public.customers.marketing_consent or excluded.marketing_consent,
+    last_seen_at      = now()
+  returning id into v_customer;
+
+  select exists (
+    select 1 from public.appointments a
+    where a.customer_id = v_customer and a.status = 'completed'
+  ) into v_returning;
+
+  if v_returning or not v_settings.approve_first_time then
+    v_status := 'confirmed';
+    v_deadline := null;
+  else
+    v_status := 'pending_approval';
+    v_deadline := least(now() + make_interval(hours => v_settings.approval_window_h), p_starts_at);
+  end if;
+
+  v_ref := public.generate_booking_reference();
+
+  begin
+    insert into public.appointments
+      (reference, customer_id, service_id, starts_at, ends_at, price_pence,
+       customer_note, source, status, requires_approval, approval_deadline, approved_at)
+    values
+      (v_ref, v_customer, v_service.id, p_starts_at,
+       p_starts_at + make_interval(mins => v_service.duration_min + v_service.buffer_min),
+       v_service.price_pence, nullif(v_note, ''), 'web', v_status, not v_returning, v_deadline,
+       case when v_status = 'confirmed' then now() end)
+    returning id into v_id;
+  exception when exclusion_violation then
+    raise exception 'SLOT_TAKEN' using errcode = 'P0001';
+  end;
+
+  return query select v_id, v_ref, v_status;
+end;
+$$;
+
+revoke all on function public.book_appointment(timestamptz, text, text, text, text, boolean) from public;
+grant execute on function public.book_appointment(timestamptz, text, text, text, text, boolean)
+  to anon, authenticated;

@@ -82,12 +82,7 @@ export function statusPillClass(status: AppointmentStatus): string {
  * Matches the legend on `docs/design/calendar.png`.
  */
 export type StatusCategory =
-  | 'pending_approval'
-  | 'confirmed'
-  | 'in_service'
-  | 'completed'
-  | 'cancelled'
-  | 'no_show';
+  'pending_approval' | 'confirmed' | 'in_service' | 'completed' | 'cancelled' | 'no_show';
 
 export const STATUS_CATEGORY: Record<AppointmentStatus, StatusCategory> = {
   pending_approval: 'pending_approval',

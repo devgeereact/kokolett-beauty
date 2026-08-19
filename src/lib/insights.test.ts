@@ -161,7 +161,11 @@ describe('findNextUp', () => {
   const now = new Date('2026-08-11T10:00:00.000Z');
 
   it('picks the soonest confirmed or checked-in appointment that has not started', () => {
-    const past = appt({ id: 'past', status: 'confirmed', starts_at: '2026-08-11T09:00:00.000Z' });
+    const past = appt({
+      id: 'past',
+      status: 'confirmed',
+      starts_at: '2026-08-11T09:00:00.000Z',
+    });
     const soonest = appt({
       id: 'soonest',
       status: 'confirmed',
@@ -176,8 +180,16 @@ describe('findNextUp', () => {
   });
 
   it('ignores in-progress and completed appointments', () => {
-    const inService = appt({ id: 'in-service', status: 'in_service', starts_at: '2026-08-11T09:30:00.000Z' });
-    const completed = appt({ id: 'done', status: 'completed', starts_at: '2026-08-11T09:00:00.000Z' });
+    const inService = appt({
+      id: 'in-service',
+      status: 'in_service',
+      starts_at: '2026-08-11T09:30:00.000Z',
+    });
+    const completed = appt({
+      id: 'done',
+      status: 'completed',
+      starts_at: '2026-08-11T09:00:00.000Z',
+    });
     expect(findNextUp([inService, completed], now)).toBeNull();
   });
 

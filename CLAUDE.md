@@ -43,13 +43,15 @@ Never in a file.
 - **TypeScript strict.** No implicit `any`; explicit return types on functions
   and hooks.
 - **Styling:** NativeWind / Tailwind classes, tokens from `tailwind.config.ts`.
-- **Offloaded systems:** Supabase (Auth/DB + RLS), ImageKit (media), Sentry
-  (monitoring), Inngest (background workflows).
+- **Offloaded systems:** Supabase (Auth/DB + RLS, seven Deno Edge Functions,
+  `pg_cron` jobs), ImageKit (transformed URLs for service images only), Sentry
+  (monitoring). There is no Inngest — the email pipeline is a Postgres trigger plus
+  a `pg_cron` drain job.
 - **Path alias:** import app code with `@/…` (maps to `src/`).
 - **Booking writes go through `book_appointment()`** — never a direct client insert.
 - **`pending_approval` holds a slot.** Availability logic must treat it as occupied.
 - **Money is integer pence. Time is UTC in storage, `Europe/London` on screen.**
-- **The AI assistant is advisory only** and cannot mutate business data.
+- **The AI assistant can propose but never execute.** It can read business data and propose two writes — booking an appointment, sending a one-off customer email — but calling either only produces a card in the chat; the actual write (`createAppointmentAsOwner` / `sendCustomEmailAsOwner`) happens client-side, under the owner's own session, only when she clicks Confirm. The AI assistant edge function itself has no path to execute a write on its own.
 - Copy is British English.
 - **Women's hair only.** Cutting, colouring, styling, treatments. Not a general
   beauty salon — no nails, brows, lashes or aesthetics — and not unisex. The word

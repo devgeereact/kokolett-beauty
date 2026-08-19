@@ -7,14 +7,26 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { LoadingState, ErrorState } from '@/components/ui/States';
 import { getTemplateUsage, type TemplateUsage } from '@/services/emailService';
-import { TEMPLATE_CATALOG, templateMeta, type TemplateCategory } from '@/lib/templateCatalog';
+import {
+  TEMPLATE_CATALOG,
+  templateMeta,
+  type TemplateCategory,
+} from '@/lib/templateCatalog';
 import { formatDateTime, formatRelative } from '@/lib/format';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
 type Lane = 'all' | TemplateCategory;
-const LANES: Lane[] = ['all', 'Booking', 'Reminders', 'Reviews', 'Availability requests', 'Account access', 'Owner notifications'];
+const LANES: Lane[] = [
+  'all',
+  'Booking',
+  'Reminders',
+  'Reviews',
+  'Availability requests',
+  'Account access',
+  'Owner notifications',
+];
 
 /**
  * The template catalogue (`docs/design/templetes.png`), restyled onto what
@@ -79,7 +91,10 @@ export function TemplatesPage(): JSX.Element {
     const example = selectedUsage?.example;
     const payload = (example?.payload as Record<string, unknown> | undefined) ?? {};
     return (
-      <DashboardLayout title="Templates" subtitle="The wording behind every automated message.">
+      <DashboardLayout
+        title="Templates"
+        subtitle="The wording behind every automated message."
+      >
         <div className="mb-4 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -89,7 +104,10 @@ export function TemplatesPage(): JSX.Element {
             <ArrowLeft aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             Back to templates
           </button>
-          <Button size="sm" onClick={() => void navigate(routes.owner.templateEditor(selected.key))}>
+          <Button
+            size="sm"
+            onClick={() => void navigate(routes.owner.templateEditor(selected.key))}
+          >
             <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             Edit template
           </Button>
@@ -102,7 +120,9 @@ export function TemplatesPage(): JSX.Element {
                 <selected.icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
               </span>
               <div>
-                <h2 className="font-serif text-lg font-semibold text-foreground">{selected.label}</h2>
+                <h2 className="font-serif text-lg font-semibold text-foreground">
+                  {selected.label}
+                </h2>
                 <Badge tone="primary">Email</Badge>
               </div>
             </div>
@@ -119,7 +139,9 @@ export function TemplatesPage(): JSX.Element {
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Last sent</dt>
                 <dd className="text-foreground">
-                  {selectedUsage?.lastSentAt ? formatRelative(selectedUsage.lastSentAt) : 'Never'}
+                  {selectedUsage?.lastSentAt
+                    ? formatRelative(selectedUsage.lastSentAt)
+                    : 'Never'}
                 </dd>
               </div>
             </dl>
@@ -140,7 +162,8 @@ export function TemplatesPage(): JSX.Element {
                   <span className="text-foreground">{example.subject}</span>
                 </p>
                 <p className="mb-4 text-xs text-muted-foreground">
-                  To {example.to_email} · {formatDateTime(example.sent_at ?? example.created_at, timezone)}
+                  To {example.to_email} ·{' '}
+                  {formatDateTime(example.sent_at ?? example.created_at, timezone)}
                 </p>
                 {Object.keys(payload).length > 0 && (
                   <dl className="space-y-1.5 border-t border-border pt-3 text-sm">
@@ -148,8 +171,12 @@ export function TemplatesPage(): JSX.Element {
                       .filter(([, v]) => v !== null && v !== undefined && v !== '')
                       .map(([key, value]) => (
                         <div key={key} className="flex justify-between gap-3">
-                          <dt className="shrink-0 text-muted-foreground">{key.replace(/_/g, ' ')}</dt>
-                          <dd className="truncate text-right text-foreground">{String(value)}</dd>
+                          <dt className="shrink-0 text-muted-foreground">
+                            {key.replace(/_/g, ' ')}
+                          </dt>
+                          <dd className="truncate text-right text-foreground">
+                            {String(value)}
+                          </dd>
                         </div>
                       ))}
                   </dl>
@@ -163,7 +190,10 @@ export function TemplatesPage(): JSX.Element {
   }
 
   return (
-    <DashboardLayout title="Templates" subtitle="The wording behind every automated message.">
+    <DashboardLayout
+      title="Templates"
+      subtitle="The wording behind every automated message."
+    >
       <div className="mb-6 flex flex-wrap items-center gap-1 border-b border-border">
         {LANES.map((l) => (
           <button
@@ -181,7 +211,9 @@ export function TemplatesPage(): JSX.Element {
             <span
               className={cn(
                 'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                lane === l ? 'bg-tint-brand text-primary' : 'bg-muted text-muted-foreground',
+                lane === l
+                  ? 'bg-tint-brand text-primary'
+                  : 'bg-muted text-muted-foreground',
               )}
             >
               {laneCounts[l]}
@@ -220,7 +252,9 @@ export function TemplatesPage(): JSX.Element {
                 <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-tint-brand text-primary">
                   <t.icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
                 </span>
-                <h3 className="mb-1 font-serif text-base font-semibold text-foreground">{t.label}</h3>
+                <h3 className="mb-1 font-serif text-base font-semibold text-foreground">
+                  {t.label}
+                </h3>
                 <p className="mb-3 text-sm text-muted-foreground">{t.description}</p>
                 <div className="mb-3">
                   <Badge tone="primary">Email</Badge>

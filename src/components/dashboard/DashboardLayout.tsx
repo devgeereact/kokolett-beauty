@@ -125,7 +125,11 @@ export function DashboardLayout({
           icon: NAV_ICONS.Calendar,
           activePaths: [routes.owner.calendar, routes.owner.appointmentType],
         },
-        { to: routes.owner.appointments, label: 'Appointments', icon: NAV_ICONS.Appointments },
+        {
+          to: routes.owner.appointments,
+          label: 'Appointments',
+          icon: NAV_ICONS.Appointments,
+        },
       ],
     },
     {
@@ -149,26 +153,40 @@ export function DashboardLayout({
     },
     {
       label: 'Customers',
-      items: [{ to: routes.owner.customers, label: 'Customers', icon: NAV_ICONS.Customers }],
+      items: [
+        { to: routes.owner.customers, label: 'Customers', icon: NAV_ICONS.Customers },
+      ],
     },
     {
       label: 'Salon',
       items: [
         { to: routes.owner.serviceMenu, label: 'Services', icon: NAV_ICONS.Services },
-        { to: routes.owner.weeklyDefault, label: 'Availability', icon: NAV_ICONS.Availability },
+        {
+          to: routes.owner.weeklyDefault,
+          label: 'Availability',
+          icon: NAV_ICONS.Availability,
+        },
       ],
     },
     {
       label: 'Insights',
       items: [
         { to: routes.owner.reports, label: 'Reports', icon: NAV_ICONS.Reports },
-        { to: routes.owner.assistant, label: 'AI Assistant', icon: NAV_ICONS['AI Assistant'] },
+        {
+          to: routes.owner.assistant,
+          label: 'AI Assistant',
+          icon: NAV_ICONS['AI Assistant'],
+        },
       ],
     },
     {
       label: 'Communications',
       items: [
-        { to: routes.owner.notifications, label: 'Notifications', icon: NAV_ICONS.Notifications },
+        {
+          to: routes.owner.notifications,
+          label: 'Notifications',
+          icon: NAV_ICONS.Notifications,
+        },
         { to: routes.owner.email, label: 'Email', icon: NAV_ICONS.Email },
         { to: routes.owner.templates, label: 'Templates', icon: NAV_ICONS.Templates },
       ],
@@ -282,7 +300,11 @@ export function DashboardLayout({
           onClick={doSignOut}
           className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
-          <ChevronRight aria-hidden="true" className="h-4 w-4 rotate-180" strokeWidth={2} />
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 rotate-180"
+            strokeWidth={2}
+          />
         </button>
       </div>
     ) : (
@@ -297,7 +319,12 @@ export function DashboardLayout({
     );
 
   const buildWordmark = (rail: boolean): JSX.Element => (
-    <div className={cn('mb-4 flex items-center', rail ? 'justify-center px-0' : 'justify-between px-3')}>
+    <div
+      className={cn(
+        'mb-4 flex items-center',
+        rail ? 'justify-center px-0' : 'justify-between px-3',
+      )}
+    >
       {rail ? (
         <span
           title="Kokolett Beauty UK"
@@ -319,7 +346,8 @@ export function DashboardLayout({
         aria-label={rail ? 'Expand sidebar' : 'Collapse sidebar'}
         className={cn(
           'hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground md:flex',
-          rail && 'absolute -right-3 top-4 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-popover',
+          rail &&
+            'absolute -right-3 top-4 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-popover',
         )}
       >
         {rail ? (
@@ -333,6 +361,18 @@ export function DashboardLayout({
 
   return (
     <>
+      {/*
+        Skip link. The dashboard sidebar puts roughly twenty links ahead of the
+        content, so a keyboard or screen-reader user was tabbing through all of
+        them again on every navigation. Visually hidden until focused, which is
+        the only moment it is any use.
+      */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-toast focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+      >
+        Skip to content
+      </a>
       {/* The one scroll region is `<main>` below (docs/DESIGN.md §15 —
           dashboard scroll architecture is a hard requirement): the browser
           viewport itself never scrolls, so the sidebar and header can never
@@ -351,11 +391,18 @@ export function DashboardLayout({
             collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
           )}
         >
-          <div className={cn('relative', collapsed ? 'overflow-x-visible px-2 py-4' : 'p-4')}>
+          <div
+            className={cn('relative', collapsed ? 'overflow-x-visible px-2 py-4' : 'p-4')}
+          >
             {buildWordmark(collapsed)}
             {buildNav(collapsed)}
           </div>
-          <div className={cn('mt-auto shrink-0 border-t border-sidebar-border', collapsed ? 'p-2' : 'p-4')}>
+          <div
+            className={cn(
+              'mt-auto shrink-0 border-t border-sidebar-border',
+              collapsed ? 'p-2' : 'p-4',
+            )}
+          >
             {buildAccount(collapsed)}
           </div>
         </aside>
@@ -401,12 +448,20 @@ export function DashboardLayout({
                   <QuickActionLauncher />
                 </div>
                 {actions}
-                <NotificationBellPopover timezone={timezone} badgeCount={badges?.notifications ?? 0} />
+                <NotificationBellPopover
+                  timezone={timezone}
+                  badgeCount={badges?.notifications ?? 0}
+                />
               </div>
             </div>
           </header>
 
-          <main className="koko-scroll scroll-bottom-gap px-4 pt-6 md:px-6 lg:px-8">{children}</main>
+          <main
+            id="main-content"
+            className="koko-scroll scroll-bottom-gap px-4 pt-6 md:px-6 lg:px-8"
+          >
+            {children}
+          </main>
         </div>
       </div>
 

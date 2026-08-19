@@ -111,6 +111,7 @@ Converged after 5 iterations. Nothing left that's fixable from code:
   visually verified against the reference's 2-page state.
 
 Inferred/deliberate values:
+
 - "Offered"/"Booked"/"Requested" timestamps use the app's existing
   `formatDateTime` phrasing, consistent with Approvals' "Requested" line —
   not the reference's literal date format.

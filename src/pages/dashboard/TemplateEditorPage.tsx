@@ -32,32 +32,48 @@ import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { EmailTemplateRow } from '@/types';
 
-const CATEGORIES = ['Booking', 'Reminders', 'Reviews', 'Availability requests', 'Account access', 'Owner notifications'];
-
-const VARIABLES = [
-  'customer_name',
-  'appointment_date',
-  'appointment_time',
-  'service_name',
-  'location',
-  'staff_name',
-  'reference',
+const CATEGORIES = [
+  'Booking',
+  'Reminders',
+  'Reviews',
+  'Availability requests',
+  'Account access',
+  'Owner notifications',
 ];
 
-/** Sample values so the preview shows real-looking copy instead of literal `{{tokens}}`. */
+/** Sample values so the preview shows real-looking copy instead of literal `{{tokens}}` — one per token `buildTokens` in `_shared/templates.ts` can produce. */
 const SAMPLE_VALUES: Record<string, string> = {
   customer_name: 'Sarah Johnson',
-  appointment_date: 'Saturday, 24 May 2025',
-  appointment_time: '10:00 AM',
+  full_name: 'Sarah Johnson',
+  customer_email: 'sarah.johnson@example.com',
+  email: 'sarah.johnson@example.com',
+  customer_mobile: '07700 900123',
+  mobile: '07700 900123',
+  appointment_date: 'Saturday, 24 May 2026',
+  appointment_time: '10:00',
+  previous_appointment_date: 'Tuesday, 20 May 2026',
+  previous_appointment_time: '14:00',
   service_name: 'Balayage',
   location: 'Kokolett Beauty UK',
   staff_name: 'Koko Lett',
   reference: 'KB-Y6ZXKH',
   approval_window_h: '12',
+  reason: 'The stylist is no longer available at that time',
+  customer_note: 'Allergic to ammonia-based dye',
+  notes: 'Flexible on time, prefers weekday mornings',
+  preferred_dates: 'Sat 24 May, Sun 25 May',
+  flexibility: 'Any time that week',
+  google_review_url: 'https://g.page/r/example/review',
+  manage_url: 'https://www.kokolettbeauty.com/access/8f3a1c9e4b2d',
+  reset_url: 'https://www.kokolettbeauty.com/reset-password',
+  reset_ttl_minutes: '60',
 };
 
 function renderPreview(html: string): string {
-  return html.replace(/\{\{(\w+)\}\}/g, (_, key: string) => SAMPLE_VALUES[key] ?? `{{${key}}}`);
+  return html.replace(
+    /\{\{(\w+)\}\}/g,
+    (_, key: string) => SAMPLE_VALUES[key] ?? `{{${key}}}`,
+  );
 }
 
 function execCmd(command: string, value?: string): void {
@@ -65,9 +81,28 @@ function execCmd(command: string, value?: string): void {
 }
 
 /**
- * The one editable field the outbox templates have — a real DB row
- * (`email_templates`), not a mock. See `emailService.getEmailTemplate`'s
- * comment for what saving here does and doesn't do yet.
+ * Length of the copy the customer will actually read, with the markup taken
+ * out.
+ *
+ * Parsed rather than regex-stripped. `replace(/<[^>]+>/g, '')` looks like it
+ * removes tags and does not: one pass over `<scr<script>ipt>` leaves a working
+ * `<script>` behind, which is what CodeQL flags as incomplete multi-character
+ * sanitization. Nothing was exploitable here, because the result was only ever
+ * measured and never rendered, but a string that looks sanitised is exactly the
+ * kind of thing somebody later reaches for in a context where it matters.
+ *
+ * Parsing is also simply more accurate: `&amp;` counts as one character rather
+ * than five, and an attribute value no longer leaks into the total.
+ */
+function textLength(html: string): number {
+  return (new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '')
+    .length;
+}
+
+/**
+ * The owner's overlay on a real outbox template (`email_templates`). Saving
+ * here is what `send-emails` reads at send time once Active and Include in
+ * automation are both on — see `emailService.getEmailTemplate`'s comment.
  */
 export function TemplateEditorPage(): JSX.Element {
   const { key = '' } = useParams<{ key: string }>();
@@ -116,7 +151,7 @@ export function TemplateEditorPage(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row]);
 
-  const charCount = useMemo(() => bodyHtml.replace(/<[^>]+>/g, '').length, [bodyHtml]);
+  const charCount = useMemo(() => textLength(bodyHtml), [bodyHtml]);
 
   const insertVariable = (name: string): void => {
     const token = `{{${name}}}`;
@@ -161,7 +196,10 @@ export function TemplateEditorPage(): JSX.Element {
   if (error || !row || !meta) {
     return (
       <DashboardLayout title="Templates">
-        <ErrorState error={error ?? new Error('Template not found')} onRetry={() => void navigate(routes.owner.templates)} />
+        <ErrorState
+          error={error ?? new Error('Template not found')}
+          onRetry={() => void navigate(routes.owner.templates)}
+        />
       </DashboardLayout>
     );
   }
@@ -172,7 +210,11 @@ export function TemplateEditorPage(): JSX.Element {
       subtitle="Create and customise your email template."
       actions={
         <>
-          <Button variant="ghost" size="sm" onClick={() => setPreviewMode((m) => (m === 'email' ? 'mobile' : 'email'))}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPreviewMode((m) => (m === 'email' ? 'mobile' : 'email'))}
+          >
             Preview template
           </Button>
           <Button size="sm" loading={saving} onClick={() => void save()}>
@@ -199,7 +241,11 @@ export function TemplateEditorPage(): JSX.Element {
               </Field>
               <Field label="Category" className="mb-0 w-48">
                 {({ id }) => (
-                  <Select id={id} value={category} onChange={(e) => setCategory(e.target.value)}>
+                  <Select
+                    id={id}
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
                     {CATEGORIES.map((c) => (
                       <option key={c} value={c}>
                         {c}
@@ -228,7 +274,9 @@ export function TemplateEditorPage(): JSX.Element {
             </Field>
 
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-sm font-medium text-foreground">Template content</label>
+              <label className="text-sm font-medium text-foreground">
+                Template content
+              </label>
               <Select
                 aria-label="Insert variable"
                 className="h-9 w-44 py-1 text-xs"
@@ -242,7 +290,7 @@ export function TemplateEditorPage(): JSX.Element {
                 }}
               >
                 <option value="">{'{{}} Insert variable'}</option>
-                {VARIABLES.map((v) => (
+                {meta.variables.map((v) => (
                   <option key={v} value={v}>
                     {v}
                   </option>
@@ -353,10 +401,18 @@ export function TemplateEditorPage(): JSX.Element {
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-4 font-serif text-base font-semibold text-foreground">Template settings</h2>
+            <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
+              Template settings
+            </h2>
             <div className="space-y-4">
               {[
-                { key: 'active' as const, label: 'Active', desc: 'This template is active and can be used.', value: active, set: setActive },
+                {
+                  key: 'active' as const,
+                  label: 'Active',
+                  desc: 'This template is active and can be used.',
+                  value: active,
+                  set: setActive,
+                },
                 {
                   key: 'allowEdit' as const,
                   label: 'Allow editing before sending',
@@ -377,7 +433,11 @@ export function TemplateEditorPage(): JSX.Element {
                     <p className="text-sm font-medium text-foreground">{row2.label}</p>
                     <p className="text-xs text-muted-foreground">{row2.desc}</p>
                   </div>
-                  <Switch checked={row2.value} onChange={row2.set} aria-label={row2.label} />
+                  <Switch
+                    checked={row2.value}
+                    onChange={row2.set}
+                    aria-label={row2.label}
+                  />
                 </div>
               ))}
             </div>
@@ -386,7 +446,9 @@ export function TemplateEditorPage(): JSX.Element {
 
         <Card className="h-fit p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-serif text-base font-semibold text-foreground">Preview</h2>
+            <h2 className="font-serif text-base font-semibold text-foreground">
+              Preview
+            </h2>
           </div>
           <div className="mb-4 flex gap-1 border-b border-border">
             {(['email', 'mobile'] as const).map((m) => (
@@ -396,7 +458,9 @@ export function TemplateEditorPage(): JSX.Element {
                 onClick={() => setPreviewMode(m)}
                 className={cn(
                   'border-b-2 px-3 py-2 text-sm font-medium capitalize',
-                  previewMode === m ? 'border-primary text-primary' : 'border-transparent text-muted-foreground',
+                  previewMode === m
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground',
                 )}
               >
                 {m}
@@ -429,12 +493,20 @@ export function TemplateEditorPage(): JSX.Element {
               <p style={{ color: '#333333' }} className="font-serif text-lg font-bold">
                 Kokolett <span style={{ color: '#e05d38' }}>Beauty</span> UK
               </p>
-              <p style={{ color: '#6b7280' }} className="text-[11px] uppercase tracking-wide">
+              <p
+                style={{ color: '#6b7280' }}
+                className="text-2xs uppercase tracking-wide"
+              >
                 Women&rsquo;s hair salon
               </p>
             </div>
-            <div style={{ background: '#ffffff', color: '#333333' }} className="p-5 text-sm">
-              <p className="mb-3 font-serif text-base font-semibold">{renderPreview(subject)}</p>
+            <div
+              style={{ background: '#ffffff', color: '#333333' }}
+              className="p-5 text-sm"
+            >
+              <p className="mb-3 font-serif text-base font-semibold">
+                {renderPreview(subject)}
+              </p>
               <div
                 style={{ color: '#333333' }}
                 className="[&_a]:underline [&_a]:[color:#e05d38] [&_p]:mb-3"
@@ -456,7 +528,9 @@ export function TemplateEditorPage(): JSX.Element {
                   </span>
                 ))}
               </div>
-              <span className="block text-xs">© {new Date().getFullYear()} Kokolett Beauty UK. All rights reserved.</span>
+              <span className="block text-xs">
+                © {new Date().getFullYear()} Kokolett Beauty UK. All rights reserved.
+              </span>
             </div>
           </div>
         </Card>

@@ -33,14 +33,21 @@ export function OpeningHoursSummaryCard({ days }: { days: TemplateDay[] }): JSX.
   }
 
   const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
-  const avgDaily = openDays.length > 0 ? Math.round((totalHours / openDays.length) * 10) / 10 : 0;
+  const avgDaily =
+    openDays.length > 0 ? Math.round((totalHours / openDays.length) * 10) / 10 : 0;
   const dayAbbr = (d: number): string => (DAYS_OF_WEEK[d]?.name ?? '').slice(0, 3);
 
   const rows = [
     { label: 'Total weekly hours', value: `${totalHours} hrs` },
     { label: 'Average daily hours', value: `${avgDaily} hrs` },
-    { label: 'Earliest start', value: earliest ? `${earliest.time} (${dayAbbr(earliest.day)})` : '—' },
-    { label: 'Latest finish', value: latest ? `${latest.time} (${dayAbbr(latest.day)})` : '—' },
+    {
+      label: 'Earliest start',
+      value: earliest ? `${earliest.time} (${dayAbbr(earliest.day)})` : '—',
+    },
+    {
+      label: 'Latest finish',
+      value: latest ? `${latest.time} (${dayAbbr(latest.day)})` : '—',
+    },
   ];
 
   return (

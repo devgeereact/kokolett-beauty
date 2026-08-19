@@ -10,11 +10,24 @@
  *
  * The response never reveals whether the address is on file. Anything else
  * turns this endpoint into a way of testing who is a customer of the salon.
+ *
+ * It is also rate limited per address. Without that, anyone who knows a
+ * customer's email could hold down a request loop and bury that person's inbox
+ * in magic links, which is both harassment and a fast way to get the salon's
+ * sending domain flagged as a spam source. `owner-password-reset` has had this
+ * limit since it was written; this endpoint is the same shape and needs the
+ * same guard.
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const TOKEN_TTL_MINUTES = 30;
+
+/**
+ * Links per address per hour. Three is generous for the real case (the link
+ * went to spam, try again) and useless as a mail-bombing tool.
+ */
+const MAX_PER_HOUR = 3;
 const SITE = 'https://www.kokolettbeauty.com';
 
 function env(name: string, fallback = ''): string {
@@ -75,6 +88,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .maybeSingle();
 
   if (!customer) return ok();
+
+  // Counted on what has already been queued to this address, so it survives a
+  // function restart and cannot be reset by rotating IPs. Same approach, same
+  // table, as owner-password-reset.
+  const since = new Date(Date.now() - 60 * 60_000).toISOString();
+  const { count } = await supabase
+    .from('email_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('template', 'access_link')
+    .eq('to_email', customer.email)
+    .gte('created_at', since);
+
+  // Same neutral response as every other exit: a caller must not be able to
+  // tell "you are rate limited" from "that address is not a customer".
+  if ((count ?? 0) >= MAX_PER_HOUR) return ok();
 
   const raw = [...crypto.getRandomValues(new Uint8Array(32))]
     .map((b) => b.toString(16).padStart(2, '0'))

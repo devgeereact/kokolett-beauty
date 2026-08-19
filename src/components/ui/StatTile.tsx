@@ -25,10 +25,16 @@ export function StatTile({
           TONE_BG[tone],
         )}
       >
-        <Icon aria-hidden="true" className={cn('h-5 w-5', TONE_TEXT[tone])} strokeWidth={2} />
+        <Icon
+          aria-hidden="true"
+          className={cn('h-5 w-5', TONE_TEXT[tone])}
+          strokeWidth={2}
+        />
       </span>
       <span className="min-w-0">
-        <span className="block font-serif text-xl font-semibold text-foreground">{value}</span>
+        <span className="block font-serif text-xl font-semibold text-foreground">
+          {value}
+        </span>
         <span className="block truncate text-xs text-muted-foreground">{label}</span>
       </span>
     </Card>

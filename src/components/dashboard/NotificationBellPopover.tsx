@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
-import { getNotifications, type NotificationEvent } from '@/services/notificationsService';
+import {
+  getNotifications,
+  type NotificationEvent,
+} from '@/services/notificationsService';
 import { useNotificationReadState } from '@/hooks/useNotificationReadState';
 import { metaFor } from '@/lib/notificationCategory';
 import { TONE_BG, TONE_TEXT } from '@/lib/tone';
@@ -63,12 +66,14 @@ export function NotificationBellPopover({
         className={cn(
           'relative inline-flex h-9 w-9 items-center justify-center rounded-lg',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          open ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+          open
+            ? 'bg-muted text-foreground'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
         )}
       >
         <Bell aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
         {badgeCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+          <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-semibold text-primary-foreground">
             {badgeCount > 9 ? '9+' : badgeCount}
           </span>
         )}
@@ -77,7 +82,9 @@ export function NotificationBellPopover({
       {open && (
         <div className="absolute right-0 top-11 z-layer-popover w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover shadow-popover">
           <div className="flex items-center justify-between border-b border-border p-3">
-            <p className="font-serif text-sm font-semibold text-foreground">Notifications</p>
+            <p className="font-serif text-sm font-semibold text-foreground">
+              Notifications
+            </p>
             <button
               type="button"
               onClick={() => markAllRead((events ?? []).map((e) => e.id))}
@@ -99,21 +106,42 @@ export function NotificationBellPopover({
                   const meta = metaFor(e.kind);
                   const read = isRead(e.id);
                   return (
-                    <li key={e.id} className={cn('flex items-start gap-3 p-3', !read && 'bg-tint-brand/40')}>
+                    <li
+                      key={e.id}
+                      className={cn(
+                        'flex items-start gap-3 p-3',
+                        !read && 'bg-tint-brand',
+                      )}
+                    >
                       <span
                         className={cn(
                           'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
                           TONE_BG[meta.tone],
                         )}
                       >
-                        <meta.icon aria-hidden="true" className={cn('h-4 w-4', TONE_TEXT[meta.tone])} strokeWidth={2} />
+                        <meta.icon
+                          aria-hidden="true"
+                          className={cn('h-4 w-4', TONE_TEXT[meta.tone])}
+                          strokeWidth={2}
+                        />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{e.title}</p>
-                        <p className="truncate text-xs text-muted-foreground">{e.detail}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{formatRelative(e.at)}</p>
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {e.title}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {e.detail}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {formatRelative(e.at)}
+                        </p>
                       </div>
-                      {!read && <span aria-hidden="true" className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                      {!read && (
+                        <span
+                          aria-hidden="true"
+                          className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary"
+                        />
+                      )}
                     </li>
                   );
                 })}

@@ -28,7 +28,6 @@ const CONTROL = cn(
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
   'disabled:cursor-not-allowed disabled:opacity-60',
   'aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive',
-  'data-[success=true]:border-success data-[success=true]:focus-visible:ring-success',
 );
 
 interface FieldShellProps {

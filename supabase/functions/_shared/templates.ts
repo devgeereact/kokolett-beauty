@@ -48,6 +48,8 @@ export interface TemplatePayload {
   notes?: string | null;
   preferred_dates?: string[];
   flexibility?: string;
+  /** Freeform body for `owner_custom_message` — the owner's own words, sent as-is (escaped, newlines kept). */
+  custom_body?: string;
   /** Injected by the sender, never stored. */
   manage_url?: string;
   /** Owner password-recovery link. Injected by the sender, never stored. */
@@ -95,13 +97,194 @@ function full(iso?: string, timeZone = 'Europe/London'): string {
   return `${when(iso, timeZone)} at ${clock(iso, timeZone)}`;
 }
 
-/** Escape anything that reaches HTML. Customer names and notes are untrusted. */
+/**
+ * Escape anything that reaches HTML. Customer names and notes are untrusted.
+ *
+ * `'` and `` ` `` are escaped as well as `"`. In the hard-coded templates below
+ * every interpolation sits in element text or a double-quoted attribute, so
+ * they were not strictly needed — but an owner-edited template body is
+ * arbitrary HTML, and `<a title='{{customer_name}}'>` is exactly the shape a
+ * WYSIWYG editor or a paste produces. A customer name reaches that attribute
+ * straight from the anonymous booking form, which only checks that it is two
+ * words of three characters or more, so `' onmouseover=` would otherwise break
+ * out of the attribute and run.
+ */
 function esc(value: unknown): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/`/g, '&#96;');
+}
+
+/** An owner-edited row from `email_templates`, used in place of the hard-coded copy below. */
+export interface TemplateOverride {
+  subject: string;
+  html_body: string;
+}
+
+/** Every token an owner-edited subject or body may reference via `{{token}}`. */
+function buildTokens(p: TemplatePayload): Record<string, string> {
+  const tz = p.timezone ?? 'Europe/London';
+  return {
+    customer_name: p.customer_name ?? p.full_name ?? '',
+    full_name: p.full_name ?? p.customer_name ?? '',
+    customer_email: p.customer_email ?? p.email ?? '',
+    customer_mobile: p.customer_mobile ?? p.mobile ?? '',
+    email: p.email ?? p.customer_email ?? '',
+    mobile: p.mobile ?? p.customer_mobile ?? '',
+    appointment_date: when(p.starts_at, tz),
+    appointment_time: clock(p.starts_at, tz),
+    appointment_end_time: p.ends_at ? clock(p.ends_at, tz) : '',
+    previous_appointment_date: p.previous_starts_at ? when(p.previous_starts_at, tz) : '',
+    previous_appointment_time: p.previous_starts_at ? clock(p.previous_starts_at, tz) : '',
+    service_name: p.service_name ?? '',
+    reference: p.reference ?? '',
+    location: p.salon_address ?? SALON,
+    staff_name: 'Koko Lett',
+    approval_window_h: String(p.approval_window_h ?? 12),
+    cancellation_window_h: String(p.cancellation_window_h ?? 24),
+    reason: p.reason ?? '',
+    customer_note: p.customer_note ?? '',
+    owner_note: p.owner_note ?? '',
+    notes: p.notes ?? '',
+    preferred_dates: (p.preferred_dates ?? []).join(', '),
+    flexibility: p.flexibility ?? '',
+    salon_address: p.salon_address ?? '',
+    salon_phone: p.salon_phone ?? '',
+    google_review_url: p.google_review_url ?? '',
+    instagram_url: p.instagram_url ?? '',
+    manage_url: p.manage_url ?? '',
+    reset_url: p.reset_url ?? '',
+    reset_ttl_minutes: String(p.reset_ttl_minutes ?? 60),
+  };
+}
+
+/** `{{token}}` → escaped value, for text that lands in HTML. */
+function applyTokens(raw: string, tokens: Record<string, string>): string {
+  return raw.replace(/\{\{(\w+)\}\}/g, (_, key: string) => esc(tokens[key] ?? ''));
+}
+
+/** `{{token}}` → raw value, for the plain-text part (already tag-free, nothing to escape). */
+function applyTokensPlain(raw: string, tokens: Record<string, string>): string {
+  return raw.replace(/\{\{(\w+)\}\}/g, (_, key: string) => tokens[key] ?? '');
+}
+
+/**
+ * Why each template arrives, mirrored from the `case` blocks below so an
+ * owner-edited body still carries the same compliance line.
+ */
+const TEMPLATE_REASON: Record<string, string> = {
+  booking_confirmed:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  booking_approved:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  booking_rescheduled:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  booking_held:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  booking_declined:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  booking_cancelled:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  reminder_24h:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  reminder_2h:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  reminder_1h:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  appointment_completed:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  review_request:
+    'You are receiving this because an appointment was booked with Kokolett Beauty UK using this email address.',
+  request_received:
+    'You are receiving this because you asked Kokolett Beauty UK for an appointment time using this email address.',
+  access_link:
+    'You are receiving this because somebody asked to see the bookings held against this email address at Kokolett Beauty UK.',
+  owner_password_reset: 'You are receiving this because a password reset was requested for the salon dashboard.',
+  owner_approval_needed: 'You are receiving this as the owner of Kokolett Beauty UK.',
+  owner_booking_moved: 'You are receiving this as the owner of Kokolett Beauty UK.',
+  owner_new_booking: 'You are receiving this as the owner of Kokolett Beauty UK.',
+  owner_new_request: 'You are receiving this as the owner of Kokolett Beauty UK.',
+  owner_custom_message:
+    'You are receiving this because Kokolett Beauty UK sent you a message directly.',
+};
+
+/**
+ * Markup out, readable text left, for the `text/plain` half of a message.
+ *
+ * The tag strip loops to a fixed point rather than running once. A single pass
+ * of `replace(/<[^>]*>/g, '')` is not a strip at all: it removes the inner tag
+ * of `<scr<script>ipt>` and leaves a working `<script>` behind, which is what
+ * CodeQL's incomplete-multi-character-sanitization rule is about.
+ *
+ * Nothing was exploitable through this path, because the result becomes the
+ * plain-text alternative (never executed) and the first line of it becomes the
+ * preheader, which `layout()` escapes. But the owner's template body is
+ * arbitrary HTML she pasted from somewhere, this is the only thing standing
+ * between it and the text part, and "not exploitable in today's two call
+ * sites" is a poor thing to rely on.
+ */
+function toPlainText(html: string): string {
+  const withBreaks = html
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n');
+
+  let out = withBreaks;
+  let previous: string;
+  do {
+    previous = out;
+    out = out.replace(/<[^>]*>/g, '');
+  } while (out !== previous);
+
+  return out;
+}
+
+/**
+ * Renders an owner-edited `email_templates` row instead of the hard-coded
+ * copy below. The owner's HTML is substituted and dropped straight into the
+ * same masthead/footer shell, so branding and the compliance footer stay
+ * identical either way — only the message body changes.
+ *
+ * `manage_url` / `reset_url` are appended as a button regardless of whether
+ * the owner's copy mentions them, so an edited template can never silently
+ * drop the one link the message exists to deliver.
+ */
+function renderOverride(template: string, override: TemplateOverride, p: TemplatePayload): RenderedEmail {
+  const tokens = buildTokens(p);
+  const subject = applyTokensPlain(override.subject, tokens);
+  let bodyHtml = applyTokens(override.html_body, tokens);
+  if (p.manage_url) bodyHtml += button(p.manage_url, 'View or change your booking');
+  if (p.reset_url) bodyHtml += button(p.reset_url, 'Choose a new password');
+
+  const reason =
+    TEMPLATE_REASON[template] ?? 'You are receiving this because you have booked with Kokolett Beauty UK.';
+
+  const plainBody = applyTokensPlain(toPlainText(override.html_body), tokens).trim();
+
+  /**
+   * The preheader is the grey line beside the subject in an inbox list.
+   * Repeating the subject there wastes it and prints the same sentence twice
+   * in a row, so take the opening of the body instead — which is what the
+   * hard-coded templates all do.
+   */
+  const preheader = plainBody.split('\n')[0]?.slice(0, 120) ?? subject;
+
+  return {
+    subject,
+    html: layout(subject, preheader, bodyHtml, p, reason),
+    /**
+     * `skipBlock` stays false. An owner editing the HTML body is changing the
+     * wording, not opting out of telling the customer when the appointment is:
+     * skipping it dropped the When / What / Reference lines from the
+     * text/plain alternative entirely, leaving e.g. the 2-hour reminder as one
+     * sentence with no date, service or reference — and a thin plain-text part
+     * is a spam signal in its own right.
+     */
+    text: plainShell(plainBody, p, reason, false),
+  };
 }
 
 /**
@@ -243,20 +426,31 @@ function aside(s: string): string {
 }
 
 export interface RenderedEmail {
+  /** Only set when rendered from an owner-edited `TemplateOverride` — the hard-coded cases below keep their subject on the caller's `email_messages.subject` instead. */
+  subject?: string;
   html: string;
   text: string;
 }
 
-/** The plain-text half. Same facts, no markup, safe to read aloud. */
-function plainShell(body: string, p: TemplatePayload, reason: string): string {
+/**
+ * The plain-text half. Same facts, no markup, safe to read aloud.
+ *
+ * `skipBlock` drops the auto-generated When/What/Reference lines — for
+ * owner-authored copy (`renderOverride`, `owner_custom_message`) that has
+ * already said the same thing in its own words, so the block would only
+ * repeat it.
+ */
+function plainShell(body: string, p: TemplatePayload, reason: string, skipBlock = false): string {
   const tz = p.timezone ?? 'Europe/London';
-  const block = [
-    p.starts_at ? `When:      ${full(p.starts_at, tz)}` : '',
-    p.service_name ? `What:      ${p.service_name}` : '',
-    p.reference ? `Reference: ${p.reference}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const block = skipBlock
+    ? ''
+    : [
+        p.starts_at ? `When:      ${full(p.starts_at, tz)}` : '',
+        p.service_name ? `What:      ${p.service_name}` : '',
+        p.reference ? `Reference: ${p.reference}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
 
   const contact = [p.salon_address, p.salon_phone].filter(Boolean).join(' · ');
 
@@ -264,6 +458,7 @@ function plainShell(body: string, p: TemplatePayload, reason: string): string {
     body,
     block,
     p.manage_url ? `View or change your booking:\n${p.manage_url}` : '',
+    p.reset_url ? `Choose a new password:\n${p.reset_url}` : '',
     '--',
     SALON,
     contact,
@@ -274,7 +469,9 @@ function plainShell(body: string, p: TemplatePayload, reason: string): string {
     .join('\n\n');
 }
 
-export function render(template: string, p: TemplatePayload): RenderedEmail {
+export function render(template: string, p: TemplatePayload, override?: TemplateOverride): RenderedEmail {
+  if (override) return renderOverride(template, override, p);
+
   const tz = p.timezone ?? 'Europe/London';
   const name = esc(p.customer_name ?? p.full_name ?? 'there');
   const manage = p.manage_url ? button(p.manage_url, 'View or change your booking') : '';
@@ -536,7 +733,7 @@ export function render(template: string, p: TemplatePayload): RenderedEmail {
           ) +
             (p.reset_url ? button(p.reset_url, 'Choose a new password') : '') +
             small(
-              'If this was not you, ignore this email and nothing changes — your current password keeps working. Nobody can sign in from this message alone, and the link is useless once it has been used or has expired.',
+              'If this was not you, ignore this email and nothing changes. Your current password keeps working. Nobody can sign in from this message alone, and the link is useless once it has been used or has expired.',
             ),
           p,
           'You are receiving this because a password reset was requested for the salon dashboard.',
@@ -564,11 +761,11 @@ export function render(template: string, p: TemplatePayload): RenderedEmail {
               `${esc(p.customer_email)}${p.customer_mobile ? ` &nbsp;·&nbsp; ${esc(p.customer_mobile)}` : ''}`,
             ) +
             (p.customer_note ? aside(`Their note: ${esc(p.customer_note)}`) : '') +
-            button(`${SITE}/dashboard/approvals`, 'Open approvals'),
+            button(`${SITE}/dashboard/inbox?tab=approvals`, 'Open approvals'),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
         ),
-        text: `${p.customer_name} (first visit) has requested an appointment. The slot is held until you decide.\n\n${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\n${SITE}/dashboard/approvals`,
+        text: `${p.customer_name} (first visit) has requested an appointment. The slot is held until you decide.\n\n${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\n${SITE}/dashboard/inbox?tab=approvals`,
       };
 
     case 'owner_booking_moved':
@@ -622,12 +819,32 @@ export function render(template: string, p: TemplatePayload): RenderedEmail {
               `Prefers: ${esc((p.preferred_dates ?? []).join(', ') || 'no date given')} &nbsp;·&nbsp; ${esc(p.flexibility ?? 'any time')}`,
             ) +
             (p.notes ? aside(`Their note: ${esc(p.notes)}`) : '') +
-            button(`${SITE}/dashboard/requests`, 'Open enquiries'),
+            button(`${SITE}/dashboard/inbox?tab=requests`, 'Open enquiries'),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
         ),
-        text: `${p.full_name} could not find a slot and has asked for a time.\n${p.email}${p.mobile ? ` · ${p.mobile}` : ''}\nPrefers: ${(p.preferred_dates ?? []).join(', ') || 'no date given'} · ${p.flexibility ?? 'any'}\n\n${SITE}/dashboard/requests`,
+        text: `${p.full_name} could not find a slot and has asked for a time.\n${p.email}${p.mobile ? ` · ${p.mobile}` : ''}\nPrefers: ${(p.preferred_dates ?? []).join(', ') || 'no date given'} · ${p.flexibility ?? 'any'}\n\n${SITE}/dashboard/inbox?tab=requests`,
       };
+
+    // The owner's own freeform note, drafted (in the dashboard or via the
+    // AI assistant) and sent only after she reviews and confirms it — this
+    // renderer just carries her words, it doesn't add sales copy of its own.
+    case 'owner_custom_message': {
+      const bodyHtml = esc(p.custom_body ?? '')
+        .split('\n')
+        .map((paragraph) => line(paragraph))
+        .join('');
+      return {
+        html: layout(
+          SALON,
+          `A message from ${SALON}`,
+          line(`Hello ${name},`) + bodyHtml,
+          p,
+          'You are receiving this because you are a customer of Kokolett Beauty UK.',
+        ),
+        text: `Hello ${p.customer_name ?? p.full_name ?? 'there'},\n\n${p.custom_body ?? ''}`,
+      };
+    }
 
     default:
       return {

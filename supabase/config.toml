@@ -426,3 +426,52 @@ enabled = true
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# =====================================================================
+# Edge Functions
+#
+# Until now there was no [functions.*] block at all, so whether a function
+# verified a JWT depended entirely on the flags of whichever `supabase
+# functions deploy` command last ran — a deploy-time decision with no record
+# in the repository. The blocks below state it declaratively, matching what
+# each function actually expects, so a deploy cannot silently change the
+# auth posture of an endpoint.
+#
+# `verify_jwt = false` is never "unauthenticated": each of those functions
+# carries its own check, named beside it.
+# =====================================================================
+
+# Owner-only. Validates the caller with auth.getUser() and then reads through
+# the caller's own RLS, so a non-owner gets a working chat that can read
+# nothing.
+[functions.ai-assistant-chat]
+verify_jwt = true
+
+# Owner-only. Same pattern: the row it renders lives on an owner-only table.
+[functions.render-email-preview]
+verify_jwt = true
+
+# Machine endpoint, called by pg_cron via pg_net. Auth is the x-cron-secret
+# shared secret in _shared/auth.ts, which fails closed when unset.
+[functions.send-emails]
+verify_jwt = false
+
+# Machine endpoint, same x-cron-secret guard.
+[functions.sync-reviews]
+verify_jwt = false
+
+# Public "email me my bookings" endpoint. Constrained by a fixed neutral
+# response, an email regex, an exact-match lookup, and a per-address rate
+# limit.
+[functions.customer-access]
+verify_jwt = false
+
+# Public reset request. Constrained by a neutral response, an email regex, a
+# staff-only join, and a 3-per-hour rate limit.
+[functions.owner-password-reset]
+verify_jwt = false
+
+# Calendar clients cannot send a Supabase JWT. Auth is the bearer token in
+# the feed URL, checked against a stored hash by calendar_feed_events().
+[functions.calendar-feed]
+verify_jwt = false

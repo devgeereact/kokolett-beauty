@@ -9,7 +9,11 @@ import { Field, Input, Textarea } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Switch } from '@/components/ui/Switch';
 import { formatDateShort, formatDateTime, formatMoney } from '@/lib/format';
-import { setCustomerMarketingConsent, type CustomerContactDraft, type CustomerWithStats } from '@/services/customerService';
+import {
+  setCustomerMarketingConsent,
+  type CustomerContactDraft,
+  type CustomerWithStats,
+} from '@/services/customerService';
 import { listEmailsForCustomer } from '@/services/emailService';
 import type { AppointmentDetailed, EmailMessage } from '@/types';
 import { cn } from '@/lib/utils';
@@ -26,7 +30,8 @@ const TABS: { key: Tab; label: string }[] = [
 /** A customer is "New" until their second visit or their fourteenth day, whichever is real, not fabricated. */
 function isNew(customer: CustomerWithStats): boolean {
   if (customer.completed_count > 1) return false;
-  const ageMs = Date.now() - new Date(customer.first_seen_at ?? customer.created_at).getTime();
+  const ageMs =
+    Date.now() - new Date(customer.first_seen_at ?? customer.created_at).getTime();
   return ageMs < 14 * 24 * 60 * 60 * 1000;
 }
 
@@ -127,7 +132,9 @@ export function CustomerDetailPanel({
               <Input
                 id={id}
                 value={contactDraft.fullName}
-                onChange={(e) => onContactDraftChange({ ...contactDraft, fullName: e.target.value })}
+                onChange={(e) =>
+                  onContactDraftChange({ ...contactDraft, fullName: e.target.value })
+                }
               />
             )}
           </Field>
@@ -137,7 +144,9 @@ export function CustomerDetailPanel({
                 id={id}
                 type="email"
                 value={contactDraft.email}
-                onChange={(e) => onContactDraftChange({ ...contactDraft, email: e.target.value })}
+                onChange={(e) =>
+                  onContactDraftChange({ ...contactDraft, email: e.target.value })
+                }
               />
             )}
           </Field>
@@ -147,7 +156,9 @@ export function CustomerDetailPanel({
                 id={id}
                 type="tel"
                 value={contactDraft.mobile}
-                onChange={(e) => onContactDraftChange({ ...contactDraft, mobile: e.target.value })}
+                onChange={(e) =>
+                  onContactDraftChange({ ...contactDraft, mobile: e.target.value })
+                }
               />
             )}
           </Field>
@@ -191,7 +202,11 @@ export function CustomerDetailPanel({
                 </p>
                 {customer.mobile && (
                   <p className="flex items-center gap-2">
-                    <Phone aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
+                    <Phone
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0"
+                      strokeWidth={2}
+                    />
                     <a
                       href={`tel:${customer.mobile.replace(/\s/g, '')}`}
                       className="truncate text-foreground hover:underline hover:underline-offset-4"
@@ -292,12 +307,16 @@ export function CustomerDetailPanel({
                   { label: 'Total visits', value: String(customer.completed_count) },
                   {
                     label: 'Last visit',
-                    value: customer.last_visit_at ? formatDateShort(customer.last_visit_at, timezone) : '—',
+                    value: customer.last_visit_at
+                      ? formatDateShort(customer.last_visit_at, timezone)
+                      : '—',
                   },
                   { label: 'No-shows', value: String(customer.no_show_count) },
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-lg border border-border p-3">
-                    <p className="font-serif text-xl font-semibold text-foreground">{stat.value}</p>
+                    <p className="font-serif text-xl font-semibold text-foreground">
+                      {stat.value}
+                    </p>
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                   </div>
                 ))}
@@ -336,7 +355,10 @@ export function CustomerDetailPanel({
                 ) : (
                   <ul className="space-y-1.5">
                     {history.slice(0, 3).map((a) => (
-                      <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
+                      <li
+                        key={a.id}
+                        className="flex items-center justify-between gap-2 text-sm"
+                      >
                         <span className="truncate text-foreground">
                           {formatDateShort(a.starts_at, timezone)} · {a.service_name}
                         </span>
@@ -361,7 +383,9 @@ export function CustomerDetailPanel({
                       Edit
                     </button>
                   </div>
-                  <p className="rounded-md bg-tint-pending p-3 text-sm text-foreground">{note}</p>
+                  <p className="rounded-md bg-tint-pending p-3 text-sm text-foreground">
+                    {note}
+                  </p>
                 </div>
               )}
             </div>
@@ -382,7 +406,9 @@ export function CustomerDetailPanel({
                         {formatDateTime(a.starts_at, timezone)} · {a.service_name}
                       </span>
                       <span className="flex items-center gap-2">
-                        <span className="text-muted-foreground">{formatMoney(a.price_pence)}</span>
+                        <span className="text-muted-foreground">
+                          {formatMoney(a.price_pence)}
+                        </span>
                         <StatusChip status={a.status} />
                       </span>
                     </li>
@@ -394,7 +420,10 @@ export function CustomerDetailPanel({
 
           {tab === 'notes' && (
             <div>
-              <Field label="Private note" hint="Only you see this. Never shown to the customer.">
+              <Field
+                label="Private note"
+                hint="Only you see this. Never shown to the customer."
+              >
                 {({ id, describedBy }) => (
                   <Textarea
                     id={id}
@@ -412,7 +441,10 @@ export function CustomerDetailPanel({
           )}
 
           {tab === 'message' && (
-            <CommunicationAssistancePanel timezone={timezone} customerEmail={customer.email} />
+            <CommunicationAssistancePanel
+              timezone={timezone}
+              customerEmail={customer.email}
+            />
           )}
 
           {tab === 'email' && (
@@ -424,15 +456,30 @@ export function CustomerDetailPanel({
               ) : (
                 <ul className="space-y-2">
                   {emails.map((e) => (
-                    <li key={e.id} className="border-b border-border pb-2 text-sm last:border-0">
+                    <li
+                      key={e.id}
+                      className="border-b border-border pb-2 text-sm last:border-0"
+                    >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="truncate font-medium text-foreground">{e.subject}</span>
-                        <Badge tone={e.status === 'sent' ? 'completed' : e.status === 'failed' ? 'cancelled' : 'pending'}>
+                        <span className="truncate font-medium text-foreground">
+                          {e.subject}
+                        </span>
+                        <Badge
+                          tone={
+                            e.status === 'sent'
+                              ? 'completed'
+                              : e.status === 'failed'
+                                ? 'cancelled'
+                                : 'pending'
+                          }
+                        >
                           {e.status}
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {e.sent_at ? formatDateTime(e.sent_at, timezone) : formatDateTime(e.created_at, timezone)}
+                        {e.sent_at
+                          ? formatDateTime(e.sent_at, timezone)
+                          : formatDateTime(e.created_at, timezone)}
                       </p>
                     </li>
                   ))}
@@ -442,7 +489,12 @@ export function CustomerDetailPanel({
           )}
 
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-            <Button variant="ghost" size="sm" className="flex-1" onClick={() => window.open(`mailto:${customer.email}`)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => window.open(`mailto:${customer.email}`)}
+            >
               <Mail aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
               Email
             </Button>

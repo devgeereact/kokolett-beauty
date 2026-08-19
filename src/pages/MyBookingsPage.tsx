@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field, Input } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { ReschedulePicker } from '@/components/public/ReschedulePicker';
@@ -43,6 +44,8 @@ export function MyBookingsPage(): JSX.Element {
   const [email, setEmail] = useState('');
   const [linkSent, setLinkSent] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [moveBusy, setMoveBusy] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
@@ -173,13 +176,21 @@ export function MyBookingsPage(): JSX.Element {
     }
   };
 
+  /**
+   * `window.confirm` / `window.alert` used to do this. They are unstyled, they
+   * cannot be read by the page's own live regions, some mobile browsers let a
+   * user suppress them for the rest of the session, and this is the one
+   * destructive action a customer can take — ConfirmDialog exists precisely to
+   * replace them and every owner-facing screen already uses it.
+   */
   const doCancel = async (id: string): Promise<void> => {
-    if (!window.confirm('Cancel this appointment?')) return;
+    setConfirmCancelId(null);
+    setCancelError(null);
     setCancelling(id);
     try {
       await cancel(id);
     } catch (e) {
-      window.alert(errorMessage(e));
+      setCancelError(errorMessage(e));
     } finally {
       setCancelling(null);
     }
@@ -288,7 +299,7 @@ export function MyBookingsPage(): JSX.Element {
                           variant="ghost"
                           size="sm"
                           loading={cancelling === a.id}
-                          onClick={() => void doCancel(a.id)}
+                          onClick={() => setConfirmCancelId(a.id)}
                         >
                           Cancel
                         </Button>
@@ -339,12 +350,29 @@ export function MyBookingsPage(): JSX.Element {
           </section>
         )}
 
+        {cancelError && (
+          <p role="alert" className="mt-6 text-center text-sm text-destructive">
+            {cancelError}
+          </p>
+        )}
+
         <p className="mt-8 text-center">
           <Button variant="ghost" size="sm" onClick={() => void refresh()}>
             Refresh
           </Button>
         </p>
       </div>
+
+      <ConfirmDialog
+        open={confirmCancelId !== null}
+        title="Cancel this appointment?"
+        message="The time goes back into the diary straight away, so it may be taken by somebody else. You can always book again."
+        confirmLabel="Yes, cancel it"
+        cancelLabel="Keep it"
+        tone="destructive"
+        onConfirm={() => confirmCancelId && void doCancel(confirmCancelId)}
+        onCancel={() => setConfirmCancelId(null)}
+      />
     </SiteShell>
   );
 }

@@ -69,3 +69,14 @@ CLAUDE.md.pre-ruflo
 
 # Isolated workspaces for subagent-driven-development plan execution.
 .worktrees/
+
+# Design references and /loop iteration screenshots. 63 MB of PNGs, ~95% of
+# everything this repository tracked, including byte-identical duplicates from
+# the same loop run. They stay on disk and stay useful; they are simply not
+# worth carrying in every clone forever. The per-screen `*-log.md` files are
+# the part with lasting information, so those are still tracked.
+docs/design/**
+!docs/design/**/*.md
+
+# `git log` rendered to markdown. Regenerable by definition.
+docs/COMMIT_MESSAGE.md

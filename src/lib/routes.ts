@@ -8,11 +8,11 @@
 export const routes = {
   public: {
     home: '/',
-    about: '/about',
-    gallery: '/gallery',
-    testimonials: '/testimonials',
-    faqs: '/faqs',
-    contact: '/contact',
+    /* There is deliberately no About, Gallery, Testimonials, FAQs or Contact
+       route. An earlier multi-page plan was simplified to a single marketing
+       page (docs/PRD.md §7); the five constants outlived it here, resolving to
+       paths no <Route> mounts, which is exactly the question this file exists
+       to answer correctly. */
     book: '/book',
     requestAvailability: '/request-availability',
     subscribe: '/subscribe',
@@ -25,7 +25,6 @@ export const routes = {
     access: (token: string) => `/access/${token}`,
     home: '/my',
     appointments: '/my/appointments',
-    appointment: (reference: string) => `/my/appointments/${reference}`,
   },
   owner: {
     dashboard: '/dashboard',

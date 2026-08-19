@@ -63,7 +63,11 @@ export function RequestDetailPanel({
   const [slotLimit, setSlotLimit] = useState(3);
   const [selectedSlot, setSelectedSlot] = useState<SuggestedSlot | null>(null);
 
-  const [customOffer, setCustomOffer] = useState<{ open: boolean; date: string; time: string }>({
+  const [customOffer, setCustomOffer] = useState<{
+    open: boolean;
+    date: string;
+    time: string;
+  }>({
     open: false,
     date: '',
     time: '10:00',
@@ -217,7 +221,10 @@ export function RequestDetailPanel({
           )}
           {returning !== null && (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span aria-hidden="true" className="h-1 w-1 rounded-full bg-muted-foreground" />
+              <span
+                aria-hidden="true"
+                className="h-1 w-1 rounded-full bg-muted-foreground"
+              />
               {returning ? 'Returning customer' : 'First visit'}
             </p>
           )}
@@ -230,21 +237,39 @@ export function RequestDetailPanel({
         </p>
         <div className="space-y-1.5 text-sm text-foreground">
           <p className="flex items-center gap-2">
-            <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Calendar
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             {request.preferred_dates.length > 0
-              ? request.preferred_dates.map((d) => formatDateLong(`${d}T00:00:00Z`)).join(' – ')
+              ? request.preferred_dates
+                  .map((d) => formatDateLong(`${d}T00:00:00Z`))
+                  .join(' – ')
               : 'Any date'}
           </p>
           <p className="flex items-center gap-2">
-            <Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Clock
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             {FLEXIBILITY_LABELS[request.flexibility] ?? request.flexibility}
           </p>
           <p className="flex items-center gap-2">
-            <Scissors aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Scissors
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             {request.service_name ?? 'Not sure yet'}
           </p>
           <p className="flex items-center gap-2 text-muted-foreground">
-            <MessageSquareQuote aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
+            <MessageSquareQuote
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0"
+              strokeWidth={2}
+            />
             Requested: {formatDateTime(request.created_at, timezone)}
           </p>
         </div>
@@ -297,7 +322,10 @@ export function RequestDetailPanel({
                     }`}
                   >
                     <p className="font-medium text-foreground">
-                      {formatDateLong(`${slot.date}T00:00:00Z`).split(' ').slice(0, 2).join(' ')}
+                      {formatDateLong(`${slot.date}T00:00:00Z`)
+                        .split(' ')
+                        .slice(0, 2)
+                        .join(' ')}
                     </p>
                     <p className="text-muted-foreground">{slot.label}</p>
                   </button>
@@ -348,7 +376,11 @@ export function RequestDetailPanel({
                 <X aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                 Confirm decline
               </Button>
-              <Button variant="ghost" className="w-full" onClick={() => setDeclining(false)}>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => setDeclining(false)}
+              >
                 Cancel
               </Button>
             </div>
@@ -370,14 +402,16 @@ export function RequestDetailPanel({
                       id={id}
                       type="time"
                       value={customOffer.time}
-                      onChange={(e) => setCustomOffer((o) => ({ ...o, time: e.target.value }))}
+                      onChange={(e) =>
+                        setCustomOffer((o) => ({ ...o, time: e.target.value }))
+                      }
                     />
                   )}
                 </Field>
               </div>
               <p className="text-xs text-muted-foreground">
-                This books them straight in and emails a confirmation — it does not have to be
-                inside your published hours.
+                This books them straight in and emails a confirmation — it does not have
+                to be inside your published hours.
               </p>
               <Button className="w-full" loading={busy} onClick={submitCustomOffer}>
                 Book this time
@@ -403,7 +437,13 @@ export function RequestDetailPanel({
               <Button
                 variant="ghost"
                 className="w-full"
-                onClick={() => setCustomOffer({ open: true, date: request.preferred_dates[0] ?? '', time: '10:00' })}
+                onClick={() =>
+                  setCustomOffer({
+                    open: true,
+                    date: request.preferred_dates[0] ?? '',
+                    time: '10:00',
+                  })
+                }
               >
                 <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                 Create custom offer
@@ -435,7 +475,11 @@ export function RequestDetailPanel({
         />
         <div className="mt-2 flex items-center justify-between">
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <History aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+            <History
+              aria-hidden="true"
+              className="h-3.5 w-3.5 shrink-0"
+              strokeWidth={2}
+            />
             Only visible to you
           </p>
           <Button

@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -6,6 +7,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { LoadingState } from '@/components/ui/States';
 import { HomePage } from '@/pages/HomePage';
 import { BookPage } from '@/pages/BookPage';
 import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
@@ -15,23 +17,80 @@ import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
 import { LoginPage } from '@/pages/LoginPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { TodayPage } from '@/pages/dashboard/TodayPage';
-import { CalendarPage } from '@/pages/dashboard/CalendarPage';
-import { WeeklyDefaultPage } from '@/pages/dashboard/WeeklyDefaultPage';
-import { InboxPage } from '@/pages/dashboard/InboxPage';
-import { AppointmentsPage } from '@/pages/dashboard/AppointmentsPage';
-import { CustomersPage } from '@/pages/dashboard/CustomersPage';
-import { AppointmentTypePage } from '@/pages/dashboard/AppointmentTypePage';
-import { ServiceMenuPage } from '@/pages/dashboard/ServiceMenuPage';
-import { AssistantPage } from '@/pages/dashboard/AssistantPage';
-import { ReportsPage } from '@/pages/dashboard/ReportsPage';
-import { NotificationsPage } from '@/pages/dashboard/NotificationsPage';
-import { EmailPage } from '@/pages/dashboard/EmailPage';
-import { TemplatesPage } from '@/pages/dashboard/TemplatesPage';
-import { TemplateEditorPage } from '@/pages/dashboard/TemplateEditorPage';
-import { ProfilePage } from '@/pages/dashboard/ProfilePage';
-import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { routes } from '@/lib/routes';
+
+/**
+ * The customer-facing pages above are imported eagerly: they are the whole
+ * reason a stranger opens this site, and a spinner on the booking page to save
+ * bytes the browser then has to fetch anyway is a bad trade.
+ *
+ * The owner dashboard is the opposite. It is seventeen screens — the calendar
+ * grid, the reports charts, the email template editor, the AI assistant — and
+ * exactly one person ever signs in to it. Statically imported, all of it sat in
+ * the same entry chunk as the booking form, so every customer downloaded the
+ * salon's back office to pick a time. Lazily, none of it is fetched until
+ * somebody actually navigates into /dashboard.
+ */
+const TodayPage = lazy(() =>
+  import('@/pages/dashboard/TodayPage').then((m) => ({ default: m.TodayPage })),
+);
+const CalendarPage = lazy(() =>
+  import('@/pages/dashboard/CalendarPage').then((m) => ({ default: m.CalendarPage })),
+);
+const WeeklyDefaultPage = lazy(() =>
+  import('@/pages/dashboard/WeeklyDefaultPage').then((m) => ({
+    default: m.WeeklyDefaultPage,
+  })),
+);
+const InboxPage = lazy(() =>
+  import('@/pages/dashboard/InboxPage').then((m) => ({ default: m.InboxPage })),
+);
+const AppointmentsPage = lazy(() =>
+  import('@/pages/dashboard/AppointmentsPage').then((m) => ({
+    default: m.AppointmentsPage,
+  })),
+);
+const CustomersPage = lazy(() =>
+  import('@/pages/dashboard/CustomersPage').then((m) => ({ default: m.CustomersPage })),
+);
+const AppointmentTypePage = lazy(() =>
+  import('@/pages/dashboard/AppointmentTypePage').then((m) => ({
+    default: m.AppointmentTypePage,
+  })),
+);
+const ServiceMenuPage = lazy(() =>
+  import('@/pages/dashboard/ServiceMenuPage').then((m) => ({
+    default: m.ServiceMenuPage,
+  })),
+);
+const AssistantPage = lazy(() =>
+  import('@/pages/dashboard/AssistantPage').then((m) => ({ default: m.AssistantPage })),
+);
+const ReportsPage = lazy(() =>
+  import('@/pages/dashboard/ReportsPage').then((m) => ({ default: m.ReportsPage })),
+);
+const NotificationsPage = lazy(() =>
+  import('@/pages/dashboard/NotificationsPage').then((m) => ({
+    default: m.NotificationsPage,
+  })),
+);
+const EmailPage = lazy(() =>
+  import('@/pages/dashboard/EmailPage').then((m) => ({ default: m.EmailPage })),
+);
+const TemplatesPage = lazy(() =>
+  import('@/pages/dashboard/TemplatesPage').then((m) => ({ default: m.TemplatesPage })),
+);
+const TemplateEditorPage = lazy(() =>
+  import('@/pages/dashboard/TemplateEditorPage').then((m) => ({
+    default: m.TemplateEditorPage,
+  })),
+);
+const ProfilePage = lazy(() =>
+  import('@/pages/dashboard/ProfilePage').then((m) => ({ default: m.ProfilePage })),
+);
+const SettingsPage = lazy(() =>
+  import('@/pages/dashboard/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+);
 
 /**
  * Owner routes are wrapped individually rather than by a layout route, because
@@ -39,7 +98,11 @@ import { routes } from '@/lib/routes';
  * shared parent would have to guess them.
  */
 function owner(element: JSX.Element): JSX.Element {
-  return <ProtectedRoute>{element}</ProtectedRoute>;
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<LoadingState />}>{element}</Suspense>
+    </ProtectedRoute>
+  );
 }
 
 export function App(): JSX.Element {
@@ -79,11 +142,15 @@ export function App(): JSX.Element {
                   land somewhere real. */}
               <Route
                 path={routes.owner.approvals}
-                element={<Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />}
+                element={owner(
+                  <Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />,
+                )}
               />
               <Route
                 path={routes.owner.requests}
-                element={<Navigate to={`${routes.owner.inbox}?tab=requests`} replace />}
+                element={owner(
+                  <Navigate to={`${routes.owner.inbox}?tab=requests`} replace />,
+                )}
               />
               <Route
                 path={routes.owner.appointments}
@@ -114,7 +181,10 @@ export function App(): JSX.Element {
               />
               <Route path={routes.owner.email} element={owner(<EmailPage />)} />
               <Route path={routes.owner.templates} element={owner(<TemplatesPage />)} />
-              <Route path="/dashboard/templates/:key/edit" element={owner(<TemplateEditorPage />)} />
+              <Route
+                path="/dashboard/templates/:key/edit"
+                element={owner(<TemplateEditorPage />)}
+              />
               <Route path={routes.owner.profile} element={owner(<ProfilePage />)} />
 
               <Route path="*" element={<NotFoundPage />} />

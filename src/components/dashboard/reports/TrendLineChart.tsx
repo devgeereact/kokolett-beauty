@@ -26,7 +26,8 @@ export function TrendLineChart({
   const innerHeight = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
   const coords = points.map((p, i) => {
-    const x = PAD_LEFT + (points.length <= 1 ? 0 : (i / (points.length - 1)) * innerWidth);
+    const x =
+      PAD_LEFT + (points.length <= 1 ? 0 : (i / (points.length - 1)) * innerWidth);
     const y = PAD_TOP + innerHeight - (p.value / max) * innerHeight;
     return { x, y, ...p };
   });
@@ -44,9 +45,16 @@ export function TrendLineChart({
     <Card className="p-5">
       <h2 className="mb-3 font-serif text-base font-semibold text-foreground">{title}</h2>
       {points.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">No data in this period.</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          No data in this period.
+        </p>
       ) : (
-        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" role="img" aria-label={title}>
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          className="w-full"
+          role="img"
+          aria-label={title}
+        >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={colorVar} stopOpacity="0.25" />

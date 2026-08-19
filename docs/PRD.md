@@ -42,7 +42,7 @@ address.
 The owner publishes exactly the hours she is willing to work. Anything inside them
 books **instantly, for anyone, new or returning** — there is no approval step on the
 happy path. When nothing is open, the customer submits a request instead, and it is
-the *request* that gets approved: requests are offered slots first-come-first-served,
+the _request_ that gets approved: requests are offered slots first-come-first-served,
 so a last-minute cancellation is reachable by whoever asked first.
 
 This replaced an earlier hybrid design (returning customers instant, first-timers held

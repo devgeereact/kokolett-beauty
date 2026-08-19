@@ -18,12 +18,14 @@ export function BillingCard(): JSX.Element {
         </span>
         <div>
           <h2 className="font-serif text-base font-semibold text-foreground">Billing</h2>
-          <p className="text-sm text-muted-foreground">Subscription and payment details.</p>
+          <p className="text-sm text-muted-foreground">
+            Subscription and payment details.
+          </p>
         </div>
       </div>
       <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-        This dashboard is your own — there's no subscription or invoice to manage. Nothing to
-        show here.
+        This dashboard is your own — there's no subscription or invoice to manage. Nothing
+        to show here.
       </p>
     </Card>
   );

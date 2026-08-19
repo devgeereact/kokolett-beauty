@@ -27,7 +27,7 @@ ones myself against primary sources:
   (not just `git log -30`) and found that **the single item both sibling reviews flagged as the
   plan's last genuinely open, high-value fix — the Today-page reschedule split-brain bug — has
   already been fixed**, in commits `d6d6781` and `a257b44`, both dated the same day as this review
-  and both landing *after* `docs/plan.md` itself was committed (`175121c`). Confirmed directly by
+  and both landing _after_ `docs/plan.md` itself was committed (`175121c`). Confirmed directly by
   reading `src/pages/dashboard/TodayPage.tsx:118-123`: `doOwnerReschedule` now calls
   `rescheduleAppointmentAsOwner`, not `createAppointmentAsOwner`. See Pre-Review System Audit below —
   this is new information neither sibling review had, and it materially changes the punch list.
@@ -44,7 +44,7 @@ single riskiest bet in the 24 steps — not a repeat of the git-archaeology or d
 
 - **Branch:** `chore/gstack-init-and-plan-doc`, working tree clean, HEAD `4727434`.
 - **`docs/plan.md` was added in commit `175121c`** ("add 2026 owner-first upgrade plan and refresh
-  platform preview mockup") — chronologically *after* `docs/BASELINE-AUDIT.md` (`c00a9fb`) and
+  platform preview mockup") — chronologically _after_ `docs/BASELINE-AUDIT.md` (`c00a9fb`) and
   `docs/CAPABILITY-MATRIX.md` (`902809f`/`a46fd03`), i.e. the plan was written with both audits
   already in hand.
 - **Since `docs/plan.md` was committed, at least 5 more Phase-4/5-relevant fixes have shipped**,
@@ -57,7 +57,7 @@ single riskiest bet in the 24 steps — not a repeat of the git-archaeology or d
 - **Recent commit shape confirms the sibling docs' "actual operating model" finding independently**:
   of the last ~15 commits, none reference a `docs/plan.md` step number; all are either a named bug
   fix ("Fix drag edge cases…"), a named design finding ("FINDING-007…"), or a spec (`Today command
-  center + payment log`). The project ships by owner-ask → spec/finding → fix, not by phase gate.
+center + payment log`). The project ships by owner-ask → spec/finding → fix, not by phase gate.
 
 **Net effect on this review:** the plan is stale in more places, and more recently, than either
 sibling review had visibility into. That trend line matters for the mode decision below — a plan
@@ -71,7 +71,7 @@ process; it benefits from being cut down to what's still true and re-issued as a
 ### 0A. Premise Challenge
 
 1. **Is this the right problem to solve?** Partially. Six of the plan's seven phases (1–6, i.e. 21
-   of 24 steps) exist to serve one declared goal: *"reduce owner daily time spent."* That goal is
+   of 24 steps) exist to serve one declared goal: _"reduce owner daily time spent."_ That goal is
    plausible but **unmeasured** — no file in this repo's docs tree contains a number for how long
    the owner currently spends on admin, confirmed by grep, matching both sibling reviews. Worse, and
    this is new to this review (see Riskiest Bet below): **that KPI is not one of `docs/PRD.md`'s own
@@ -93,21 +93,21 @@ process; it benefits from being cut down to what's still true and re-issued as a
 
 ### 0B. Existing Code Leverage
 
-| Plan phase/step | Claimed state in `docs/plan.md` | Actual state, verified this run |
-| --- | --- | --- |
-| Phase 0 (baseline, capability matrix) | To be produced | **Done.** `docs/BASELINE-AUDIT.md`, `docs/CAPABILITY-MATRIX.md` exist, file:line grounded. |
-| Phase 1 step 3 (7-nav model) | To be built | **Done.** `DashboardLayout.tsx:57-73`, code comment cites the plan step by name. |
-| Phase 1 step 5 (Inbox consolidation) | To be built | **Done.** `InboxPage.tsx`, `?tab=` state, SLA urgency styling. |
-| Phase 1 step 6 (orphaned pages first-class under Calendar) | To be built | **Done.** `CalendarCapacityTabs.tsx` — 3-route segmented tab strip. |
-| Phase 1 step 7 (dead-nav handling) | "Temporarily remove or relabel" | **Superseded by a better shipped decision** — kept reachable, visually secondary, never hidden. |
-| Phase 2 step 9 (cross-nav quick actions) | To be built | **Done.** `QuickActionLauncher.tsx` (Cmd+K). |
-| Phase 2 step 10 (kill blocking dialogs) | To be built | **Done.** `ConfirmDialog`/`Toast` replacing `window.confirm`/`alert`. |
-| Phase 3 step 11 (Reports module) | "Missing production module" | **Done**, and predates the Phase 0 audit (`3d8a11f`). |
-| Phase 3 step 12 (AI Assistant) | "Missing production module" | **Done** (`85f199a`), mechanism differs from `docs/ARCHITECTURE.md`'s description (client-side deterministic module, not an Edge Function + `ai_recommendations` table) but the safety property — advisory-only, no autonomous mutation — holds. |
-| Phase 4 step 14 (reschedule semantics) | To be fixed | **Done, verified this run.** `d6d6781` + `a257b44`. `TodayPage.tsx:118-123` now calls `rescheduleAppointmentAsOwner`. |
-| Phase 5 step 17 (token/ARIA drift) | To be resolved | **Partially done.** `AssistantPage.tsx`'s ARIA tabs fixed (`b150cf3`); `SettingsPage.tsx:164-173` still has the identical bug (verified live this run — `role="tablist"`/`role="tab"`/`aria-selected` present); `InboxPage.tsx`'s tab toggle still has **no** `aria-pressed`/`aria-selected` at all (verified — zero matches). |
-| Phase 5/PRD §4.2 (request filter/priority/history) | Implied by Growth-nav's one sentence | **Not built.** Verified: zero `priority` or filter-control references in `RequestsPanel.tsx`. |
-| Growth (offer/promotion mechanism) | Implied by Growth-nav's one sentence | **Not built**, per `docs/CAPABILITY-MATRIX.md`'s grep, not independently re-checked this run (low priority, see below). |
+| Plan phase/step                                            | Claimed state in `docs/plan.md`      | Actual state, verified this run                                                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phase 0 (baseline, capability matrix)                      | To be produced                       | **Done.** `docs/BASELINE-AUDIT.md`, `docs/CAPABILITY-MATRIX.md` exist, file:line grounded.                                                                                                                                                                                                                                     |
+| Phase 1 step 3 (7-nav model)                               | To be built                          | **Done.** `DashboardLayout.tsx:57-73`, code comment cites the plan step by name.                                                                                                                                                                                                                                               |
+| Phase 1 step 5 (Inbox consolidation)                       | To be built                          | **Done.** `InboxPage.tsx`, `?tab=` state, SLA urgency styling.                                                                                                                                                                                                                                                                 |
+| Phase 1 step 6 (orphaned pages first-class under Calendar) | To be built                          | **Done.** `CalendarCapacityTabs.tsx` — 3-route segmented tab strip.                                                                                                                                                                                                                                                            |
+| Phase 1 step 7 (dead-nav handling)                         | "Temporarily remove or relabel"      | **Superseded by a better shipped decision** — kept reachable, visually secondary, never hidden.                                                                                                                                                                                                                                |
+| Phase 2 step 9 (cross-nav quick actions)                   | To be built                          | **Done.** `QuickActionLauncher.tsx` (Cmd+K).                                                                                                                                                                                                                                                                                   |
+| Phase 2 step 10 (kill blocking dialogs)                    | To be built                          | **Done.** `ConfirmDialog`/`Toast` replacing `window.confirm`/`alert`.                                                                                                                                                                                                                                                          |
+| Phase 3 step 11 (Reports module)                           | "Missing production module"          | **Done**, and predates the Phase 0 audit (`3d8a11f`).                                                                                                                                                                                                                                                                          |
+| Phase 3 step 12 (AI Assistant)                             | "Missing production module"          | **Done** (`85f199a`), mechanism differs from `docs/ARCHITECTURE.md`'s description (client-side deterministic module, not an Edge Function + `ai_recommendations` table) but the safety property — advisory-only, no autonomous mutation — holds.                                                                               |
+| Phase 4 step 14 (reschedule semantics)                     | To be fixed                          | **Done, verified this run.** `d6d6781` + `a257b44`. `TodayPage.tsx:118-123` now calls `rescheduleAppointmentAsOwner`.                                                                                                                                                                                                          |
+| Phase 5 step 17 (token/ARIA drift)                         | To be resolved                       | **Partially done.** `AssistantPage.tsx`'s ARIA tabs fixed (`b150cf3`); `SettingsPage.tsx:164-173` still has the identical bug (verified live this run — `role="tablist"`/`role="tab"`/`aria-selected` present); `InboxPage.tsx`'s tab toggle still has **no** `aria-pressed`/`aria-selected` at all (verified — zero matches). |
+| Phase 5/PRD §4.2 (request filter/priority/history)         | Implied by Growth-nav's one sentence | **Not built.** Verified: zero `priority` or filter-control references in `RequestsPanel.tsx`.                                                                                                                                                                                                                                  |
+| Growth (offer/promotion mechanism)                         | Implied by Growth-nav's one sentence | **Not built**, per `docs/CAPABILITY-MATRIX.md`'s grep, not independently re-checked this run (low priority, see below).                                                                                                                                                                                                        |
 
 **Reading this table as a founder:** roughly two-thirds of the plan's substantive content is already
 shipped. What remains open is small, concrete, and already diagnosed by someone (mostly this repo's
@@ -142,7 +142,7 @@ than a team-scale process would allow.
 **APPROACH A — Follow `docs/plan.md` literally, Phases 4→6 in order**
 Summary: finish the (now much shorter) list of open items inside the plan's existing phase
 structure; keep Phase 6's release-wave/UAT/ops-dashboard ceremony as written.
-Effort: L (human: 1-2 weeks / CC: a few sessions). Risk: Medium — not correctness risk, *process*
+Effort: L (human: 1-2 weeks / CC: a few sessions). Risk: Medium — not correctness risk, _process_
 risk: it re-imposes gates on a team of one that has been correctly ignoring them.
 Reuses: the plan's own phase labels.
 Completeness: 6/10 — technically finishes "the plan," but a large share of that effort re-litigates
@@ -178,6 +178,7 @@ whether it's needed. Shipping B does not foreclose C — it's additive once the 
 ### 0D. SCOPE REDUCTION analysis
 
 **Ruthless cut — what's the absolute minimum that ships value now:**
+
 1. Fix the two live a11y bugs (`SettingsPage.tsx`'s incomplete ARIA tabs, `InboxPage.tsx`'s missing
    `aria-pressed`) — both P1, both trivial, both already diagnosed by `plan-design-review.md`.
 2. Confirm (2-minute check, already done above) that Phase 4 step 14 and the orphaned-page
@@ -195,7 +196,7 @@ disproportionate to a one-person business).
 **What can be a follow-up PR vs. must-ship-together:** items 1-2 above are a single small PR.
 Item 3 is a conversation, not code. Item 4 is a doc edit. Nothing in this reduced set has a
 "must ship together" dependency on anything else — that in itself is evidence the plan's phase-gate
-dependency chain (*"blocks all phases"*, *"depends on Phase 0"*) was never load-bearing.
+dependency chain (_"blocks all phases"_, _"depends on Phase 0"_) was never load-bearing.
 
 ### 0F. Mode Selection
 
@@ -224,10 +225,10 @@ first place — rigor applied to the wrong scope is waste, not diligence.
 Per the mode's own reduced requirements (no CEO plan doc, no Phase 2/3 scope mapping, error map and
 deploy standard scoped to "critical paths only" / "simplest possible", Design section skipped by
 default). This is a strategy document, not a code diff, so each section below evaluates the plan's
-*content*, not a set of file changes.
+_content_, not a set of file changes.
 
 **Section 1 — Architecture.** The plan's real "architecture" is its phase-dependency graph
-(*"blocks all phases"*, *"depends on Phase N"*). Finding: **that graph doesn't describe how the
+(_"blocks all phases"_, _"depends on Phase N"_). Finding: **that graph doesn't describe how the
 project actually ships**, evidenced by Phase 3's flagship modules landing before Phase 0's own audit
 commit. Recommend dropping strict phase-gating from whatever replaces this plan; a flat, priority-
 ordered list is a more honest model of a one-person operation's real constraint (attention, not
@@ -274,7 +275,7 @@ this business doesn't have the headcount to staff.
 
 **Section 9 — Deployment / Rollout.** **Cut Phase 6 step 24's four-wave release choreography**
 (Wave A/B/C/D). One production environment, one deploy path (`docs/DEPLOYMENT.md`), no second
-stakeholder to coordinate a wave with. Keep the underlying *principle* — ship data-safety fixes
+stakeholder to coordinate a wave with. Keep the underlying _principle_ — ship data-safety fixes
 before cosmetic polish — as an ordering rule, not a formal gate ceremony.
 
 **Section 10 — Long-Term Trajectory.** Reversibility of "retire the phase-gated plan.md as literal
@@ -295,8 +296,8 @@ carried forward into this review's Implementation Tasks below rather than re-der
 
 **Not any implementation risk inside the 24 steps — the allocation bet underneath all of them.**
 
-`docs/plan.md`'s own **Decisions** section (line 146) states: *"Primary KPI: reduce owner daily time
-spent."* Twenty-one of the plan's 24 steps — everything from Phase 1 onward — exist to serve that
+`docs/plan.md`'s own **Decisions** section (line 146) states: _"Primary KPI: reduce owner daily time
+spent."_ Twenty-one of the plan's 24 steps — everything from Phase 1 onward — exist to serve that
 one KPI. Cross-checking it against `docs/PRD.md` §8's actual, product-defined success metrics table
 (8 business metrics: monthly confirmed bookings, booking conversion rate, returning-customer rate,
 Google review conversion, appointment utilisation, average booking value, cancellation rate, no-show
@@ -325,7 +326,7 @@ happens, every hour spent on Phase 5/6 process work is a bet placed without havi
 
 **Is the scope right for a one-person, one-location business?** Partially, and unevenly. Phase 0's
 baseline-truth work was exactly right-sized and genuinely valuable — it's the reason this review
-could be this precise. Phases 1-4's *content* (nav consolidation, reschedule integrity, orphaned-page
+could be this precise. Phases 1-4's _content_ (nav consolidation, reschedule integrity, orphaned-page
 discoverability) was right-sized too, which is exactly why it's already been built without waiting
 for phase gates. Phase 6 is where the scope stops fitting the business: release waves, a second
 observability module, and structured UAT scripts are patterns for a team shipping to multiple
@@ -335,11 +336,12 @@ cites as sources.
 
 **Is the phase sequencing right?** No, and the project has already proven it wrong by ignoring it:
 Phase 3's "missing modules" shipped before Phase 0's audit, and Phase 2's quick-actions/dialog work
-shipped in parallel with Phase 1, not after it. The dependency language (*"blocks all phases"*)
+shipped in parallel with Phase 1, not after it. The dependency language (_"blocks all phases"_)
 describes a waterfall that adds no safety here — nothing in the actually-shipped work broke from
 being built out of the declared order.
 
 **What's scope creep relative to what moves the business's numbers?** Ranked, most to least:
+
 1. Phase 6 step 22 (second observability module) — duplicates Sentry, zero PRD metric it serves.
 2. Phase 6 step 24 (four-wave release ceremony) — coordination overhead with no one to coordinate with.
 3. Phase 2 step 2 / Phase 0 step 2's "recurring capability matrix" as ongoing ceremony — valuable once
@@ -373,6 +375,7 @@ rather than contradicts the sibling conclusions.
 ## Required Outputs
 
 ### NOT in scope for this review
+
 - Re-running `/plan-design-review`'s Phase 1+5 pixel-level audit — already done, cited not repeated.
 - Re-deriving the git-archaeology evidence chain — already done by `/office-hours`, re-verified not
   re-produced.
@@ -383,17 +386,20 @@ rather than contradicts the sibling conclusions.
   gap, correctly gated behind the owner conversation (0D item 3), not speculatively designed here.
 
 ### What already exists (reuse targets — do not rebuild)
+
 See the 0B table in full above. Summary: 7-nav IA, Inbox consolidation, orphaned-page discoverability,
 cross-nav quick actions, non-blocking dialogs, Reports, AI Assistant, and (new to this review) the
 reschedule-integrity fix are all shipped and should be documented as done, not re-planned.
 
 ### Dream state delta
-Per 0C: this plan, as literally written, moves *away* from the 12-month ideal of a living, always-
+
+Per 0C: this plan, as literally written, moves _away_ from the 12-month ideal of a living, always-
 current punch list by re-deriving already-good decisions and adding team-scale process. Cutting it to
 Approach B closes that gap almost entirely; Approach C (gated on the owner conversation) closes the
 rest by giving the PRD's own revenue metrics a track that currently doesn't exist.
 
 ### Error & Rescue Registry
+
 ```
   CODEPATH                          | FAILURE MODE                          | STATUS
   -----------------------------------|----------------------------------------|------------------
@@ -406,11 +412,13 @@ rest by giving the PRD's own revenue metrics a track that currently doesn't exis
   reschedule_appointment_as_owner    | vestigial SERVICE_UNAVAILABLE guard    | FIXED (a257b44,
   RPC                                | blocked reschedule with 0 services     | migration 0026)
 ```
+
 No CRITICAL GAPS remain in this registry — all four rows are closed. This is a materially different
 result than either sibling review found (both treated the reschedule bug as the plan's top open item);
 the difference is timing, not disagreement.
 
 ### Failure Modes Registry
+
 ```
   CODEPATH                    | FAILURE MODE                | RESCUED? | TEST? | USER SEES?  | LOGGED?
   -----------------------------|------------------------------|----------|-------|-------------|--------
@@ -422,8 +430,9 @@ the difference is timing, not disagreement.
   toggle                        | on the active-lane toggle    | a11y bug | test  | no selected-|
                                  |                               |          |       | state cue   |
 ```
+
 Neither row is a data-integrity or security gap (hence no CRITICAL GAP marking under this skill's
-own rule, which reserves that for RESCUED=N + TEST=N + USER SEES=Silent on a *data* path) — but both
+own rule, which reserves that for RESCUED=N + TEST=N + USER SEES=Silent on a _data_ path) — but both
 are real, live accessibility bugs in exactly the surfaces this plan's own Phase 1/5 restructured,
 already diagnosed with file:line precision by `plan-design-review.md`, and cheap to fix.
 

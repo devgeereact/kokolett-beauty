@@ -113,7 +113,7 @@ function EventBlockImpl({
         draggable && 'cursor-grab touch-none active:cursor-grabbing',
       )}
     >
-      <span className="flex items-center gap-1 font-mono text-[11px] font-semibold">
+      <span className="flex items-center gap-1 font-mono text-2xs font-semibold">
         <span
           aria-hidden="true"
           className={cn(

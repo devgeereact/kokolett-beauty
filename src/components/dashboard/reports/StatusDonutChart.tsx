@@ -30,10 +30,18 @@ export function StatusDonutChart({
         Appointments by status
       </h2>
       {total === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">No appointments in this period.</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          No appointments in this period.
+        </p>
       ) : (
         <div className="flex flex-wrap items-center gap-6">
-          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} role="img" aria-label="Appointments by status">
+          <svg
+            width={SIZE}
+            height={SIZE}
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+            role="img"
+            aria-label="Appointments by status"
+          >
             <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
               <circle
                 cx={SIZE / 2}
@@ -73,7 +81,13 @@ export function StatusDonutChart({
             >
               {total}
             </text>
-            <text x="50%" y="60%" textAnchor="middle" fontSize="11" fill="var(--muted-foreground)">
+            <text
+              x="50%"
+              y="60%"
+              textAnchor="middle"
+              fontSize="11"
+              fill="var(--muted-foreground)"
+            >
               Total
             </text>
           </svg>

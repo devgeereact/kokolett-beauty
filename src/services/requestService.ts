@@ -64,7 +64,9 @@ type RequestRow = {
 
 function toQueuedRequest(row: RequestRow, queuePosition: number | null): QueuedRequest {
   const service = Array.isArray(row.services) ? row.services[0] : row.services;
-  const appointment = Array.isArray(row.appointments) ? row.appointments[0] : row.appointments;
+  const appointment = Array.isArray(row.appointments)
+    ? row.appointments[0]
+    : row.appointments;
   return {
     id: row.id,
     queue_position: queuePosition,
@@ -84,11 +86,17 @@ function toQueuedRequest(row: RequestRow, queuePosition: number | null): QueuedR
     converted_starts_at: appointment?.starts_at ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    waiting_hours: Math.round(((Date.now() - new Date(row.created_at).getTime()) / 3_600_000) * 10) / 10,
+    waiting_hours:
+      Math.round(((Date.now() - new Date(row.created_at).getTime()) / 3_600_000) * 10) /
+      10,
   };
 }
 
-const OPEN_STATUSES: AvailabilityRequestStatus[] = ['new', 'awaiting_response', 'offer_sent'];
+const OPEN_STATUSES: AvailabilityRequestStatus[] = [
+  'new',
+  'awaiting_response',
+  'offer_sent',
+];
 
 /** Open requests only, oldest first — whoever asked first is served first. */
 export async function listQueuedRequests(): Promise<QueuedRequest[]> {
@@ -99,7 +107,9 @@ export async function listQueuedRequests(): Promise<QueuedRequest[]> {
     .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return (data ?? []).map((row, i) => toQueuedRequest(row as unknown as RequestRow, i + 1));
+  return (data ?? []).map((row, i) =>
+    toQueuedRequest(row as unknown as RequestRow, i + 1),
+  );
 }
 
 /**
@@ -127,7 +137,10 @@ export async function listAllRequests(): Promise<QueuedRequest[]> {
 }
 
 /** Private note, visible only to the owner — never emailed (migration 0030). */
-export async function setRequestOwnerNote(requestId: string, note: string): Promise<void> {
+export async function setRequestOwnerNote(
+  requestId: string,
+  note: string,
+): Promise<void> {
   const { error } = await supabase.rpc('set_request_owner_note', {
     p_request_id: requestId,
     p_note: note,

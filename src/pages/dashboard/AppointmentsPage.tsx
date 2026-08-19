@@ -30,10 +30,16 @@ import { errorMessage } from '@/lib/errors';
 import { downloadCsv } from '@/lib/csv';
 import { formatMoney, formatTime, toSalonDate } from '@/lib/format';
 import { computeDateRange, type DateMode } from '@/lib/appointmentsDateRange';
-import { STATUS_CATEGORIES, STATUS_CATEGORY, STATUS_LABELS, type StatusCategory } from '@/lib/status';
+import {
+  STATUS_CATEGORIES,
+  STATUS_CATEGORY,
+  STATUS_LABELS,
+  type StatusCategory,
+} from '@/lib/status';
 import type { AppointmentDetailed, AppointmentStatus, Service } from '@/types';
 
-type Tab = 'all' | 'upcoming' | 'today' | 'in_service' | 'completed' | 'cancelled_no_show';
+type Tab =
+  'all' | 'upcoming' | 'today' | 'in_service' | 'completed' | 'cancelled_no_show';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -114,7 +120,8 @@ export function AppointmentsPage(): JSX.Element {
     setUpcomingOnly(next === 'upcoming');
     if (next === 'in_service') setVisibleCategories(new Set(['in_service']));
     else if (next === 'completed') setVisibleCategories(new Set(['completed']));
-    else if (next === 'cancelled_no_show') setVisibleCategories(new Set(['cancelled', 'no_show']));
+    else if (next === 'cancelled_no_show')
+      setVisibleCategories(new Set(['cancelled', 'no_show']));
     else setVisibleCategories(new Set(STATUS_CATEGORIES));
   };
 
@@ -127,7 +134,8 @@ export function AppointmentsPage(): JSX.Element {
           (a.status === 'pending_approval' || a.status === 'confirmed') &&
           new Date(a.starts_at).getTime() >= nowMs,
       ).length,
-      today: appointments.filter((a) => toSalonDate(a.starts_at, timezone) === today).length,
+      today: appointments.filter((a) => toSalonDate(a.starts_at, timezone) === today)
+        .length,
       in_service: appointments.filter((a) => a.status === 'in_service').length,
       completed: appointments.filter((a) => a.status === 'completed').length,
       cancelled_no_show: appointments.filter((a) =>
@@ -204,9 +212,13 @@ export function AppointmentsPage(): JSX.Element {
   const defaultAppointment = useMemo((): AppointmentDetailed | null => {
     const byStartsAt = (a: AppointmentDetailed, b: AppointmentDetailed): number =>
       a.starts_at.localeCompare(b.starts_at);
-    const todays = appointments.filter((a) => toSalonDate(a.starts_at, timezone) === today);
+    const todays = appointments.filter(
+      (a) => toSalonDate(a.starts_at, timezone) === today,
+    );
 
-    const inService = [...todays].filter((a) => a.status === 'in_service').sort(byStartsAt)[0];
+    const inService = [...todays]
+      .filter((a) => a.status === 'in_service')
+      .sort(byStartsAt)[0];
     if (inService) return inService;
 
     const upcoming = [...todays]
@@ -277,7 +289,18 @@ export function AppointmentsPage(): JSX.Element {
   };
 
   const exportCsv = (): void => {
-    const header = ['Date', 'Time', 'Client', 'Email', 'Mobile', 'Service', 'Staff', 'Status', 'Reference', 'Paid'];
+    const header = [
+      'Date',
+      'Time',
+      'Client',
+      'Email',
+      'Mobile',
+      'Service',
+      'Staff',
+      'Status',
+      'Reference',
+      'Paid',
+    ];
     const rows = sorted.map((a) => [
       toSalonDate(a.starts_at, timezone),
       formatTime(a.starts_at, timezone),
@@ -298,10 +321,21 @@ export function AppointmentsPage(): JSX.Element {
       title="Appointments"
       subtitle="View, search and manage all appointments."
       actions={
-        <Button size="sm" onClick={() => { setPrefill(null); setJustBooked(null); setBooking(true); }}>
+        <Button
+          size="sm"
+          onClick={() => {
+            setPrefill(null);
+            setJustBooked(null);
+            setBooking(true);
+          }}
+        >
           <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.5} />
           New booking
-          <ChevronDown aria-hidden="true" className="h-4 w-4 opacity-70" strokeWidth={2.5} />
+          <ChevronDown
+            aria-hidden="true"
+            className="h-4 w-4 opacity-70"
+            strokeWidth={2.5}
+          />
         </Button>
       }
     >

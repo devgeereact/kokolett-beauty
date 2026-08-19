@@ -42,46 +42,7 @@ interface UseSupabaseAuth {
 export function useSupabaseAuth(): UseSupabaseAuth;
 ```
 
-## 4. `useOptimizedImage`
-
-`src/hooks/useOptimizedImage.ts`
-Builds a transformed ImageKit URL (real-time resize + auto format/quality).
-
-```ts
-interface ImageTransform {
-  width?: number;
-  height?: number;
-  quality?: number; // 1–100, default 80
-  crop?: 'maintain_ratio' | 'force' | 'at_max';
-}
-export function useOptimizedImage(path: string, t?: ImageTransform): string;
-```
-
-## 5. `useInngestDispatch`
-
-`src/hooks/useInngestDispatch.ts`
-Dispatches a typed event to Inngest's ingest endpoint using the write-only key.
-Fire-and-forget; failures are reported to Sentry, never thrown into the UI.
-
-```ts
-interface DispatchResult {
-  ok: boolean;
-}
-interface UseInngestDispatch {
-  sending: boolean;
-  send: (name: string, data: Record<string, unknown>) => Promise<DispatchResult>;
-}
-export function useInngestDispatch(): UseInngestDispatch;
-```
-
----
-
-# Application hooks
-
-Contracts for the salon-specific hooks. Same rule as above: the signature here is the
-source of truth.
-
-## 6. `useServices`
+## 4. `useServices`
 
 `src/hooks/useServices.ts`
 Active service catalogue with categories, for the marketing site and booking flow.
@@ -98,7 +59,7 @@ interface UseServices {
 export function useServices(includeInactive?: boolean): UseServices;
 ```
 
-## 7. `useAvailability`
+## 5. `useAvailability`
 
 `src/hooks/useAvailability.ts`
 Bookable slots over a rolling window. No service argument since 0011 — one appointment type means slots are absolute.
@@ -124,7 +85,7 @@ export function useAvailability(
 
 **Slots are generated in the database, not the browser.** Anon has no `SELECT` on `appointments` — deliberately, per the closing comment of `0002_salon.sql` — and a policy broad enough to compute availability client-side would publish the salon's entire schedule. `public.available_slots()` does the subtraction under `security definer` and returns only free starts, applying opening rules, exceptions, lead time, horizon, the daily cap and the overlap check.
 
-## 8. `useAppointments`
+## 6. `useAppointments`
 
 `src/hooks/useAppointments.ts`
 Owner-side appointment queries over a date range, with status filtering.
@@ -146,7 +107,7 @@ interface UseAppointments {
 export function useAppointments(options: UseAppointmentsOptions): UseAppointments;
 ```
 
-## 9. `useRealtimeAppointments`
+## 7. `useRealtimeAppointments`
 
 `src/hooks/useRealtimeAppointments.ts`
 Supabase Realtime subscription so the owner's calendar reflects new bookings without
@@ -162,7 +123,7 @@ export function useRealtimeAppointments(
 ): UseRealtimeAppointments;
 ```
 
-## 10. `useCustomerSession`
+## 8. `useCustomerSession`
 
 `src/hooks/useCustomerSession.ts`
 The customer's own view of their bookings. Passwordless — no Supabase auth session, no password.
@@ -188,7 +149,7 @@ interface UseCustomerSession {
 export function useCustomerSession(): UseCustomerSession;
 ```
 
-## 11. `useBusinessSettings`
+## 9. `useBusinessSettings`
 
 `src/hooks/useBusinessSettings.ts`
 The single `booking_settings` row. Public-readable (the booking UI needs lead time and horizon); owner-writable.
@@ -206,7 +167,7 @@ interface UseBusinessSettings {
 export function useBusinessSettings(): UseBusinessSettings;
 ```
 
-## 12. `useOwnerSummary`
+## 10. `useOwnerSummary`
 
 `src/hooks/useOwnerSummary.ts`
 Headline counts for the dashboard in one round trip.
@@ -221,7 +182,7 @@ interface UseOwnerSummary {
 export function useOwnerSummary(): UseOwnerSummary;
 ```
 
-## 13. `useIsOwner`
+## 11. `useIsOwner`
 
 `src/hooks/useIsOwner.ts`
 Whether the signed-in user is salon staff. Resolved by asking the database via `is_owner()` security-definer predicate, not a JWT claim.
@@ -238,7 +199,7 @@ interface UseIsOwner {
 export function useIsOwner(): UseIsOwner;
 ```
 
-## 14. `useLiveClock`
+## 12. `useLiveClock`
 
 `src/hooks/useLiveClock.ts`
 Current time refreshed while the screen stays open. 30s interval (enough for minute display on a tablet left visible for hours).
@@ -247,7 +208,7 @@ Current time refreshed while the screen stays open. 30s interval (enough for min
 export function useLiveClock(): Date;
 ```
 
-## 15. `useNowLine`
+## 13. `useNowLine`
 
 `src/hooks/useNowLine.ts`
 Minutes since local midnight, refreshed for rendering a position line on the calendar. 30s interval.
@@ -256,7 +217,7 @@ Minutes since local midnight, refreshed for rendering a position line on the cal
 export function useNowLine(timezone: string): number;
 ```
 
-## 16. `useSalonToday`
+## 14. `useSalonToday`
 
 `src/hooks/useSalonToday.ts`
 Today's salon day, kept current while the screen stays open. Detects rollover via timer, `visibilitychange`, and `focus`.
@@ -273,7 +234,7 @@ interface SalonToday {
 export function useSalonToday(timezone: string): SalonToday;
 ```
 
-## 17. `useUsualHours`
+## 15. `useUsualHours`
 
 `src/hooks/useUsualHours.ts`
 The salon's usual week, summarized for the footer. Derived from the weekly template so it cannot drift from what the owner publishes.
@@ -288,7 +249,7 @@ interface HoursLine {
 export function useUsualHours(): { lines: HoursLine[]; loading: boolean };
 ```
 
-## 18. `useServiceMenu`
+## 16. `useServiceMenu`
 
 `src/hooks/useServiceMenu.ts`
 Public menu of styles. Failures are quiet (renders nothing) so a visitor without the list can still book.
@@ -303,7 +264,7 @@ export function useServiceMenu(): {
 };
 ```
 
-## 19. `useAppointmentDrag`
+## 17. `useAppointmentDrag`
 
 `src/hooks/useAppointmentDrag.ts`
 Custom pointer-events drag for reschedule. Touch-friendly (HTML5 Drag and Drop is unreliable on tablets). Distinguishes click from drag with a 6px threshold.
@@ -334,6 +295,45 @@ export function useAppointmentDrag(
   onMoved: () => void,
 ): UseAppointmentDrag;
 ```
+
+---
+
+## 18. `useAppointmentActions`
+
+`src/hooks/useAppointmentActions.ts`
+The status transitions an owner can apply to an appointment (confirm, check in, start,
+complete, mark no-show, cancel), with the confirmation copy and the busy state each one
+needs. Shared by the detail modal, the calendar panel and the quick-action steps so the
+same action means the same thing wherever it is offered.
+
+---
+
+## 19. `useNotificationReadState`
+
+`src/hooks/useNotificationReadState.ts`
+Which notifications the owner has already seen. Read state is local to the device, so
+this is a localStorage-backed set rather than a column, and the bell badge counts
+against it.
+
+---
+
+## 20. `useFocusTrap`
+
+`src/hooks/useFocusTrap.ts`
+Keeps Tab inside an open overlay and closes it on Escape. The caller keeps ownership of
+what "closed" means and of where focus goes afterwards; only the trapping is shared.
+
+```ts
+export function useFocusTrap(
+  open: boolean,
+  panelRef: RefObject<HTMLElement>,
+  onEscape: () => void,
+): void;
+```
+
+This loop was copied character for character into `Modal`, `ConfirmDialog` and
+`QuickActionLauncher`, each with its own `FOCUSABLE_SELECTOR`. A keyboard trap that
+behaves differently in three dialogs defeats the point of having one.
 
 ---
 

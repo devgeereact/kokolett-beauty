@@ -14,6 +14,7 @@ Refinement, not a from-scratch build.
 Screenshot: `appointment-1.png`.
 
 Diff found and fixed:
+
 1. **Date-range toolbar select had no icon** — ref shows a small calendar icon
    inside the "Date: This week" box. Added a `Calendar` icon (lucide-react),
    matching the same icon-inside-input pattern already used by the search box
@@ -21,6 +22,7 @@ Diff found and fixed:
 
 Diffs found and deliberately left alone (log only, all pre-existing documented
 decisions, same pattern as the Calendar screen):
+
 - **No Staff/Location dropdowns** in the toolbar or the Filters rail. Documented
   in `AppointmentsFilterPanel.tsx`: single-owner, single-site salon — a picker
   offering exactly one choice would be a fake control, already dropped from
@@ -168,7 +170,7 @@ lg:overflow-y-auto`, aside back to `lg:h-full lg:overflow-y-auto` — same shape
 as the very first version) — but this time also made `AppointmentsFilterPanel`'s
 own `Card` `flex h-full flex-col` (it previously only had `p-5`, sizing to its
 own short content regardless of what the invisible `aside` wrapper around it
-did — which is *why* iterations 1–4 could never visually close this gap no
+did — which is _why_ iterations 1–4 could never visually close this gap no
 matter what the aside's height was: the visible card never stretched, only its
 invisible wrapper did). Now the Filters card's own visible border stretches to
 match the table column, so both are one uniform block reaching the same real
@@ -188,7 +190,7 @@ mobile's normal document flow) — `appointment-mobile-light-4.png`. Build clean
 ## Iteration 7 — user request: match the table card to the (now-good) Filters card
 
 Filters card confirmed good. The table still looked unfinished next to it: its
-scroll was applied from *outside* (`min-h-0 flex-1 lg:overflow-y-auto` wrapping
+scroll was applied from _outside_ (`min-h-0 flex-1 lg:overflow-y-auto` wrapping
 `AppointmentsTable`), which clipped the table's own bordered/rounded box along
 with the rows — the box's natural content (918px) was taller than the clip, so
 its bottom border and rounded corners rendered below the visible line and never
@@ -221,7 +223,7 @@ just sizes to its natural content and shows every row
 Clarified: they didn't want Pagination folded into the table column's height
 (which is why the table card was 64px shorter than Filters — it was reserving
 room for Pagination beneath it inside the same flex column). They want the
-table *card* to match Filters exactly, and Pagination to live below the whole
+table _card_ to match Filters exactly, and Pagination to live below the whole
 row as its own element, not something that needs to align with either card.
 
 Restructured: `AppointmentsTable` is now the sole content of the table column
@@ -300,7 +302,7 @@ tested end-to-end in the browser, not just visually.
 
 Panel was defaulting to a 13 Aug appointment marked `in_service` even though
 "today" (per the system clock, confirmed via `new Date()`) is 15 Aug — the
-`defaultAppointment` logic scanned *all* loaded appointments (the whole "This
+`defaultAppointment` logic scanned _all_ loaded appointments (the whole "This
 week" window) for anything `in_service`, so a demo row that was never marked
 completed on an earlier day kept winning regardless of date.
 
@@ -308,7 +310,7 @@ Fixed: scoped the whole default-selection algorithm to `today` specifically
 (`toSalonDate(a.starts_at, timezone) === today`) before applying the
 in-service → next-upcoming priority. Added the behaviour asked for
 explicitly: once today's list has no more upcoming appointments, fall back to
-today's *last* appointment (`.sort(byStartsAt).at(-1)`) instead of drifting to
+today's _last_ appointment (`.sort(byStartsAt).at(-1)`) instead of drifting to
 nothing or to a different day. Label now has three states instead of two:
 "Currently in service", "Today's next appointment" (starts_at still ahead of
 now), or "Today's last appointment" (today's list exhausted).
@@ -331,7 +333,7 @@ Five asks in one message:
    enough (see #4) to fit its `h-full` box with room to spare — verified via
    `scrollHeight === clientHeight` on the card (686 = 686), not just visually.
 2. **"Move pagination to the card that uses it"** — `Pagination` had been
-   pulled *out* to a separate block below the row (iteration 8, to fix a
+   pulled _out_ to a separate block below the row (iteration 8, to fix a
    height mismatch). Reversed that: `AppointmentsTable` now takes
    `page`/`pageSize`/`totalItems`/`onPageChange` directly and renders
    `Pagination` as its own footer, inside the same bordered box, below a
@@ -369,7 +371,7 @@ Five asks in one message:
      `border-style: solid` needed no change — Tailwind's preflight already
      sets it as the base default for every bordered element.
    - Removed `shadow-card` from the shared `Card` component only (flat,
-     border-only now) — did *not* touch the other seven files that use
+     border-only now) — did _not_ touch the other seven files that use
      `shadow-card` directly (`ConfirmDialog`, `DatePicker`, `Toast`,
      `QuickActionLauncher`, `AppointmentRowMenu`, `CalendarCapacityTabs`,
      `BookPage`). Those are floating/overlay surfaces (dialogs, dropdowns,

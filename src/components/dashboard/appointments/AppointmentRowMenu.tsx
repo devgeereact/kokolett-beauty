@@ -75,7 +75,9 @@ export function AppointmentRowMenu({
             onClick={() => {
               setOpen(false);
               if (appointment.customer_id) {
-                void navigate(`${routes.owner.customers}?customer=${appointment.customer_id}`);
+                void navigate(
+                  `${routes.owner.customers}?customer=${appointment.customer_id}`,
+                );
               }
             }}
           >

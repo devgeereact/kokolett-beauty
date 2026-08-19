@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import {
   CALENDAR_GRID_HEIGHT_CLASS,
   dayNumber,
@@ -26,8 +26,6 @@ export interface WeekViewProps {
   timezone: string;
   appointmentsByDate: Map<string, AppointmentDetailed[]>;
   openSlotsByDate: Map<string, OwnerDaySlot[]>;
-  /** Longest active service's duration, in minutes — pads the axis close time. */
-  maxServiceDurationMin: number;
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
   onSelectDate: (date: string) => void;
   onSelectOpenSlot: (date: string, slot: OwnerDaySlot) => void;
@@ -122,7 +120,6 @@ export function WeekView({
   timezone,
   appointmentsByDate,
   openSlotsByDate,
-  maxServiceDurationMin,
   onSelectAppointment,
   onSelectDate,
   onSelectOpenSlot,
@@ -130,39 +127,10 @@ export function WeekView({
 }: WeekViewProps): JSX.Element {
   const nowMinutes = useNowLine(timezone);
 
-  // Memoized so drag.preview changes (the highest-frequency re-render
-  // trigger, firing on every pointermove) don't rebuild this array or hand
-  // WeekAppointmentBlock/WeekOpenSlotBlock a new `range` object on every
-  // frame — drag.preview isn't a dependency here, so during a drag this
-  // returns the same object reference and those memoized blocks correctly
-  // skip re-rendering. nowMinutes stays a real dependency (not just for
-  // cache-busting): the live "now" line needs the axis to actually widen to
-  // cover the current time as the day goes on, or it can silently stop
-  // appearing once "now" drifts outside a range fitted at mount.
-  //
-  // Fitted to published slot times (any status — a booked slot's start is
-  // still real evidence the salon is open then), not to appointment times —
-  // an appointment sitting outside currently-published hours (a legacy row,
-  // a demo artifact) doesn't get to stretch the whole week's grid to cover
-  // it; it still renders, just clamped to the nearest edge.
-  const { range, labels } = useMemo(() => {
-    const slotStartMinutes: number[] = [];
-    for (const date of dates) {
-      for (const s of openSlotsByDate.get(date) ?? []) {
-        slotStartMinutes.push(minutesSinceMidnight(s.starts_at, timezone));
-      }
-    }
-    // The live "now" line needs the axis to actually cover the current time
-    // — otherwise a day with only sparse published slots can auto-fit a
-    // range that excludes "now" entirely, and the line silently never
-    // appears.
-    const computedRange = openingHoursRange(
-      slotStartMinutes,
-      maxServiceDurationMin,
-      dates.includes(today) ? nowMinutes : undefined,
-    );
-    return { range: computedRange, labels: hourLabels(computedRange) };
-  }, [dates, openSlotsByDate, maxServiceDurationMin, timezone, today, nowMinutes]);
+  // Fixed 08:00–20:00 axis — doesn't stretch for slots, appointments, or
+  // "now", so it's a plain constant rather than something to memoize.
+  const range = openingHoursRange();
+  const labels = hourLabels(range);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
 
@@ -197,8 +165,8 @@ export function WeekView({
           <thead>
             <tr className="border-b border-border">
               <th scope="col" className="w-[52px] py-2.5 text-center">
-                <span className="text-[11px] font-medium text-muted-foreground">Time</span>
-                <span className="block text-[10px] text-muted-foreground">
+                <span className="text-2xs font-medium text-muted-foreground">Time</span>
+                <span className="block text-2xs text-muted-foreground">
                   {gmtOffsetLabel(timezone)}
                 </span>
               </th>
@@ -216,12 +184,12 @@ export function WeekView({
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     )}
                   >
-                    <span className="text-[11px] font-medium text-muted-foreground">
+                    <span className="text-2xs font-medium text-muted-foreground">
                       {WEEKDAY_HEADINGS[(dayOfWeek(date) + 6) % 7]}
                     </span>
                     <span
                       className={cn(
-                        'flex h-7 w-7 items-center justify-center rounded-full text-[15px]',
+                        'flex h-7 w-7 items-center justify-center rounded-full text-base',
                         date === today
                           ? 'bg-primary font-semibold text-primary-foreground'
                           : 'text-foreground',
@@ -239,7 +207,7 @@ export function WeekView({
               <tr key={label} style={{ height: `${100 / labels.length}%` }}>
                 <th
                   scope="row"
-                  className="pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
+                  className="pr-2 text-right align-top text-2xs font-normal text-muted-foreground"
                 >
                   {label}
                 </th>

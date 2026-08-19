@@ -21,7 +21,7 @@ _Last updated: 2026-08-06 (revised after intake form)_
   (`VITE_SALON_EMAIL`, `SMTP_FROM_EMAIL`).
 - **Booking model**: **availability-first with a hybrid trust gate** (user decision,
   06 Aug 2026). Customers only ever see slots that are genuinely bookable.
-  **Returning customers — those with at least one *completed* appointment — are
+  **Returning customers — those with at least one _completed_ appointment — are
   confirmed instantly. First-time customers are held for owner approval**, with the
   slot reserved from the moment of submission and the hold released automatically if
   the approval window elapses. A prior cancellation or no-show does not earn instant
@@ -35,7 +35,7 @@ _Last updated: 2026-08-06 (revised after intake form)_
   wait on the same time.
 - **Domain**: `https://www.kokolettbeauty.com` (moved from `koko.gakinz.com` 11 Aug 2026).
 - **Theme**: default follows the operating system preference; explicit light and dark
-  both available and persisted as the *preference*, not the resolved value.
+  both available and persisted as the _preference_, not the resolved value.
 - **Design tokens**: supplied by the user as a full shadcn-style token set —
   terracotta `#e05d38` primary against cool neutral greys, Inter / Source Serif 4 /
   JetBrains Mono, radius `0.75rem`. Adopted verbatim.
@@ -62,7 +62,7 @@ _Last updated: 2026-08-06 (revised after intake form)_
 
 ## Assumptions
 
-Each line is a decision made *for* the user in the absence of an answer. All are cheap
+Each line is a decision made _for_ the user in the absence of an answer. All are cheap
 to change now and expensive to change after build.
 
 - `ASSUMPTION` App name **Kokolett Beauty UK**; PWA short name **Kokolett**; package
@@ -89,17 +89,17 @@ to change now and expensive to change after build.
 
 ## Infrastructure (provisioned 06 Aug 2026)
 
-| Thing | Value |
-| --- | --- |
-| Repo | `github.com/devgeereact/kokolett-beauty` — **public** (unlimited Actions, free CodeQL + Dependabot) |
-| Supabase ref | `erqrfjlozqyhogneqraj` |
-| Supabase URL | `https://erqrfjlozqyhogneqraj.supabase.co` |
-| Supabase region | `eu-west-2` (London) — chosen over the usual `eu-west-1` for UK data residency |
-| Migrations applied | `0001_init`, `0002_salon` — verified via `supabase migration list` |
-| Auth | Magic link only; no OAuth provider enabled. Site URL and redirects point at `https://www.kokolettbeauty.com`; OTP is 8 characters, 30-minute expiry, 60-second send throttle |
-| Live site | `https://www.kokolettbeauty.com` — source in `coming-soon/` or `dist/` depending on launch state |
-| Dev + preview port | `5082` (block 08, `strictPort`) |
-| DB password | macOS Keychain, service `supabase-kokolett-db`. Never in a file |
+| Thing              | Value                                                                                                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repo               | `github.com/devgeereact/kokolett-beauty` — **public** (unlimited Actions, free CodeQL + Dependabot)                                                                          |
+| Supabase ref       | `erqrfjlozqyhogneqraj`                                                                                                                                                       |
+| Supabase URL       | `https://erqrfjlozqyhogneqraj.supabase.co`                                                                                                                                   |
+| Supabase region    | `eu-west-2` (London) — chosen over the usual `eu-west-1` for UK data residency                                                                                               |
+| Migrations applied | `0001_init`, `0002_salon` — verified via `supabase migration list`                                                                                                           |
+| Auth               | Magic link only; no OAuth provider enabled. Site URL and redirects point at `https://www.kokolettbeauty.com`; OTP is 8 characters, 30-minute expiry, 60-second send throttle |
+| Live site          | `https://www.kokolettbeauty.com` — source in `coming-soon/` or `dist/` depending on launch state                                                                             |
+| Dev + preview port | `5082` (block 08, `strictPort`)                                                                                                                                              |
+| DB password        | macOS Keychain, service `supabase-kokolett-db`. Never in a file                                                                                                              |
 
 RLS was verified from an anonymous client, not from admin SQL: `customers`,
 `appointments`, `profiles`, `staff`, `services`, `availability_requests`,
@@ -179,11 +179,11 @@ better retention, more Google reviews, fewer scheduling conflicts, actionable in
 
 ### Users, Roles & Permissions (→ PRD.md / SCHEMA.md RLS)
 
-| Role | Authentication | Can do |
-|---|---|---|
-| `anon` (visitor) | none | Read the marketing site, active services, and generated availability. Create a booking via a validated RPC (instant if returning, held if first-time). Submit an availability request. |
-| `customer` | magic link, 30-day session | Everything `anon` can, plus view their own appointments and history, cancel, reschedule, rebook. Scoped strictly to their own `customer_id`. |
-| `owner` | Supabase Auth magic link | Everything. Sole mutator of services, availability, settings, appointments, customer records, and AI recommendations. |
+| Role             | Authentication             | Can do                                                                                                                                                                                 |
+| ---------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `anon` (visitor) | none                       | Read the marketing site, active services, and generated availability. Create a booking via a validated RPC (instant if returning, held if first-time). Submit an availability request. |
+| `customer`       | magic link, 30-day session | Everything `anon` can, plus view their own appointments and history, cancel, reschedule, rebook. Scoped strictly to their own `customer_id`.                                           |
+| `owner`          | Supabase Auth magic link   | Everything. Sole mutator of services, availability, settings, appointments, customer records, and AI recommendations.                                                                  |
 
 Enforced by an `is_owner()` security-definer predicate over a `staff` table, not by a
 JWT claim the client could shape.

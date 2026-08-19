@@ -1,9 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { FOCUSABLE_SELECTOR, useFocusTrap } from '@/hooks/useFocusTrap';
 import { cn } from '@/lib/utils';
-
-const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
  * A reusable accessible dialog — portal, backdrop, focus trap, Escape to
@@ -42,32 +40,7 @@ export function Modal({
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-      const panel = panelRef.current;
-      if (!panel) return;
-      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
+  useFocusTrap(open, panelRef, onClose);
 
   useEffect(() => {
     if (!open) return;

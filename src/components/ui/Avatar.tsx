@@ -16,12 +16,19 @@ const ICON_SIZES = {
 } as const;
 
 /** Chart tokens give five tinted grounds — reused here purely for visual variety, not data meaning. */
-const TILES = ['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5'] as const;
+const TILES = [
+  'bg-chart-1',
+  'bg-chart-2',
+  'bg-chart-3',
+  'bg-chart-4',
+  'bg-chart-5',
+] as const;
 
 /** Same customer always lands on the same tile colour. */
 function tileIndex(name: string): number {
   let hash = 0;
-  for (let i = 0; i < name.length; i += 1) hash = (hash + name.charCodeAt(i)) % TILES.length;
+  for (let i = 0; i < name.length; i += 1)
+    hash = (hash + name.charCodeAt(i)) % TILES.length;
   return hash;
 }
 

@@ -130,7 +130,9 @@ export function BusinessTabContent(): JSX.Element {
     <div className="space-y-6">
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <Card className="p-5">
-          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Salon details</h2>
+          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+            Salon details
+          </h2>
           <p className="mb-4 text-sm text-muted-foreground">
             Shown in your website footer and at the bottom of every email a customer gets.
           </p>
@@ -172,9 +174,12 @@ export function BusinessTabContent(): JSX.Element {
         </Card>
 
         <Card className="p-5">
-          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Booking rules</h2>
+          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+            Booking rules
+          </h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            Enforced by the database, so these apply even to a booking page someone already had open.
+            Enforced by the database, so these apply even to a booking page someone
+            already had open.
           </p>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Slot spacing (min)">
@@ -236,7 +241,9 @@ export function BusinessTabContent(): JSX.Element {
                   id={id}
                   inputMode="numeric"
                   value={form.cancellationWindow}
-                  onChange={(e) => setForm({ ...form, cancellationWindow: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, cancellationWindow: e.target.value })
+                  }
                 />
               )}
             </Field>
@@ -268,11 +275,17 @@ export function BusinessTabContent(): JSX.Element {
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <Card className="p-5">
-          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Google reviews</h2>
+          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+            Google reviews
+          </h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            The link is where you send customers; the Place ID lets your reviews appear on your website.
+            The link is where you send customers; the Place ID lets your reviews appear on
+            your website.
           </p>
-          <Field label="Google review link" hint="Sent automatically after an appointment is completed.">
+          <Field
+            label="Google review link"
+            hint="Sent automatically after an appointment is completed."
+          >
             {({ id }) => (
               <Input
                 id={id}
@@ -318,18 +331,36 @@ export function BusinessTabContent(): JSX.Element {
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <Card className="p-5">
-          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Links to share</h2>
+          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+            Links to share
+          </h2>
           <p className="mb-4 text-sm text-muted-foreground">
             Paste these into your Instagram bio, a story, or a WhatsApp reply.
           </p>
-          <ShareLink label="Book an appointment" hint="Goes straight to the times you have open." url={`${SITE}${routes.public.book}`} />
-          <ShareLink label="Join my mailing list" hint="Name and email only." url={`${SITE}${routes.public.subscribe}`} />
-          <ShareLink label="Ask for a time" hint="For when nothing on the calendar suits them." url={`${SITE}${routes.public.requestAvailability}`} />
+          <ShareLink
+            label="Book an appointment"
+            hint="Goes straight to the times you have open."
+            url={`${SITE}${routes.public.book}`}
+          />
+          <ShareLink
+            label="Join my mailing list"
+            hint="Name and email only."
+            url={`${SITE}${routes.public.subscribe}`}
+          />
+          <ShareLink
+            label="Ask for a time"
+            hint="For when nothing on the calendar suits them."
+            url={`${SITE}${routes.public.requestAvailability}`}
+          />
         </Card>
 
         <Card className="p-5">
-          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Mailing list</h2>
-          <p className="mb-4 text-sm text-muted-foreground">Everyone who signed up through your link.</p>
+          <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+            Mailing list
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Everyone who signed up through your link.
+          </p>
           {subscribers === null ? (
             <LoadingState label="Counting…" />
           ) : subscribers.length === 0 ? (
@@ -338,7 +369,9 @@ export function BusinessTabContent(): JSX.Element {
             </p>
           ) : (
             <>
-              <p className="font-serif text-3xl font-semibold text-foreground">{subscribers.length}</p>
+              <p className="font-serif text-3xl font-semibold text-foreground">
+                {subscribers.length}
+              </p>
               <p className="text-sm text-muted-foreground">
                 {subscribers.length === 1 ? 'person' : 'people'} on the list
               </p>

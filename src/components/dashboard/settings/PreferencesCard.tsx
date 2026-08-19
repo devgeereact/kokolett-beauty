@@ -3,7 +3,11 @@ import { Clock, Globe, Moon, SlidersHorizontal, Sun, SunMoon } from 'lucide-reac
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Field';
 import { useTheme } from '@/context/ThemeContext';
-import { getTimeFormatPreference, setTimeFormatPreference, type TimeFormatPreference } from '@/lib/format';
+import {
+  getTimeFormatPreference,
+  setTimeFormatPreference,
+  type TimeFormatPreference,
+} from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { ThemeMode } from '@/types';
 
@@ -25,7 +29,9 @@ function readDateFormat(): DateFormat {
  */
 export function PreferencesCard(): JSX.Element {
   const { theme, setTheme } = useTheme();
-  const [timeFormat, setTimeFormatState] = useState<TimeFormatPreference>(getTimeFormatPreference);
+  const [timeFormat, setTimeFormatState] = useState<TimeFormatPreference>(
+    getTimeFormatPreference,
+  );
   const [dateFormat, setDateFormat] = useState<DateFormat>(readDateFormat);
 
   const onTimeFormat = (pref: TimeFormatPreference): void => {
@@ -45,7 +51,9 @@ export function PreferencesCard(): JSX.Element {
           <SlidersHorizontal aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <h2 className="font-serif text-base font-semibold text-foreground">Preferences</h2>
+          <h2 className="font-serif text-base font-semibold text-foreground">
+            Preferences
+          </h2>
           <p className="text-sm text-muted-foreground">App appearance and behaviour.</p>
         </div>
       </div>
@@ -53,20 +61,22 @@ export function PreferencesCard(): JSX.Element {
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <SunMoon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <SunMoon
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             <div>
               <p className="text-sm font-medium text-foreground">Theme</p>
               <p className="text-xs text-muted-foreground">Choose light or dark mode</p>
             </div>
           </div>
           <div className="inline-flex rounded-lg border border-border p-0.5">
-            {(
-              [
-                { mode: 'light' as ThemeMode, label: 'Light', icon: Sun },
-                { mode: 'dark' as ThemeMode, label: 'Dark', icon: Moon },
-                { mode: 'system' as ThemeMode, label: 'Auto', icon: SunMoon },
-              ]
-            ).map((opt) => (
+            {[
+              { mode: 'light' as ThemeMode, label: 'Light', icon: Sun },
+              { mode: 'dark' as ThemeMode, label: 'Dark', icon: Moon },
+              { mode: 'system' as ThemeMode, label: 'Auto', icon: SunMoon },
+            ].map((opt) => (
               <button
                 key={opt.mode}
                 type="button"
@@ -88,7 +98,11 @@ export function PreferencesCard(): JSX.Element {
 
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Globe aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Globe
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             <div>
               <p className="text-sm font-medium text-foreground">Language</p>
               <p className="text-xs text-muted-foreground">Set your preferred language</p>
@@ -101,7 +115,11 @@ export function PreferencesCard(): JSX.Element {
 
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Clock
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             <div>
               <p className="text-sm font-medium text-foreground">Time format</p>
               <p className="text-xs text-muted-foreground">Choose 12h or 24h</p>
@@ -120,7 +138,11 @@ export function PreferencesCard(): JSX.Element {
 
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Clock
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             <div>
               <p className="text-sm font-medium text-foreground">Date format</p>
               <p className="text-xs text-muted-foreground">Select your date format</p>

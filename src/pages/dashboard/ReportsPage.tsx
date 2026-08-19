@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, CalendarCheck, PoundSterling, TrendingUp, UserPlus, UserX } from 'lucide-react';
+import {
+  Calendar,
+  CalendarCheck,
+  PoundSterling,
+  TrendingUp,
+  UserPlus,
+  UserX,
+} from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AdvisorySection } from '@/components/dashboard/assistant/AdvisorySection';
-import { BusinessAnalyticsPanel } from '@/components/dashboard/assistant/BusinessAnalyticsPanel';
-import { TrendAnalysisPanel } from '@/components/dashboard/assistant/TrendAnalysisPanel';
 import { DayOfWeekChart } from '@/components/dashboard/insights/DayOfWeekChart';
 import { HourOfDayChart } from '@/components/dashboard/insights/HourOfDayChart';
 import { StatTrendTile } from '@/components/dashboard/reports/StatTrendTile';
@@ -16,9 +20,20 @@ import { Card } from '@/components/ui/Card';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { getReportsData, getReportsOverview, type ReportsData, type ReportsOverview } from '@/services/reportsService';
+import {
+  getReportsData,
+  getReportsOverview,
+  type ReportsData,
+  type ReportsOverview,
+} from '@/services/reportsService';
 import { downloadCsv } from '@/lib/csv';
-import { addDays, formatDateShort, formatDateTime, formatMoney, toSalonDate } from '@/lib/format';
+import {
+  addDays,
+  formatDateShort,
+  formatDateTime,
+  formatMoney,
+  toSalonDate,
+} from '@/lib/format';
 import { routes } from '@/lib/routes';
 
 /**
@@ -55,7 +70,10 @@ export function ReportsPage(): JSX.Element {
 
   const load = (): void => {
     setError(null);
-    Promise.all([getReportsOverview(timezone, range.from, range.to), getReportsData(timezone)])
+    Promise.all([
+      getReportsOverview(timezone, range.from, range.to),
+      getReportsData(timezone),
+    ])
       .then(([o, l]) => {
         setOverview(o);
         setLegacy(l);
@@ -109,7 +127,8 @@ export function ReportsPage(): JSX.Element {
               </select>
             </div>
             <span className="hidden text-sm text-muted-foreground md:inline">
-              {formatDateShort(`${overview.from}T00:00:00Z`)} – {formatDateShort(`${overview.to}T00:00:00Z`)}
+              {formatDateShort(`${overview.from}T00:00:00Z`)} –{' '}
+              {formatDateShort(`${overview.to}T00:00:00Z`)}
             </span>
             <Button variant="ghost" size="sm" onClick={exportReport}>
               Export report
@@ -175,13 +194,19 @@ export function ReportsPage(): JSX.Element {
           <div className="grid gap-6 lg:grid-cols-2">
             <TrendLineChart
               title="Appointments over time"
-              points={overview.seriesByDay.map((d) => ({ date: d.date, value: d.appointments }))}
+              points={overview.seriesByDay.map((d) => ({
+                date: d.date,
+                value: d.appointments,
+              }))}
               colorVar="var(--primary)"
               formatValue={(n) => String(n)}
             />
             <TrendLineChart
               title="Revenue over time"
-              points={overview.seriesByDay.map((d) => ({ date: d.date, value: d.revenuePence / 100 }))}
+              points={overview.seriesByDay.map((d) => ({
+                date: d.date,
+                value: d.revenuePence / 100,
+              }))}
               colorVar="var(--chart-3)"
               formatValue={(n) => `£${n}`}
             />
@@ -195,14 +220,18 @@ export function ReportsPage(): JSX.Element {
                 Appointments by service
               </h2>
               {overview.byService.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No appointments in this period.</p>
+                <p className="text-sm text-muted-foreground">
+                  No appointments in this period.
+                </p>
               ) : (
                 <div className="space-y-3">
                   {overview.byService.map((s) => {
                     const max = overview.byService[0]!.count;
                     return (
                       <div key={s.name} className="flex items-center gap-3">
-                        <span className="w-32 shrink-0 truncate text-sm text-foreground">{s.name}</span>
+                        <span className="w-32 shrink-0 truncate text-sm text-foreground">
+                          {s.name}
+                        </span>
                         <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                           <div
                             className="h-full rounded-full bg-primary"
@@ -226,7 +255,9 @@ export function ReportsPage(): JSX.Element {
                 Recent bookings
               </h2>
               {overview.recentBookings.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nothing booked in this period yet.</p>
+                <p className="text-sm text-muted-foreground">
+                  Nothing booked in this period yet.
+                </p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[480px] text-sm">
@@ -245,14 +276,20 @@ export function ReportsPage(): JSX.Element {
                           <td className="py-2.5 pr-3">
                             <div className="flex items-center gap-2">
                               <Avatar name={b.customer_name ?? 'Customer'} size="sm" />
-                              <span className="truncate text-foreground">{b.customer_name}</span>
+                              <span className="truncate text-foreground">
+                                {b.customer_name}
+                              </span>
                             </div>
                           </td>
-                          <td className="py-2.5 pr-3 text-foreground">{b.service_name}</td>
+                          <td className="py-2.5 pr-3 text-foreground">
+                            {b.service_name}
+                          </td>
                           <td className="py-2.5 pr-3 whitespace-nowrap text-muted-foreground">
                             {formatDateTime(b.starts_at, timezone)}
                           </td>
-                          <td className="py-2.5 pr-3 text-foreground">{formatMoney(b.price_pence)}</td>
+                          <td className="py-2.5 pr-3 text-foreground">
+                            {formatMoney(b.price_pence)}
+                          </td>
                           <td className="py-2.5">
                             <StatusChip status={b.status} />
                           </td>
@@ -269,7 +306,9 @@ export function ReportsPage(): JSX.Element {
                 Top customers by visits
               </h2>
               {overview.topCustomers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nobody has a completed visit yet.</p>
+                <p className="text-sm text-muted-foreground">
+                  Nobody has a completed visit yet.
+                </p>
               ) : (
                 <ul className="space-y-3">
                   {overview.topCustomers.map((r) => (
@@ -289,7 +328,9 @@ export function ReportsPage(): JSX.Element {
           </div>
 
           <Card className="p-5">
-            <h2 className="mb-4 font-serif text-base font-semibold text-foreground">Insights</h2>
+            <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
+              Insights
+            </h2>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="flex items-start gap-3">
                 <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-in-service text-status-in-service">
@@ -298,11 +339,13 @@ export function ReportsPage(): JSX.Element {
                 <div>
                   <p className="text-sm font-medium text-foreground">
                     Revenue{' '}
-                    {overview.totals.revenuePence >= overview.previous.revenuePence ? 'is up' : 'is down'}
+                    {overview.totals.revenuePence >= overview.previous.revenuePence
+                      ? 'is up'
+                      : 'is down'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    You earned {formatMoney(overview.totals.revenuePence)} this period, compared to{' '}
-                    {formatMoney(overview.previous.revenuePence)} last period.
+                    You earned {formatMoney(overview.totals.revenuePence)} this period,
+                    compared to {formatMoney(overview.previous.revenuePence)} last period.
                   </p>
                 </div>
               </div>
@@ -311,7 +354,9 @@ export function ReportsPage(): JSX.Element {
                   <UserPlus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-foreground">New customer growth</p>
+                  <p className="text-sm font-medium text-foreground">
+                    New customer growth
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     You gained {overview.totals.newCustomers} new customer
                     {overview.totals.newCustomers === 1 ? '' : 's'} this period.
@@ -321,13 +366,17 @@ export function ReportsPage(): JSX.Element {
               {overview.busiestDay && (
                 <div className="flex items-start gap-3">
                   <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-pending text-status-pending">
-                    <CalendarCheck aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+                    <CalendarCheck
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                      strokeWidth={2}
+                    />
                   </span>
                   <div>
                     <p className="text-sm font-medium text-foreground">Peak day</p>
                     <p className="text-xs text-muted-foreground">
-                      {overview.busiestDay.name} is your busiest day, with {overview.busiestDay.count}{' '}
-                      appointments.
+                      {overview.busiestDay.name} is your busiest day, with{' '}
+                      {overview.busiestDay.count} appointments.
                     </p>
                   </div>
                 </div>
@@ -393,13 +442,6 @@ export function ReportsPage(): JSX.Element {
           </Card>
         </div>
       )}
-
-      <AdvisorySection title="Business analytics" description="AI-summarised read of how the business is trending.">
-        <BusinessAnalyticsPanel timezone={timezone} />
-      </AdvisorySection>
-      <AdvisorySection title="Appointment trends" description="Patterns in when and what customers book.">
-        <TrendAnalysisPanel timezone={timezone} />
-      </AdvisorySection>
     </DashboardLayout>
   );
 }

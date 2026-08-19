@@ -1,52 +1,16 @@
-import { memo, useEffect, useMemo, useState } from 'react';
-import { HOUR_ROW_PX, hourLabels, hourRange, offsetPercent, type HourRange } from '@/lib/calendar';
-import { formatTime, minutesSinceMidnight, toSalonDate } from '@/lib/format';
+import { memo, useMemo } from 'react';
+import {
+  hourGridlines,
+  hourLabels,
+  openingHoursRange,
+  offsetPercent,
+} from '@/lib/calendar';
+import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { cn } from '@/lib/utils';
-import { listDaySlots } from '@/services/availabilityService';
-import { listActiveServices } from '@/services/serviceCatalogService';
 import type { AppointmentDetailed } from '@/types';
-
-/** "09:30" → 570. */
-function timeToMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(':').map(Number);
-  return (h ?? 0) * 60 + (m ?? 0);
-}
-
-/**
- * Today's actual published opening/closing, not a guess from which
- * appointments happen to be booked — a quiet late slot must still show, and
- * a fully-booked early morning must not make the axis start later than the
- * salon really opens. Closing pads the last bookable slot by the longest
- * active service, since that slot can run that long.
- */
-function useOpeningHoursRange(timezone: string): HourRange | null {
-  const [range, setRange] = useState<HourRange | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const today = toSalonDate(new Date(), timezone);
-    Promise.all([listDaySlots(today), listActiveServices()])
-      .then(([slots, services]) => {
-        if (cancelled || slots.length === 0) return;
-        const starts = slots.map((s) => timeToMinutes(s.local_time)).sort((a, b) => a - b);
-        const maxDuration = Math.max(60, ...services.map((s) => s.duration_min));
-        const openMin = Math.floor(starts[0]! / 60) * 60;
-        const closeMin = Math.min(24 * 60, Math.ceil((starts.at(-1)! + maxDuration) / 60) * 60);
-        setRange({ startMin: openMin, endMin: closeMin });
-      })
-      .catch(() => {
-        if (!cancelled) setRange(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [timezone]);
-
-  return range;
-}
 
 /**
  * One pastel tint per customer, off the `--tint-chart-*` tokens (docs/
@@ -87,7 +51,11 @@ function assignCustomerTints(appointments: AppointmentDetailed[]): Map<string, s
     let tint = customerTint.get(key);
     if (!tint) {
       let index = nextPaletteIndex % CUSTOMER_TINTS.length;
-      for (let tries = 0; busy.has(CUSTOMER_TINTS[index]!) && tries < CUSTOMER_TINTS.length; tries += 1) {
+      for (
+        let tries = 0;
+        busy.has(CUSTOMER_TINTS[index]!) && tries < CUSTOMER_TINTS.length;
+        tries += 1
+      ) {
         index = (index + 1) % CUSTOMER_TINTS.length;
       }
       tint = CUSTOMER_TINTS[index]!;
@@ -163,13 +131,13 @@ const TimelineBlock = memo(function TimelineBlock({
 });
 
 /**
- * Today's schedule as a proportional hour-axis timeline — the same fitted
- * range / positioning math `DayView` uses for the real Calendar page
- * (`@/lib/calendar`'s `hourRange`/`offsetPercent`), rendered with the
- * dashboard's own pastel per-customer block treatment rather than Calendar's
- * neutral `EventBlock` style — a summary widget, not the primary editing
- * surface. Sized to fit the whole day at a fixed hour height — it does not
- * stretch or shrink to match a neighbouring card.
+ * Today's schedule as a proportional hour-axis timeline — the same fixed
+ * 08:00–20:00 axis and percentage-based positioning `DayView` uses for the
+ * real Calendar page (`@/lib/calendar`'s `openingHoursRange`/`offsetPercent`),
+ * rendered with the dashboard's own pastel per-customer block treatment
+ * rather than Calendar's neutral `EventBlock` style — a summary widget, not
+ * the primary editing surface. Stretches to fill whatever height the parent
+ * card gives it, same as the Calendar grid does.
  */
 export function ScheduleTimeline({
   appointments,
@@ -185,38 +153,18 @@ export function ScheduleTimeline({
   onToggle: (id: string) => void;
 }): JSX.Element {
   const nowMinutes = useNowLine(timezone);
-  const openingHours = useOpeningHoursRange(timezone);
-
-  const { range, labels, gridHeight } = useMemo(() => {
-    // Prefer the day's real published hours; fall back to fitting the
-    // booked appointments while that RPC is still in flight.
-    const computedRange =
-      openingHours ??
-      hourRange([
-        ...appointments.flatMap((a) => [
-          minutesSinceMidnight(a.starts_at, timezone),
-          minutesSinceMidnight(a.ends_at, timezone),
-        ]),
-        nowMinutes,
-      ]);
-    const computedLabels = hourLabels(computedRange);
-    return {
-      range: computedRange,
-      labels: computedLabels,
-      gridHeight: computedLabels.length * HOUR_ROW_PX,
-    };
-  }, [appointments, timezone, nowMinutes, openingHours]);
+  const range = openingHoursRange();
+  const labels = hourLabels(range);
 
   const tints = useMemo(() => assignCustomerTints(appointments), [appointments]);
 
   return (
-    <div className="flex overflow-hidden rounded-lg border border-border bg-card">
-      <div>
+    <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
+      <div className="flex flex-col">
         {labels.map((label) => (
           <div
             key={label}
-            style={{ height: HOUR_ROW_PX }}
-            className="w-12 pr-2 pt-1 text-right text-[10px] text-muted-foreground"
+            className="w-12 flex-1 pr-2 pt-1 text-right text-2xs text-muted-foreground"
           >
             {label}
           </div>
@@ -224,10 +172,7 @@ export function ScheduleTimeline({
       </div>
       <div
         className="relative flex-1"
-        style={{
-          height: gridHeight,
-          backgroundImage: `repeating-linear-gradient(180deg, transparent, transparent ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX - 1}px, var(--border) ${HOUR_ROW_PX}px)`,
-        }}
+        style={{ backgroundImage: hourGridlines(labels.length) }}
       >
         {appointments.map((appointment) => (
           <TimelineBlock

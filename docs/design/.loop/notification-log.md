@@ -26,7 +26,7 @@ row and the bell icon elsewhere in the shell, but not here).
   text and a conditional badge, reusing the exact pill classes already
   used for the sidebar nav's own unread badges
   (`inline-flex min-w-5 items-center justify-center rounded-full bg-primary
-  px-1.5 py-0.5 text-xs font-semibold text-primary-foreground`) rather than
+px-1.5 py-0.5 text-xs font-semibold text-primary-foreground`) rather than
   inventing new badge styling.
 - Verified live: badge reads "43" on load, clicking a notification marks it
   read and the badge live-updates to "42" in the same render as the tab

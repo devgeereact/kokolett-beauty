@@ -61,7 +61,10 @@ export function MonthView({
       {/* Fixed 6 rows filling whatever height is left, not a row per week
           sized to its own content — so the month always fits the screen
           instead of pushing the page taller in a 6-week month. */}
-      <div className="grid flex-1 grid-cols-7" style={{ gridTemplateRows: 'repeat(6, minmax(0, 1fr))' }}>
+      <div
+        className="grid flex-1 grid-cols-7"
+        style={{ gridTemplateRows: 'repeat(6, minmax(0, 1fr))' }}
+      >
         {weeks.flat().map((date) => {
           const row = summary.get(date);
           const inMonth = isSameMonth(date, year, month);
@@ -107,14 +110,14 @@ export function MonthView({
                     folding into the pill list below.
                   */}
                   {row && row.slot_count > 0 && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-2xs text-muted-foreground">
                       {row.slot_count} time{row.slot_count === 1 ? '' : 's'}
                     </span>
                   )}
                   {pills.map((a) => (
                     <span
                       key={a.id}
-                      className="flex w-full items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground"
+                      className="flex w-full items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-2xs font-medium text-foreground"
                     >
                       <span
                         aria-hidden="true"
@@ -126,13 +129,13 @@ export function MonthView({
                       <span className="min-w-0 flex-1 truncate">
                         {a.customer_name?.split(' ')[0] ?? 'Customer'}
                       </span>
-                      <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
+                      <span className="shrink-0 font-mono text-2xs text-muted-foreground">
                         {formatTime(a.starts_at, timezone)}
                       </span>
                     </span>
                   ))}
                   {overflow > 0 && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-2xs text-muted-foreground">
                       +{overflow} more
                     </span>
                   )}

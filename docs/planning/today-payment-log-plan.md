@@ -63,15 +63,15 @@ TypeScript strict, Tailwind 3.4.
 
 ## File Structure
 
-| File | Responsibility |
-| --- | --- |
-| `supabase/migrations/0027_payment_log.sql` (new) | `payments` table + RLS, `log_payment` RPC, redefines `owner_dashboard_summary()` and `appointments_detailed` |
-| `src/types/database.types.ts` (modify) | Interim hand-shim matching what `supabase gen types` will output once `0027` is pushed: `payments` table, `appointments_detailed.paid_pence`, `Functions.log_payment` |
-| `src/types/index.ts` (modify) | `OwnerSummary.today_revenue_pence` → `today_collected_pence`; `BookingErrorCode` gains `'INVALID_AMOUNT'` |
-| `src/lib/errors.ts` (modify) | `MESSAGES` gains the `INVALID_AMOUNT` copy |
-| `src/services/paymentService.ts` (new) | `logPayment()` — the one RPC wrapper |
-| `src/components/dashboard/AppointmentCard.tsx` (modify) | Payment block (mirrors the existing owner-note block) + `onLogPayment` prop |
-| `src/pages/dashboard/TodayPage.tsx` (modify) | Wire `onLogPayment` through, rename the stat card, visual polish pass |
+| File                                                    | Responsibility                                                                                                                                                        |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/0027_payment_log.sql` (new)        | `payments` table + RLS, `log_payment` RPC, redefines `owner_dashboard_summary()` and `appointments_detailed`                                                          |
+| `src/types/database.types.ts` (modify)                  | Interim hand-shim matching what `supabase gen types` will output once `0027` is pushed: `payments` table, `appointments_detailed.paid_pence`, `Functions.log_payment` |
+| `src/types/index.ts` (modify)                           | `OwnerSummary.today_revenue_pence` → `today_collected_pence`; `BookingErrorCode` gains `'INVALID_AMOUNT'`                                                             |
+| `src/lib/errors.ts` (modify)                            | `MESSAGES` gains the `INVALID_AMOUNT` copy                                                                                                                            |
+| `src/services/paymentService.ts` (new)                  | `logPayment()` — the one RPC wrapper                                                                                                                                  |
+| `src/components/dashboard/AppointmentCard.tsx` (modify) | Payment block (mirrors the existing owner-note block) + `onLogPayment` prop                                                                                           |
+| `src/pages/dashboard/TodayPage.tsx` (modify)            | Wire `onLogPayment` through, rename the stat card, visual polish pass                                                                                                 |
 
 ---
 
@@ -288,6 +288,7 @@ script did).
 
 **Two things a fresh worktree/session needs that a long-lived checkout
 might not:**
+
 1. `supabase link --project-ref erqrfjlozqyhogneqraj` first — `supabase/.temp/`
    (where the CLI caches the link) is gitignored, so a fresh worktree
    doesn't inherit it from any other checkout. Confirm the ref matches
@@ -313,12 +314,13 @@ not inventing a new one. Verified directly against this project's live
 **Picking a collision-free test time.** The salon is on UTC+1 (BST) right
 now, so a UTC offset that looks "off-schedule" against the salon's
 09:00–17:00 **local** slot pattern can land exactly on a real one — `current_date
-+ interval '10 hours'` (10:00 UTC) is 11:00 BST, one of the published
-times, and collided with a real live appointment when this was first
-tried. Rather than hand-picking one hour and hoping, the script below
-tries a short list of late-evening salon-local candidates in order and
-uses whichever one doesn't collide — robust to whatever's actually on the
-calendar today without needing to read it first.
+
+- interval '10 hours'` (10:00 UTC) is 11:00 BST, one of the published
+  times, and collided with a real live appointment when this was first
+  tried. Rather than hand-picking one hour and hoping, the script below
+  tries a short list of late-evening salon-local candidates in order and
+  uses whichever one doesn't collide — robust to whatever's actually on the
+  calendar today without needing to read it first.
 
 ```bash
 cat > /tmp/0027-validate.sql << 'EOF'
@@ -542,9 +544,9 @@ line to the `Row` object, next to the existing `owner_note` /
 `price_pence` fields (alphabetical, but again not required):
 
 ```ts
-           owner_note: string | null
-           paid_pence: number | null
-           price_pence: number | null
+owner_note: string | null;
+paid_pence: number | null;
+price_pence: number | null;
 ```
 
 - [ ] **Step 3: Add `log_payment` to `Functions`**
@@ -754,14 +756,14 @@ export function AppointmentCard({
 Add state, next to the existing note state:
 
 ```tsx
-  const [noteOpen, setNoteOpen] = useState(false);
-  const [note, setNote] = useState(appointment.owner_note ?? '');
-  const [savingNote, setSavingNote] = useState(false);
-  const [paymentOpen, setPaymentOpen] = useState(false);
-  const [amountInput, setAmountInput] = useState('');
-  const [paymentNote, setPaymentNote] = useState('');
-  const [savingPayment, setSavingPayment] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
+const [noteOpen, setNoteOpen] = useState(false);
+const [note, setNote] = useState(appointment.owner_note ?? '');
+const [savingNote, setSavingNote] = useState(false);
+const [paymentOpen, setPaymentOpen] = useState(false);
+const [amountInput, setAmountInput] = useState('');
+const [paymentNote, setPaymentNote] = useState('');
+const [savingPayment, setSavingPayment] = useState(false);
+const [paymentError, setPaymentError] = useState<string | null>(null);
 ```
 
 - [ ] **Step 3: Add `savePayment`**
@@ -769,24 +771,24 @@ Add state, next to the existing note state:
 Add next to the existing `saveNote` function:
 
 ```tsx
-  const savePayment = async (): Promise<void> => {
-    if (!onLogPayment) return;
-    const pence = parseMoney(amountInput);
-    if (pence === null) {
-      setPaymentError('Enter a valid amount, e.g. 45.00');
-      return;
-    }
-    setPaymentError(null);
-    setSavingPayment(true);
-    try {
-      await onLogPayment(appointment.id, pence, paymentNote);
-      setAmountInput('');
-      setPaymentNote('');
-      setPaymentOpen(false);
-    } finally {
-      setSavingPayment(false);
-    }
-  };
+const savePayment = async (): Promise<void> => {
+  if (!onLogPayment) return;
+  const pence = parseMoney(amountInput);
+  if (pence === null) {
+    setPaymentError('Enter a valid amount, e.g. 45.00');
+    return;
+  }
+  setPaymentError(null);
+  setSavingPayment(true);
+  try {
+    await onLogPayment(appointment.id, pence, paymentNote);
+    setAmountInput('');
+    setPaymentNote('');
+    setPaymentOpen(false);
+  } finally {
+    setSavingPayment(false);
+  }
+};
 ```
 
 - [ ] **Step 4: Add the button**
@@ -795,18 +797,22 @@ In the actions `<div>`, right after the existing note button and before
 `onMove`:
 
 ```tsx
-            {onNoteSave && (
-              <Button size="sm" variant="ghost" onClick={() => setNoteOpen((v) => !v)}>
-                {appointment.owner_note ? 'Note ✓' : 'Add note'}
-              </Button>
-            )}
-            {onLogPayment && (
-              <Button size="sm" variant="ghost" onClick={() => setPaymentOpen((v) => !v)}>
-                {(appointment.paid_pence ?? 0) > 0
-                  ? `Paid ${formatMoney(appointment.paid_pence ?? 0)}`
-                  : 'Log payment'}
-              </Button>
-            )}
+{
+  onNoteSave && (
+    <Button size="sm" variant="ghost" onClick={() => setNoteOpen((v) => !v)}>
+      {appointment.owner_note ? 'Note ✓' : 'Add note'}
+    </Button>
+  );
+}
+{
+  onLogPayment && (
+    <Button size="sm" variant="ghost" onClick={() => setPaymentOpen((v) => !v)}>
+      {(appointment.paid_pence ?? 0) > 0
+        ? `Paid ${formatMoney(appointment.paid_pence ?? 0)}`
+        : 'Log payment'}
+    </Button>
+  );
+}
 ```
 
 - [ ] **Step 5: Add the payment block**
@@ -815,59 +821,61 @@ Right after the existing note block (the one gated on `onNoteSave &&
 (noteOpen || appointment.owner_note)`), add a matching block:
 
 ```tsx
-        {onLogPayment && (paymentOpen || (appointment.paid_pence ?? 0) > 0) && (
-          <div className="mt-3 border-t border-border pt-3">
-            {paymentOpen ? (
-              <>
-                <Input
-                  aria-label="Amount paid"
-                  inputMode="decimal"
-                  placeholder="£0.00"
-                  value={amountInput}
-                  onChange={(e) => setAmountInput(e.target.value)}
-                />
-                <Textarea
-                  aria-label="Payment note"
-                  rows={2}
-                  placeholder="Cash, gave 10% off, etc. (optional)"
-                  value={paymentNote}
-                  onChange={(e) => setPaymentNote(e.target.value)}
-                  className="mt-2"
-                />
-                {paymentError && (
-                  <p className="mt-2 text-xs font-medium text-destructive" role="alert">
-                    {paymentError}
-                  </p>
-                )}
-                <div className="mt-2 flex gap-2">
-                  <Button size="sm" loading={savingPayment} onClick={() => void savePayment()}>
-                    Save payment
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setAmountInput('');
-                      setPaymentNote('');
-                      setPaymentError(null);
-                      setPaymentOpen(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  What she agreed in the chair, not a quoted price.
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Paid: </span>
-                {formatMoney(appointment.paid_pence ?? 0)}
-              </p>
-            )}
+{
+  onLogPayment && (paymentOpen || (appointment.paid_pence ?? 0) > 0) && (
+    <div className="mt-3 border-t border-border pt-3">
+      {paymentOpen ? (
+        <>
+          <Input
+            aria-label="Amount paid"
+            inputMode="decimal"
+            placeholder="£0.00"
+            value={amountInput}
+            onChange={(e) => setAmountInput(e.target.value)}
+          />
+          <Textarea
+            aria-label="Payment note"
+            rows={2}
+            placeholder="Cash, gave 10% off, etc. (optional)"
+            value={paymentNote}
+            onChange={(e) => setPaymentNote(e.target.value)}
+            className="mt-2"
+          />
+          {paymentError && (
+            <p className="mt-2 text-xs font-medium text-destructive" role="alert">
+              {paymentError}
+            </p>
+          )}
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" loading={savingPayment} onClick={() => void savePayment()}>
+              Save payment
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setAmountInput('');
+                setPaymentNote('');
+                setPaymentError(null);
+                setPaymentOpen(false);
+              }}
+            >
+              Cancel
+            </Button>
           </div>
-        )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            What she agreed in the chair, not a quoted price.
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Paid: </span>
+          {formatMoney(appointment.paid_pence ?? 0)}
+        </p>
+      )}
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 6: Typecheck**
@@ -908,40 +916,40 @@ import { logPayment } from '@/services/paymentService';
 Next to the existing `changeStatus` callback:
 
 ```tsx
-  const logPaymentHandler = useCallback(
-    async (id: string, amountPence: number, note: string): Promise<void> => {
-      try {
-        await logPayment(id, amountPence, note);
-        await Promise.all([refresh(), refreshSummary()]);
-      } catch (e) {
-        showToast({ message: errorMessage(e) });
-      }
-    },
-    [refresh, refreshSummary, showToast],
-  );
+const logPaymentHandler = useCallback(
+  async (id: string, amountPence: number, note: string): Promise<void> => {
+    try {
+      await logPayment(id, amountPence, note);
+      await Promise.all([refresh(), refreshSummary()]);
+    } catch (e) {
+      showToast({ message: errorMessage(e) });
+    }
+  },
+  [refresh, refreshSummary, showToast],
+);
 ```
 
 - [ ] **Step 3: Rename the stat**
 
 ```tsx
-  const stats = [
-    { label: 'Booked today', value: summary ? String(summary.today_count) : '—' },
-    {
-      label: 'Collected today',
-      value: summary ? formatMoney(summary.today_collected_pence) : '—',
-    },
-    {
-      label: 'Awaiting approval',
-      value: summary ? String(summary.pending_approval_count) : '—',
-      to: `${routes.owner.inbox}?tab=approvals`,
-      urgent: (summary?.urgent_approval_count ?? 0) > 0,
-    },
-    {
-      label: 'New enquiries',
-      value: summary ? String(summary.new_request_count) : '—',
-      to: `${routes.owner.inbox}?tab=requests`,
-    },
-  ];
+const stats = [
+  { label: 'Booked today', value: summary ? String(summary.today_count) : '—' },
+  {
+    label: 'Collected today',
+    value: summary ? formatMoney(summary.today_collected_pence) : '—',
+  },
+  {
+    label: 'Awaiting approval',
+    value: summary ? String(summary.pending_approval_count) : '—',
+    to: `${routes.owner.inbox}?tab=approvals`,
+    urgent: (summary?.urgent_approval_count ?? 0) > 0,
+  },
+  {
+    label: 'New enquiries',
+    value: summary ? String(summary.new_request_count) : '—',
+    to: `${routes.owner.inbox}?tab=requests`,
+  },
+];
 ```
 
 - [ ] **Step 4: Pass the prop**

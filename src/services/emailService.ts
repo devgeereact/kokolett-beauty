@@ -1,13 +1,33 @@
-import { supabase } from '@/lib/supabase';
+import { invokeFunction, supabase } from '@/lib/supabase';
 import type { EmailMessage, EmailTemplateRow, EmailTemplateUpdate } from '@/types';
 
 /**
  * `email_messages` — the delivery log and retry queue an Inngest worker
- * drains (`docs/SCHEMA.md` §10). Read-only here: nothing on the dashboard
- * composes or resends an email directly, it only shows what the automated
- * sender already queued and its outcome.
+ * drains (`docs/SCHEMA.md` §10). Mostly read-only here: nothing on the
+ * dashboard composes or resends a *transactional* email directly, it only
+ * shows what the automated sender already queued and its outcome.
+ * `sendCustomEmailAsOwner` (migration 0036) is the one write — a one-off
+ * message to an existing customer, owner-gated, still going through the
+ * same outbox rather than sending directly.
  */
 export type { EmailMessage };
+
+/** Enqueues a one-off email to a customer. Never sends directly — same outbox, retry and audit trail as every other email. */
+export async function sendCustomEmailAsOwner(
+  customerEmail: string,
+  customerName: string,
+  subject: string,
+  body: string,
+): Promise<string> {
+  const { data, error } = await supabase.rpc('send_custom_email_as_owner', {
+    p_customer_email: customerEmail,
+    p_customer_name: customerName,
+    p_subject: subject,
+    p_body: body,
+  });
+  if (error) throw error;
+  return data;
+}
 
 export async function listEmailsForCustomer(customerId: string): Promise<EmailMessage[]> {
   const { data, error } = await supabase
@@ -45,7 +65,11 @@ export async function getTemplateUsage(): Promise<Map<string, TemplateUsage>> {
   for (const row of data ?? []) {
     const existing = usage.get(row.template);
     if (!existing) {
-      usage.set(row.template, { count: 1, lastSentAt: row.sent_at ?? row.created_at, example: row });
+      usage.set(row.template, {
+        count: 1,
+        lastSentAt: row.sent_at ?? row.created_at,
+        example: row,
+      });
     } else {
       existing.count += 1;
     }
@@ -54,14 +78,19 @@ export async function getTemplateUsage(): Promise<Map<string, TemplateUsage>> {
 }
 
 /**
- * The owner's editable draft of a template (`email_templates`, migration
- * 0032) — a real saved row, not a mock. Editing and saving here does not
- * yet change what `send-emails` actually sends (still the hard-coded
- * renderer in `supabase/functions/_shared/templates.ts`); this is the
- * draft/preview layer the Template Editor screen writes to.
+ * The owner's editable overlay on a template (`email_templates`, migration
+ * 0032) — a real saved row, not a mock. When `active` and
+ * `include_in_automation` are both on, `send-emails` renders this row's
+ * `subject`/`html_body` (with `{{token}}` substitution) instead of the
+ * hard-coded copy in `supabase/functions/_shared/templates.ts`; turning
+ * either off reverts that template to the tested default.
  */
 export async function getEmailTemplate(key: string): Promise<EmailTemplateRow | null> {
-  const { data, error } = await supabase.from('email_templates').select('*').eq('key', key).maybeSingle();
+  const { data, error } = await supabase
+    .from('email_templates')
+    .select('*')
+    .eq('key', key)
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -72,7 +101,10 @@ export async function listEmailTemplates(): Promise<EmailTemplateRow[]> {
   return data ?? [];
 }
 
-export async function updateEmailTemplate(key: string, patch: EmailTemplateUpdate): Promise<EmailTemplateRow> {
+export async function updateEmailTemplate(
+  key: string,
+  patch: EmailTemplateUpdate,
+): Promise<EmailTemplateRow> {
   const { data, error } = await supabase
     .from('email_templates')
     .update(patch)
@@ -83,6 +115,26 @@ export async function updateEmailTemplate(key: string, patch: EmailTemplateUpdat
   return data;
 }
 
+export interface EmailPreview {
+  available: boolean;
+  reason?: string;
+  subject?: string;
+  html?: string;
+  text?: string;
+}
+
+/**
+ * Renders a real, previously-sent (or still-queued) email for the
+ * Communications › Email detail pane — via the `render-email-preview` Edge
+ * Function, which shares `_shared/templates.ts` with `send-emails` so this
+ * is exactly what went out, override included. `available: false` means the
+ * payload was scrubbed after sending (see `send-emails`'s own comment) and
+ * there is nothing left to render.
+ */
+export async function previewEmailMessage(id: string): Promise<EmailPreview> {
+  return invokeFunction<EmailPreview>('render-email-preview', { id });
+}
+
 export interface ListEmailsOptions {
   status?: EmailMessage['status'];
   search?: string;
@@ -90,7 +142,9 @@ export interface ListEmailsOptions {
 }
 
 /** The full outbox — Communications › Email's dataset. */
-export async function listEmailMessages(options: ListEmailsOptions = {}): Promise<EmailMessage[]> {
+export async function listEmailMessages(
+  options: ListEmailsOptions = {},
+): Promise<EmailMessage[]> {
   let request = supabase
     .from('email_messages')
     .select('*')

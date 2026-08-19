@@ -31,7 +31,8 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   ALREADY_PASSED: 'That appointment has already passed.',
   SAME_TIME: 'That is the time you are already booked in for.',
   INVALID_AMOUNT: 'Enter an amount greater than £0.',
-  HAS_PAYMENT: 'This has a logged payment, so it can’t be deleted — that would erase a financial record.',
+  HAS_PAYMENT:
+    'This has a logged payment, so it can’t be deleted — that would erase a financial record.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

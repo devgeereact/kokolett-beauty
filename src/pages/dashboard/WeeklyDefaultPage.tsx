@@ -221,8 +221,8 @@ export function WeeklyDefaultPage(): JSX.Element {
               Weekly schedule
             </h2>
             <p className="mb-2 text-sm text-muted-foreground">
-              Set the times you normally work. A day with no times is a day you are normally
-              closed.
+              Set the times you normally work. A day with no times is a day you are
+              normally closed.
             </p>
 
             <div>
@@ -239,7 +239,9 @@ export function WeeklyDefaultPage(): JSX.Element {
                   <div key={dayIndex} className="border-b border-border last:border-0">
                     <button
                       type="button"
-                      onClick={() => setOpenDayIndex((cur) => (cur === dayIndex ? null : dayIndex))}
+                      onClick={() =>
+                        setOpenDayIndex((cur) => (cur === dayIndex ? null : dayIndex))
+                      }
                       className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md p-2 -mx-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <div className="flex items-center gap-2">
@@ -263,7 +265,9 @@ export function WeeklyDefaultPage(): JSX.Element {
                       <span className="flex items-center gap-3 text-xs text-muted-foreground">
                         {open &&
                           `${times.length} time${times.length === 1 ? '' : 's'} · up to ${settings?.max_appointments_per_day ?? '—'} per day`}
-                        <span className="font-medium text-primary">{isEditing ? 'Close' : 'Edit'}</span>
+                        <span className="font-medium text-primary">
+                          {isEditing ? 'Close' : 'Edit'}
+                        </span>
                       </span>
                     </button>
 
@@ -311,7 +315,10 @@ export function WeeklyDefaultPage(): JSX.Element {
                             size="sm"
                             loading={busy === dayIndex}
                             onClick={() =>
-                              void saveDay(dayIndex, [...times, newTime[dayIndex] ?? '09:00'])
+                              void saveDay(dayIndex, [
+                                ...times,
+                                newTime[dayIndex] ?? '09:00',
+                              ])
                             }
                           >
                             Add
@@ -348,7 +355,11 @@ export function WeeklyDefaultPage(): JSX.Element {
             </div>
 
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-              <Button variant="ghost" size="sm" onClick={() => openDayEditor(dayEditorDate)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openDayEditor(dayEditorDate)}
+              >
                 <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                 Adjust a single day
               </Button>
@@ -387,7 +398,10 @@ export function WeeklyDefaultPage(): JSX.Element {
                     />
                   </div>
                   <div>
-                    <label htmlFor="tf-to" className="mb-1 block text-xs text-muted-foreground">
+                    <label
+                      htmlFor="tf-to"
+                      className="mb-1 block text-xs text-muted-foreground"
+                    >
                       To
                     </label>
                     <Input
@@ -432,11 +446,14 @@ export function WeeklyDefaultPage(): JSX.Element {
                       Put it on the calendar
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      The pattern does nothing on its own — this is what writes it into real days.
+                      The pattern does nothing on its own — this is what writes it into
+                      real days.
                     </p>
                   </div>
                   <div className="flex items-baseline gap-2 rounded-md border border-border bg-muted px-3 py-2">
-                    <span className="text-xs text-muted-foreground">Times set this week</span>
+                    <span className="text-xs text-muted-foreground">
+                      Times set this week
+                    </span>
                     <span className="font-mono text-sm font-semibold text-foreground">
                       {totalTimes}
                     </span>
@@ -516,16 +533,21 @@ export function WeeklyDefaultPage(): JSX.Element {
                 </h3>
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-lg border border-border bg-muted p-3">
-                    <p className="mb-1 text-sm font-medium text-foreground">Fill empty days</p>
+                    <p className="mb-1 text-sm font-medium text-foreground">
+                      Fill empty days
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Only touches days you have never set. A day you cleared stays cleared.
+                      Only touches days you have never set. A day you cleared stays
+                      cleared.
                     </p>
                   </div>
                   <div className="rounded-lg border border-border bg-muted p-3">
-                    <p className="mb-1 text-sm font-medium text-foreground">Replace every day</p>
+                    <p className="mb-1 text-sm font-medium text-foreground">
+                      Replace every day
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Lays the week over the top, including days you have changed. Times with
-                      bookings against them are always kept.
+                      Lays the week over the top, including days you have changed. Times
+                      with bookings against them are always kept.
                     </p>
                   </div>
                   <div className="rounded-lg border border-border bg-muted p-3">
@@ -533,8 +555,8 @@ export function WeeklyDefaultPage(): JSX.Element {
                       Fills forward nightly
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      The calendar quietly extends from this pattern each night, so you never run
-                      out of bookable days.
+                      The calendar quietly extends from this pattern each night, so you
+                      never run out of bookable days.
                     </p>
                   </div>
                   <div className="rounded-lg border border-border bg-muted p-3">
@@ -542,7 +564,8 @@ export function WeeklyDefaultPage(): JSX.Element {
                       A single day always wins
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Editing any date above overrides the pattern for that date from then on.
+                      Editing any date above overrides the pattern for that date from then
+                      on.
                     </p>
                   </div>
                 </div>

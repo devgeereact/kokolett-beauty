@@ -6,10 +6,6 @@ import { ApprovalCard } from '@/components/dashboard/approvals/ApprovalCard';
 import { ApprovalDetailPanel } from '@/components/dashboard/approvals/ApprovalDetailPanel';
 import { ApprovalPolicyFooter } from '@/components/dashboard/approvals/ApprovalPolicyFooter';
 import { ApprovalStats } from '@/components/dashboard/approvals/ApprovalStats';
-import {
-  buildDemoApprovalStats,
-  buildDemoApprovals,
-} from '@/components/dashboard/approvals/demoApprovals';
 import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import {
   RequestsQueue,
@@ -17,7 +13,7 @@ import {
 } from '@/components/dashboard/requests/RequestsQueue';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { ErrorState, LoadingState } from '@/components/ui/States';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useOwnerSummary } from '@/hooks/useOwnerSummary';
@@ -132,35 +128,23 @@ export function InboxPage(): JSX.Element {
     void loadApprovals();
   }, [loadApprovals]);
 
-  // Under the salon's current live settings `approve_first_time` is off, so
-  // this queue is structurally empty — see the empty-state copy below. The
-  // demo set stands in so the screen is a real, working view rather than a
-  // blank one; it never touches the backend (approve/decline no-op on it).
-  const isDemo = !loading && !error && rows.length === 0;
-  const displayRows = isDemo ? buildDemoApprovals(new Date()) : rows;
-  const displayStats = isDemo ? buildDemoApprovalStats() : stats;
-
   useEffect(() => {
-    if (displayRows.length === 0) {
+    if (rows.length === 0) {
       setSelectedId(null);
       return;
     }
-    const first = displayRows[0];
-    if (first && !displayRows.some((r) => r.id === selectedId)) {
+    const first = rows[0];
+    if (first && !rows.some((r) => r.id === selectedId)) {
       setSelectedId(first.id);
     }
     // Only re-pick when the available rows change — not on every
     // `selectedId` change, or a click could never stick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayRows]);
+  }, [rows]);
 
-  const selectedRow = displayRows.find((r) => r.id === selectedId) ?? null;
+  const selectedRow = rows.find((r) => r.id === selectedId) ?? null;
 
   const approve = async (id: string): Promise<void> => {
-    if (isDemo) {
-      showToast({ message: 'Demo data — turn on first-time approval in Settings to use this for real.' });
-      return;
-    }
     setBusyId(id);
     try {
       await approveAppointment(id);
@@ -173,10 +157,6 @@ export function InboxPage(): JSX.Element {
   };
 
   const startDecline = (id: string): void => {
-    if (isDemo) {
-      showToast({ message: 'Demo data — turn on first-time approval in Settings to use this for real.' });
-      return;
-    }
     setSelectedId(id);
     setDecliningId(id);
     setReason('');
@@ -249,9 +229,14 @@ export function InboxPage(): JSX.Element {
               rows (DashboardLayout's grouped nav), so this pill is redundant on
               desktop — it only earns its keep below `md:`, where the sidebar is
               hidden behind the Menu button. */}
-          <div className="inline-flex rounded-lg border border-border p-0.5 md:hidden">
+          <div
+            role="group"
+            aria-label="Inbox queue"
+            className="inline-flex rounded-lg border border-border p-0.5 md:hidden"
+          >
             <button
               type="button"
+              aria-pressed={tab === 'approvals'}
               onClick={() => goToTab('approvals')}
               className={cn(
                 'flex items-center rounded-md px-3 py-1.5 text-sm font-medium',
@@ -277,6 +262,7 @@ export function InboxPage(): JSX.Element {
             </button>
             <button
               type="button"
+              aria-pressed={tab === 'requests'}
               onClick={() => goToTab('requests')}
               className={cn(
                 'flex items-center rounded-md px-3 py-1.5 text-sm font-medium',
@@ -319,64 +305,82 @@ export function InboxPage(): JSX.Element {
           {!loading && !error && (
             <>
               <ApprovalStats
-                pendingCount={displayRows.length}
-                avgWaitMinutes={displayStats?.avgWaitMinutes ?? null}
-                approvedPercent={displayStats?.approvedPercent ?? null}
-                thisWeekCount={displayStats?.thisWeekCount ?? 0}
+                pendingCount={rows.length}
+                avgWaitMinutes={stats?.avgWaitMinutes ?? null}
+                approvedPercent={stats?.approvedPercent ?? null}
+                thisWeekCount={stats?.thisWeekCount ?? 0}
               />
 
               <div className="flex items-start gap-3 rounded-lg bg-tint-pending p-4 text-sm text-status-pending">
-                <Zap aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
-                <p>Slots are reserved immediately when a first-time customer submits a booking.</p>
+                <Zap
+                  aria-hidden="true"
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                  strokeWidth={2}
+                />
+                <p>
+                  Slots are reserved immediately when a first-time customer submits a
+                  booking.
+                </p>
               </div>
 
-              {isDemo && (
-                <p className="text-xs text-muted-foreground">
-                  Nothing is waiting for real right now — published hours book instantly for
-                  everyone under your current policy, so this queue only fills once you switch
-                  first-time approval back on in Settings. The queue below is a preview of how
-                  it looks when it does.
-                </p>
+              {rows.length === 0 ? (
+                <EmptyState
+                  title="Nothing waiting"
+                  description="Your published hours book instantly for everyone, so nothing needs a decision. Turn on first-time approval in Settings if you would rather check new customers yourself first."
+                  action={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void navigate(routes.owner.settings)}
+                    >
+                      Open Settings
+                    </Button>
+                  }
+                />
+              ) : (
+                <>
+                  <h2 className="font-serif text-lg font-semibold text-foreground">
+                    Pending approvals ({rows.length})
+                  </h2>
+
+                  <div className="grid gap-6 lg:grid-cols-3">
+                    <div className="space-y-4 lg:col-span-2">
+                      {rows.map((row) => (
+                        <ApprovalCard
+                          key={row.id}
+                          row={row}
+                          timezone={timezone}
+                          selected={row.id === selectedId}
+                          busy={busyId === row.id}
+                          onSelect={() => setSelectedId(row.id)}
+                          onApprove={() => void approve(row.id)}
+                          onDecline={() => startDecline(row.id)}
+                        />
+                      ))}
+                    </div>
+
+                    <ApprovalDetailPanel
+                      row={selectedRow}
+                      timezone={timezone}
+                      busy={selectedRow !== null && busyId === selectedRow.id}
+                      declining={selectedRow !== null && decliningId === selectedRow.id}
+                      reason={reason}
+                      onReasonChange={setReason}
+                      onApprove={() => selectedRow && void approve(selectedRow.id)}
+                      onDeclineStart={() => selectedRow && startDecline(selectedRow.id)}
+                      onDeclineConfirm={() => selectedRow && void decline(selectedRow.id)}
+                      onDeclineCancel={() => {
+                        setDecliningId(null);
+                        setReason('');
+                      }}
+                    />
+                  </div>
+                </>
               )}
 
-              <h2 className="font-serif text-lg font-semibold text-foreground">
-                Pending approvals ({displayRows.length})
-              </h2>
-
-              <div className="grid gap-6 lg:grid-cols-3">
-                <div className="space-y-4 lg:col-span-2">
-                  {displayRows.map((row) => (
-                    <ApprovalCard
-                      key={row.id}
-                      row={row}
-                      timezone={timezone}
-                      selected={row.id === selectedId}
-                      busy={busyId === row.id}
-                      onSelect={() => setSelectedId(row.id)}
-                      onApprove={() => void approve(row.id)}
-                      onDecline={() => startDecline(row.id)}
-                    />
-                  ))}
-                </div>
-
-                <ApprovalDetailPanel
-                  row={selectedRow}
-                  timezone={timezone}
-                  busy={selectedRow !== null && busyId === selectedRow.id}
-                  declining={selectedRow !== null && decliningId === selectedRow.id}
-                  reason={reason}
-                  onReasonChange={setReason}
-                  onApprove={() => selectedRow && void approve(selectedRow.id)}
-                  onDeclineStart={() => selectedRow && startDecline(selectedRow.id)}
-                  onDeclineConfirm={() => selectedRow && void decline(selectedRow.id)}
-                  onDeclineCancel={() => {
-                    setDecliningId(null);
-                    setReason('');
-                  }}
-                />
-              </div>
-
-              <ApprovalPolicyFooter approvalWindowHours={settings?.approval_window_h ?? 12} />
+              <ApprovalPolicyFooter
+                approvalWindowHours={settings?.approval_window_h ?? 12}
+              />
             </>
           )}
         </div>

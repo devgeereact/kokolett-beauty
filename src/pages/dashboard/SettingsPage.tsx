@@ -30,18 +30,31 @@ export function SettingsPage(): JSX.Element {
   const [tab, setTab] = useState<SettingsTab>('organisation');
 
   return (
-    <DashboardLayout title="Settings" subtitle="Manage your account, business and app preferences.">
+    <DashboardLayout
+      title="Settings"
+      subtitle="Manage your account, business and app preferences."
+    >
+      {/*
+        Buttons with `aria-pressed`, not `role="tablist"`/`role="tab"`.
+
+        The ARIA tab pattern is a contract: a screen reader announces "tab 1 of
+        5" and the user then expects arrow keys to move between them, a single
+        tab stop for the whole set, and each tab to point at a `role="tabpanel"`
+        via `aria-controls`. This markup had none of that, so the promise was
+        made and immediately broken — worse for a screen-reader user than plain
+        buttons, which announce exactly what they are and behave as announced.
+        Same pattern as AssistantPage's own switches.
+      */}
       <div
-        role="tablist"
+        role="group"
         aria-label="Settings sections"
         className="mb-6 flex flex-wrap gap-1 border-b border-border"
       >
         {TABS.map((t) => (
           <button
             key={t.key}
-            role="tab"
             type="button"
-            aria-selected={tab === t.key}
+            aria-pressed={tab === t.key}
             onClick={() => setTab(t.key)}
             className={cn(
               '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium',

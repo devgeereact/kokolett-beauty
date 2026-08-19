@@ -7,6 +7,7 @@ import { ScheduleTimeline } from '@/components/dashboard/today/ScheduleTimeline'
 import { NextUpCard } from '@/components/dashboard/today/NextUpCard';
 import { GlanceGrid } from '@/components/dashboard/today/GlanceGrid';
 import { ApprovalsQueueCard } from '@/components/dashboard/today/ApprovalsQueueCard';
+import { TodayDateTimeCard } from '@/components/dashboard/today/TodayDateTimeCard';
 import { BookingsOverviewChart } from '@/components/dashboard/today/BookingsOverviewChart';
 import { AvailabilityRequestsCard } from '@/components/dashboard/today/AvailabilityRequestsCard';
 import { AssistantInsightsRow } from '@/components/dashboard/today/AssistantInsightsRow';
@@ -100,7 +101,10 @@ export function TodayPage(): JSX.Element {
     () => new Date(start.getTime() + 60 * 24 * 60 * 60 * 1000),
     [start],
   );
-  const upcomingStatuses = useMemo<AppointmentStatus[]>(() => ['confirmed', 'checked_in'], []);
+  const upcomingStatuses = useMemo<AppointmentStatus[]>(
+    () => ['confirmed', 'checked_in'],
+    [],
+  );
   const { appointments: upcomingPool, refresh: refreshUpcoming } = useAppointments({
     from: start,
     to: upcomingHorizon,
@@ -293,7 +297,7 @@ export function TodayPage(): JSX.Element {
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch">
-        <Card className="flex h-full flex-col p-4 lg:col-span-3 lg:row-span-2">
+        <Card className="flex h-full min-h-0 flex-col p-4 lg:col-span-3 lg:row-span-2">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h2 className="font-serif text-base font-semibold text-foreground">
@@ -353,7 +357,9 @@ export function TodayPage(): JSX.Element {
                   setMovingId(null);
                   setMoveError(null);
                 }}
-                onChoose={(startsAt) => void doOwnerReschedule(expandedAppointment.id, startsAt)}
+                onChoose={(startsAt) =>
+                  void doOwnerReschedule(expandedAppointment.id, startsAt)
+                }
               />
             </div>
           )}
@@ -380,16 +386,25 @@ export function TodayPage(): JSX.Element {
           now={now}
           onViewDetails={(id) => setExpandedId(id)}
         />
-        <GlanceGrid
-          className="lg:col-span-3"
-          appointments={appointments}
-          todayCount={summary?.today_count ?? null}
-          timezone={timezone}
-        />
-        {/* Direct row-1 grid siblings of Next up / Today at a glance, not a
-            row-span-2 stack — otherwise this column floats independently of
-            the row boundary and its bottom edge stops lining up with theirs. */}
-        <ApprovalsQueueCard className="lg:col-span-3" />
+        {/* One lg:col-span-6 wrapper standing in for the two lg:col-span-3
+            cells Today at a glance / Approvals queue used to occupy
+            directly — same total column width, so row 1's flow (and every
+            card after it) lands exactly where it did before. The date/time
+            strip's own height comes out of the flex-1 row below it, which is
+            why it doesn't grow the row. */}
+        <div className="flex h-full min-h-0 flex-col gap-4 lg:col-span-6">
+          <TodayDateTimeCard now={now} timezone={timezone} />
+          <div className="flex min-h-0 flex-1 gap-4">
+            <GlanceGrid
+              className="flex-1"
+              appointments={appointments}
+              todayCount={summary?.today_count ?? null}
+              collectedPence={summary?.today_collected_pence ?? null}
+              timezone={timezone}
+            />
+            <ApprovalsQueueCard className="flex-1" />
+          </div>
+        </div>
 
         {/* h-full: stretches to match Availability requests beside it, now
             that Recent notifications is gone that's only ~20px of headroom

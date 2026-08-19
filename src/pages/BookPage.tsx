@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Calendar } from '@/components/ui/Calendar';
 import { Card } from '@/components/ui/Card';
 import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
-import { EmptyState, LoadingState } from '@/components/ui/States';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { formatLocalDate, parseLocalDate } from '@/lib/localDate';
 import { useServices } from '@/hooks/useServices';
 import { useAvailability } from '@/hooks/useAvailability';
@@ -51,8 +51,14 @@ export function BookPage(): JSX.Element {
   // simply not shown to the customer any more.
   const appointmentMinutes = services[0]?.duration_min ?? 60;
 
-  const { slotsByDate, openDates, loading, isEmpty, refresh } =
-    useAvailability(appointmentMinutes);
+  const {
+    slotsByDate,
+    openDates,
+    loading,
+    isEmpty,
+    error: availabilityError,
+    refresh,
+  } = useAvailability(appointmentMinutes);
 
   const [openDate, setOpenDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<TimeSlot | null>(null);
@@ -189,6 +195,20 @@ export function BookPage(): JSX.Element {
         </p>
 
         {loading && <LoadingState label="Finding open times…" />}
+
+        {/*
+          `useAvailability` has always exposed `error`; this page never read
+          it. Because `isEmpty` is itself gated on `error === null`, a failed
+          fetch rendered neither the slot grid nor the empty state — the
+          customer got a heading, a sentence, and then nothing at all, with no
+          way to tell a network failure from a page still thinking.
+        */}
+        {availabilityError && (
+          <ErrorState
+            error="We could not load the diary just now. Check your connection and try again."
+            onRetry={() => void refresh()}
+          />
+        )}
 
         {isEmpty && (
           <EmptyState

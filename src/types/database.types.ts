@@ -1405,6 +1405,15 @@ export type Database = {
       }
       retired_booking_templates: { Args: never; Returns: string[] }
       revoke_calendar_feed: { Args: { p_id: string }; Returns: undefined }
+      send_custom_email_as_owner: {
+        Args: {
+          p_body: string
+          p_customer_email: string
+          p_customer_name: string
+          p_subject: string
+        }
+        Returns: string
+      }
       set_appointment_status: {
         Args: {
           p_appointment_id: string

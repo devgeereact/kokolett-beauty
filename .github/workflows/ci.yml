@@ -74,6 +74,11 @@ jobs:
             deno check --no-lock --node-modules-dir=none "$f"
           done
 
+      # `_shared/templates.ts` decides what every customer actually receives and
+      # had no tests at all. These are Deno, so `npm test` cannot reach them.
+      - name: Edge Function tests
+        run: deno test --no-lock --node-modules-dir=none --allow-read supabase/functions/
+
       # Deliberately built with no .env present. Vite inlines VITE_* at build
       # time, so real keys here would land in a public log — and would also hide
       # the failure mode that actually matters: a missing variable.

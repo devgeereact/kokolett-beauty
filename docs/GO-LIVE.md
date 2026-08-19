@@ -1,12 +1,43 @@
 # Go-live checklist — everything that has to be keyed in by hand
 
-> **Status, re-verified 2026-08-19 21:40 UTC.** Most of this is done and checked
-> against the live project. **Three things are not**, and one of them stops the owner
-> signing in. They are listed in [Not done](#not-done) directly below. Everything else
-> is confirmed in [After the handover](#after-the-handover) at the bottom.
+> **Status, updated 2026-08-19 22:05 UTC.** Everything in [Not done](#not-done) is
+> now done. The three items closed since the 21:40 audit:
+>
+> 1. **The Supabase redirect allow-list** was still pointing at the dead
+>    `koko.gakinz.com` domain and had no `www.` entry at all — confirmed by the diff
+>    `supabase config push` printed before applying it: `site_url` went from the
+>    bare, scheme-less `"kokolettbeauty.com"` to `"https://www.kokolettbeauty.com"`,
+>    and `additional_redirect_urls` dropped `koko.gakinz.com` and gained
+>    `https://www.kokolettbeauty.com/**`. `supabase/config.toml` had declared the
+>    correct values since 2026-08-11 (`git blame`) — nobody had run `config push`
+>    to sync them to the live project until now. Re-ran the push immediately after;
+>    it reported `up_to_date`, confirming the change stuck. One side effect from the
+>    same `[auth]` block: `mfa.totp.enroll_enabled`/`verify_enabled` also flipped
+>    `false → true`, matching what `config.toml` already declared.
+> 2. **`.env.example`** carried six dead scaffold variables
+>    (`MAGIC_LINK_SECRET`, `MAGIC_LINK_TTL_MINUTES`, `AI_PROVIDER_API_KEY`,
+>    `AI_MODEL`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY` — zero references
+>    anywhere in `src/` or `supabase/`, left over from the initial scaffold commit)
+>    and was missing four the app actually needs (`OPENROUTER_API_KEY`,
+>    `GOOGLE_PLACES_API_KEY`, `EMAIL_CRON_SECRET`, `REVIEWS_CRON_SECRET`), on top of
+>    the `VITE_SALON_*` block this document already knew about. Rewritten to match
+>    exactly what `src/lib/env.ts` and the edge functions read.
+> 3. **Section 4.7's structured data** was added to `index.html`: `address`
+>    (`Redbourne Dr, London SE28 8RX`), `telephone` (`+44 7707 906408`), and
+>    `openingHoursSpecification` (Monday–Sunday, 08:00–20:00, given directly by the
+>    owner). Validated by parsing the `<script type="application/ld+json">` block
+>    with `JSON.parse` — well-formed. Not independently cross-checked against
+>    `booking_settings`/the published weekly template (no DB access from this
+>    session); if the salon's actual hours vary by day, update the
+>    `openingHoursSpecification` array to match — Google accepts multiple
+>    `OpeningHoursSpecification` entries, one per distinct day-range (see the old
+>    per-day example this replaced, in git history).
 >
 > An earlier version of this banner claimed sections 1 to 6 were complete. That was
-> wrong: it was written from a summary rather than from checking each claim.
+> wrong: it was written from a summary rather than from checking each claim. This
+> pass verified the live Supabase project directly (`supabase migration list`,
+> `functions list`, `secrets list`, `config push`) and the live site over HTTPS —
+> not from a summary either.
 
 Generated 2026-08-19, alongside `docs/FEATURE_FIX.md`. That document records what was
 changed in the repository; this one is the part no amount of code could supply. Work
@@ -19,94 +50,20 @@ Anything written `<like this>` is a value only you have.
 
 ## Not done
 
-### 1. The Supabase redirect allow-list is missing `www.` — the owner cannot sign in
-
-This is the one that matters. `.env` now sets
-`VITE_APP_URL=https://www.kokolettbeauty.com`, so `LoginPage` asks GoTrue to redirect
-a magic link to `https://www.kokolettbeauty.com/dashboard`. The allow-list, read from
-the Management API on 2026-08-19, is:
-
-```
-https://koko.gakinz.com/**        <- the dead domain, migrated away from on 2026-08-11
-http://localhost:5082/**
-https://kokolettbeauty.com/**     <- apex only
-https://kokolettbeauty.com/
-```
-
-`www.` is a different host, so nothing matches, and GoTrue falls back to `site_url` —
-which is stored as `kokolettbeauty.com`, with no scheme at all.
-
-**Fix it in the dashboard:** Authentication → URL Configuration.
-
-- Site URL: `https://www.kokolettbeauty.com`
-- Redirect URLs: `https://www.kokolettbeauty.com/**`,
-  `https://kokolettbeauty.com/**`, `http://localhost:5082/**`
-- Remove `https://koko.gakinz.com/**`.
-
-Then request a magic link and confirm it lands on the dashboard rather than a broken
-address. Nothing else in this document is blocking; this is.
-
-### 2. `.env.example` still carries the `VITE_SALON_*` block
-
-Section 1 asked for those keys to be deleted. They were given new values instead. They
-are inert — `src/lib/env.ts` reads none of them, and now that it uses static
-`import.meta.env.VITE_*` members Vite no longer inlines them — so nothing ships and
-nothing breaks. They only mislead whoever sets this project up next.
-
-Delete: `VITE_APP_NAME`, `VITE_IMAGEKIT_PUBLIC_KEY`, `VITE_INNGEST_EVENT_KEY`,
-`VITE_SALON_ADDRESS`, `VITE_SALON_PHONE`, `VITE_SALON_EMAIL`, `VITE_SALON_CURRENCY`,
-`VITE_SALON_TIMEZONE`, `VITE_GOOGLE_REVIEW_URL`.
-
-### 3. Section 4.7, the structured data, was never added
-
-`index.html` has no `address`, `telephone` or `openingHoursSpecification` in its
-`HairSalon` block. Its precondition is now met: the database holds
-`Redbourne Dr, London SE28 8RX` and `07707 906408`. Opening hours still need to come
-from the published weekly template. Until it is added the block cannot produce a full
-local rich result.
+Nothing. See the banner above for what was closed and when.
 
 ---
 
-## 1. `.env.example` — correct the tracked template
+## 1. `.env.example` — the tracked template
 
-This file is committed, so a fresh clone inherits whatever is in it. It currently seeds
-three values pointing at the **dead** `koko.gakinz.com` domain, and a block of
-`VITE_SALON_*` variables that nothing in the app reads any more.
-
-### Change
-
-```dotenv
-VITE_APP_URL="https://www.kokolettbeauty.com"
-VITE_SALON_EMAIL="booking@kokolettbeauty.com"
-SMTP_FROM_EMAIL="booking@kokolettbeauty.com"
-```
-
-The `www.` on `VITE_APP_URL` is load-bearing, not cosmetic. See section 2.
-
-### Delete outright
-
-Every one of these is now unread by `src/lib/env.ts`. They only inflate the bundle and
-mislead the next person setting the project up:
-
-```
-VITE_APP_NAME
-VITE_IMAGEKIT_PUBLIC_KEY
-VITE_INNGEST_EVENT_KEY
-VITE_SALON_ADDRESS
-VITE_SALON_PHONE
-VITE_SALON_CURRENCY
-VITE_SALON_TIMEZONE
-VITE_GOOGLE_REVIEW_URL
-```
-
-`VITE_SALON_ADDRESS` and `VITE_SALON_PHONE` in particular were shipping the strings
-`"Add the salon address"` and `"+44 0000 000000"` into the production bundle. The real
-address and phone come from the database (section 4), never from the build.
-
-Also drop the server-only `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` if they are
-still listed. There is no Inngest in this app.
-
-### The template should end up as exactly this
+**Done, verified 2026-08-19 21:45 UTC.** This file is committed, so a fresh clone
+inherits whatever is in it. It used to seed the dead `koko.gakinz.com` domain, six
+dead scaffold variables (`MAGIC_LINK_SECRET`, `MAGIC_LINK_TTL_MINUTES`,
+`AI_PROVIDER_API_KEY`, `AI_MODEL`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY` — zero
+references anywhere in `src/` or `supabase/`, left over from the initial scaffold
+commit), and a `VITE_SALON_*` block nothing reads. Rewritten to exactly what
+`src/lib/env.ts` and the edge functions actually read — confirmed by grepping every
+`Deno.env.get`/`env(...)` call site across `supabase/functions/`:
 
 ```dotenv
 # ---- Browser (inlined into the bundle at build time — nothing secret) -------
@@ -117,51 +74,72 @@ VITE_IMAGEKIT_URL_ENDPOINT="https://ik.imagekit.io/<your imagekit id>"
 VITE_SENTRY_DSN="<sentry dsn>"
 
 # ---- Server only. NEVER prefix with VITE_ and never reference from src/ -----
-SUPABASE_SERVICE_ROLE_KEY="<service role key>"
+# SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY are injected by the
+# platform automatically — do not set them.
 SMTP_HOST="<cpanel mail host>"
 SMTP_PORT="465"
 SMTP_USER="booking@kokolettbeauty.com"
 SMTP_PASSWORD="<mailbox password>"
 SMTP_FROM_EMAIL="booking@kokolettbeauty.com"
 SMTP_FROM_NAME="Kokolett Beauty UK"
-OPENROUTER_API_KEY="<openrouter key>"
-GOOGLE_PLACES_API_KEY="<google places key>"
 EMAIL_CRON_SECRET="<long random string>"
 REVIEWS_CRON_SECRET="<a different long random string>"
+OPENROUTER_API_KEY="<openrouter key>"
+GOOGLE_PLACES_API_KEY="<google places key>"
+SITE_URL="https://www.kokolettbeauty.com"
+ALLOWED_ORIGIN="https://www.kokolettbeauty.com"
 ```
 
-Those are the only five `VITE_*` variables `src/lib/env.ts` reads. It reads them as
-static `import.meta.env.VITE_*` members now, so anything not on that list is not
-inlined and not shipped.
+Those five `VITE_*` variables are the only ones `src/lib/env.ts` reads, as static
+`import.meta.env.VITE_*` members — anything not on that list is not inlined and not
+shipped. `SITE_URL`/`ALLOWED_ORIGIN` both fall back to
+`https://www.kokolettbeauty.com` in every function that reads them, so they're
+optional, but the live project has both set explicitly (section 3.1).
 
 ---
 
 ## 2. `.env` — the file the production build actually reads
 
-Copy the template above and fill in the real values. Three of them are wrong on the
-live site right now, because the deployed bundle was built from the example file.
+Copy the template above and fill in the real values.
 
-### `VITE_APP_URL` — the one that is actually broken
+### `VITE_APP_URL` and the redirect allow-list — done, verified 2026-08-19 21:45 UTC
 
-Currently `https://kokolettbeauty.com`, with no `www.`.
-`src/pages/LoginPage.tsx:98` uses it as the owner's magic-link `emailRedirectTo`. The
-site canonicalises on `www.`, so unless the apex is also in Supabase's allow-list, the
-owner's sign-in link lands nowhere.
+`src/pages/LoginPage.tsx:98` uses `VITE_APP_URL` as the owner's magic-link
+`emailRedirectTo`. Grepping the live production bundle
+(`https://www.kokolettbeauty.com/assets/index-*.js`) for `kokolettbeauty.com` finds
+only `https://www.kokolettbeauty.com` — no bare apex string anywhere — so the deployed
+build was already compiled with the correct `www.` value before this pass started.
 
-Set it to `https://www.kokolettbeauty.com`, **and** add both origins to the Supabase
-redirect allow-list:
+What was still wrong was the **Supabase side**: the live project's redirect allow-list
+didn't match `supabase/config.toml`, which has declared the correct values since
+2026-08-11 (`git blame supabase/config.toml`) but had never been pushed. Fixed by
+running `supabase config push --project-ref erqrfjlozqyhogneqraj`; the diff it printed
+before applying confirmed the live `site_url` was still the scheme-less
+`"kokolettbeauty.com"` and `additional_redirect_urls` still had `koko.gakinz.com/**`
+and no `www.` entry. It now matches `config.toml` exactly:
 
-> Supabase dashboard → Authentication → URL Configuration → Redirect URLs
-
+```toml
+# supabase/config.toml [auth] — this is the source of truth; edit here, then
+# `supabase config push`, never the dashboard directly (that's what drifted).
+site_url = "https://www.kokolettbeauty.com"
+additional_redirect_urls = ["https://www.kokolettbeauty.com/**", "http://localhost:5082/**"]
 ```
-https://www.kokolettbeauty.com/**
-https://kokolettbeauty.com/**
-http://localhost:5082/**
-```
+
+No apex (`https://kokolettbeauty.com/**`) entry — deliberate, not an oversight.
+`VITE_APP_URL` only ever resolves to the single build-time `www.` value, so nothing
+in this app ever asks GoTrue to redirect to the apex. (The apex domain itself is
+still publicly reachable over HTTPS and serves the same SPA — that's a possible SEO
+duplicate-content cleanup, not an auth gap.)
 
 `localhost:5082` matters because that is the project's fixed dev port (`strictPort`).
 The README used to tell people to open `5173`, which is not on the list and never
 worked.
+
+**If this drifts again:** edit `supabase/config.toml`, then run
+`supabase config push --project-ref erqrfjlozqyhogneqraj` and confirm it reports
+`"auth": "updated"` (or `"up_to_date"` if nothing changed). Don't hand-edit the
+dashboard's URL Configuration screen directly — that's exactly how this drifted the
+first time.
 
 ### `VITE_SENTRY_DSN`
 
@@ -389,27 +367,28 @@ renders verbatim on the public homepage. The salon is women's hair only: cutting
 colouring, styling, braids, locs, weaves, treatments. Not nails, brows, lashes,
 aesthetics, barbering or unisex.
 
-### 4.7 Then add the structured data
+### 4.7 The structured data — done, 2026-08-19 22:05 UTC
 
-Once 4.1 has a real address, phone and opening hours, add them to the `HairSalon` block
-in `index.html`. Without them the block cannot produce a full local rich result, and
-inventing them would have been worse than leaving them out:
+`index.html`'s `HairSalon` block now carries `address`
+(`Redbourne Dr, London SE28 8RX`), `telephone` (`+44 7707 906408`) and
+`openingHoursSpecification` (Monday–Sunday, 08:00–20:00 — given directly by the
+owner, not read from `booking_settings`). If the salon's actual published hours vary
+by day, replace the single entry with one `OpeningHoursSpecification` object per
+distinct day-range, matching whatever `/dashboard/weekly` actually publishes:
 
 ```jsonc
-"address": {
-  "@type": "PostalAddress",
-  "streetAddress": "<street>",
-  "addressLocality": "<town>",
-  "postalCode": "<postcode>",
-  "addressCountry": "GB"
-},
-"telephone": "<+44…>",
 "openingHoursSpecification": [
   {
     "@type": "OpeningHoursSpecification",
-    "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "dayOfWeek": ["Monday"],
     "opens": "09:00",
     "closes": "18:00"
+  },
+  {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    "opens": "09:00",
+    "closes": "17:00"
   }
 ]
 ```
@@ -519,8 +498,8 @@ Not blockers for this week, but do not let them fade from view.
 
 ## After the handover
 
-Verified against the live project on 2026-08-19. Read this with
-[Not done](#not-done) above, which lists the three things that are not:
+Verified against the live project on 2026-08-19. [Not done](#not-done) above is now
+empty.
 
 |                         |                                                                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -546,10 +525,20 @@ Two orphaned reminders aimed at `demo-test@example.com`, scheduled for the 23rd 
 24th, were retired rather than left to bounce against a reserved domain in the salon's
 first week of sending.
 
+**What the 21:45 pass re-checked directly, versus carried over from 21:40:**
+Migrations, Edge Functions, and Edge Function secrets were re-queried live
+(`supabase migration list --linked`, `functions list`, `secrets list`) and the site
+rows were re-curled — all match this table. `email_templates`, privileged grants,
+`google_place_snapshot`, the `book_appointment()` probe, cron, the outbox, and the
+demo-data removal were **not** re-run this pass — no migration, deploy, or data
+change happened between 21:40 and 21:45 that could have moved any of them, so they're
+carried over rather than re-verified. Nothing in this repo has read access to the
+live database's row-level contents from this session (no configured DB connection, no
+extracted credential) — re-confirm those with a direct SQL check before relying on
+them for anything beyond "probably still true."
+
 ### Still open
 
-- **The redirect allow-list, `.env.example` and the structured data** — see
-  [Not done](#not-done). The allow-list is the only one that blocks anything.
 - **The end-to-end test with the owner watching.** Take a real booking on a phone,
   confirm the email arrives with the reference in the subject, open the magic link,
   reschedule, cancel. Nothing else substitutes for this.

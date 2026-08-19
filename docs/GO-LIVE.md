@@ -1,5 +1,10 @@
 # Go-live checklist — everything that has to be keyed in by hand
 
+> **Status: done, 2026-08-19 21:00 UTC.** Sections 1 to 6 have been carried out and
+> verified against the live project. What is left is in
+> [After the handover](#after-the-handover) at the bottom. The sections below are kept
+> as the record of what was done and how it was checked, not as outstanding work.
+
 Generated 2026-08-19, alongside `docs/FEATURE_FIX.md`. That document records what was
 changed in the repository; this one is the part no amount of code could supply. Work
 through it top to bottom: the order matters in section 3, and section 4 is what proves
@@ -447,3 +452,50 @@ Not blockers for this week, but do not let them fade from view.
   enforces stronger rules, but only in the browser.
 - **The calendar has no keyboard equivalent for drag-to-reschedule.** The Move panel is
   the fallback, reached through the edit modal.
+
+---
+
+## After the handover
+
+Everything in sections 1 to 6 is done. Verified on 2026-08-19:
+
+|                         |                                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Migrations              | `0001`–`0039` applied, 0 pending                                                                                                      |
+| `email_templates`       | 18 active, **0 automated** — an unedited draft cannot replace tested copy                                                             |
+| Privileged grants       | `drain_email_queue`, `sync_google_reviews`, `booked_times_on` all `anon=false, authenticated=false`                                   |
+| `google_place_snapshot` | public read policy removed; only the owner policy remains                                                                             |
+| `book_appointment()`    | rolled-back probe: bad email, single-word name and over-long name all rejected; a valid booking still accepted                        |
+| Edge Functions          | all seven ACTIVE, `verify_jwt` matching `config.toml` exactly                                                                         |
+| Cron                    | `drain-email-queue` succeeded at 20:50, after both the revoke and the redeploy                                                        |
+| Outbox                  | nothing queued, nothing pending that would bounce                                                                                     |
+| Site                    | entry chunk serves `content-type: text/javascript`, all nine routes 200, no `.map` reachable, `.htaccess` and `.well-known` preserved |
+| Metadata                | og:title, og:description, og:image, twitter:card and canonical all live; description is customer copy                                 |
+
+**Demo data was removed from the live database.** 14 of 16 customers, 28 of 30
+appointments, all 5 availability requests, both subscribers and 76 outbox rows were
+seeded rows on `@example.invalid`. The owner would have opened her dashboard to
+fourteen people she had never met, and her Reports figures would have counted them.
+Deleted with the filter the seeder itself documents, dry-run first, rollback confirmed
+before committing. Two real customers and their completed appointments remain.
+
+Two orphaned reminders aimed at `demo-test@example.com`, scheduled for the 23rd and
+24th, were retired rather than left to bounce against a reserved domain in the salon's
+first week of sending.
+
+### Still open
+
+- **The end-to-end test with the owner watching.** Take a real booking on a phone,
+  confirm the email arrives with the reference in the subject, open the magic link,
+  reschedule, cancel. Nothing else substitutes for this.
+- **`google_place_id`** is unset, so the reviews sync stays idle and the public Reviews
+  block renders nothing. Deliberate: a clean empty state, not a fault. Set it in
+  Settings → Business when you want reviews on the site.
+- **`GOOGLE_PLACES_API_KEY`** is the one Edge Function secret not set, for the same
+  reason.
+- **No RLS tests.** Nothing asserts that anon cannot read `appointments` or
+  `customers`. The security model is still unverified by any automated check, and this
+  is the highest-value thing to add next.
+- **CI runs no SQL.** The three migrations here were validated by hand in a rolled-back
+  transaction. That worked, but it is a person remembering to do it.
+- **CSP is still `Report-Only`** and its `connect-src` no longer needs `inn.gs`.

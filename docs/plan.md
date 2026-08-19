@@ -33,11 +33,17 @@ that was never built; this list used to repeat it.
 - [ ] **`docs/ARCHITECTURE.md` §2 service list and `docs/HOOKS.md`** should get a
       periodic pass against `src/services/` and `src/hooks/` — both drift fast in this
       project (see the 2026-08-14 docs cleanup for the last correction).
-- [ ] **Owner data.** The salon's real address, phone, opening hours, service menu and
+- [x] ~~**Owner data.**~~ Done: address, phone, Instagram and review link are set, 402
+      slots are published and the service menu has 49 items. Only `google_place_id`
+      remains, deliberately.
+- [ ] **Owner data (remainder).** The salon's real address, phone, opening hours, service menu and
       Google review URL still have to be entered in Settings. The footer and the policy
       pages render nothing where they are blank, and the `HairSalon` structured data in
       `index.html` cannot claim `address`/`telephone`/`openingHours` until they exist.
-- [ ] **`.env` for the production build.** The live bundle was built from
+- [x] ~~**`.env` for the production build.**~~ Done: `VITE_APP_URL` is the www form,
+      Sentry is live on a real EU DSN. The ImageKit endpoint is still a placeholder and
+      that is fine, since all 49 menu items have a null `image_path`.
+- [ ] **`.env` (superseded).** The live bundle was built from
       `.env.example` placeholders: `VITE_APP_URL` pointed at the **non-www** apex (it
       feeds the owner's magic-link redirect), the ImageKit endpoint was
       `your_imagekit_id`, and the Sentry DSN was a placeholder, so error reporting is

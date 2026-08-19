@@ -17,7 +17,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
-import { render, type TemplatePayload } from '../_shared/templates.ts';
+import { render, type TemplateOverride, type TemplatePayload } from '../_shared/templates.ts';
 import { requireCronSecret } from '../_shared/auth.ts';
 
 const MAX_ATTEMPTS = 5;
@@ -137,6 +137,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const fromEmail = env('SMTP_FROM_EMAIL', 'booking@kokolettbeauty.com');
   const fromName = env('SMTP_FROM_NAME', 'Kokolett Beauty UK');
 
+  // The owner's Template Editor overlay (`email_templates`). Only a row that
+  // is both switched on *and* opted into automation replaces the hard-coded
+  // copy in `_shared/templates.ts` — anything else keeps sending the tested
+  // default, so a half-finished draft can never reach a real inbox.
+  const overrides = new Map<string, TemplateOverride>();
+  const { data: templateRows } = await supabase
+    .from('email_templates')
+    .select('key, subject, html_body, active, include_in_automation');
+  for (const t of templateRows ?? []) {
+    if (t.active && t.include_in_automation) {
+      overrides.set(t.key, { subject: t.subject, html_body: t.html_body });
+    }
+  }
+
   let sent = 0;
   let failed = 0;
 
@@ -161,12 +175,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
         },
       });
 
-      const body = render(row.template, row.payload ?? {});
+      const body = render(row.template, row.payload ?? {}, overrides.get(row.template));
 
       await client.send({
         from: `${fromName} <${fromEmail}>`,
         to: row.to_email,
-        subject: row.subject,
+        /**
+         * `||`, not `??`: an owner-edited template with a blank subject must
+         * fall back to the one the database built when the row was queued.
+         * Those carry the booking reference and the customer name
+         * ("Your appointment is confirmed · KB-1234", "New booking: Jane
+         * Doe"); losing them makes the owner's own inbox unsortable.
+         */
+        subject: body.subject || row.subject,
         content: body.text,
         html: body.html,
         replyTo: fromEmail,
@@ -214,11 +235,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
           status: 'sent',
           sent_at: new Date().toISOString(),
           last_error: null,
-          // Scrub the variables once delivered. `access_link` payloads carry a
-          // working magic link, and the point of storing only a token hash is
-          // that a database dump contains no usable links — a sent row that
-          // kept its payload would quietly undo that. Nothing reads it again.
-          payload: {},
+          // Scrub only the two fields documented in `TemplatePayload` as
+          // "injected by the sender, never stored" — `manage_url` and
+          // `reset_url` carry a working one-time link, and the point of
+          // storing only a token hash is that a database dump contains no
+          // usable links. Everything else in the payload (customer name,
+          // appointment time, reference…) is ordinary business data already
+          // visible elsewhere in the dashboard, and keeping it is what lets
+          // Communications › Email show what was actually sent.
+          payload: { ...row.payload, manage_url: null, reset_url: null },
         })
         .eq('id', row.id);
       sent += 1;

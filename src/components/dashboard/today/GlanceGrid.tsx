@@ -110,21 +110,32 @@ export function GlanceGrid({
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.key} className="rounded-lg border border-border p-3.5">
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-tint-brand text-primary">
-                  <Icon aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2} />
+              // A soft fill instead of a border — four bordered boxes nested
+              // inside the card's own border read as boxes-in-a-box. The
+              // whole tile is the link (bigger target, one affordance) —
+              // its accessible name is "1 Appointments View today", so the
+              // link label can stay a quiet second line instead of the loud
+              // always-orange CTA it was.
+              <Link
+                key={stat.key}
+                to={stat.to}
+                className="group rounded-lg bg-muted/60 p-3.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-tint-brand text-primary">
+                  <Icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                 </span>
-                <p className="mt-2.5 font-sans text-3xl font-semibold tabular-nums leading-none text-foreground">
+                {/* font-serif matches "Bookings overview"'s own stat numbers
+                    right below this card, and StatTile's documented
+                    convention for a dashboard headline number — font-sans
+                    here was the odd one out on this exact screen. */}
+                <p className="mt-2.5 font-serif text-3xl font-semibold tabular-nums leading-none text-foreground">
                   {stat.value}
                 </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <Link
-                  to={stat.to}
-                  className="mt-1 inline-block text-xs font-medium text-primary hover:underline"
-                >
+                <p className="mt-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
                   {stat.linkLabel}
-                </Link>
-              </div>
+                </p>
+              </Link>
             );
           })}
         </div>

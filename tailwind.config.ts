@@ -268,10 +268,19 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'clock-blink': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.25' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 150ms ease-out both',
         'fade-up': 'fade-up 300ms cubic-bezier(0, 0, 0.2, 1) both',
+        /* The Today dashboard's live clock — a seconds-per-beat colon, the
+           one ambient motion touch on an otherwise-static page. Covered by
+           index.css's global prefers-reduced-motion rule like every other
+           animation utility, no per-component opt-out needed. */
+        'clock-blink': 'clock-blink 2s ease-in-out infinite',
       },
     },
   },

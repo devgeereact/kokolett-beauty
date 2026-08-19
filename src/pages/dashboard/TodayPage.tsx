@@ -7,6 +7,7 @@ import { ScheduleTimeline } from '@/components/dashboard/today/ScheduleTimeline'
 import { NextUpCard } from '@/components/dashboard/today/NextUpCard';
 import { GlanceGrid } from '@/components/dashboard/today/GlanceGrid';
 import { ApprovalsQueueCard } from '@/components/dashboard/today/ApprovalsQueueCard';
+import { TodayDateTimeCard } from '@/components/dashboard/today/TodayDateTimeCard';
 import { BookingsOverviewChart } from '@/components/dashboard/today/BookingsOverviewChart';
 import { AvailabilityRequestsCard } from '@/components/dashboard/today/AvailabilityRequestsCard';
 import { AssistantInsightsRow } from '@/components/dashboard/today/AssistantInsightsRow';
@@ -380,16 +381,24 @@ export function TodayPage(): JSX.Element {
           now={now}
           onViewDetails={(id) => setExpandedId(id)}
         />
-        <GlanceGrid
-          className="lg:col-span-3"
-          appointments={appointments}
-          todayCount={summary?.today_count ?? null}
-          timezone={timezone}
-        />
-        {/* Direct row-1 grid siblings of Next up / Today at a glance, not a
-            row-span-2 stack — otherwise this column floats independently of
-            the row boundary and its bottom edge stops lining up with theirs. */}
-        <ApprovalsQueueCard className="lg:col-span-3" />
+        {/* One lg:col-span-6 wrapper standing in for the two lg:col-span-3
+            cells Today at a glance / Approvals queue used to occupy
+            directly — same total column width, so row 1's flow (and every
+            card after it) lands exactly where it did before. The date/time
+            strip's own height comes out of the flex-1 row below it, which is
+            why it doesn't grow the row. */}
+        <div className="flex h-full min-h-0 flex-col gap-4 lg:col-span-6">
+          <TodayDateTimeCard now={now} timezone={timezone} />
+          <div className="flex min-h-0 flex-1 gap-4">
+            <GlanceGrid
+              className="flex-1"
+              appointments={appointments}
+              todayCount={summary?.today_count ?? null}
+              timezone={timezone}
+            />
+            <ApprovalsQueueCard className="flex-1" />
+          </div>
+        </div>
 
         {/* h-full: stretches to match Availability requests beside it, now
             that Recent notifications is gone that's only ~20px of headroom

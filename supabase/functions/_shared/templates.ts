@@ -48,6 +48,8 @@ export interface TemplatePayload {
   notes?: string | null;
   preferred_dates?: string[];
   flexibility?: string;
+  /** Freeform body for `owner_custom_message` — the owner's own words, sent as-is (escaped, newlines kept). */
+  custom_body?: string;
   /** Injected by the sender, never stored. */
   manage_url?: string;
   /** Owner password-recovery link. Injected by the sender, never stored. */
@@ -628,6 +630,26 @@ export function render(template: string, p: TemplatePayload): RenderedEmail {
         ),
         text: `${p.full_name} could not find a slot and has asked for a time.\n${p.email}${p.mobile ? ` · ${p.mobile}` : ''}\nPrefers: ${(p.preferred_dates ?? []).join(', ') || 'no date given'} · ${p.flexibility ?? 'any'}\n\n${SITE}/dashboard/requests`,
       };
+
+    // The owner's own freeform note, drafted (in the dashboard or via the
+    // AI assistant) and sent only after she reviews and confirms it — this
+    // renderer just carries her words, it doesn't add sales copy of its own.
+    case 'owner_custom_message': {
+      const bodyHtml = esc(p.custom_body ?? '')
+        .split('\n')
+        .map((paragraph) => line(paragraph))
+        .join('');
+      return {
+        html: layout(
+          SALON,
+          `A message from ${SALON}`,
+          line(`Hello ${name},`) + bodyHtml,
+          p,
+          'You are receiving this because you are a customer of Kokolett Beauty UK.',
+        ),
+        text: `Hello ${p.customer_name ?? p.full_name ?? 'there'},\n\n${p.custom_body ?? ''}`,
+      };
+    }
 
     default:
       return {

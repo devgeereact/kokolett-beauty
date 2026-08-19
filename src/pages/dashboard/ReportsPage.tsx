@@ -2,9 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, CalendarCheck, PoundSterling, TrendingUp, UserPlus, UserX } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AdvisorySection } from '@/components/dashboard/assistant/AdvisorySection';
-import { BusinessAnalyticsPanel } from '@/components/dashboard/assistant/BusinessAnalyticsPanel';
-import { TrendAnalysisPanel } from '@/components/dashboard/assistant/TrendAnalysisPanel';
 import { DayOfWeekChart } from '@/components/dashboard/insights/DayOfWeekChart';
 import { HourOfDayChart } from '@/components/dashboard/insights/HourOfDayChart';
 import { StatTrendTile } from '@/components/dashboard/reports/StatTrendTile';
@@ -393,13 +390,6 @@ export function ReportsPage(): JSX.Element {
           </Card>
         </div>
       )}
-
-      <AdvisorySection title="Business analytics" description="AI-summarised read of how the business is trending.">
-        <BusinessAnalyticsPanel timezone={timezone} />
-      </AdvisorySection>
-      <AdvisorySection title="Appointment trends" description="Patterns in when and what customers book.">
-        <TrendAnalysisPanel timezone={timezone} />
-      </AdvisorySection>
     </DashboardLayout>
   );
 }

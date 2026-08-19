@@ -3,11 +3,31 @@ import type { EmailMessage, EmailTemplateRow, EmailTemplateUpdate } from '@/type
 
 /**
  * `email_messages` — the delivery log and retry queue an Inngest worker
- * drains (`docs/SCHEMA.md` §10). Read-only here: nothing on the dashboard
- * composes or resends an email directly, it only shows what the automated
- * sender already queued and its outcome.
+ * drains (`docs/SCHEMA.md` §10). Mostly read-only here: nothing on the
+ * dashboard composes or resends a *transactional* email directly, it only
+ * shows what the automated sender already queued and its outcome.
+ * `sendCustomEmailAsOwner` (migration 0036) is the one write — a one-off
+ * message to an existing customer, owner-gated, still going through the
+ * same outbox rather than sending directly.
  */
 export type { EmailMessage };
+
+/** Enqueues a one-off email to a customer. Never sends directly — same outbox, retry and audit trail as every other email. */
+export async function sendCustomEmailAsOwner(
+  customerEmail: string,
+  customerName: string,
+  subject: string,
+  body: string,
+): Promise<string> {
+  const { data, error } = await supabase.rpc('send_custom_email_as_owner', {
+    p_customer_email: customerEmail,
+    p_customer_name: customerName,
+    p_subject: subject,
+    p_body: body,
+  });
+  if (error) throw error;
+  return data as string;
+}
 
 export async function listEmailsForCustomer(customerId: string): Promise<EmailMessage[]> {
   const { data, error } = await supabase

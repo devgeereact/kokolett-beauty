@@ -293,7 +293,7 @@ export function TodayPage(): JSX.Element {
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch">
-        <Card className="flex h-full flex-col p-4 lg:col-span-3 lg:row-span-2">
+        <Card className="flex h-full min-h-0 flex-col p-4 lg:col-span-3 lg:row-span-2">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h2 className="font-serif text-base font-semibold text-foreground">

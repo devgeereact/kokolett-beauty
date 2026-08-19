@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  hourRange,
+  openingHoursRange,
   offsetPercent,
   hourLabels,
   weekDates,
@@ -9,25 +9,9 @@ import {
   snapMinutes,
 } from '@/lib/calendar';
 
-describe('hourRange', () => {
-  it('falls back to 08:00–20:00 when there is nothing to fit', () => {
-    expect(hourRange([])).toEqual({ startMin: 480, endMin: 1200 });
-  });
-
-  it('fits tightly around the given times with an hour of padding', () => {
-    // 09:15 and 13:00 -> pad to 08:00 and floor(14*60/60)=14:00
-    expect(hourRange([9 * 60 + 15, 13 * 60])).toEqual({ startMin: 480, endMin: 840 });
-  });
-
-  it('never produces a span shorter than 6 hours', () => {
-    const range = hourRange([9 * 60, 9 * 60 + 30]);
-    expect(range.endMin - range.startMin).toBeGreaterThanOrEqual(360);
-  });
-
-  it('clamps to a single day', () => {
-    const range = hourRange([0, 23 * 60 + 59]);
-    expect(range.startMin).toBeGreaterThanOrEqual(0);
-    expect(range.endMin).toBeLessThanOrEqual(24 * 60);
+describe('openingHoursRange', () => {
+  it('is always fixed to 08:00–20:00', () => {
+    expect(openingHoursRange()).toEqual({ startMin: 480, endMin: 1200 });
   });
 });
 

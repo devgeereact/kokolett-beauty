@@ -23,8 +23,6 @@ export interface DayViewProps {
   timezone: string;
   appointments: AppointmentDetailed[];
   openSlots: OwnerDaySlot[];
-  /** Longest active service's duration, in minutes — pads the axis close time. */
-  maxServiceDurationMin: number;
   onSelectAppointment: (appointment: AppointmentDetailed) => void;
   onSelectOpenSlot: (slot: OwnerDaySlot) => void;
   /** Reload after a drag successfully reschedules an appointment. */
@@ -108,7 +106,6 @@ export function DayView({
   timezone,
   appointments,
   openSlots,
-  maxServiceDurationMin,
   onSelectAppointment,
   onSelectOpenSlot,
   onChanged,
@@ -120,26 +117,10 @@ export function DayView({
     [openSlots],
   );
 
-  // See WeekView's identical memo: this only needs to recompute when the
-  // real inputs change, not on every drag pointermove — drag.preview isn't a
-  // dependency, so DayAppointmentBlock/DayOpenSlotBlock get a stable `range`
-  // reference during a drag and correctly skip re-rendering. nowMinutes
-  // stays a real dependency — see WeekView's identical guard: without "now"
-  // in the fitted range, the live line can silently never show on a
-  // sparsely-published day.
-  //
-  // Fitted to published slot times (any status, not just `freeSlots`), same
-  // reasoning as WeekView: an appointment outside currently-published hours
-  // doesn't get to stretch the axis to cover it.
-  const { range, labels } = useMemo(() => {
-    const slotStartMinutes = openSlots.map((s) => minutesSinceMidnight(s.starts_at, timezone));
-    const computedRange = openingHoursRange(
-      slotStartMinutes,
-      maxServiceDurationMin,
-      isToday ? nowMinutes : undefined,
-    );
-    return { range: computedRange, labels: hourLabels(computedRange) };
-  }, [openSlots, maxServiceDurationMin, timezone, isToday, nowMinutes]);
+  // Fixed 08:00–20:00 axis — doesn't stretch for slots, appointments, or
+  // "now", so it's a plain constant rather than something to memoize.
+  const range = openingHoursRange();
+  const labels = hourLabels(range);
 
   const drag = useAppointmentDrag(range, timezone, onChanged);
 

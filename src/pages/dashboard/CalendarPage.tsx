@@ -30,7 +30,6 @@ import {
   setOwnerNote,
 } from '@/services/appointmentService';
 import { logPayment } from '@/services/paymentService';
-import { listActiveServices } from '@/services/serviceCatalogService';
 import { errorMessage } from '@/lib/errors';
 import {
   formatDateLong,
@@ -103,21 +102,6 @@ export function CalendarPage(): JSX.Element {
   const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
   const [daySlots, setDaySlots] = useState<Map<string, OwnerDaySlot[]>>(new Map());
   const [error, setError] = useState<Error | null>(null);
-
-  // For fitting the grid's hour axis to real published hours (below) rather
-  // than to whatever appointments happen to be booked.
-  const [maxServiceDurationMin, setMaxServiceDurationMin] = useState(60);
-  useEffect(() => {
-    listActiveServices()
-      .then((services) => {
-        if (services.length > 0) {
-          setMaxServiceDurationMin(Math.max(60, ...services.map((s) => s.duration_min)));
-        }
-      })
-      .catch(() => {
-        // Keep the 60-minute default — the grid still fits, just less precisely.
-      });
-  }, []);
 
   // Rail filters — client-side only, over whatever `load()` already fetched.
   const [visibleCategories, setVisibleCategories] = useState<Set<StatusCategory>>(
@@ -433,7 +417,6 @@ export function CalendarPage(): JSX.Element {
               timezone={timezone}
               appointmentsByDate={appointmentsByDate}
               openSlotsByDate={daySlots}
-              maxServiceDurationMin={maxServiceDurationMin}
               onSelectAppointment={selectAppointment}
               onSelectDate={goToDay}
               onSelectOpenSlot={selectOpenSlot}
@@ -448,7 +431,6 @@ export function CalendarPage(): JSX.Element {
               timezone={timezone}
               appointments={appointmentsByDate.get(anchor) ?? []}
               openSlots={daySlots.get(anchor) ?? []}
-              maxServiceDurationMin={maxServiceDurationMin}
               onSelectAppointment={selectAppointment}
               onSelectOpenSlot={(slot) => selectOpenSlot(anchor, slot)}
               onChanged={() => void load()}

@@ -95,24 +95,17 @@ export interface HourRange {
   endMin: number;
 }
 
-/** Pixel height of one hour row — shared by the axis labels and the grid lines. */
-export const HOUR_ROW_PX = 64;
-
 /**
  * Week/Day's grid fits the viewport instead of scrolling internally
  * (docs/design/calendar.png shows the full opening-to-closing span on
  * screen at once, however many hours that is) — so rows are sized by
  * percentage of this fixed container height, not a per-hour pixel constant.
- * `HOUR_ROW_PX` stays in use for `ScheduleTimeline` (Today page), which is a
- * summary widget that scrolls within its own card, not the primary editing
- * surface this constraint applies to.
  */
 export const CALENDAR_GRID_HEIGHT_CLASS = 'h-[calc(100vh-16rem)] min-h-[480px]';
 
 /**
  * Equal-height hour gridlines as a percentage-based repeating gradient, so
- * they render correctly at any container height — used with
- * `CALENDAR_GRID_HEIGHT_CLASS` instead of `HOUR_ROW_PX`-per-row pixel maths.
+ * they render correctly at any container height.
  */
 export function hourGridlines(rowCount: number): string {
   if (rowCount <= 0) return 'none';
@@ -121,69 +114,18 @@ export function hourGridlines(rowCount: number): string {
 }
 
 const FALLBACK_RANGE: HourRange = { startMin: 8 * 60, endMin: 20 * 60 };
-const MIN_SPAN_MIN = 6 * 60;
 const DAY_MIN = 24 * 60;
 
 /**
- * The hour axis to render, fitted to whatever is actually happening that day.
- *
- * An owner with one 9am booking should not see a 24-hour axis — but the axis
- * also should not be so tight that a single appointment fills the screen, so
- * it pads an hour either side and floors the span at 6 hours.
+ * The hour axis for the Day/Week grid: fixed at 08:00–20:00, always. Does
+ * not stretch for published slot times, appointment times, or "now" — a
+ * stray slot/appointment outside this window is clamped to the nearest edge
+ * by `offsetPercent` rather than widening the grid to chase it, and the
+ * now-line simply stops rendering once "now" drifts past 20:00 or before
+ * 08:00 rather than dragging the axis wider.
  */
-export function hourRange(minutesOfDay: number[]): HourRange {
-  if (minutesOfDay.length === 0) return FALLBACK_RANGE;
-
-  const min = Math.min(...minutesOfDay);
-  const max = Math.max(...minutesOfDay);
-
-  let startMin = Math.max(0, Math.floor((min - 60) / 60) * 60);
-  let endMin = Math.min(DAY_MIN, Math.ceil((max + 60) / 60) * 60);
-
-  if (endMin - startMin < MIN_SPAN_MIN) {
-    endMin = Math.min(DAY_MIN, startMin + MIN_SPAN_MIN);
-    startMin = Math.max(0, endMin - MIN_SPAN_MIN);
-  }
-
-  return { startMin, endMin };
-}
-
-/**
- * The hour axis clamped to real published opening hours, not to whatever
- * appointments happen to exist. `hourRange` (above) fits the axis to booked
- * appointment times, which means one stray appointment outside the salon's
- * actual published hours — a legacy row, a demo artifact, a since-changed
- * schedule — stretches the whole grid to cover it. This instead only looks
- * at published slot start times (booked or not — a booked slot's start time
- * is still real evidence the salon is open then) and pads the close by the
- * longest active service's duration, same math as the Dashboard's own
- * schedule fit. An appointment outside this range still renders — clamped to
- * the nearest edge by `offsetPercent`, never hidden — it just doesn't get a
- * vote on how wide the axis is.
- */
-export function openingHoursRange(
-  slotStartMinutes: number[],
-  maxServiceDurationMin: number,
-  nowMinutes?: number,
-): HourRange {
-  if (slotStartMinutes.length === 0) {
-    return nowMinutes === undefined ? FALLBACK_RANGE : hourRange([nowMinutes]);
-  }
-
-  const openMin = Math.floor(Math.min(...slotStartMinutes) / 60) * 60;
-  const closeMin = Math.min(
-    DAY_MIN,
-    Math.ceil((Math.max(...slotStartMinutes) + maxServiceDurationMin) / 60) * 60,
-  );
-
-  let startMin = openMin;
-  let endMin = closeMin;
-  if (nowMinutes !== undefined) {
-    if (nowMinutes < startMin) startMin = Math.floor(nowMinutes / 60) * 60;
-    if (nowMinutes > endMin) endMin = Math.min(DAY_MIN, Math.ceil(nowMinutes / 60) * 60);
-  }
-
-  return { startMin, endMin };
+export function openingHoursRange(): HourRange {
+  return FALLBACK_RANGE;
 }
 
 /** Where a time falls within the axis, as a percentage — clamped, never overflows. */

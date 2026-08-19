@@ -24,34 +24,68 @@ export function SupportCard(): JSX.Element {
           rel="noreferrer"
           className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-muted"
         >
-          <HelpCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <HelpCircle
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium text-foreground">Help centre</span>
-            <span className="block text-xs text-muted-foreground">Find answers to common questions</span>
+            <span className="block text-xs text-muted-foreground">
+              Find answers to common questions
+            </span>
           </span>
-          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
         </a>
         <a
           href={`mailto:${SUPPORT_EMAIL}`}
           className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-muted"
         >
-          <Mail aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <Mail
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-foreground">Contact support</span>
-            <span className="block text-xs text-muted-foreground">Get in touch with our team</span>
+            <span className="block text-sm font-medium text-foreground">
+              Contact support
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Get in touch with our team
+            </span>
           </span>
-          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
         </a>
         <a
           href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Kokolett dashboard feedback')}`}
           className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-muted"
         >
-          <MessageSquareText aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <MessageSquareText
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-foreground">Send feedback</span>
-            <span className="block text-xs text-muted-foreground">Help us improve Kokolett</span>
+            <span className="block text-sm font-medium text-foreground">
+              Send feedback
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Help us improve Kokolett
+            </span>
           </span>
-          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
         </a>
       </div>
     </Card>

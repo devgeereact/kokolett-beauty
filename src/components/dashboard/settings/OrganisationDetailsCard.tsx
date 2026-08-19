@@ -55,8 +55,12 @@ export function OrganisationDetailsCard(): JSX.Element {
             <Building2 aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="font-serif text-base font-semibold text-foreground">Organisation details</h2>
-            <p className="text-sm text-muted-foreground">Manage your salon business information.</p>
+            <h2 className="font-serif text-base font-semibold text-foreground">
+              Organisation details
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Manage your salon business information.
+            </p>
           </div>
         </div>
         {!editing && (
@@ -71,13 +75,27 @@ export function OrganisationDetailsCard(): JSX.Element {
         <>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Business name" className="mb-0">
-              {({ id }) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />}
+              {({ id }) => (
+                <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />
+              )}
             </Field>
             <Field label="Category" className="mb-0">
-              {({ id }) => <Input id={id} value={category} onChange={(e) => setCategory(e.target.value)} />}
+              {({ id }) => (
+                <Input
+                  id={id}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                />
+              )}
             </Field>
             <Field label="Country" className="mb-0">
-              {({ id }) => <Input id={id} value={country} onChange={(e) => setCountry(e.target.value)} />}
+              {({ id }) => (
+                <Input
+                  id={id}
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                />
+              )}
             </Field>
             <Field label="Time zone" className="mb-0">
               {({ id }) => <Input id={id} value="London (GMT/BST)" disabled />}
@@ -101,15 +119,21 @@ export function OrganisationDetailsCard(): JSX.Element {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <p className="text-xs font-medium text-muted-foreground">Business name</p>
-            <p className="text-sm text-foreground">{settings?.business_name ?? 'Kokolett Beauty UK'}</p>
+            <p className="text-sm text-foreground">
+              {settings?.business_name ?? 'Kokolett Beauty UK'}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium text-muted-foreground">Category</p>
-            <p className="text-sm text-foreground">{settings?.business_category ?? 'Hair Salon'}</p>
+            <p className="text-sm text-foreground">
+              {settings?.business_category ?? 'Hair Salon'}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium text-muted-foreground">Country</p>
-            <p className="text-sm text-foreground">{settings?.country ?? 'United Kingdom'}</p>
+            <p className="text-sm text-foreground">
+              {settings?.country ?? 'United Kingdom'}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium text-muted-foreground">Time zone</p>

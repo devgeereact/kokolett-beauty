@@ -44,7 +44,9 @@ export function TodayDateTimeCard({
         <span className="text-sm font-semibold uppercase tracking-wide text-foreground">
           {weekday}
         </span>
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">{date}</span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          {date}
+        </span>
       </div>
     </Card>
   );

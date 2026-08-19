@@ -7,12 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Input, Textarea } from '@/components/ui/Field';
 import { ACTION_LABELS, useAppointmentActions } from '@/hooks/useAppointmentActions';
-import {
-  formatDateLong,
-  formatDuration,
-  formatMoney,
-  formatTime,
-} from '@/lib/format';
+import { formatDateLong, formatDuration, formatMoney, formatTime } from '@/lib/format';
 import type { AppointmentDetailed, AppointmentStatus } from '@/types';
 
 /** Statuses that already mean "this is over" — deleting one of these is
@@ -49,7 +44,12 @@ export function AppointmentDetailModal({
   /** Omit to hide "Delete appointment" entirely. */
   onDelete?: (id: string) => Promise<void>;
 }): JSX.Element {
-  const a = useAppointmentActions({ appointment, onStatusChange, onNoteSave, onLogPayment });
+  const a = useAppointmentActions({
+    appointment,
+    onStatusChange,
+    onNoteSave,
+    onLogPayment,
+  });
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -84,8 +84,13 @@ export function AppointmentDetailModal({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted p-3">
         <div className="space-y-1.5 text-sm text-foreground">
           <p className="flex items-center gap-2">
-            <Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-            {formatTime(appointment.starts_at, timezone)} – {formatTime(appointment.ends_at, timezone)}{' '}
+            <Clock
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
+            {formatTime(appointment.starts_at, timezone)} –{' '}
+            {formatTime(appointment.ends_at, timezone)}{' '}
             <span className="text-muted-foreground">
               (
               {formatDuration(
@@ -97,19 +102,31 @@ export function AppointmentDetailModal({
             </span>
           </p>
           <p className="flex items-center gap-2">
-            <CalendarIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <CalendarIcon
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             {formatDateLong(appointment.starts_at, timezone)}
           </p>
           <p className="flex items-center gap-2">
-            <Hash aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-            <span className="font-mono text-muted-foreground">{appointment.reference}</span>
+            <Hash
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
+            <span className="font-mono text-muted-foreground">
+              {appointment.reference}
+            </span>
           </p>
         </div>
-        {onMove && (appointment.status === 'confirmed' || appointment.status === 'pending_approval') && (
-          <Button size="sm" variant="secondary" onClick={() => onMove(appointment)}>
-            Change time
-          </Button>
-        )}
+        {onMove &&
+          (appointment.status === 'confirmed' ||
+            appointment.status === 'pending_approval') && (
+            <Button size="sm" variant="secondary" onClick={() => onMove(appointment)}>
+              Change time
+            </Button>
+          )}
       </div>
 
       <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">
@@ -124,7 +141,11 @@ export function AppointmentDetailModal({
             Contact
           </p>
           <p className="flex items-center gap-2 text-sm">
-            <Mail aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Mail
+              aria-hidden="true"
+              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             <a
               href={`mailto:${appointment.customer_email}`}
               className="truncate text-foreground hover:underline hover:underline-offset-4"
@@ -134,7 +155,11 @@ export function AppointmentDetailModal({
           </p>
           {appointment.customer_mobile && (
             <p className="mt-1 flex items-center gap-2 text-sm">
-              <Phone aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <Phone
+                aria-hidden="true"
+                className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                strokeWidth={2}
+              />
               <a
                 href={`tel:${appointment.customer_mobile.replace(/\s/g, '')}`}
                 className="truncate text-foreground hover:underline hover:underline-offset-4"
@@ -168,7 +193,11 @@ export function AppointmentDetailModal({
                 onChange={(e) => a.setNote(e.target.value)}
               />
               <div className="mt-2 flex gap-2">
-                <Button size="sm" loading={a.savingNote} onClick={() => void a.saveNote()}>
+                <Button
+                  size="sm"
+                  loading={a.savingNote}
+                  onClick={() => void a.saveNote()}
+                >
                   Save note
                 </Button>
                 <Button size="sm" variant="ghost" onClick={a.cancelNoteEdit}>
@@ -233,7 +262,11 @@ export function AppointmentDetailModal({
                 </p>
               )}
               <div className="mt-2 flex gap-2">
-                <Button size="sm" loading={a.savingPayment} onClick={() => void a.savePayment()}>
+                <Button
+                  size="sm"
+                  loading={a.savingPayment}
+                  onClick={() => void a.savePayment()}
+                >
                   Save payment
                 </Button>
                 <Button size="sm" variant="ghost" onClick={a.cancelPaymentEdit}>
@@ -287,7 +320,12 @@ export function AppointmentDetailModal({
             </Button>
           ))}
         {onBookFollowUp && (
-          <Button size="sm" variant="ghost" className="shrink-0" onClick={() => onBookFollowUp(appointment)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="shrink-0"
+            onClick={() => onBookFollowUp(appointment)}
+          >
             Book follow-up
           </Button>
         )}

@@ -43,7 +43,11 @@ export function AssistantPage(): JSX.Element {
       <AssistantChatTab firstName={firstName} />
 
       <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="New booking">
-        <NewBookingPanel prefill={null} onClose={() => setBooking(false)} onBooked={() => setBooking(false)} />
+        <NewBookingPanel
+          prefill={null}
+          onClose={() => setBooking(false)}
+          onBooked={() => setBooking(false)}
+        />
       </Modal>
     </DashboardLayout>
   );

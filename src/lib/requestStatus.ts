@@ -40,7 +40,8 @@ export const REQUEST_LANE_LABELS: Record<RequestLane, string> = {
 
 export function laneForStatus(status: AvailabilityRequestStatus): RequestLane {
   if (status === 'new') return 'new';
-  if (status === 'awaiting_response' || status === 'offer_sent') return 'awaiting_response';
+  if (status === 'awaiting_response' || status === 'offer_sent')
+    return 'awaiting_response';
   if (status === 'converted') return 'converted';
   return 'declined';
 }

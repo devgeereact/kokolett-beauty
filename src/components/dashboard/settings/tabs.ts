@@ -1,1 +1,2 @@
-export type SettingsTab = 'organisation' | 'account' | 'business' | 'preferences' | 'security' | 'billing';
+export type SettingsTab =
+  'organisation' | 'account' | 'business' | 'preferences' | 'security' | 'billing';

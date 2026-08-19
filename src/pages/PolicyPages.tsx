@@ -51,9 +51,7 @@ function LegalPage({
 }
 
 function H2({ children }: { children: ReactNode }): JSX.Element {
-  return (
-    <h2 className="font-serif text-lg font-semibold text-foreground">{children}</h2>
-  );
+  return <h2 className="font-serif text-lg font-semibold text-foreground">{children}</h2>;
 }
 
 export function PrivacyPage(): JSX.Element {

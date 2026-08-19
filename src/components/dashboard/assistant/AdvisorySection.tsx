@@ -35,13 +35,18 @@ export function AdvisorySection({
             <Sparkles aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="font-serif text-base font-semibold text-foreground">{title}</h2>
+            <h2 className="font-serif text-base font-semibold text-foreground">
+              {title}
+            </h2>
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>
         <ChevronDown
           aria-hidden="true"
-          className={cn('h-5 w-5 shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')}
+          className={cn(
+            'h-5 w-5 shrink-0 text-muted-foreground transition-transform',
+            open && 'rotate-180',
+          )}
           strokeWidth={2}
         />
       </button>

@@ -18,6 +18,10 @@ const STATUS_LABEL: Record<EmailMessage['status'], string> = {
   bounced: 'Bounced',
 };
 
-export function EmailStatusBadge({ status }: { status: EmailMessage['status'] }): JSX.Element {
+export function EmailStatusBadge({
+  status,
+}: {
+  status: EmailMessage['status'];
+}): JSX.Element {
   return <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>;
 }

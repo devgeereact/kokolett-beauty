@@ -1,4 +1,11 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { RequestRow } from '@/components/dashboard/requests/RequestRow';
 import { RequestDetailPanel } from '@/components/dashboard/requests/RequestDetailPanel';
@@ -148,7 +155,16 @@ export const RequestsQueue = forwardRef<
         : a.created_at.localeCompare(b.created_at),
     );
     return sorted;
-  }, [requests, lane, search, serviceId, priorityFilter, preferredFrom, preferredTo, sortOrder]);
+  }, [
+    requests,
+    lane,
+    search,
+    serviceId,
+    priorityFilter,
+    preferredFrom,
+    preferredTo,
+    sortOrder,
+  ]);
 
   useEffect(() => {
     setPage(1);
@@ -185,7 +201,9 @@ export const RequestsQueue = forwardRef<
     setBusy(true);
     try {
       const result = await offerSlotToRequest(selected.id, startsAtIso, overrideReason);
-      showToast({ message: `Booked in — reference ${result.reference}. They have been emailed.` });
+      showToast({
+        message: `Booked in — reference ${result.reference}. They have been emailed.`,
+      });
       await load();
     } catch (e) {
       const ahead = whoIsAhead(e);
@@ -250,7 +268,9 @@ export const RequestsQueue = forwardRef<
             <span
               className={cn(
                 'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                lane === l ? 'bg-tint-brand text-primary' : 'bg-muted text-muted-foreground',
+                lane === l
+                  ? 'bg-tint-brand text-primary'
+                  : 'bg-muted text-muted-foreground',
               )}
             >
               {laneCounts[l]}
@@ -319,13 +339,21 @@ export const RequestsQueue = forwardRef<
             <label className="mb-1.5 block text-xs font-medium text-foreground">
               Preferred from
             </label>
-            <DatePicker value={preferredFrom} onChange={setPreferredFrom} max={preferredTo} />
+            <DatePicker
+              value={preferredFrom}
+              onChange={setPreferredFrom}
+              max={preferredTo}
+            />
           </div>
           <div className="min-w-[10rem]">
             <label className="mb-1.5 block text-xs font-medium text-foreground">
               Preferred to
             </label>
-            <DatePicker value={preferredTo} onChange={setPreferredTo} min={preferredFrom} />
+            <DatePicker
+              value={preferredTo}
+              onChange={setPreferredTo}
+              min={preferredFrom}
+            />
           </div>
           <Button variant="ghost" size="sm" onClick={clearFilters}>
             Clear filters

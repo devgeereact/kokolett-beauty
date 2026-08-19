@@ -5,7 +5,11 @@ import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { addDays, formatDateLong, toSalonDate } from '@/lib/format';
-import { listMonthSummary, type DaySummary, type TemplateDay } from '@/services/availabilityService';
+import {
+  listMonthSummary,
+  type DaySummary,
+  type TemplateDay,
+} from '@/services/availabilityService';
 import { routes } from '@/lib/routes';
 
 interface Exception {
@@ -43,7 +47,8 @@ export function SpecialHoursClosuresCard({
   const [summary, setSummary] = useState<DaySummary[] | null>(null);
 
   const today = toSalonDate(new Date(), timezone);
-  const windowEnd = filledTo && filledTo < addDays(today, 60) ? filledTo : addDays(today, 60);
+  const windowEnd =
+    filledTo && filledTo < addDays(today, 60) ? filledTo : addDays(today, 60);
 
   useEffect(() => {
     if (!filledTo || filledTo < today) {
@@ -56,7 +61,9 @@ export function SpecialHoursClosuresCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timezone, filledTo]);
 
-  const usuallyOpen = new Set(days.filter((d) => d.times.length > 0).map((d) => d.day_of_week));
+  const usuallyOpen = new Set(
+    days.filter((d) => d.times.length > 0).map((d) => d.day_of_week),
+  );
 
   const allExceptions: Exception[] = (summary ?? [])
     .map((s): Exception | null => {
@@ -104,9 +111,17 @@ export function SpecialHoursClosuresCard({
               >
                 <span className="flex items-center gap-2 text-sm text-foreground">
                   {e.kind === 'closed' ? (
-                    <CalendarOff aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+                    <CalendarOff
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-muted-foreground"
+                      strokeWidth={2}
+                    />
                   ) : (
-                    <CalendarPlus aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+                    <CalendarPlus
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-muted-foreground"
+                      strokeWidth={2}
+                    />
                   )}
                   {formatDateLong(`${e.date}T12:00:00Z`, 'UTC')}
                 </span>

@@ -2,7 +2,12 @@ import { listAppointments } from '@/services/appointmentService';
 import { listCustomers } from '@/services/customerService';
 import { listWeeklyTemplate } from '@/services/availabilityService';
 import { addDays, salonDayRange, toSalonDate } from '@/lib/format';
-import { STATUS_CATEGORY, STATUS_CATEGORY_LABELS, STATUS_CATEGORIES, type StatusCategory } from '@/lib/status';
+import {
+  STATUS_CATEGORY,
+  STATUS_CATEGORY_LABELS,
+  STATUS_CATEGORIES,
+  type StatusCategory,
+} from '@/lib/status';
 import {
   analyzeDayOfWeekTrend,
   analyzeHourOfDayTrend,
@@ -37,7 +42,9 @@ function computeTotals(
   appointments: AppointmentDetailed[],
   newCustomerCount: number,
 ): ReportsOverview['totals'] {
-  const counted = appointments.filter((a) => a.status !== 'rescheduled' && a.status !== 'rejected');
+  const counted = appointments.filter(
+    (a) => a.status !== 'rescheduled' && a.status !== 'rejected',
+  );
   const completed = counted.filter((a) => a.status === 'completed');
   const noShows = counted.filter((a) => a.status === 'no_show');
   const revenuePence = completed.reduce((sum, a) => sum + a.price_pence, 0);
@@ -46,8 +53,10 @@ function computeTotals(
     appointments: counted.length,
     revenuePence,
     newCustomers: newCustomerCount,
-    avgBookingValuePence: completed.length > 0 ? Math.round(revenuePence / completed.length) : 0,
-    noShowRate: counted.length > 0 ? Math.round((noShows.length / counted.length) * 1000) / 10 : 0,
+    avgBookingValuePence:
+      completed.length > 0 ? Math.round(revenuePence / completed.length) : 0,
+    noShowRate:
+      counted.length > 0 ? Math.round((noShows.length / counted.length) * 1000) / 10 : 0,
   };
 }
 
@@ -64,7 +73,9 @@ export async function getReportsOverview(
 ): Promise<ReportsOverview> {
   const range = salonDayRange(fromDate, timezone);
   const rangeEnd = salonDayRange(toDate, timezone);
-  const spanDays = Math.round((rangeEnd.end.getTime() - range.start.getTime()) / 86_400_000);
+  const spanDays = Math.round(
+    (rangeEnd.end.getTime() - range.start.getTime()) / 86_400_000,
+  );
   const prevFrom = addDays(fromDate, -spanDays);
   const prevTo = addDays(fromDate, -1);
   const prevRange = salonDayRange(prevFrom, timezone);
@@ -77,7 +88,10 @@ export async function getReportsOverview(
   ]);
 
   const newCustomers = customers.filter(
-    (c) => c.first_seen_at && c.first_seen_at >= range.start.toISOString() && c.first_seen_at < rangeEnd.end.toISOString(),
+    (c) =>
+      c.first_seen_at &&
+      c.first_seen_at >= range.start.toISOString() &&
+      c.first_seen_at < rangeEnd.end.toISOString(),
   ).length;
   const prevNewCustomers = customers.filter(
     (c) =>
@@ -86,7 +100,9 @@ export async function getReportsOverview(
       c.first_seen_at < prevRangeEnd.end.toISOString(),
   ).length;
 
-  const counted = appointments.filter((a) => a.status !== 'rescheduled' && a.status !== 'rejected');
+  const counted = appointments.filter(
+    (a) => a.status !== 'rescheduled' && a.status !== 'rejected',
+  );
   const completed = counted.filter((a) => a.status === 'completed');
 
   const byDay = new Map<string, { appointments: number; revenuePence: number }>();
@@ -106,11 +122,13 @@ export async function getReportsOverview(
     const cat = STATUS_CATEGORY[a.status];
     statusCounts.set(cat, (statusCounts.get(cat) ?? 0) + 1);
   }
-  const byStatus = STATUS_CATEGORIES.filter((c) => (statusCounts.get(c) ?? 0) > 0).map((c) => ({
-    category: c,
-    label: STATUS_CATEGORY_LABELS[c],
-    count: statusCounts.get(c) ?? 0,
-  }));
+  const byStatus = STATUS_CATEGORIES.filter((c) => (statusCounts.get(c) ?? 0) > 0).map(
+    (c) => ({
+      category: c,
+      label: STATUS_CATEGORY_LABELS[c],
+      count: statusCounts.get(c) ?? 0,
+    }),
+  );
 
   const serviceCounts = new Map<string, number>();
   for (const a of counted) {
@@ -124,7 +142,9 @@ export async function getReportsOverview(
   const dayOfWeekCounts = new Map<string, number>();
   for (const a of counted) {
     const day = toSalonDate(a.starts_at, timezone);
-    const name = new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long' });
+    const name = new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', {
+      weekday: 'long',
+    });
     dayOfWeekCounts.set(name, (dayOfWeekCounts.get(name) ?? 0) + 1);
   }
   const busiestEntry = [...dayOfWeekCounts.entries()].sort((a, b) => b[1] - a[1])[0];
@@ -138,7 +158,9 @@ export async function getReportsOverview(
     byStatus,
     byService,
     topCustomers: rankRepeatCustomers(customers, completed).slice(0, 5),
-    recentBookings: [...appointments].sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 5),
+    recentBookings: [...appointments]
+      .sort((a, b) => b.starts_at.localeCompare(a.starts_at))
+      .slice(0, 5),
     busiestDay: busiestEntry ? { name: busiestEntry[0], count: busiestEntry[1] } : null,
   };
 }

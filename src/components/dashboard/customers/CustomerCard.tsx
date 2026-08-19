@@ -8,13 +8,16 @@ import type { CustomerWithStats } from '@/services/customerService';
 
 function isNew(customer: CustomerWithStats): boolean {
   if (customer.completed_count > 1) return false;
-  const ageMs = Date.now() - new Date(customer.first_seen_at ?? customer.created_at).getTime();
+  const ageMs =
+    Date.now() - new Date(customer.first_seen_at ?? customer.created_at).getTime();
   return ageMs < 14 * 24 * 60 * 60 * 1000;
 }
 
 function isInactive(customer: CustomerWithStats): boolean {
   if (!customer.last_visit_at) return false;
-  return Date.now() - new Date(customer.last_visit_at).getTime() > 180 * 24 * 60 * 60 * 1000;
+  return (
+    Date.now() - new Date(customer.last_visit_at).getTime() > 180 * 24 * 60 * 60 * 1000
+  );
 }
 
 /** One customer, card-shaped — same fields the reference's table row carried, laid out for a grid instead of a list per owner request. */
@@ -48,7 +51,9 @@ export function CustomerCard({
             </p>
             {isNew(customer) && <Badge tone="primary">New</Badge>}
           </div>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">{customer.email}</p>
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">
+            {customer.email}
+          </p>
           {customer.mobile && (
             <p className="truncate text-sm text-muted-foreground">{customer.mobile}</p>
           )}
@@ -70,14 +75,18 @@ export function CustomerCard({
         <div>
           <p className="text-xs text-muted-foreground">Last visit</p>
           <p className="font-medium text-foreground">
-            {customer.last_visit_at ? formatDateShort(customer.last_visit_at, timezone) : '—'}
+            {customer.last_visit_at
+              ? formatDateShort(customer.last_visit_at, timezone)
+              : '—'}
           </p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Total visits</p>
           <p className="font-medium text-foreground">{customer.completed_count}</p>
         </div>
-        <Badge tone={inactive ? 'neutral' : 'completed'}>{inactive ? 'Inactive' : 'Active'}</Badge>
+        <Badge tone={inactive ? 'neutral' : 'completed'}>
+          {inactive ? 'Inactive' : 'Active'}
+        </Badge>
       </div>
 
       <div className="flex flex-nowrap items-center gap-1 overflow-hidden">
@@ -92,7 +101,9 @@ export function CustomerCard({
           </Badge>
         )}
         {customer.favourite_services.length === 0 && (
-          <span className="truncate text-xs text-muted-foreground">No favourite services yet</span>
+          <span className="truncate text-xs text-muted-foreground">
+            No favourite services yet
+          </span>
         )}
       </div>
     </Card>

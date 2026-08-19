@@ -19,7 +19,7 @@ quoted price.
 The codebase already leans this direction. `AppointmentCard.tsx` already
 carries the comment: "No price is shown. What the appointment cost is
 agreed in the chair and the stored figure is a placeholder." What's missing
-is the other half — nowhere records what was *actually* charged, so
+is the other half — nowhere records what was _actually_ charged, so
 `owner_dashboard_summary()`'s `today_revenue_pence` sums a placeholder
 (`appointments.price_pence`, snapshotted at booking) and calls it "Expected
 takings" on the Today page. This spec replaces that placeholder sum with a
@@ -76,20 +76,20 @@ one).
 
 ### `payments`
 
-| Column          | Type            | Notes                                   |
-| --------------- | --------------- | ---------------------------------------- |
-| `id`             | uuid PK         |                                          |
+| Column           | Type                | Notes                                                                                        |
+| ---------------- | ------------------- | -------------------------------------------------------------------------------------------- |
+| `id`             | uuid PK             |                                                                                              |
 | `appointment_id` | uuid → appointments | `on delete restrict` — matches this schema's convention of never orphaning financial history |
-| `amount_pence`   | int             | `check (amount_pence > 0)`              |
-| `note`           | text            | nullable                                |
-| `recorded_by`    | uuid → staff    | not null                                |
-| `created_at`     | timestamptz     | default `now()`                          |
+| `amount_pence`   | int                 | `check (amount_pence > 0)`                                                                   |
+| `note`           | text                | nullable                                                                                     |
+| `recorded_by`    | uuid → staff        | not null                                                                                     |
+| `created_at`     | timestamptz         | default `now()`                                                                              |
 
 Deliberately one-to-many, not one-to-one: v1 UI logs one amount per
 appointment, but nothing stops a deposit-then-balance flow later without a
 migration. **Append-only** — no `update`/`delete` RPC. A mis-logged amount
 gets corrected by logging another row (possibly negative-offsetting is
-*not* supported in v1 — a genuine correction is a conversation, not a UI
+_not_ supported in v1 — a genuine correction is a conversation, not a UI
 problem this spec solves); the card shows the sum. This mirrors the
 schema's existing bias toward preserving financial history rather than
 mutating it (see `customers.deleted_at`'s comment on preserving financial
@@ -129,7 +129,7 @@ practice (RLS on `payments` returns nothing to anon/customer regardless).
 - **`AppointmentCard.tsx`** — new `onLogPayment?: (id: string, amountPence: number, note: string) => Promise<void>` prop, omit to hide (same convention as `onNoteSave`). New payment block, same structure/spacing as the existing note block. Amount entered as pounds-and-pence text, converted to integer pence before calling `onLogPayment` — never floats past the component boundary.
 - **`TodayPage.tsx`** — the "Expected takings" stat becomes "Collected today", reading `summary.today_collected_pence`. `onLogPayment` wired through to `AppointmentCard`, calling `paymentService.logPayment` then `refresh()` + `refreshSummary()` (same pattern `changeStatus` already uses).
 - **Types** — `OwnerDashboardSummary` (or wherever that shape lives in `src/types`) — rename field; `AppointmentDetailed` gains `paid_pence: number`.
-- **Visual pass** — stat cards and schedule list restyled using `/ui-ux-pro-max` (hierarchy/spacing reference) and `/ui-styling` (Tailwind/shadcn execution) against the *existing* `docs/DESIGN.md` tokens. No new colours. WCAG 2.2 AA and 44×44px touch targets (already-standing constraints) carry over unchanged.
+- **Visual pass** — stat cards and schedule list restyled using `/ui-ux-pro-max` (hierarchy/spacing reference) and `/ui-styling` (Tailwind/shadcn execution) against the _existing_ `docs/DESIGN.md` tokens. No new colours. WCAG 2.2 AA and 44×44px touch targets (already-standing constraints) carry over unchanged.
 
 ## 6. Testing
 

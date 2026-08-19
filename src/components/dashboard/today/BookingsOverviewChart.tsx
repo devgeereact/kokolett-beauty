@@ -17,7 +17,9 @@ const NEW_COLOR = 'bg-chart-1';
 const NEW_COLOR_TODAY = 'bg-chart-2';
 
 function liveOnly(appointments: AppointmentDetailed[]): AppointmentDetailed[] {
-  return appointments.filter((a) => a.status !== 'rescheduled' && a.status !== 'rejected');
+  return appointments.filter(
+    (a) => a.status !== 'rescheduled' && a.status !== 'rejected',
+  );
 }
 
 function trendLabel(delta: number | null): string {
@@ -154,7 +156,10 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
               New
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className={`h-2 w-2 rounded-full ${RETURNING_COLOR}`} aria-hidden="true" />
+              <span
+                className={`h-2 w-2 rounded-full ${RETURNING_COLOR}`}
+                aria-hidden="true"
+              />
               Returning
             </span>
           </div>
@@ -184,7 +189,10 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
                   const day = byDay.get(dow) ?? { newCount: 0, returningCount: 0 };
                   const isToday = dow === metrics.todayDow;
                   return (
-                    <div key={dow} className="flex h-full flex-1 flex-col items-center gap-1.5">
+                    <div
+                      key={dow}
+                      className="flex h-full flex-1 flex-col items-center gap-1.5"
+                    >
                       <div className="flex h-full w-8 min-h-0 flex-col-reverse justify-start overflow-hidden rounded-t-md">
                         <div
                           className={`w-full ${isToday ? NEW_COLOR_TODAY : NEW_COLOR}`}

@@ -30,7 +30,7 @@ So this brief skips Phase 2 (competitive research) and Phase 5 (font+colour mock
 generation) from the skill's usual flow — both are for choosing a palette, and there is
 no palette to choose. What survives is Phase 3's proposal discipline (a coherent,
 opinionated package with an explicit SAFE/RISK split) and Phase 6's job of writing
-something a builder can execute against — retargeted at *component-level* decisions
+something a builder can execute against — retargeted at _component-level_ decisions
 (sidebar, stat tiles, list density, calendar surface, settings forms) instead of
 system-level ones (fonts, palette).
 
@@ -57,7 +57,7 @@ Per the skill's own forcing question — one sentence, everything below should s
 > **"She can run her whole day from her phone between clients and the software never
 > makes her stop and think."**
 
-Not "delightful," not "modern" — *fast to re-orient after an interruption*. A
+Not "delightful," not "modern" — _fast to re-orient after an interruption_. A
 twelve-hour solo-owner day is a sequence of five-second glances between clients, not a
 sit-down session. Every recommendation below is judged against: does this make the
 next glance faster, or does it just look nicer sitting still?
@@ -115,7 +115,7 @@ which several of the target pages already have ad hoc:
   visited tab — correct, since editing a setting isn't optional-per-item the way a
   note is.
 - Customers' contact-edit block (`Edit` → inline form → `Save`/`Cancel`) is
-  *already* the disclosure shape, just not named as such. Good — it's independent
+  _already_ the disclosure shape, just not named as such. Good — it's independent
   confirmation the pattern predates this brief in places, not a new invention.
 
 **Recommendation:** treat "disclosure-action block" as a documented interaction
@@ -129,7 +129,7 @@ and an always-open form each time.
 The Today spec's stat tiles aren't new markup — `Card p-4` + uppercase-tracked label +
 `font-display text-2xl font-semibold` value already exists verbatim on
 `AppointmentsPage`'s four stat tiles too (`AppointmentsPage.tsx:192-207`). What the
-spec changes is *meaning*: "Expected takings" (a placeholder sum the codebase itself
+spec changes is _meaning_: "Expected takings" (a placeholder sum the codebase itself
 flags as unreliable) becomes "Collected today" (an owner-entered, trustworthy figure).
 The visual lesson isn't a new component — it's that **the single most-trusted number
 on a stat row deserves to look more trusted than its neighbours**, and right now all
@@ -161,6 +161,7 @@ call out. Don't risk touch-target regression for a purely visual refinement here
 correct but visually flat next to the richer stat-tile treatment proposed below —
 right now the sidebar and the content area don't share a sense of "this got more
 design attention." Two low-risk additions, both inside existing tokens:
+
 - Give the active pill a subtle inset treatment using the sidebar's own `-ring` token
   on focus (already present, just not currently distinct from the hover state) so
   keyboard navigation through the sidebar is as legible as mouse hover.
@@ -201,6 +202,7 @@ two already-duplicated call sites — zero visual risk, straightforward win.
 `variant?: 'headline' | 'default'` prop. `headline` steps the value up from
 `text-2xl` to `text-3xl` and the label from `text-xs` to `text-sm`, while keeping
 every other tile at the current size. Exactly one tile per stat row gets `headline`:
+
 - Today: "Collected today" (once the payment-log migration lands per the spec) — the
   number the owner is most likely to check first thing and last thing.
 - Bookings: "Needs closing off" — already singled out with the `warn` tone; giving it
@@ -225,6 +227,7 @@ use, which fails the §2 test.
 
 **Proposal — name the two densities that already exist, so future pages pick the
 right one deliberately rather than by copying whichever file is open:**
+
 - **Comfortable** (`Card p-5`, `gap-3`+ spacing, full StatusChip + secondary detail
   visible): for anything requiring a decision before moving on — Inbox approval
   cards, Today's schedule (`AppointmentCard`), Customers' detail panel.
@@ -263,7 +266,7 @@ risk.
 the booked-block time label at `font-mono text-[11px]` — an arbitrary value outside
 the documented `text-xs`(12)/`text-sm`(14) scale, one pixel under the DESIGN.md §4
 floor ("never below 14px for anything a customer must read to book" — this is
-owner-only, so the floor technically doesn't bind, but the *hour labels* beside it
+owner-only, so the floor technically doesn't bind, but the _hour labels_ beside it
 (`DayView.tsx:173`) go even smaller, to `text-[10px]`). Two arbitrary sub-scale sizes
 sitting next to each other, on the single most information-dense screen in the app, is
 the kind of thing "richer type rhythm" is supposed to fix. **Recommendation:** step
@@ -285,12 +288,12 @@ Inbox and Settings don't match it and should.
 **three different visual treatments for "switch between sections of one page"** live
 in the app simultaneously:
 
-| Surface | Container | Active state |
-|---|---|---|
-| Calendar view switcher (`CalendarShell`) | `bg-muted p-1`, segmented | `bg-card shadow-card` |
-| Calendar & Capacity page switcher (`CalendarCapacityTabs.tsx:25`) | `bg-muted p-1`, segmented | `bg-card shadow-card` |
-| Inbox Approvals/Requests switcher (`InboxPage.tsx:188`) | `border border-border p-0.5`, segmented | `bg-primary text-primary-foreground` (filled) |
-| Settings section tabs (`SettingsPage.tsx:166`) | none, `border-b border-border` | `border-b-2 border-primary text-primary` (underline) |
+| Surface                                                           | Container                               | Active state                                         |
+| ----------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------- |
+| Calendar view switcher (`CalendarShell`)                          | `bg-muted p-1`, segmented               | `bg-card shadow-card`                                |
+| Calendar & Capacity page switcher (`CalendarCapacityTabs.tsx:25`) | `bg-muted p-1`, segmented               | `bg-card shadow-card`                                |
+| Inbox Approvals/Requests switcher (`InboxPage.tsx:188`)           | `border border-border p-0.5`, segmented | `bg-primary text-primary-foreground` (filled)        |
+| Settings section tabs (`SettingsPage.tsx:166`)                    | none, `border-b border-border`          | `border-b-2 border-primary text-primary` (underline) |
 
 Three patterns doing the identical job (in-page section switching) is exactly the kind
 of drift a "same visual system across the rest of the nav" pass exists to catch — a
@@ -301,7 +304,7 @@ different ways depending on which page she's on.
 segmented-control shape already used by two of the four (`bg-muted p-1` container,
 `bg-card shadow-card` active state). Rationale: it already appears more often, it
 pairs naturally with the elevated-card language used everywhere else (the active tab
-*is* a small card, reusing the same `shadow-card` token rather than inventing a new
+_is_ a small card, reusing the same `shadow-card` token rather than inventing a new
 signal), and it reads as more "designed" than a plain underline — which matters for
 the "richer" half of the brief. Concretely: Inbox's Approvals/Requests switcher
 changes container (`border` → `bg-muted p-1`) and active state (filled primary →
@@ -317,10 +320,11 @@ Every one of those fields is a short numeric input with a one-line hint — exac
 shape Inbox's approval-card `dl` grid (`InboxPage.tsx:287`, `grid gap-3 sm:grid-cols-3`)
 already handles well for short label/value pairs. **Recommendation:** at `sm:` and
 above, lay Booking Rules' numeric fields out two-per-row instead of one-per-row (label
-+ hint stacked above each input, same as now — just two columns instead of one). This
-roughly halves the scroll length of the single longest form in the app without
-changing a single field's own treatment, which is exactly the "better density" the
-Today precedent asks for, applied to a form instead of a list.
+
+- hint stacked above each input, same as now — just two columns instead of one). This
+  roughly halves the scroll length of the single longest form in the app without
+  changing a single field's own treatment, which is exactly the "better density" the
+  Today precedent asks for, applied to a form instead of a list.
 
 **Proposal — SAFE, unchanged:** keep the Save button un-sticky and bottom-anchored.
 A sticky save bar is tempting on a long form, but this form is short enough after the
@@ -332,15 +336,15 @@ Rules' current length.
 
 **Current state:** already close to the target — `Card`-grouped sections, a
 sticky-on-desktop add-form sidebar (`ServiceMenuPage.tsx:287`, `lg:sticky lg:top-24`),
-and the compact hover-row list treatment (§5.3) that this brief recommends *extending
-to* Customers, not changing here. Growth is, structurally, already what the other
+and the compact hover-row list treatment (§5.3) that this brief recommends _extending
+to_ Customers, not changing here. Growth is, structurally, already what the other
 pages should look more like.
 
 **Proposal:** no structural change. The one thing worth flagging: this page is titled
 "Services" in its own `DashboardLayout` `title` prop (`ServiceMenuPage.tsx:151`) while
 the sidebar entry and the 7-nav IA call it "Growth" (`DashboardLayout.tsx:71`,
 `plan.md` Phase 1 step 3). That's a naming gap, not a visual one, but it sits exactly
-on the boundary of this brief's scope (it's the page header, which *is* a visual
+on the boundary of this brief's scope (it's the page header, which _is_ a visual
 element) so it's worth naming here even though the fix belongs to whoever owns
 Growth's eventual scope expansion (`plan.md` Phase 2 step 8 describes Growth as
 "manage website-facing offer/requests/subscribers/reviews" — broader than the current
@@ -381,6 +385,7 @@ to this brief's proposals:
 ## 7. SAFE / RISK summary
 
 **SAFE (already-correct patterns this brief asks to extend, not change):**
+
 - Shared primitives (`Card`, `Button`, `Field`, `StatusChip`, empty/error/loading
   states) stay exactly as they are — the audit found no case for touching them.
 - Calendar's drag/keyboard/table accessibility structure is untouched.
@@ -388,6 +393,7 @@ to this brief's proposals:
 - No new colour, shadow, radius, or motion primitive anywhere in this brief.
 
 **RISK (deliberate departures, each with an explicit cost):**
+
 1. Standardise all in-page tab/section switchers on the segmented-control shape
    (§5.5) — costs a wrap-behaviour check on Settings at narrow viewports.
 2. Give exactly one stat tile per row a `headline` size step (§5.2) — costs a small

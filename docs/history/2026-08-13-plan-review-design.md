@@ -42,16 +42,16 @@ The three biggest judgment calls, up front:
 
 ## What already exists (reuse targets — do not rebuild)
 
-| Component | What it already solves |
-| --- | --- |
-| `src/components/dashboard/DashboardLayout.tsx` | The full 7-item primary nav (Today/Inbox/Calendar & Capacity/Bookings/Customers/Growth/Settings), a visually-secondary 2-item tier (Reports, AI Assistant) below a divider, the dedicated `sidebar` token ramp (DESIGN.md §3), and a shared mobile slide-over that renders the identical nav. Both tiers explicitly cite `docs/plan.md Phase 1 step 3/6` in code comments. |
-| `src/pages/dashboard/InboxPage.tsx` | Phase 1 step 5's Approvals+Requests consolidation, `?tab=` query-param state, SLA urgency styling (`text-status-pending` on holds expiring within 2h), and a policy-aware empty state. |
-| `src/components/dashboard/CalendarCapacityTabs.tsx` | Phase 1 step 6's "first-class under Calendar & Capacity" — a segmented tab strip of three real routed pages (Schedule / Appointment type / Weekly hours), explicitly modelled on `CalendarShell`'s view switcher. |
-| `src/components/dashboard/calendar/CalendarShell.tsx` | The canonical accessible tab/segmented-control pattern: plain `<button>` + `aria-pressed`, **not** `role="tablist"`/`role="tab"`, with a code comment explaining why (promising roving-tabindex keyboard nav via ARIA and then not implementing it is worse for assistive tech than no ARIA at all). |
-| `src/components/ui/ConfirmDialog.tsx` | A fully accessible modal primitive already proven in production: focus trap, Escape-to-close, focus restored to trigger on close, portaled to `document.body` (specifically to dodge `backdrop-filter` containing-block clipping), `role="alertdialog"`, `aria-modal`, `aria-labelledby`/`aria-describedby`. This is the reference implementation Phase 5 step 19 should point to. |
-| `src/components/dashboard/QuickActionLauncher.tsx` | Phase 2 step 9's Cmd+K cross-nav launcher — already shipped, portaled, keyboard-aware, editable-target-safe. |
-| `src/components/ui/States.tsx` | `EmptyState`/`ErrorState`/`LoadingState` — the reuse target for any interaction-state work Phase 1/5 need to specify. |
-| The two shipped specs (Today command centre + payment log; Calendar rebuild) | Concrete evidence of "on-brief": both are written at the altitude the plan's Phase 1/5 prose is not — specific components, specific ARIA contracts, specific DESIGN.md citations, explicit non-goals. |
+| Component                                                                    | What it already solves                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/components/dashboard/DashboardLayout.tsx`                               | The full 7-item primary nav (Today/Inbox/Calendar & Capacity/Bookings/Customers/Growth/Settings), a visually-secondary 2-item tier (Reports, AI Assistant) below a divider, the dedicated `sidebar` token ramp (DESIGN.md §3), and a shared mobile slide-over that renders the identical nav. Both tiers explicitly cite `docs/plan.md Phase 1 step 3/6` in code comments.         |
+| `src/pages/dashboard/InboxPage.tsx`                                          | Phase 1 step 5's Approvals+Requests consolidation, `?tab=` query-param state, SLA urgency styling (`text-status-pending` on holds expiring within 2h), and a policy-aware empty state.                                                                                                                                                                                             |
+| `src/components/dashboard/CalendarCapacityTabs.tsx`                          | Phase 1 step 6's "first-class under Calendar & Capacity" — a segmented tab strip of three real routed pages (Schedule / Appointment type / Weekly hours), explicitly modelled on `CalendarShell`'s view switcher.                                                                                                                                                                  |
+| `src/components/dashboard/calendar/CalendarShell.tsx`                        | The canonical accessible tab/segmented-control pattern: plain `<button>` + `aria-pressed`, **not** `role="tablist"`/`role="tab"`, with a code comment explaining why (promising roving-tabindex keyboard nav via ARIA and then not implementing it is worse for assistive tech than no ARIA at all).                                                                               |
+| `src/components/ui/ConfirmDialog.tsx`                                        | A fully accessible modal primitive already proven in production: focus trap, Escape-to-close, focus restored to trigger on close, portaled to `document.body` (specifically to dodge `backdrop-filter` containing-block clipping), `role="alertdialog"`, `aria-modal`, `aria-labelledby`/`aria-describedby`. This is the reference implementation Phase 5 step 19 should point to. |
+| `src/components/dashboard/QuickActionLauncher.tsx`                           | Phase 2 step 9's Cmd+K cross-nav launcher — already shipped, portaled, keyboard-aware, editable-target-safe.                                                                                                                                                                                                                                                                       |
+| `src/components/ui/States.tsx`                                               | `EmptyState`/`ErrorState`/`LoadingState` — the reuse target for any interaction-state work Phase 1/5 need to specify.                                                                                                                                                                                                                                                              |
+| The two shipped specs (Today command centre + payment log; Calendar rebuild) | Concrete evidence of "on-brief": both are written at the altitude the plan's Phase 1/5 prose is not — specific components, specific ARIA contracts, specific DESIGN.md citations, explicit non-goals.                                                                                                                                                                              |
 
 This matters for the review below: several Phase 1 findings are not "the plan is wrong" but "the
 plan describes a decision that was already made better, in code, than the plan's own words say."
@@ -68,15 +68,16 @@ answers "what does the owner see first/second/third" per surface, not just per s
 framing (age, expiring soon, next action) is IA that respects urgency, not just category.
 
 **What's missing (why not a 10):**
+
 - No primary/secondary tier definition, even though `DashboardLayout.tsx` already invented and
   shipped one (7 primary + 2 visually-secondary, divider-separated). The plan describes a flat list
   of 7; the shipped reality is richer and better.
-- Step 6's "become first-class under Calendar & Capacity" never says *how*. It shipped as a
+- Step 6's "become first-class under Calendar & Capacity" never says _how_. It shipped as a
   three-route segmented tab strip (`CalendarCapacityTabs.tsx`) — a legitimate, specific IA
   decision the plan text doesn't capture, leaving a future reader to reinvent it (possibly
   differently, possibly with the ARIA-tabs footgun described in Pass 6).
 - Step 7 ("Temporarily remove or relabel dead-nav entries... to preserve trust") describes a
-  *worse* solution than what shipped. The actual decision — keep both reachable, visually
+  _worse_ solution than what shipped. The actual decision — keep both reachable, visually
   de-emphasized, cited in code as "neither is a stub or redirect" (`docs/BASELINE-AUDIT.md`) — is
   more trustworthy than removal or relabelling and should be the policy documented, not a
   temporary stopgap description.
@@ -84,6 +85,7 @@ framing (age, expiring soon, next action) is IA that respects urgency, not just 
   JSX rendered in both the desktop sidebar and the mobile slide-over).
 
 **Fix to 10 (recommended plan text):**
+
 > Replace step 3 with an explicit two-tier statement: "7 primary nav entries, equal visual weight,
 > plus a visually-secondary tier (Reports, AI Assistant) below a divider — always reachable, never
 > hidden or relabelled, per the shipped `DashboardLayout.tsx` pattern." Replace step 6 with:
@@ -102,9 +104,10 @@ SLA language implicitly requires a "no items" / "nothing waiting" state for the 
 under the current instant-confirm policy.
 
 **What's missing:**
+
 - Phase 1 never specifies states for the surfaces it restructures. It merges two queues (Approvals,
   Requests) into one page with two lanes — that merge changes what "empty" means for each lane
-  (Approvals is *structurally* almost-always-empty under current policy; Requests is not), and the
+  (Approvals is _structurally_ almost-always-empty under current policy; Requests is not), and the
   plan doesn't say so even though the shipped code already got this right (`InboxPage.tsx`'s empty
   state literally explains the policy reason for zero rows).
 - Phase 5 step 19's "reliable feedback patterns for all state-changing actions" names the concern
@@ -112,6 +115,7 @@ under the current instant-confirm policy.
   (approve, decline, mark-complete, log-payment, drag-reschedule).
 
 **Fix to 10:**
+
 > Add to Phase 1: an interaction-state note for Inbox's two lanes, matching what's shipped —
 > Approvals' empty state explains the policy reason (not a generic "no items"), Requests' empty/
 > queued/expiring states reuse `EmptyState`/`LoadingState`/`ErrorState` (`src/components/ui/States.tsx`).
@@ -127,11 +131,11 @@ under the current instant-confirm policy.
 ### Pass 3: User Journey & Emotional Arc — **3/10**
 
 **What's there:** Step 5's SLA/urgency framing is the one place Phase 1 reasons about how the owner
-*feels* (time pressure on an expiring hold), not just what she sees.
+_feels_ (time pressure on an expiring hold), not just what she sees.
 
 **What's missing:** Nothing addresses the day-one emotional arc of an owner whose nav just moved
 (`/dashboard/approvals` and `/dashboard/requests` now redirect into `/dashboard/inbox?tab=` — true
-in code today, per `InboxPage.tsx`'s own comment, but not stated as a *plan commitment*, so a future
+in code today, per `InboxPage.tsx`'s own comment, but not stated as a _plan commitment_, so a future
 refactor could silently drop it and break bookmarks/muscle memory with no one noticing). Phase 5 is
 written entirely as engineering-quality bullets ("resolve drift", "standardize", "upgrade") with no
 owner-experience framing at all, despite `docs/DESIGN.md`'s own stated rationale for the whole
@@ -139,6 +143,7 @@ colour system being a twelve-hour shift, and `TodayPage.tsx`'s own comment about
 "left open... overnight."
 
 **Fix to 10:**
+
 > Add to Phase 1: "Old `/dashboard/approvals` and `/dashboard/requests` deep-links continue to
 > redirect into the merged Inbox (already true in code — make it a plan-level commitment so it
 > survives future refactors)." Add one line to Phase 5 tying step 20 (skeletons/optimistic updates)
@@ -152,7 +157,7 @@ colour system being a twelve-hour shift, and `TodayPage.tsx`'s own comment about
 
 **Classifier:** This is App UI (owner dashboard), not marketing/landing. Applying App UI rules:
 calm surface hierarchy, dense-but-readable, minimal chrome, utility language, cards only when the
-card *is* the interaction.
+card _is_ the interaction.
 
 **What's there:** The shipped nav (`DashboardLayout.tsx`) is already restrained — text-only labels,
 no icon-in-colored-circle decoration (AI Slop blacklist item 3), flat token-driven surfaces, no
@@ -168,13 +173,14 @@ no citation of that rule is asking an implementer to rediscover the exact bug DE
 warns about by name.
 
 **Fix to 10:**
+
 > Add to Phase 1 step 3: "Primary nav stays text-only (no icon glyphs) — matches the shipped
 > pattern; do not introduce icon-in-circle nav decoration." Rewrite Phase 5 step 17 as a concrete
 > punch list: (a) unify the tab/segmented-control primitive on `CalendarShell`'s plain-button +
 > `aria-pressed` pattern (see Pass 6 for the two files that still diverge); (b) grep for
 > `bg-*/NN`-style opacity modifiers against token colours and replace with `color-mix()` or a
 > dedicated token, per DESIGN.md §8's explicit warning; (c) audit for one-off `rounded-xl border …
-> shadow-card` combinations that should be the `Card` primitive instead.
+shadow-card` combinations that should be the `Card` primitive instead.
 
 ---
 
@@ -188,12 +194,13 @@ ramp (DESIGN.md §3: "so it reads as chrome rather than content") rather than `c
 exactly the kind of thing a future "redesign the nav" pass could silently violate by reaching for
 `bg-card`/`border` instead. Phase 5 step 18 ("standardize component behavior for density modes") is
 ambiguous about scope: DESIGN.md §5 already defines exactly **two** fixed densities keyed to
-*context* (marketing `py-16`/`py-24` vs dashboard `p-4`/`gap-3`), not to user preference. The plan
+_context_ (marketing `py-16`/`py-24` vs dashboard `p-4`/`gap-3`), not to user preference. The plan
 doesn't say whether "standardize" means auditing existing components against those two, or
 introducing a new user-facing density toggle (a materially bigger, unscoped feature DESIGN.md
 doesn't currently support).
 
 **Fix to 10:**
+
 > Add to Phase 1 step 3: "Sidebar chrome uses the dedicated `sidebar`/`sidebar-foreground`/
 > `sidebar-primary`/`sidebar-accent`/`sidebar-border`/`sidebar-ring` ramp (DESIGN.md §3), never
 > `card`/`background`/`border`." Resolve step 18 explicitly **[JUDGMENT CALL — see below]**:
@@ -232,11 +239,12 @@ Phase 1 restructures, and neither is mentioned in the plan despite Phase 5 exist
 catch this class of drift.
 
 Beyond that: neither Phase 1 nor Phase 5 restates DESIGN.md's concrete numeric bars (44×44px touch
-targets, 4.5:1 body contrast) as acceptance criteria for the *new* interactive surfaces Phase 1
+targets, 4.5:1 body contrast) as acceptance criteria for the _new_ interactive surfaces Phase 1
 introduces (Inbox's tab toggle, approve/decline buttons) — leaving compliance implicit rather than
 a checked bar.
 
 **Fix to 10:**
+
 > Add to Phase 1: "All new/consolidated interactive targets (Inbox tab toggle, approve/decline
 > actions) meet the 44×44px minimum (DESIGN.md §7)." Expand Phase 5 step 19 to name the acceptance
 > bar explicitly instead of only pointing at the calendar spec: "drawer/dialog behaviour follows
@@ -251,12 +259,12 @@ a checked bar.
 
 ### Pass 7: Unresolved Design Decisions
 
-| Decision needed | If deferred, what happens | Resolution in this run |
-| --- | --- | --- |
-| Calendar & Capacity sub-nav mechanism | A future implementer re-derives a different (possibly ARIA-tabs) pattern than the one already shipped and proven. | **[JUDGMENT CALL]** Document the shipped `CalendarCapacityTabs.tsx` segmented-strip pattern as the answer — it already exists and is correct. |
-| Density-mode scope (step 18) | Either under-delivers (if a toggle was actually wanted) or balloons into unplanned settings UI (if "standardize" is read as "build a toggle"). | **[JUDGMENT CALL]** Recommend audit-only against DESIGN.md §5's two existing context-keyed densities; explicitly defer a user-facing toggle pending an actual owner ask. |
+| Decision needed                            | If deferred, what happens                                                                                                                                                                                                                                                  | Resolution in this run                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Calendar & Capacity sub-nav mechanism      | A future implementer re-derives a different (possibly ARIA-tabs) pattern than the one already shipped and proven.                                                                                                                                                          | **[JUDGMENT CALL]** Document the shipped `CalendarCapacityTabs.tsx` segmented-strip pattern as the answer — it already exists and is correct.                                                                                                                                                                                                                                                                                     |
+| Density-mode scope (step 18)               | Either under-delivers (if a toggle was actually wanted) or balloons into unplanned settings UI (if "standardize" is read as "build a toggle").                                                                                                                             | **[JUDGMENT CALL]** Recommend audit-only against DESIGN.md §5's two existing context-keyed densities; explicitly defer a user-facing toggle pending an actual owner ask.                                                                                                                                                                                                                                                          |
 | Dialog/drawer primitive strategy (step 19) | Risk of three concurrent, incompatible modal patterns: `ConfirmDialog`'s proven portal pattern, a newly-introduced library (e.g. Radix Dialog), and the existing "inline-expanding panel" convention the calendar spec explicitly says this codebase uses everywhere else. | **[JUDGMENT CALL]** Recommend extracting `ConfirmDialog.tsx`'s pattern into a general-purpose primitive for true blocking dialogs, and keeping the inline-panel convention (per the calendar spec's own explicit reasoning) for everything that isn't a blocking confirmation — not adopting an external library. This is a real product/scope call; flag it for explicit owner sign-off before building, don't silently default. |
-| Plan-vs-shipped drift | Future planning passes (including AI-agent-authored ones) re-plan or re-implement already-solved IA work, or worse, regress a better shipped decision (step 7's actual behaviour) back to the plan's weaker described one ("remove or relabel"). | Not a design taste call — a plan-hygiene fix. Recommend adding a one-line "already shipped, see `DashboardLayout.tsx`/`InboxPage.tsx`/`CalendarCapacityTabs.tsx`" callout to Phase 1 (and Phase 2 step 9) so nobody re-derives it. |
+| Plan-vs-shipped drift                      | Future planning passes (including AI-agent-authored ones) re-plan or re-implement already-solved IA work, or worse, regress a better shipped decision (step 7's actual behaviour) back to the plan's weaker described one ("remove or relabel").                           | Not a design taste call — a plan-hygiene fix. Recommend adding a one-line "already shipped, see `DashboardLayout.tsx`/`InboxPage.tsx`/`CalendarCapacityTabs.tsx`" callout to Phase 1 (and Phase 2 step 9) so nobody re-derives it.                                                                                                                                                                                                |
 
 ---
 

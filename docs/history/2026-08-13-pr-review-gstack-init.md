@@ -4,7 +4,7 @@
 generated `docs/fresh/*` skill artifacts, which aren't part of this branch's own diff).
 Read-only review — no fixes applied, no PR comments posted (none exists), no tracked file edited.
 
-**Judgment call — base branch.** `origin/main` is 71 commits *behind* local `main` (local main has
+**Judgment call — base branch.** `origin/main` is 71 commits _behind_ local `main` (local main has
 unpushed work; `git log --oneline origin/main..main` = 71 commits, `git log HEAD..origin/main` = 0).
 Diffing against `origin/main` pulls in unrelated already-integrated local history and produces a
 misleading 109-file diff. Local `main` (`b01c8ad`) is this branch's actual fork point
@@ -45,11 +45,11 @@ same commit then **also** edits `0024`/`0025` in place anyway, directly contradi
 that justified creating `0026` at all. Practical consequences:
 
 - It's the project's own documented rule, broken in the same branch that argues for it.
-- A fresh `supabase db reset` (local dev, CI) will silently apply the *already-fixed* `0024`/`0025`,
+- A fresh `supabase db reset` (local dev, CI) will silently apply the _already-fixed_ `0024`/`0025`,
   then `0026` reapplies the same fix again (harmless — `create or replace function` is idempotent) —
-  so this doesn't break a clean replay. The risk is environments that already applied the *original*
+  so this doesn't break a clean replay. The risk is environments that already applied the _original_
   `0024`/`0025` and now diff/lint the migration files against Supabase CLI's tracked history, or a
-  future engineer using `git blame`/`git show 0024` expecting to see what was *actually* shipped and
+  future engineer using `git blame`/`git show 0024` expecting to see what was _actually_ shipped and
   instead finding it silently rewritten.
 
 **Fix:** revert the in-place edits to `0024` and `0025`; let `0026` carry the fix alone (it already
@@ -72,7 +72,7 @@ if (busy) return;
 ```
 
 `busy` is only set `true` inside `finishDrag`, right before the RPC call (line 150) — i.e. only
-*after* a drop, never while a drag is merely in flight. So if a second pointer presses a *different*
+_after_ a drop, never while a drag is merely in flight. So if a second pointer presses a _different_
 `EventBlock` before the first pointer releases (two fingers on a touch device — the hook's own
 docstring says "the salon tablet this has to work on is touch-first"), `beginDrag` overwrites the
 shared `stateRef.current` with the second appointment.
@@ -87,9 +87,9 @@ finds `stateRef.current` already nulled and does nothing — its own drag or tap
 
 The code comment at line 188-190 claims this is handled ("a second finger touching a different
 draggable block mid-drag must not hijack stateRef"), and the per-listener `pointerId` filtering does
-correctly stop a *foreign* pointer's stray events from resolving the *tracked* drag (this is what
+correctly stop a _foreign_ pointer's stray events from resolving the _tracked_ drag (this is what
 `useAppointmentDrag.test.ts`'s "ignores a pointerup from a different pointerId" test actually covers)
-— but that test never exercises two *concurrent* `beginDrag` calls, which is the actual gap: the
+— but that test never exercises two _concurrent_ `beginDrag` calls, which is the actual gap: the
 mutable `stateRef` itself isn't scoped per pointer, only the listeners are.
 
 **Fix:** key drag state by `pointerId` (e.g. `Map<number, DragState>`) so two concurrent gestures

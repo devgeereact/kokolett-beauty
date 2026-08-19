@@ -55,14 +55,26 @@ export async function listCustomersWithStats(search = ''): Promise<CustomerWithS
 
   const byCustomer = new Map<
     string,
-    { completed: number; upcoming: number; noShow: number; lastVisit: string | null; services: Map<string, number> }
+    {
+      completed: number;
+      upcoming: number;
+      noShow: number;
+      lastVisit: string | null;
+      services: Map<string, number>;
+    }
   >();
 
   for (const a of appointments ?? []) {
     if (!a.customer_id) continue;
     let bucket = byCustomer.get(a.customer_id);
     if (!bucket) {
-      bucket = { completed: 0, upcoming: 0, noShow: 0, lastVisit: null, services: new Map() };
+      bucket = {
+        completed: 0,
+        upcoming: 0,
+        noShow: 0,
+        lastVisit: null,
+        services: new Map(),
+      };
       byCustomer.set(a.customer_id, bucket);
     }
     if (a.status === 'completed') {
@@ -71,11 +83,18 @@ export async function listCustomersWithStats(search = ''): Promise<CustomerWithS
         bucket.lastVisit = a.starts_at;
       }
       if (a.service_name) {
-        bucket.services.set(a.service_name, (bucket.services.get(a.service_name) ?? 0) + 1);
+        bucket.services.set(
+          a.service_name,
+          (bucket.services.get(a.service_name) ?? 0) + 1,
+        );
       }
     } else if (a.status === 'no_show') {
       bucket.noShow += 1;
-    } else if (a.status === 'confirmed' || a.status === 'checked_in' || a.status === 'pending_approval') {
+    } else if (
+      a.status === 'confirmed' ||
+      a.status === 'checked_in' ||
+      a.status === 'pending_approval'
+    ) {
       bucket.upcoming += 1;
     }
   }
@@ -83,7 +102,10 @@ export async function listCustomersWithStats(search = ''): Promise<CustomerWithS
   return customers.map((c) => {
     const bucket = byCustomer.get(c.id);
     const favourites = bucket
-      ? [...bucket.services.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name]) => name)
+      ? [...bucket.services.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 4)
+          .map(([name]) => name)
       : [];
     return {
       ...c,
@@ -96,7 +118,10 @@ export async function listCustomersWithStats(search = ''): Promise<CustomerWithS
   });
 }
 
-export async function setCustomerMarketingConsent(id: string, consent: boolean): Promise<void> {
+export async function setCustomerMarketingConsent(
+  id: string,
+  consent: boolean,
+): Promise<void> {
   const { error } = await supabase
     .from('customers')
     .update({ marketing_consent: consent, consent_updated_at: new Date().toISOString() })

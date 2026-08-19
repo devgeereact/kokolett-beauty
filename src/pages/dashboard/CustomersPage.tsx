@@ -32,12 +32,15 @@ type StatusFilter = 'all' | 'active' | 'inactive' | 'new';
 
 function isInactive(customer: CustomerWithStats): boolean {
   if (!customer.last_visit_at) return false;
-  return Date.now() - new Date(customer.last_visit_at).getTime() > 180 * 24 * 60 * 60 * 1000;
+  return (
+    Date.now() - new Date(customer.last_visit_at).getTime() > 180 * 24 * 60 * 60 * 1000
+  );
 }
 
 function isNewCustomer(customer: CustomerWithStats): boolean {
   if (customer.completed_count > 1) return false;
-  const ageMs = Date.now() - new Date(customer.first_seen_at ?? customer.created_at).getTime();
+  const ageMs =
+    Date.now() - new Date(customer.first_seen_at ?? customer.created_at).getTime();
   return ageMs < 14 * 24 * 60 * 60 * 1000;
 }
 
@@ -69,7 +72,9 @@ export function CustomersPage(): JSX.Element {
   const [savingContact, setSavingContact] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
   const [pendingErase, setPendingErase] = useState<CustomerWithStats | null>(null);
-  const [pendingHardDelete, setPendingHardDelete] = useState<CustomerWithStats | null>(null);
+  const [pendingHardDelete, setPendingHardDelete] = useState<CustomerWithStats | null>(
+    null,
+  );
   const [page, setPage] = useState(1);
   // 12, not 9: the grid is 1/2/3 columns (mobile/tablet/desktop) — 12 is the
   // smallest count divisible by both 2 and 3, so the last row is never
@@ -128,7 +133,15 @@ export function CustomersPage(): JSX.Element {
     if (!customerId) return;
     getCustomer(customerId)
       .then((customer) => {
-        if (customer) void open({ ...customer, completed_count: 0, upcoming_count: 0, no_show_count: 0, last_visit_at: null, favourite_services: [] });
+        if (customer)
+          void open({
+            ...customer,
+            completed_count: 0,
+            upcoming_count: 0,
+            no_show_count: 0,
+            last_visit_at: null,
+            favourite_services: [],
+          });
       })
       .catch((e: unknown) => showToast({ message: errorMessage(e) }));
     void navigate(routes.owner.customers, { replace: true });
@@ -217,7 +230,15 @@ export function CustomersPage(): JSX.Element {
   };
 
   const exportCsv = (): void => {
-    const header = ['Name', 'Email', 'Mobile', 'Total visits', 'Last visit', 'Status', 'Marketing consent'];
+    const header = [
+      'Name',
+      'Email',
+      'Mobile',
+      'Total visits',
+      'Last visit',
+      'Status',
+      'Marketing consent',
+    ];
     const rows = filtered.map((c) => [
       c.full_name,
       c.email,
@@ -255,7 +276,9 @@ export function CustomersPage(): JSX.Element {
       }
     >
       <p className="mb-2 text-sm text-muted-foreground">
-        {loading ? 'Loading…' : `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`}
+        {loading
+          ? 'Loading…'
+          : `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`}
       </p>
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -356,7 +379,11 @@ export function CustomersPage(): JSX.Element {
             onErase={() => setPendingErase(selected)}
             onHardDelete={() => setPendingHardDelete(selected)}
             onConsentChange={(consent) =>
-              setCustomers((prev) => prev.map((c) => (c.id === selected.id ? { ...c, marketing_consent: consent } : c)))
+              setCustomers((prev) =>
+                prev.map((c) =>
+                  c.id === selected.id ? { ...c, marketing_consent: consent } : c,
+                ),
+              )
             }
           />
         )}
@@ -366,7 +393,11 @@ export function CustomersPage(): JSX.Element {
         <NewBookingPanel
           prefill={
             selected
-              ? { fullName: selected.full_name, email: selected.email, mobile: selected.mobile ?? '' }
+              ? {
+                  fullName: selected.full_name,
+                  email: selected.email,
+                  mobile: selected.mobile ?? '',
+                }
               : null
           }
           onClose={() => setBooking(false)}

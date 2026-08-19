@@ -20,9 +20,7 @@ export function Card({
   variant = 'default',
   ...props
 }: HTMLAttributes<HTMLDivElement> & { variant?: CardVariant }): JSX.Element {
-  return (
-    <div className={cn('rounded-xl', VARIANTS[variant], className)} {...props} />
-  );
+  return <div className={cn('rounded-xl', VARIANTS[variant], className)} {...props} />;
 }
 
 export function CardHeader({
@@ -36,9 +34,7 @@ export function CardTitle({
   className,
   ...props
 }: HTMLAttributes<HTMLHeadingElement>): JSX.Element {
-  return (
-    <h2 className={cn('font-serif text-lg font-semibold', className)} {...props} />
-  );
+  return <h2 className={cn('font-serif text-lg font-semibold', className)} {...props} />;
 }
 
 export function CardBody({

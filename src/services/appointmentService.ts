@@ -102,7 +102,9 @@ export async function getApprovalStats(): Promise<ApprovalStats> {
     avgWaitMinutes: waitMinutes.length
       ? Math.round(waitMinutes.reduce((a, b) => a + b, 0) / waitMinutes.length)
       : null,
-    approvedPercent: decidedCount ? Math.round((approvedCount / decidedCount) * 100) : null,
+    approvedPercent: decidedCount
+      ? Math.round((approvedCount / decidedCount) * 100)
+      : null,
     thisWeekCount: rows.length,
   };
 }

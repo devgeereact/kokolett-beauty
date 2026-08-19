@@ -18,7 +18,11 @@ import {
 import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
-import { sendChatMessage, type ChatMessage, type Proposal } from '@/services/aiChatService';
+import {
+  sendChatMessage,
+  type ChatMessage,
+  type Proposal,
+} from '@/services/aiChatService';
 import { createAppointmentAsOwner } from '@/services/appointmentService';
 import { sendCustomEmailAsOwner } from '@/services/emailService';
 import { formatDateTime } from '@/lib/format';
@@ -42,10 +46,26 @@ const SUGGESTION_CHIPS = [
 ];
 
 const QUICK_ACTIONS = [
-  { icon: FileEdit, label: 'Write social post', prompt: 'Write a social media post promoting our current availability.' },
-  { icon: Mail, label: 'Create email', prompt: 'Draft an email to send to a customer following up after their appointment.' },
-  { icon: TrendingUp, label: 'Summarise report', prompt: 'Summarise my revenue and bookings over the last 4 weeks.' },
-  { icon: Megaphone, label: 'Plan a promotion', prompt: 'Suggest a promotion I could run to fill quiet days.' },
+  {
+    icon: FileEdit,
+    label: 'Write social post',
+    prompt: 'Write a social media post promoting our current availability.',
+  },
+  {
+    icon: Mail,
+    label: 'Create email',
+    prompt: 'Draft an email to send to a customer following up after their appointment.',
+  },
+  {
+    icon: TrendingUp,
+    label: 'Summarise report',
+    prompt: 'Summarise my revenue and bookings over the last 4 weeks.',
+  },
+  {
+    icon: Megaphone,
+    label: 'Plan a promotion',
+    prompt: 'Suggest a promotion I could run to fill quiet days.',
+  },
   { icon: Search, label: 'Find availability', prompt: "What's on my schedule today?" },
 ] as const;
 
@@ -123,7 +143,9 @@ function ProposalCard({
 
   if (status === 'dismissed') {
     return (
-      <div className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">Dismissed.</div>
+      <div className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">
+        Dismissed.
+      </div>
     );
   }
 
@@ -142,7 +164,9 @@ function ProposalCard({
         <dl className="space-y-1 text-sm">
           <div className="flex justify-between gap-2">
             <dt className="text-muted-foreground">Customer</dt>
-            <dd className="text-right font-medium text-foreground">{proposal.full_name}</dd>
+            <dd className="text-right font-medium text-foreground">
+              {proposal.full_name}
+            </dd>
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-muted-foreground">When</dt>
@@ -157,7 +181,11 @@ function ProposalCard({
               {proposal.mobile ? ` · ${proposal.mobile}` : ''}
             </dd>
           </div>
-          {proposal.note && <div className="pt-1 text-xs text-muted-foreground">Note: {proposal.note}</div>}
+          {proposal.note && (
+            <div className="pt-1 text-xs text-muted-foreground">
+              Note: {proposal.note}
+            </div>
+          )}
         </dl>
       ) : (
         <div className="space-y-1.5 text-sm">
@@ -166,7 +194,9 @@ function ProposalCard({
             {proposal.customer_name} &lt;{proposal.customer_email}&gt;
           </p>
           <p className="font-medium text-foreground">{proposal.subject}</p>
-          <p className="whitespace-pre-wrap text-xs text-muted-foreground">{proposal.body}</p>
+          <p className="whitespace-pre-wrap text-xs text-muted-foreground">
+            {proposal.body}
+          </p>
         </div>
       )}
 
@@ -218,7 +248,9 @@ const greeting = (firstName: string): DisplayMessage => ({
  */
 export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Element {
   const { timezone } = useBusinessSettings();
-  const [conversations, setConversations] = useState<Conversation[]>(() => loadConversations());
+  const [conversations, setConversations] = useState<Conversation[]>(() =>
+    loadConversations(),
+  );
   const [messages, setMessages] = useState<DisplayMessage[]>(
     () => conversations[0]?.messages ?? [greeting(firstName)],
   );
@@ -231,7 +263,10 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
   }, [messages]);
 
   const persistTurn = (nextMessages: DisplayMessage[]): void => {
@@ -239,8 +274,16 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
     if (!firstUser) return;
     const id = activeConversationId ?? crypto.randomUUID();
     setActiveConversationId(id);
-    const title = firstUser.content.length > 48 ? `${firstUser.content.slice(0, 48)}…` : firstUser.content;
-    const updated: Conversation = { id, title, updatedAt: new Date().toISOString(), messages: nextMessages };
+    const title =
+      firstUser.content.length > 48
+        ? `${firstUser.content.slice(0, 48)}…`
+        : firstUser.content;
+    const updated: Conversation = {
+      id,
+      title,
+      updatedAt: new Date().toISOString(),
+      messages: nextMessages,
+    };
     setConversations((prev) => {
       const next = [updated, ...prev.filter((c) => c.id !== id)];
       saveConversations(next);
@@ -299,7 +342,12 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
           durationMin: proposal.duration_min,
         });
       } else {
-        await sendCustomEmailAsOwner(proposal.customer_email, proposal.customer_name, proposal.subject, proposal.body);
+        await sendCustomEmailAsOwner(
+          proposal.customer_email,
+          proposal.customer_name,
+          proposal.subject,
+          proposal.body,
+        );
       }
       updateMessage(index, { proposalStatus: 'confirmed' });
     } catch (e) {
@@ -337,9 +385,12 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
   return (
     <div>
       <div className="mb-2">
-        <h1 className="font-serif text-2xl font-semibold text-foreground">Hi {firstName} 👋</h1>
+        <h1 className="font-serif text-2xl font-semibold text-foreground">
+          Hi {firstName} 👋
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Your AI assistant is here to help you manage your business, create content, and get things done faster.
+          Your AI assistant is here to help you manage your business, create content, and
+          get things done faster.
         </p>
       </div>
 
@@ -350,8 +401,12 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
               <c.icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-foreground">{c.title}</span>
-              <span className="block truncate text-xs text-muted-foreground">{c.description}</span>
+              <span className="block truncate text-sm font-semibold text-foreground">
+                {c.title}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {c.description}
+              </span>
             </span>
           </Card>
         ))}
@@ -364,7 +419,10 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
               {messages.map((m, i) => (
                 <div
                   key={i}
-                  className={cn('flex items-start gap-3', m.role === 'user' && 'flex-row-reverse')}
+                  className={cn(
+                    'flex items-start gap-3',
+                    m.role === 'user' && 'flex-row-reverse',
+                  )}
                 >
                   {m.role === 'assistant' ? (
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
@@ -377,7 +435,9 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                     <div
                       className={cn(
                         'rounded-lg px-4 py-3 text-sm whitespace-pre-wrap',
-                        m.role === 'assistant' ? 'bg-muted text-foreground' : 'bg-tint-brand text-foreground',
+                        m.role === 'assistant'
+                          ? 'bg-muted text-foreground'
+                          : 'bg-tint-brand text-foreground',
                       )}
                     >
                       {m.content}
@@ -432,7 +492,11 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
               }}
               className="flex items-center gap-2 border-t border-border p-3"
             >
-              <Sparkles aria-hidden="true" className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <Sparkles
+                aria-hidden="true"
+                className="ml-2 h-4 w-4 shrink-0 text-muted-foreground"
+                strokeWidth={2}
+              />
               <input
                 type="text"
                 value={input}
@@ -451,14 +515,17 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
             </form>
           </Card>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            Kokolett AI · Advisory only — nothing here books, cancels, or edits anything on its own
+            Kokolett AI · Advisory only — nothing here books, cancels, or edits anything
+            on its own
           </p>
         </div>
 
         <div className="space-y-6">
           <Card className="p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-serif text-base font-semibold text-foreground">Quick actions</h2>
+              <h2 className="font-serif text-base font-semibold text-foreground">
+                Quick actions
+              </h2>
               <button
                 type="button"
                 onClick={startNewConversation}
@@ -476,7 +543,11 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                   onClick={() => void send(a.prompt)}
                   className="flex items-center gap-2 rounded-lg border border-border p-2.5 text-left text-xs font-medium text-foreground hover:bg-muted"
                 >
-                  <a.icon aria-hidden="true" className="h-4 w-4 shrink-0 text-primary" strokeWidth={2} />
+                  <a.icon
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 text-primary"
+                    strokeWidth={2}
+                  />
                   {a.label}
                 </button>
               ))}
@@ -484,13 +555,20 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
           </Card>
 
           <Card className="p-5">
-            <h2 className="mb-3 font-serif text-base font-semibold text-foreground">Recent conversations</h2>
+            <h2 className="mb-3 font-serif text-base font-semibold text-foreground">
+              Recent conversations
+            </h2>
             {conversations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing yet — ask something to start one.</p>
+              <p className="text-sm text-muted-foreground">
+                Nothing yet — ask something to start one.
+              </p>
             ) : (
               <ul className="space-y-1">
                 {conversations.slice(0, 5).map((c) => (
-                  <li key={c.id} className="group flex items-center gap-1 rounded-lg hover:bg-muted">
+                  <li
+                    key={c.id}
+                    className="group flex items-center gap-1 rounded-lg hover:bg-muted"
+                  >
                     <button
                       type="button"
                       onClick={() => openConversation(c)}
@@ -499,7 +577,9 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                         c.id === activeConversationId && 'bg-tint-brand',
                       )}
                     >
-                      <span className="block truncate text-sm text-foreground">{c.title}</span>
+                      <span className="block truncate text-sm text-foreground">
+                        {c.title}
+                      </span>
                       <span className="block text-xs text-muted-foreground">
                         {new Date(c.updatedAt).toLocaleString('en-GB', {
                           day: 'numeric',
@@ -515,14 +595,17 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                       aria-label={`Delete conversation "${c.title}"`}
                       className="mr-1 shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 hover:bg-card hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
                     >
-                      <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                      <Trash2
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5"
+                        strokeWidth={2}
+                      />
                     </button>
                   </li>
                 ))}
               </ul>
             )}
           </Card>
-
         </div>
       </div>
     </div>

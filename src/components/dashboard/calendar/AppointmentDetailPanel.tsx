@@ -100,7 +100,11 @@ export function AppointmentDetailPanel({
               )
             </p>
             <p className="flex items-center gap-2">
-              <CalendarIcon aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
+              <CalendarIcon
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0"
+                strokeWidth={2}
+              />
               {formatDateLong(appointment.starts_at, timezone)}
             </p>
             <p className="flex items-center gap-2">
@@ -121,7 +125,11 @@ export function AppointmentDetailPanel({
               Contact
             </p>
             <p className="flex items-center gap-2 text-sm">
-              <Mail aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <Mail
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0 text-muted-foreground"
+                strokeWidth={2}
+              />
               <a
                 href={`mailto:${appointment.customer_email}`}
                 className="truncate text-foreground hover:underline hover:underline-offset-4"
@@ -131,7 +139,11 @@ export function AppointmentDetailPanel({
             </p>
             {appointment.customer_mobile && (
               <p className="mt-1 flex items-center gap-2 text-sm">
-                <Phone aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+                <Phone
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-muted-foreground"
+                  strokeWidth={2}
+                />
                 <a
                   href={`tel:${appointment.customer_mobile.replace(/\s/g, '')}`}
                   className="truncate text-foreground hover:underline hover:underline-offset-4"

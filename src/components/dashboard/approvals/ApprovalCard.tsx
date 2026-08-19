@@ -4,7 +4,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CountdownChip } from '@/components/ui/CountdownChip';
-import { formatDateShort, formatDateTime, formatDuration, formatTime } from '@/lib/format';
+import {
+  formatDateShort,
+  formatDateTime,
+  formatDuration,
+  formatTime,
+} from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed } from '@/types';
 
@@ -56,23 +61,36 @@ export function ApprovalCard({
         <div className="flex flex-wrap items-start gap-4">
           <div className="min-w-[7rem] text-sm">
             <p className="font-medium text-foreground">{row.service_name}</p>
-            <p className="text-muted-foreground">{formatDuration(row.service_duration_min ?? 0)}</p>
+            <p className="text-muted-foreground">
+              {formatDuration(row.service_duration_min ?? 0)}
+            </p>
           </div>
 
           <div className="min-w-[6rem] text-sm">
             <p className="flex items-center gap-1.5 text-foreground">
-              <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <Calendar
+                aria-hidden="true"
+                className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                strokeWidth={2}
+              />
               {formatDateShort(row.starts_at, timezone)}
             </p>
             <p className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
-              <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <Clock
+                aria-hidden="true"
+                className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                strokeWidth={2}
+              />
               {formatTime(row.starts_at, timezone)}
             </p>
           </div>
 
           {row.approval_deadline && <CountdownChip deadline={row.approval_deadline} />}
 
-          <div className="flex shrink-0 flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex shrink-0 flex-col gap-2"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button size="sm" loading={busy} onClick={onApprove}>
               Approve
             </Button>

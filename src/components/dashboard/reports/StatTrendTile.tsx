@@ -45,7 +45,11 @@ export function StatTrendTile({
             TONE_BG[tone],
           )}
         >
-          <Icon aria-hidden="true" className={cn('h-4 w-4', TONE_TEXT[tone])} strokeWidth={2} />
+          <Icon
+            aria-hidden="true"
+            className={cn('h-4 w-4', TONE_TEXT[tone])}
+            strokeWidth={2}
+          />
         </span>
       </div>
       <p className="mb-1 font-serif text-2xl font-semibold text-foreground">{value}</p>
@@ -59,8 +63,12 @@ export function StatTrendTile({
               !positive && !negative && 'text-muted-foreground',
             )}
           >
-            {change > 0 && <ArrowUp aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />}
-            {change < 0 && <ArrowDown aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />}
+            {change > 0 && (
+              <ArrowUp aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
+            )}
+            {change < 0 && (
+              <ArrowDown aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
+            )}
             {Math.abs(change)}%
           </span>
         )}

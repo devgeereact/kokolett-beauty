@@ -333,16 +333,27 @@ export function CalendarPage(): JSX.Element {
     return [...booked, ...open]
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       .map((row) => row.entry);
-  }, [view, anchor, appointmentsByDate, daySlots, timezone, selectAppointment, selectOpenSlot]);
+  }, [
+    view,
+    anchor,
+    appointmentsByDate,
+    daySlots,
+    timezone,
+    selectAppointment,
+    selectOpenSlot,
+  ]);
 
-  const toggleCategory = useCallback((category: StatusCategory, visible: boolean): void => {
-    setVisibleCategories((prev) => {
-      const next = new Set(prev);
-      if (visible) next.add(category);
-      else next.delete(category);
-      return next;
-    });
-  }, []);
+  const toggleCategory = useCallback(
+    (category: StatusCategory, visible: boolean): void => {
+      setVisibleCategories((prev) => {
+        const next = new Set(prev);
+        if (visible) next.add(category);
+        else next.delete(category);
+        return next;
+      });
+    },
+    [],
+  );
 
   const heading =
     view === 'month'
@@ -359,7 +370,11 @@ export function CalendarPage(): JSX.Element {
         <Button size="sm" onClick={() => setNewBooking({ date: anchor, time: '10:00' })}>
           <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.5} />
           New booking
-          <ChevronDown aria-hidden="true" className="h-4 w-4 opacity-70" strokeWidth={2.5} />
+          <ChevronDown
+            aria-hidden="true"
+            className="h-4 w-4 opacity-70"
+            strokeWidth={2.5}
+          />
         </Button>
       }
     >
@@ -389,7 +404,11 @@ export function CalendarPage(): JSX.Element {
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium text-foreground">
           {heading}
-          <ChevronDown aria-hidden="true" className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
+          <ChevronDown
+            aria-hidden="true"
+            className="h-3.5 w-3.5 text-muted-foreground"
+            strokeWidth={2}
+          />
         </span>
         <CalendarShell view={view} onViewChange={setView} />
       </div>
@@ -444,7 +463,10 @@ export function CalendarPage(): JSX.Element {
                 CALENDAR_GRID_HEIGHT_CLASS,
               )}
             >
-              <AgendaList entries={agendaEntries} emptyLabel="Nothing published for this day." />
+              <AgendaList
+                entries={agendaEntries}
+                emptyLabel="Nothing published for this day."
+              />
             </div>
           )}
         </div>

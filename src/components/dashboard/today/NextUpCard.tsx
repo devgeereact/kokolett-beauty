@@ -36,7 +36,9 @@ function NextUpRow({
               {capitalize(formatRelative(appointment.starts_at, now))}
             </span>
           </div>
-          <p className="truncate text-sm text-muted-foreground">{appointment.service_name}</p>
+          <p className="truncate text-sm text-muted-foreground">
+            {appointment.service_name}
+          </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             <Clock aria-hidden="true" className="h-3 w-3 shrink-0" strokeWidth={2} />
             {formatTime(appointment.starts_at, timezone)}
@@ -93,7 +95,9 @@ export function NextUpCard({
 }): JSX.Element {
   return (
     <Card className={cn('flex h-full flex-col p-4', className)}>
-      <h2 className="mb-2.5 text-base font-semibold leading-tight text-foreground">Next up</h2>
+      <h2 className="mb-2.5 text-base font-semibold leading-tight text-foreground">
+        Next up
+      </h2>
 
       {appointments.length === 0 && (
         <EmptyState

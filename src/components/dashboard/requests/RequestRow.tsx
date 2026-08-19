@@ -57,55 +57,90 @@ export function RequestRow({
             </Badge>
           </div>
           <p className="mt-0.5 text-sm text-muted-foreground">{request.email}</p>
-          {request.mobile && <p className="text-sm text-muted-foreground">{request.mobile}</p>}
+          {request.mobile && (
+            <p className="text-sm text-muted-foreground">{request.mobile}</p>
+          )}
         </div>
 
         <div className="min-w-[8rem] text-sm">
-          <p className="font-medium text-foreground">{request.service_name ?? 'Not sure yet'}</p>
+          <p className="font-medium text-foreground">
+            {request.service_name ?? 'Not sure yet'}
+          </p>
         </div>
 
         <div className="min-w-[10rem] text-sm">
           {isOpen ? (
             <>
               <p className="flex items-center gap-1.5 font-medium text-foreground">
-                <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                <Calendar
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  strokeWidth={2}
+                />
                 Preferred
               </p>
               <p className="mb-1.5 ml-5 text-muted-foreground">
                 {request.preferred_dates.length > 0
-                  ? request.preferred_dates.map((d) => formatDateShort(`${d}T00:00:00Z`)).join(' – ')
+                  ? request.preferred_dates
+                      .map((d) => formatDateShort(`${d}T00:00:00Z`))
+                      .join(' – ')
                   : 'Any date'}
               </p>
               <p className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                <Clock
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0"
+                  strokeWidth={2}
+                />
                 {FLEXIBILITY_LABELS[request.flexibility] ?? request.flexibility}
               </p>
             </>
           ) : lane === 'converted' ? (
             <>
               <p className="flex items-center gap-1.5 font-medium text-foreground">
-                <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                <Calendar
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  strokeWidth={2}
+                />
                 Offered
               </p>
               <p className="mb-1.5 ml-5 text-muted-foreground">
                 {request.responded_at ? formatDateTime(request.responded_at) : '—'}
               </p>
-              <p className={cn('flex items-center gap-1.5 font-medium', TONE_TEXT.completed)}>
-                <CalendarCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+              <p
+                className={cn(
+                  'flex items-center gap-1.5 font-medium',
+                  TONE_TEXT.completed,
+                )}
+              >
+                <CalendarCheck
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0"
+                  strokeWidth={2}
+                />
                 Booked
               </p>
               <p className="ml-5 text-muted-foreground">
-                {request.converted_starts_at ? formatDateTime(request.converted_starts_at) : '—'}
+                {request.converted_starts_at
+                  ? formatDateTime(request.converted_starts_at)
+                  : '—'}
               </p>
             </>
           ) : (
             // declined / expired — no offer was ever made, just when they asked.
             <>
               <p className="flex items-center gap-1.5 font-medium text-foreground">
-                <Calendar aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+                <Calendar
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                  strokeWidth={2}
+                />
                 Requested
               </p>
-              <p className="ml-5 text-muted-foreground">{formatDateTime(request.created_at)}</p>
+              <p className="ml-5 text-muted-foreground">
+                {formatDateTime(request.created_at)}
+              </p>
             </>
           )}
         </div>
@@ -119,7 +154,9 @@ export function RequestRow({
             </Badge>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
-            {isOpen ? formatRelative(request.created_at) : formatRelative(request.updated_at)}
+            {isOpen
+              ? formatRelative(request.created_at)
+              : formatRelative(request.updated_at)}
           </p>
         </div>
 

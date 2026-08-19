@@ -23,7 +23,11 @@ interface RequestBucket {
  * `listAllRequests` for how the answered ones landed. Same two calls
  * `InboxPage`'s Requests tab and `RequestsPanel` already use.
  */
-export function AvailabilityRequestsCard({ className }: { className?: string }): JSX.Element {
+export function AvailabilityRequestsCard({
+  className,
+}: {
+  className?: string;
+}): JSX.Element {
   const [counts, setCounts] = useState<{
     new: number;
     awaiting: number;
@@ -92,7 +96,10 @@ export function AvailabilityRequestsCard({ className }: { className?: string }):
         <h2 className="text-base font-semibold leading-tight text-foreground">
           Availability requests
         </h2>
-        <Link to={requestsHref} className="text-xs font-medium text-primary hover:underline">
+        <Link
+          to={requestsHref}
+          className="text-xs font-medium text-primary hover:underline"
+        >
           View all
         </Link>
       </div>

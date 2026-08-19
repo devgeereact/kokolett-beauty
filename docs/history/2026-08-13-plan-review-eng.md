@@ -36,8 +36,8 @@ actions. Concretely:
   implies for these two.
 - **Phase 1 step 7** ("relabel dead-nav entries… Reports, AI Assistant") was already
   tried and explicitly reversed. `DashboardLayout.tsx:75-81` carries a comment saying
-  exactly that: *"kept reachable, visually secondary rather than hidden or relabelled…
-  neither is a stub or redirect."* The plan and the shipped code disagree, and nothing
+  exactly that: _"kept reachable, visually secondary rather than hidden or relabelled…
+  neither is a stub or redirect."_ The plan and the shipped code disagree, and nothing
   in the plan acknowledges the reversal.
 - A **sibling, uncoordinated worktree** (`feat/today-payment-log`) has already landed
   migration `0027` (a payments log table + `log_payment` RPC) with its own plan doc —
@@ -45,7 +45,7 @@ actions. Concretely:
   Phase 4 ("guards for all write-critical RPC workflows") would need to cover once
   merged.
 
-None of this means the plan's *ideas* are wrong — the reschedule-semantics bug it
+None of this means the plan's _ideas_ are wrong — the reschedule-semantics bug it
 flags in Phase 4 step 14 is real and well-evidenced (see below). It means the plan, as
 currently written, will mislead anyone who executes it in order: they'll re-derive
 Phase 0's baseline (already done), re-plan Phase 1's IA (already shipped), and
@@ -75,7 +75,7 @@ missing modules") are wrong.
    than the 24-step document implies.
 3. **Complexity check (8+ files / 2+ new services triggers a challenge):** The plan's
    own "Relevant files" section lists 26 files/paths. That would normally trigger a
-   scope challenge, but nearly all of them are *read* targets for Phase 0 discovery,
+   scope challenge, but nearly all of them are _read_ targets for Phase 0 discovery,
    not new files — the actual new-build surface (once Phase 0/1/2 are recognized as
    done) is much smaller: Email Ops (new page + maybe one new RPC), the reschedule-fix
    (one service function swap), and RPC contract guards (test-only, no new prod code).
@@ -101,20 +101,20 @@ right move.
 
 ## What already exists (required section)
 
-| Plan item | Status in current `HEAD` | Evidence |
-|---|---|---|
-| Phase 0 step 1 (baseline vs docs/routes) | **Done** | `docs/BASELINE-AUDIT.md`, commit `c00a9fb`/`f382d1b`/`b01c8ad`, dated 2026-08-13 14:39:57 — before `plan.md`'s own commit |
-| Phase 0 step 2 (capability matrix) | **Done** | `docs/CAPABILITY-MATRIX.md`, same commit `b01c8ad` |
-| Phase 1 step 3 (7-nav model) | **Done** | `src/components/dashboard/DashboardLayout.tsx:57-73`, comment cites "docs/plan.md Phase 1 step 3" directly |
-| Phase 1 step 5 (Inbox merges Approvals+Requests) | **Done** | `src/App.tsx:76-84` (redirects `/dashboard/approvals`→`inbox?tab=approvals`, `/dashboard/requests`→`inbox?tab=requests`), `src/pages/dashboard/InboxPage.tsx` (392 lines) + `InboxPage.test.tsx` (220 lines) |
-| Phase 1 step 6 (WeeklyDefault/AppointmentType under Calendar & Capacity) | **Done** | `src/components/dashboard/CalendarCapacityTabs.tsx` (shared sub-nav across `CalendarPage`/`AppointmentTypePage`/`WeeklyDefaultPage`), `DashboardLayout.tsx` `activePaths` grouping |
-| Phase 1 step 7 (relabel/remove Reports & Assistant nav) | **Tried and reversed** | `DashboardLayout.tsx:75-81`: *"Real, shipped pages that sit outside the plan's 7-nav model — kept reachable, visually secondary rather than hidden or relabelled… neither is a stub or redirect."* |
-| Phase 2 step 9 (cross-nav quick actions) | **Done** | `src/components/dashboard/QuickActionLauncher.tsx` + `QuickActionLauncher.test.tsx` (406 lines), Cmd+K, wired in `DashboardLayout.tsx` header |
-| Phase 2 step 10 (kill blocking browser dialogs) | **Mostly done** | `ConfirmDialog.tsx` + test exist; `TodayPage` has an undo banner per `CAPABILITY-MATRIX.md` §1. Not independently re-verified for zero remaining `window.confirm`/`alert` — flagged as a doubt, not a finding. |
-| Phase 3 step 11 (Reports module) | **Done, zero new RPCs** | `src/pages/dashboard/ReportsPage.tsx` (132 lines) + `src/services/reportsService.ts` — pure aggregation over `listAppointments`/`listWeeklyTemplate`/`listCustomers` (existing reads) via `src/lib/insights.ts` |
-| Phase 3 step 12 (AI Assistant advisory queue) | **Substantially done, different mechanism than plan implies** | `src/pages/dashboard/AssistantPage.tsx` (81 lines, 8 real panel modules) + `src/lib/insights.ts` — client-side, deterministic, zero Supabase writes. See Architecture Review §1 for the open ambiguity this leaves. |
-| Phase 3 step 13 (Email Ops) | **Backend exists, UI doesn't** | `supabase/migrations/0005`/`0006` (outbox), `0014` (drain-on-schedule cron), `0016` (retire unsent mail) — the data model and the drain job are live; there is no owner-facing page over it |
-| Phase 4 step 14 (reschedule semantics bug) | **Real, still open** | `TodayPage.tsx`'s inline reschedule calls `createAppointmentAsOwner` (duplicate-creation) instead of `rescheduleAppointmentAsOwner` (atomic retire-and-recreate) — confirmed independently by `docs/CAPABILITY-MATRIX.md` §1 and §3's cross-cutting finding |
+| Plan item                                                                | Status in current `HEAD`                                      | Evidence                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 0 step 1 (baseline vs docs/routes)                                 | **Done**                                                      | `docs/BASELINE-AUDIT.md`, commit `c00a9fb`/`f382d1b`/`b01c8ad`, dated 2026-08-13 14:39:57 — before `plan.md`'s own commit                                                                                                                                   |
+| Phase 0 step 2 (capability matrix)                                       | **Done**                                                      | `docs/CAPABILITY-MATRIX.md`, same commit `b01c8ad`                                                                                                                                                                                                          |
+| Phase 1 step 3 (7-nav model)                                             | **Done**                                                      | `src/components/dashboard/DashboardLayout.tsx:57-73`, comment cites "docs/plan.md Phase 1 step 3" directly                                                                                                                                                  |
+| Phase 1 step 5 (Inbox merges Approvals+Requests)                         | **Done**                                                      | `src/App.tsx:76-84` (redirects `/dashboard/approvals`→`inbox?tab=approvals`, `/dashboard/requests`→`inbox?tab=requests`), `src/pages/dashboard/InboxPage.tsx` (392 lines) + `InboxPage.test.tsx` (220 lines)                                                |
+| Phase 1 step 6 (WeeklyDefault/AppointmentType under Calendar & Capacity) | **Done**                                                      | `src/components/dashboard/CalendarCapacityTabs.tsx` (shared sub-nav across `CalendarPage`/`AppointmentTypePage`/`WeeklyDefaultPage`), `DashboardLayout.tsx` `activePaths` grouping                                                                          |
+| Phase 1 step 7 (relabel/remove Reports & Assistant nav)                  | **Tried and reversed**                                        | `DashboardLayout.tsx:75-81`: _"Real, shipped pages that sit outside the plan's 7-nav model — kept reachable, visually secondary rather than hidden or relabelled… neither is a stub or redirect."_                                                          |
+| Phase 2 step 9 (cross-nav quick actions)                                 | **Done**                                                      | `src/components/dashboard/QuickActionLauncher.tsx` + `QuickActionLauncher.test.tsx` (406 lines), Cmd+K, wired in `DashboardLayout.tsx` header                                                                                                               |
+| Phase 2 step 10 (kill blocking browser dialogs)                          | **Mostly done**                                               | `ConfirmDialog.tsx` + test exist; `TodayPage` has an undo banner per `CAPABILITY-MATRIX.md` §1. Not independently re-verified for zero remaining `window.confirm`/`alert` — flagged as a doubt, not a finding.                                              |
+| Phase 3 step 11 (Reports module)                                         | **Done, zero new RPCs**                                       | `src/pages/dashboard/ReportsPage.tsx` (132 lines) + `src/services/reportsService.ts` — pure aggregation over `listAppointments`/`listWeeklyTemplate`/`listCustomers` (existing reads) via `src/lib/insights.ts`                                             |
+| Phase 3 step 12 (AI Assistant advisory queue)                            | **Substantially done, different mechanism than plan implies** | `src/pages/dashboard/AssistantPage.tsx` (81 lines, 8 real panel modules) + `src/lib/insights.ts` — client-side, deterministic, zero Supabase writes. See Architecture Review §1 for the open ambiguity this leaves.                                         |
+| Phase 3 step 13 (Email Ops)                                              | **Backend exists, UI doesn't**                                | `supabase/migrations/0005`/`0006` (outbox), `0014` (drain-on-schedule cron), `0016` (retire unsent mail) — the data model and the drain job are live; there is no owner-facing page over it                                                                 |
+| Phase 4 step 14 (reschedule semantics bug)                               | **Real, still open**                                          | `TodayPage.tsx`'s inline reschedule calls `createAppointmentAsOwner` (duplicate-creation) instead of `rescheduleAppointmentAsOwner` (atomic retire-and-recreate) — confirmed independently by `docs/CAPABILITY-MATRIX.md` §1 and §3's cross-cutting finding |
 
 ---
 
@@ -153,9 +153,9 @@ computed from data the dashboard already fetched. **The safety property holds**
 that "the AI assistant is advisory only and cannot mutate business data" trivially, by
 construction, since the module has no write path at all).
 
-`docs/plan.md` step 12 says: *"Build `AI Assistant` as advisory-only queue with
+`docs/plan.md` step 12 says: _"Build `AI Assistant` as advisory-only queue with
 explicit owner actions (accept/dismiss/convert to draft action), never direct
-mutation of business tables."* This is genuinely ambiguous between two very
+mutation of business tables."_ This is genuinely ambiguous between two very
 different-sized pieces of work:
 
 - **(a)** Formalize what's already shipped into a persisted recommendation-queue
@@ -163,7 +163,7 @@ different-sized pieces of work:
   recommendations server-side, an accept/dismiss state machine. This is real new
   infrastructure and a real new RPC/write surface.
 - **(b)** Keep the current client-computed panels and just add "accept/dismiss" as UI
-  affordances that call the *existing* action RPCs (reschedule, send email, mark
+  affordances that call the _existing_ action RPCs (reschedule, send email, mark
   complete) the panels already link out to. This is a UI-only change with no new
   backend surface at all.
 
@@ -183,24 +183,26 @@ recommendations), that's a real requirements question this review can't resolve
 without you — flagging as a judgment call below rather than deciding it silently.
 
 ### 2. Phase 3 (new RPCs) before Phase 4 (guard all write-critical RPCs) is a
-   sequencing risk — but a smaller one than it looks
 
-Phase 4 step 15 says *"Add contract-level guards for all write-critical RPC
-workflows."* If Phase 3 step 12 goes with option (a) above, or if Email Ops (step 13)
+sequencing risk — but a smaller one than it looks
+
+Phase 4 step 15 says _"Add contract-level guards for all write-critical RPC
+workflows."_ If Phase 3 step 12 goes with option (a) above, or if Email Ops (step 13)
 needs a `requeue_outbox_email(id)`-style RPC, those new RPCs are created in Phase 3
 and wouldn't automatically fall inside a Phase 4 scope that was defined by an earlier
 snapshot of "all write-critical RPCs." Given the recommendation above (option (b) for
 the assistant, and Email Ops likely needing at most one narrow new RPC), the actual
 new-RPC surface Phase 3 introduces is small — but the plan should say explicitly that
-Phase 4's guard sweep runs *after* Phase 3's RPCs exist, re-enumerated at that point,
+Phase 4's guard sweep runs _after_ Phase 3's RPCs exist, re-enumerated at that point,
 not against a list frozen at Phase 0.
 
 **(confidence: 7/10)** — this is a plan-structure gap, not a bug I can point to a
 line for; flagged as medium confidence per the calibration table.
 
 ### 3. Given static-PWA + Supabase-only, every "new RPC" is a `SECURITY DEFINER`
-   Postgres function — consistent with existing pattern, but each one needs its own
-   RLS/definer review
+
+Postgres function — consistent with existing pattern, but each one needs its own
+RLS/definer review
 
 `docs/SCHEMA.md:207,294-297,401-402` confirms the existing write-critical RPCs
 (`book_appointment`, `approve_appointment`, `reject_appointment`,
@@ -213,11 +215,12 @@ the plan is consistent with it (it doesn't propose anything requiring a server).
 risk isn't the pattern — it's that `docs/SCHEMA.md` and `docs/plan.md`'s own migration
 list (`0003`, `0007`, `0011`, `0019`, `0022`) stop at `0022`, while current `HEAD` is
 at migration `0026`, and the sibling worktree adds `0027`. Any new Phase 3/4 RPC needs
-to be planned against the *current* function/RLS surface, not the one the plan's file
+to be planned against the _current_ function/RLS surface, not the one the plan's file
 list points at.
 
 ### 4. `feat/today-payment-log` worktree is invisible to this plan and directly
-   overlaps Phase 4's scope
+
+overlaps Phase 4's scope
 
 **(confidence: 9/10)** — quoting the evidence directly: `git log --oneline
 feat/today-payment-log -5` shows `f5d4cf8 feat(db): add payments log and log_payment
@@ -235,12 +238,12 @@ scope ships a hardening phase that's already incomplete on day one.
 
 ### 5. Failure-scenario pass — one per new codepath the plan implies
 
-| New/changed codepath | Realistic production failure | Plan accounts for it? |
-|---|---|---|
-| Reschedule-semantics fix (Phase 4 step 14: swap `createAppointmentAsOwner`→`rescheduleAppointmentAsOwner` in Today's inline picker) | In-flight reschedule races a customer-initiated cancel on the same appointment between read and RPC call | No — Verification section has no concurrency/race test named for this specific fix, despite the plan explicitly identifying the bug |
-| Email Ops "retry state" UI/RPC | Outbox row was already picked up by the drain cron between the owner's page load and their retry click — double-send | No — not mentioned in Verification's "simulated email failures" item, which covers failure/retry but not the race between owner action and cron |
-| AI Assistant "convert to draft action" (if option (a) is chosen — see §1) | Owner accepts a stale recommendation computed against schedule data that changed since the panel loaded (double-booking risk) | No — Verification's AI-boundary item only checks "no client direct writes," not staleness of the advisory data itself |
-| Any new Phase 3 RPC exposed via PostgREST | RLS policy gap exposes the function to a role it shouldn't (the exact class of bug `SCHEMA.md`'s existing `security definer` design is built to avoid) | Partially — Phase 4 step 15 exists for this, but only if it re-scopes per Architecture §2 above |
+| New/changed codepath                                                                                                                | Realistic production failure                                                                                                                           | Plan accounts for it?                                                                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reschedule-semantics fix (Phase 4 step 14: swap `createAppointmentAsOwner`→`rescheduleAppointmentAsOwner` in Today's inline picker) | In-flight reschedule races a customer-initiated cancel on the same appointment between read and RPC call                                               | No — Verification section has no concurrency/race test named for this specific fix, despite the plan explicitly identifying the bug             |
+| Email Ops "retry state" UI/RPC                                                                                                      | Outbox row was already picked up by the drain cron between the owner's page load and their retry click — double-send                                   | No — not mentioned in Verification's "simulated email failures" item, which covers failure/retry but not the race between owner action and cron |
+| AI Assistant "convert to draft action" (if option (a) is chosen — see §1)                                                           | Owner accepts a stale recommendation computed against schedule data that changed since the panel loaded (double-booking risk)                          | No — Verification's AI-boundary item only checks "no client direct writes," not staleness of the advisory data itself                           |
+| Any new Phase 3 RPC exposed via PostgREST                                                                                           | RLS policy gap exposes the function to a role it shouldn't (the exact class of bug `SCHEMA.md`'s existing `security definer` design is built to avoid) | Partially — Phase 4 step 15 exists for this, but only if it re-scopes per Architecture §2 above                                                 |
 
 **Critical gap flagged:** the reschedule race (row 1) has no test and no stated error
 handling in the plan, and would be silent (the owner sees "rescheduled," the customer
@@ -332,7 +335,8 @@ GAPS: 6 (1 marked [→E2E]) | PARTIAL: 3 | Quality scoring: ★★★:1 ★★:1
 ```
 
 ### The single most important gap: no RPC-level test harness exists, and Phase 4's
-   entire deliverable depends on one
+
+entire deliverable depends on one
 
 Phase 4 step 15 ("contract-level guards for all write-critical RPC workflows") and
 Verification item 3 ("lifecycle invariants test matrix") both assume a way to test
@@ -351,10 +355,10 @@ is prerequisite work Phase 6 doesn't call out as its own step — it's presuppos
 inside step 21 ("expand automated test coverage… and booking integrity invariants")
 without acknowledging the harness doesn't exist yet.
 
-**Recommendation:** add an explicit Phase 4 or Phase 6 step: *"Stand up an RPC
+**Recommendation:** add an explicit Phase 4 or Phase 6 step: _"Stand up an RPC
 contract-test harness (rolled-back-transaction Vitest tests against a real Supabase
 instance, following the project's existing rollback-transaction validation pattern) —
-prerequisite to steps 15 and 21."* Without it, "contract-level guards" has no test to
+prerequisite to steps 15 and 21."_ Without it, "contract-level guards" has no test to
 prove the guard works, and step 21's "booking integrity invariants" coverage has
 nowhere to live except more client-side tests that can't see RLS/definer behavior at
 all.
@@ -379,11 +383,11 @@ splitting) and Verification item 5 (before/after JS size) are the right instinct
 two gaps:
 
 1. **No current baseline exists to diff against.** Recommend capturing a bundle-size
-   and route-TTI baseline as the *first* action of Phase 5, not an assumed input to
+   and route-TTI baseline as the _first_ action of Phase 5, not an assumed input to
    its verification step.
 2. **N+1 risk in the newly-discovered Reports/Assistant architecture:**
    `reportsService.ts:30-34` runs `Promise.all([listAppointments, listWeeklyTemplate,
-   listCustomers])` on every page load with a fixed 180-day window and no caching —
+listCustomers])` on every page load with a fixed 180-day window and no caching —
    fine at current data volume (a single-location, single-stylist salon), but
    `listCustomers()` is separately flagged in `CAPABILITY-MATRIX.md` as capped at 200
    rows with no pagination. If Reports and the Assistant both independently call
@@ -399,17 +403,17 @@ two gaps:
 
 ## Phase dependency correctness
 
-| Phase | Stated dependency | Actual state | Correctness verdict |
-|---|---|---|---|
-| 0 | Blocks all phases | Already executed (audits committed before the plan) | **Dependency claim is stale** — nothing currently blocks on it because it already happened |
-| 1 | Depends on Phase 0 | Steps 3, 5, 6 shipped; step 7 shipped-then-reversed; step 4 partially true (structural separation exists, but `CAPABILITY-MATRIX.md`'s "Bookings" gaps — 30-day cap, missing reschedule wiring — mean the *outcome* Phase 2 step 8 wants from Phase 1 isn't fully delivered yet) | **Mostly satisfied, not verified as complete** |
-| 2 | Depends on Phase 1 | Step 9 shipped; step 10 mostly shipped; step 8 (explicit outcomes) not formally written anywhere, though the raw material for it is in `CAPABILITY-MATRIX.md` | **Substantially satisfied** |
-| 3 | Depends on Phase 2 | Reports/Assistant already exist independent of Phase 2 completion — they didn't wait for Phase 2 and don't structurally need to have. The stated dependency is **broader than the real one**: Email Ops (the only genuinely unbuilt piece) has no real dependency on Phase 2's quick-actions/dialog work either | **Dependency overstated** — could parallelize starting now |
-| 4 | Depends on "Phase 1 route/workflow ownership" (step 14) | Step 14's bug is real and independent of Phase 1's nav work — it's a service-layer fix (`TodayPage.tsx` calling the wrong function), unrelated to which nav item hosts the page | **Dependency mischaracterized** — step 14 could ship today, independent of any other phase |
-| 5 | Parallel with Phase 4 | No conflict found | **Correct as stated** |
-| 6 | Depends on Phases 3–4 | Correct in principle, but as shown above, Phase 6's step 21 silently depends on a test harness that doesn't exist and isn't itself a named step in Phases 3–4 | **Understated — missing a real dependency** (the RPC test harness) |
+| Phase | Stated dependency                                       | Actual state                                                                                                                                                                                                                                                                                                    | Correctness verdict                                                                        |
+| ----- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 0     | Blocks all phases                                       | Already executed (audits committed before the plan)                                                                                                                                                                                                                                                             | **Dependency claim is stale** — nothing currently blocks on it because it already happened |
+| 1     | Depends on Phase 0                                      | Steps 3, 5, 6 shipped; step 7 shipped-then-reversed; step 4 partially true (structural separation exists, but `CAPABILITY-MATRIX.md`'s "Bookings" gaps — 30-day cap, missing reschedule wiring — mean the _outcome_ Phase 2 step 8 wants from Phase 1 isn't fully delivered yet)                                | **Mostly satisfied, not verified as complete**                                             |
+| 2     | Depends on Phase 1                                      | Step 9 shipped; step 10 mostly shipped; step 8 (explicit outcomes) not formally written anywhere, though the raw material for it is in `CAPABILITY-MATRIX.md`                                                                                                                                                   | **Substantially satisfied**                                                                |
+| 3     | Depends on Phase 2                                      | Reports/Assistant already exist independent of Phase 2 completion — they didn't wait for Phase 2 and don't structurally need to have. The stated dependency is **broader than the real one**: Email Ops (the only genuinely unbuilt piece) has no real dependency on Phase 2's quick-actions/dialog work either | **Dependency overstated** — could parallelize starting now                                 |
+| 4     | Depends on "Phase 1 route/workflow ownership" (step 14) | Step 14's bug is real and independent of Phase 1's nav work — it's a service-layer fix (`TodayPage.tsx` calling the wrong function), unrelated to which nav item hosts the page                                                                                                                                 | **Dependency mischaracterized** — step 14 could ship today, independent of any other phase |
+| 5     | Parallel with Phase 4                                   | No conflict found                                                                                                                                                                                                                                                                                               | **Correct as stated**                                                                      |
+| 6     | Depends on Phases 3–4                                   | Correct in principle, but as shown above, Phase 6's step 21 silently depends on a test harness that doesn't exist and isn't itself a named step in Phases 3–4                                                                                                                                                   | **Understated — missing a real dependency** (the RPC test harness)                         |
 
-**Net:** the plan's phase *ordering* is mostly defensible in the abstract, but its
+**Net:** the plan's phase _ordering_ is mostly defensible in the abstract, but its
 dependency edges are drawn against a stale snapshot. Once re-baselined, Phase 3
 (Email Ops) and the Phase 4 step-14 reschedule fix can very likely both start
 immediately, in parallel, without waiting on anything — they don't depend on each
@@ -421,13 +425,13 @@ other or on unfinished Phase 1/2 work the way the plan currently implies.
 
 Once re-baselined to reflect what's actually left, the remaining work splits cleanly:
 
-| Workstream | Modules touched | Depends on |
-|---|---|---|
-| Reschedule-semantics fix (Phase 4 step 14 + regression test) | `src/pages/dashboard/TodayPage.tsx`, `src/services/appointmentService.ts` (read-only reference), new test file | — |
-| Email Ops module (Phase 3 step 13) | New `src/pages/dashboard/EmailOpsPage.tsx`, `src/services/` (new read service over outbox), `src/lib/routes.ts`, `DashboardLayout.tsx` (nav entry) | — |
-| RPC contract-test harness (prerequisite to Phase 4 step 15 / Phase 6 step 21) | New `supabase/tests/` or `src/services/*.rpc.test.ts` pattern, CI config | — |
-| `feat/today-payment-log` reconciliation into Phase 4's RPC guard scope | `docs/plan.md` (editing it — outside this review's scope), `supabase/migrations/0027` | Merge of `feat/today-payment-log` |
-| Booking-management capability gaps from `CAPABILITY-MATRIX.md` (30-day search cap, reschedule wiring on `AppointmentsPage`, request history view) | `src/pages/dashboard/AppointmentsPage.tsx`, `src/services/requestService.ts` (`listAllRequests` already exists, just needs a caller) | — |
+| Workstream                                                                                                                                        | Modules touched                                                                                                                                    | Depends on                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Reschedule-semantics fix (Phase 4 step 14 + regression test)                                                                                      | `src/pages/dashboard/TodayPage.tsx`, `src/services/appointmentService.ts` (read-only reference), new test file                                     | —                                 |
+| Email Ops module (Phase 3 step 13)                                                                                                                | New `src/pages/dashboard/EmailOpsPage.tsx`, `src/services/` (new read service over outbox), `src/lib/routes.ts`, `DashboardLayout.tsx` (nav entry) | —                                 |
+| RPC contract-test harness (prerequisite to Phase 4 step 15 / Phase 6 step 21)                                                                     | New `supabase/tests/` or `src/services/*.rpc.test.ts` pattern, CI config                                                                           | —                                 |
+| `feat/today-payment-log` reconciliation into Phase 4's RPC guard scope                                                                            | `docs/plan.md` (editing it — outside this review's scope), `supabase/migrations/0027`                                                              | Merge of `feat/today-payment-log` |
+| Booking-management capability gaps from `CAPABILITY-MATRIX.md` (30-day search cap, reschedule wiring on `AppointmentsPage`, request history view) | `src/pages/dashboard/AppointmentsPage.tsx`, `src/services/requestService.ts` (`listAllRequests` already exists, just needs a caller)               | —                                 |
 
 **Execution order:** Launch the reschedule fix, the Email Ops module, and the RPC
 test-harness stand-up in three parallel worktrees — none share a module directory and
@@ -535,13 +539,13 @@ normally be an `AskUserQuestion` was resolved here instead. Revisit any of these
 
 ## GSTACK REVIEW REPORT
 
-| Review | Trigger | Why | Runs | Status | Findings |
-|--------|---------|-----|------|--------|----------|
-| CEO Review | `/plan-ceo-review` | Scope & strategy | 0 (this run) | — | not run in this session |
-| Codex Review | `/codex review` | Independent 2nd opinion | 0 | — | outside voice skipped, see Judgment calls #3 |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | **ISSUES_OPEN** | 5 architecture issues, 2 code-quality issues, 6 test gaps, 2 performance issues, 1 critical failure-mode gap |
-| Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | not run in this session (a sibling review run may cover this separately) |
-| DX Review | `/plan-devex-review` | Developer experience gaps | 0 | — | not run in this session |
+| Review        | Trigger               | Why                             | Runs         | Status          | Findings                                                                                                     |
+| ------------- | --------------------- | ------------------------------- | ------------ | --------------- | ------------------------------------------------------------------------------------------------------------ |
+| CEO Review    | `/plan-ceo-review`    | Scope & strategy                | 0 (this run) | —               | not run in this session                                                                                      |
+| Codex Review  | `/codex review`       | Independent 2nd opinion         | 0            | —               | outside voice skipped, see Judgment calls #3                                                                 |
+| Eng Review    | `/plan-eng-review`    | Architecture & tests (required) | 1            | **ISSUES_OPEN** | 5 architecture issues, 2 code-quality issues, 6 test gaps, 2 performance issues, 1 critical failure-mode gap |
+| Design Review | `/plan-design-review` | UI/UX gaps                      | 0            | —               | not run in this session (a sibling review run may cover this separately)                                     |
+| DX Review     | `/plan-devex-review`  | Developer experience gaps       | 0            | —               | not run in this session                                                                                      |
 
 **VERDICT:** Eng Review not CLEAR — eng review required before this plan should be
 executed as written. The primary blocker isn't code quality, it's currency: the plan
@@ -549,6 +553,7 @@ must be re-baselined against current `HEAD` before its phase-by-phase effort est
 can be trusted.
 
 **UNRESOLVED DECISIONS:**
+
 - AI Assistant "queue" scope — option (a) persisted recommendation-queue vs. option
   (b) UI-only layer over existing client-side computation (Architecture §1 /
   Judgment call #1)

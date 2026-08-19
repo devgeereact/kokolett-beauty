@@ -33,11 +33,19 @@ export function AccountSummaryCard(): JSX.Element {
             <UserCircle aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="font-serif text-base font-semibold text-foreground">Account</h2>
-            <p className="text-sm text-muted-foreground">Your profile and login details.</p>
+            <h2 className="font-serif text-base font-semibold text-foreground">
+              Account
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Your profile and login details.
+            </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => void navigate(routes.owner.profile)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => void navigate(routes.owner.profile)}
+        >
           <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
           Edit profile
         </Button>
@@ -56,20 +64,34 @@ export function AccountSummaryCard(): JSX.Element {
       <dl className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
         {user?.email && (
           <div className="flex items-center gap-2">
-            <Mail aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Mail
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             <dd className="truncate text-foreground">{user.email}</dd>
           </div>
         )}
         {settings?.phone && (
           <div className="flex items-center gap-2">
-            <Phone aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+            <Phone
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
             <dd className="text-foreground">{settings.phone}</dd>
           </div>
         )}
         {user?.created_at && (
           <div className="flex items-center gap-2">
-            <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
-            <dd className="text-foreground">Member since {formatDateLong(user.created_at)}</dd>
+            <Calendar
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+              strokeWidth={2}
+            />
+            <dd className="text-foreground">
+              Member since {formatDateLong(user.created_at)}
+            </dd>
           </div>
         )}
       </dl>

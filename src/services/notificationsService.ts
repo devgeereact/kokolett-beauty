@@ -20,7 +20,10 @@ export interface NotificationEvent {
  * there isn't one, so "read" state lives in `localStorage`
  * (`useNotificationReadState`), not here.
  */
-export async function getNotifications(timezone: string, windowDays = 30): Promise<NotificationEvent[]> {
+export async function getNotifications(
+  timezone: string,
+  windowDays = 30,
+): Promise<NotificationEvent[]> {
   const today = toSalonDate(new Date(), timezone);
   const from = salonDayRange(addDays(today, -30), timezone).start;
   const to = salonDayRange(addDays(today, 60), timezone).end;
@@ -83,8 +86,8 @@ export async function getNotifications(timezone: string, windowDays = 30): Promi
       detail: `${r.author_name} left you a ${r.rating}-star review.`,
     }));
 
-  return [...appointmentEvents, ...requestEvents, ...paymentEvents, ...reviewEvents].sort((a, b) =>
-    b.at.localeCompare(a.at),
+  return [...appointmentEvents, ...requestEvents, ...paymentEvents, ...reviewEvents].sort(
+    (a, b) => b.at.localeCompare(a.at),
   );
 }
 
@@ -101,7 +104,9 @@ function activityToNotification(e: ActivityEvent): NotificationEvent {
     id: e.id,
     kind: e.kind,
     at: e.at,
-    title: e.customerName ? `${e.kind === 'created' ? 'New booking received' : e.kind[0]!.toUpperCase() + e.kind.slice(1)} — ${e.customerName}` : e.kind,
+    title: e.customerName
+      ? `${e.kind === 'created' ? 'New booking received' : e.kind[0]!.toUpperCase() + e.kind.slice(1)} — ${e.customerName}`
+      : e.kind,
     detail: detailByKind[e.kind],
   };
 }

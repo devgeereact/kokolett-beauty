@@ -55,7 +55,7 @@ ACCOUNT        Settings
 
 1. **Grouped nav supersedes Variant D's "flat, no groups" verdict.** The owner's
    explicit list in §0 is newer and more specific than the earlier headless design
-   review. Variant D's *other* finding — the `lg:`→`md:` breakpoint gap that drops the
+   review. Variant D's _other_ finding — the `lg:`→`md:` breakpoint gap that drops the
    persistent sidebar on a portrait salon tablet — is independent of flat-vs-grouped and
    is kept (Task 6).
 2. **Approvals and Availability Requests are not rebuilt as separate pages.**
@@ -124,9 +124,11 @@ ACCOUNT        Settings
 ## Task 1: Fix the card shadow, add a popover shadow
 
 **Files:**
+
 - Modify: `tailwind.config.ts:88-90`
 
 **Interfaces:**
+
 - Produces: `shadow-card` (corrected value), `shadow-popover` (new) — Tailwind utility
   classes any component can use going forward.
 
@@ -158,6 +160,7 @@ git commit -m "fix(design): correct card shadow value, add popover elevation tie
 ## Task 2: Document the new tokens in `docs/DESIGN.md`
 
 **Files:**
+
 - Modify: `docs/DESIGN.md`
 
 - [ ] **Step 1: Add a spacing/grid/breakpoints section**
@@ -214,10 +217,12 @@ git commit -m "docs(design): record spacing/grid/breakpoint tokens, popover shad
 ## Task 3: Add the icon dependency and a nav icon map
 
 **Files:**
+
 - Modify: `package.json` (dependency)
 - Create: `src/lib/icons.ts`
 
 **Interfaces:**
+
 - Produces: `NAV_ICONS`, a `Record<string, LucideIcon>` keyed by nav label, consumed by
   Task 6's `DashboardLayout.tsx`.
 
@@ -287,6 +292,7 @@ git commit -m "feat(design): add lucide-react and a labelled nav icon map"
 ## Task 4: Regenerate the app icon set from `docs/design/logo.png`
 
 **Files:**
+
 - Create/overwrite: `public/icons/pwa-512.png`, `public/icons/pwa-192.png`,
   `public/icons/pwa-maskable-512.png`, `public/icons/favicon-32.png`
 - Delete: `public/favicon.svg` (generic scaffold placeholder — near-black background,
@@ -294,6 +300,7 @@ git commit -m "feat(design): add lucide-react and a labelled nav icon map"
 - Modify: `index.html:5` (favicon link), `vite.config.ts:49` (`includeAssets`)
 
 **Interfaces:**
+
 - Produces: the four PNGs above, already wired into `vite.config.ts`'s existing
   `VitePWA` manifest (`icons: [...]`, lines 61-68) and `index.html`'s
   `apple-touch-icon` link (line 13) — neither needs further changes, both already
@@ -384,6 +391,7 @@ git commit -m "feat(design): replace placeholder app icon/favicon with the Kokol
 ## Task 5: Add Email and Templates routes and stub pages
 
 **Files:**
+
 - Modify: `src/lib/routes.ts:53-58` (owner route block)
 - Create: `src/pages/dashboard/EmailPage.tsx`
 - Create: `src/pages/dashboard/TemplatesPage.tsx`
@@ -391,6 +399,7 @@ git commit -m "feat(design): replace placeholder app icon/favicon with the Kokol
   pattern at e.g. `src/App.tsx:108-111`)
 
 **Interfaces:**
+
 - Consumes: `DashboardLayout` (`title`, `subtitle` props), `EmptyState`
   (`src/components/ui/States.tsx:34-42`, props `title`, `description`, `action`).
 - Produces: `routes.owner.email` (`/dashboard/email`), `routes.owner.templates`
@@ -436,7 +445,10 @@ import { EmptyState } from '@/components/ui/States';
 
 export function TemplatesPage(): JSX.Element {
   return (
-    <DashboardLayout title="Templates" subtitle="The wording behind every automated email">
+    <DashboardLayout
+      title="Templates"
+      subtitle="The wording behind every automated email"
+    >
       <EmptyState
         title="Template previews are coming soon"
         description="This will show the fixed set of transactional email templates the outbox sends from, read-only."
@@ -474,12 +486,14 @@ git commit -m "feat(dashboard): add Email and Templates routes with empty-state 
 ## Task 6: Rebuild `DashboardLayout.tsx` onto the grouped nav
 
 **Files:**
+
 - Modify: `src/components/dashboard/DashboardLayout.tsx` (full nav section,
   `:11-130`)
 - Modify: `src/pages/dashboard/TodayPage.tsx:177-182` (`badges` prop)
 - Modify: `src/pages/dashboard/InboxPage.tsx:185` (`badges` prop)
 
 **Interfaces:**
+
 - Consumes: `NAV_ICONS` from `src/lib/icons.ts` (Task 3), `routes.owner.email` /
   `routes.owner.templates` (Task 5).
 - Produces: `DashboardLayout`'s `badges` prop changes shape from `{ inbox?: number }` to
@@ -624,48 +638,48 @@ function isEntryActive(entry: NavEntry, pathname: string, search: string): boole
 ```tsx
 // src/components/dashboard/DashboardLayout.tsx — replace the old renderEntry (lines
 // 83-122) and `nav` const (lines 124-130) with:
-  const renderEntry = (entry: NavEntry): JSX.Element => {
-    const active = isEntryActive(entry, location.pathname, location.search);
-    const Icon = entry.icon;
-    return (
-      // Plain `Link`, not `NavLink`: see the original rationale this replaces —
-      // NavLink's own prefix matching can't express activePaths/matchTab grouping.
-      <Link
-        key={entry.to}
-        to={entry.to}
-        onClick={() => setMenuOpen(false)}
-        aria-current={active ? 'page' : undefined}
-        className={cn(
-          'flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-          active
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold'
-            : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-        )}
-      >
-        <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2} />
-        <span className="flex-1 truncate">{entry.label}</span>
-        {entry.badge ? (
-          <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
-            {entry.badge}
-          </span>
-        ) : null}
-      </Link>
-    );
-  };
-
-  const nav = (
-    <nav className="flex flex-col gap-4" aria-label="Dashboard">
-      {navGroups.map((group) => (
-        <div key={group.label}>
-          <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
-            {group.label}
-          </p>
-          <div className="flex flex-col gap-1">{group.items.map(renderEntry)}</div>
-        </div>
-      ))}
-    </nav>
+const renderEntry = (entry: NavEntry): JSX.Element => {
+  const active = isEntryActive(entry, location.pathname, location.search);
+  const Icon = entry.icon;
+  return (
+    // Plain `Link`, not `NavLink`: see the original rationale this replaces —
+    // NavLink's own prefix matching can't express activePaths/matchTab grouping.
+    <Link
+      key={entry.to}
+      to={entry.to}
+      onClick={() => setMenuOpen(false)}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+        active
+          ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold'
+          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+      )}
+    >
+      <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2} />
+      <span className="flex-1 truncate">{entry.label}</span>
+      {entry.badge ? (
+        <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
+          {entry.badge}
+        </span>
+      ) : null}
+    </Link>
   );
+};
+
+const nav = (
+  <nav className="flex flex-col gap-4" aria-label="Dashboard">
+    {navGroups.map((group) => (
+      <div key={group.label}>
+        <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
+          {group.label}
+        </p>
+        <div className="flex flex-col gap-1">{group.items.map(renderEntry)}</div>
+      </div>
+    ))}
+  </nav>
+);
 ```
 
 - [ ] **Step 4: Move the breakpoint from `lg:` to `md:`**
@@ -716,6 +730,7 @@ Run: `npm run build && npm test`
 Expected: PASS.
 
 Then start the dev server and use the `/browse` skill to:
+
 1. Load `/dashboard` — confirm seven labelled groups render, Dashboard row is active.
 2. Click into Calendar, then Appointment type (via `CalendarCapacityTabs`) — confirm
    only the Calendar row highlights, never two rows at once.

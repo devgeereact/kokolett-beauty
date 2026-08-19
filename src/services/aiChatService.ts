@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { invokeFunction } from '@/lib/supabase';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -43,13 +43,12 @@ export interface ChatTurn {
  * under her own session. Nothing this function returns has already happened.
  */
 export async function sendChatMessage(messages: ChatMessage[]): Promise<ChatTurn> {
-  const { data, error } = await supabase.functions.invoke<{
+  const data = await invokeFunction<{
     reply?: string;
     proposal?: Proposal;
     error?: string;
-  }>('ai-assistant-chat', { body: { messages } });
+  }>('ai-assistant-chat', { messages });
 
-  if (error) throw error;
-  if (!data || data.error) throw new Error(data?.error ?? 'The assistant is unavailable right now.');
+  if (data.error) throw new Error(data.error);
   return { reply: data.reply ?? '', proposal: data.proposal ?? null };
 }

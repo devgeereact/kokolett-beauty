@@ -58,6 +58,22 @@ jobs:
       - name: Hookify rule tests
         run: npm run test:hooks
 
+      # `supabase/functions/**` is Deno, so it is invisible to npm typecheck and
+      # is in eslint's ignorePatterns. Until this step existed the only thing
+      # reading those files was CodeQL's security queries — and a real type
+      # error was sitting in ai-assistant-chat unnoticed because of it.
+      # --node-modules-dir=none keeps Deno out of the app's node_modules, which
+      # it otherwise tries to resolve npm: specifiers against.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Typecheck Edge Functions
+        run: |
+          for f in supabase/functions/*/index.ts supabase/functions/_shared/*.ts; do
+            deno check --no-lock --node-modules-dir=none "$f"
+          done
+
       # Deliberately built with no .env present. Vite inlines VITE_* at build
       # time, so real keys here would land in a public log — and would also hide
       # the failure mode that actually matters: a missing variable.
@@ -68,3 +84,4 @@ jobs:
         run: |
           test -f dist/sw.js || { echo "::error::dist/sw.js missing — the PWA would work online and silently fail offline"; exit 1; }
           test -f dist/manifest.webmanifest || { echo "::error::dist/manifest.webmanifest missing — the app is not installable"; exit 1; }
+          test -f .htaccess || { echo "::error::.htaccess missing — it is not in dist/ and must be copied to the docroot by hand; without it every deep link 404s while the home page works"; exit 1; }

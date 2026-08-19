@@ -138,19 +138,39 @@ export function SecurityCard(): JSX.Element {
           onClick={() => void navigate(routes.owner.profile)}
           className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-muted"
         >
-          <Key aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <Key
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-foreground">Change password</span>
-            <span className="block text-xs text-muted-foreground">Update your login password</span>
+            <span className="block text-sm font-medium text-foreground">
+              Change password
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Update your login password
+            </span>
           </span>
-          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
         </button>
 
         <div className="flex items-center gap-3 px-2 py-2.5">
-          <ShieldCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <ShieldCheck
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-foreground">Two-factor authentication</span>
-            <span className="block text-xs text-muted-foreground">Add an extra layer of security</span>
+            <span className="block text-sm font-medium text-foreground">
+              Two-factor authentication
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Add an extra layer of security
+            </span>
           </span>
           <Switch
             checked={Boolean(factorId)}
@@ -168,12 +188,24 @@ export function SecurityCard(): JSX.Element {
           onClick={() => setShowActivity((v) => !v)}
           className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-muted"
         >
-          <UserRoundCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <UserRoundCheck
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-foreground">Login activity</span>
-            <span className="block text-xs text-muted-foreground">View recent sign-ins</span>
+            <span className="block text-sm font-medium text-foreground">
+              Login activity
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              View recent sign-ins
+            </span>
           </span>
-          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+          <ChevronRight
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            strokeWidth={2}
+          />
         </button>
         {showActivity && (
           <p className="px-2 pb-2 pt-1 text-sm text-muted-foreground">
@@ -190,18 +222,25 @@ export function SecurityCard(): JSX.Element {
         </p>
       )}
 
-      <Modal open={enrolling} onClose={cancelEnroll} ariaLabel="Set up two-factor authentication">
+      <Modal
+        open={enrolling}
+        onClose={cancelEnroll}
+        ariaLabel="Set up two-factor authentication"
+      >
         <Card className="p-5">
           <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
             Set up two-factor authentication
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            Scan this with an authenticator app (Google Authenticator, 1Password, Authy), then enter the
-            6-digit code it shows.
+            Scan this with an authenticator app (Google Authenticator, 1Password, Authy),
+            then enter the 6-digit code it shows.
           </p>
+          {/* Supabase-generated inline SVG QR code, not user input. */}
           {qrSvg && (
-            // eslint-disable-next-line react/no-danger -- Supabase-generated inline SVG QR code, not user input.
-            <div className="mb-4 flex justify-center rounded-lg border border-border bg-card p-4" dangerouslySetInnerHTML={{ __html: qrSvg }} />
+            <div
+              className="mb-4 flex justify-center rounded-lg border border-border bg-card p-4"
+              dangerouslySetInnerHTML={{ __html: qrSvg }}
+            />
           )}
           <Field label="6-digit code">
             {({ id }) => (

@@ -61,8 +61,7 @@ export function Calendar({
             'hover:bg-muted hover:text-foreground',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           ),
-          weekday:
-            'w-9 text-center text-[11px] font-medium uppercase text-muted-foreground',
+          weekday: 'w-9 text-center text-2xs font-medium uppercase text-muted-foreground',
           day: 'h-9 w-9 p-0 text-center text-sm relative',
           day_button: cn(
             'h-9 w-9 rounded-md font-normal text-foreground',

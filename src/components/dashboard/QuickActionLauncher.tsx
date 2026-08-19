@@ -17,6 +17,7 @@ import { setAppointmentStatus } from '@/services/appointmentService';
 import type { QueuedRequest } from '@/services/requestService';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
+import { FOCUSABLE_SELECTOR, useFocusTrap } from '@/hooks/useFocusTrap';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed, Customer } from '@/types';
 
@@ -39,9 +40,6 @@ import type { AppointmentDetailed, Customer } from '@/types';
  * routing between steps. Each step's own search/fetch logic and markup lives
  * in its own file under `./quickActions/`.
  */
-
-const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
  * Whether Cmd+K/Ctrl+K landed on something the owner is actively typing
@@ -234,34 +232,7 @@ export function QuickActionLauncher(): JSX.Element {
   // mean two different things depending on which action is active. A visible
   // "← Back to quick actions" link handles the step-back case instead. Tab
   // cycling is trapped inside the panel, matching ConfirmDialog.
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        close();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-      const panel = panelRef.current;
-      if (!panel) return;
-      const focusable = Array.from(
-        panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      );
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, close]);
+  useFocusTrap(open, panelRef, close);
 
   // Initial focus per step: the search box for a search step (so typing can
   // start immediately), the first navigable item for the menu, or — for the
@@ -333,12 +304,14 @@ export function QuickActionLauncher(): JSX.Element {
       className={cn(
         'inline-flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-border px-3 text-sm md:w-64',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        open ? 'bg-muted text-foreground' : 'bg-input text-muted-foreground hover:bg-muted',
+        open
+          ? 'bg-muted text-foreground'
+          : 'bg-input text-muted-foreground hover:bg-muted',
       )}
     >
       <Search aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
       <span className="flex-1 truncate text-left">Search anything…</span>
-      <kbd className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px]">
+      <kbd className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-2xs">
         ⌘K
       </kbd>
     </button>

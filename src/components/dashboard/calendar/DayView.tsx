@@ -156,7 +156,7 @@ export function DayView({
               <tr key={label} style={{ height: `${100 / labels.length}%` }}>
                 <th
                   scope="row"
-                  className="w-[52px] pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
+                  className="w-[52px] pr-2 text-right align-top text-2xs font-normal text-muted-foreground"
                 >
                   {label}
                 </th>

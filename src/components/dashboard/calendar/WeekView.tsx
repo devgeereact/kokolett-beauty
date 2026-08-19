@@ -165,8 +165,8 @@ export function WeekView({
           <thead>
             <tr className="border-b border-border">
               <th scope="col" className="w-[52px] py-2.5 text-center">
-                <span className="text-[11px] font-medium text-muted-foreground">Time</span>
-                <span className="block text-[10px] text-muted-foreground">
+                <span className="text-2xs font-medium text-muted-foreground">Time</span>
+                <span className="block text-2xs text-muted-foreground">
                   {gmtOffsetLabel(timezone)}
                 </span>
               </th>
@@ -184,12 +184,12 @@ export function WeekView({
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     )}
                   >
-                    <span className="text-[11px] font-medium text-muted-foreground">
+                    <span className="text-2xs font-medium text-muted-foreground">
                       {WEEKDAY_HEADINGS[(dayOfWeek(date) + 6) % 7]}
                     </span>
                     <span
                       className={cn(
-                        'flex h-7 w-7 items-center justify-center rounded-full text-[15px]',
+                        'flex h-7 w-7 items-center justify-center rounded-full text-base',
                         date === today
                           ? 'bg-primary font-semibold text-primary-foreground'
                           : 'text-foreground',
@@ -207,7 +207,7 @@ export function WeekView({
               <tr key={label} style={{ height: `${100 / labels.length}%` }}>
                 <th
                   scope="row"
-                  className="pr-2 text-right align-top text-[10px] font-normal text-muted-foreground"
+                  className="pr-2 text-right align-top text-2xs font-normal text-muted-foreground"
                 >
                   {label}
                 </th>

@@ -1,10 +1,8 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/Button';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { cn } from '@/lib/utils';
-
-const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -74,38 +72,7 @@ export function ConfirmDialog({
   // Escape closes (equivalent to Cancel); Tab is kept inside the dialog. Enter
   // activating a focused button needs no handler — that's native <button>
   // behaviour, and nothing here calls preventDefault on it.
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onCancel();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-
-      const panel = panelRef.current;
-      if (!panel) return;
-      const focusable = Array.from(
-        panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      );
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, onCancel]);
+  useFocusTrap(open, panelRef, onCancel);
 
   if (!open) return null;
 

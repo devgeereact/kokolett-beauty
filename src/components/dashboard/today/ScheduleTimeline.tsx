@@ -1,5 +1,10 @@
 import { memo, useMemo } from 'react';
-import { hourGridlines, hourLabels, openingHoursRange, offsetPercent } from '@/lib/calendar';
+import {
+  hourGridlines,
+  hourLabels,
+  openingHoursRange,
+  offsetPercent,
+} from '@/lib/calendar';
 import { formatTime, minutesSinceMidnight } from '@/lib/format';
 import { useNowLine } from '@/hooks/useNowLine';
 import { NowLine } from '@/components/dashboard/calendar/NowLine';
@@ -46,7 +51,11 @@ function assignCustomerTints(appointments: AppointmentDetailed[]): Map<string, s
     let tint = customerTint.get(key);
     if (!tint) {
       let index = nextPaletteIndex % CUSTOMER_TINTS.length;
-      for (let tries = 0; busy.has(CUSTOMER_TINTS[index]!) && tries < CUSTOMER_TINTS.length; tries += 1) {
+      for (
+        let tries = 0;
+        busy.has(CUSTOMER_TINTS[index]!) && tries < CUSTOMER_TINTS.length;
+        tries += 1
+      ) {
         index = (index + 1) % CUSTOMER_TINTS.length;
       }
       tint = CUSTOMER_TINTS[index]!;
@@ -155,7 +164,7 @@ export function ScheduleTimeline({
         {labels.map((label) => (
           <div
             key={label}
-            className="w-12 flex-1 pr-2 pt-1 text-right text-[10px] text-muted-foreground"
+            className="w-12 flex-1 pr-2 pt-1 text-right text-2xs text-muted-foreground"
           >
             {label}
           </div>

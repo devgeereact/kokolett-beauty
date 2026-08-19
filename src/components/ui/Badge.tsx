@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * A short, tinted label for a fact about a row that isn't its
- * `AppointmentStatus` — that's `StatusPill`/`StatusChip`. e.g. "First-time
+ * `AppointmentStatus` — that's `StatusChip`. e.g. "First-time
  * customer", "Needs approval · 11h 24m remaining".
  */
 export function Badge({

@@ -8,8 +8,15 @@ import { Switch } from '@/components/ui/Switch';
 import { ErrorState, LoadingState, EmptyState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useNotificationReadState } from '@/hooks/useNotificationReadState';
-import { getNotifications, type NotificationEvent } from '@/services/notificationsService';
-import { CATEGORY_LABELS, metaFor, type NotificationCategory } from '@/lib/notificationCategory';
+import {
+  getNotifications,
+  type NotificationEvent,
+} from '@/services/notificationsService';
+import {
+  CATEGORY_LABELS,
+  metaFor,
+  type NotificationCategory,
+} from '@/lib/notificationCategory';
 import { TONE_BG, TONE_TEXT } from '@/lib/tone';
 import { formatDateTime, formatRelative, toSalonDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -24,12 +31,19 @@ interface Prefs {
   bookingReminders: boolean;
   marketing: boolean;
 }
-const DEFAULT_PREFS: Prefs = { email: true, push: true, bookingReminders: true, marketing: false };
+const DEFAULT_PREFS: Prefs = {
+  email: true,
+  push: true,
+  bookingReminders: true,
+  marketing: false,
+};
 
 function loadPrefs(): Prefs {
   try {
     const raw = window.localStorage.getItem(PREFS_KEY);
-    return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) } : DEFAULT_PREFS;
+    return raw
+      ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) }
+      : DEFAULT_PREFS;
   } catch {
     return DEFAULT_PREFS;
   }
@@ -42,7 +56,10 @@ function groupLabel(iso: string, timezone: string): string {
   const yesterday = toSalonDate(new Date(Date.now() - 86_400_000), timezone);
   if (day === today) return 'Today';
   if (day === yesterday) return 'Yesterday';
-  const daysAgo = Math.round((new Date(`${today}T00:00:00Z`).getTime() - new Date(`${day}T00:00:00Z`).getTime()) / 86_400_000);
+  const daysAgo = Math.round(
+    (new Date(`${today}T00:00:00Z`).getTime() - new Date(`${day}T00:00:00Z`).getTime()) /
+      86_400_000,
+  );
   if (daysAgo <= 7) return 'Earlier this week';
   return 'Earlier';
 }
@@ -60,10 +77,13 @@ export function NotificationsPage(): JSX.Element {
   const [events, setEvents] = useState<NotificationEvent[] | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [lane, setLane] = useState<Lane>('all');
-  const [categoryFilter, setCategoryFilter] = useState<NotificationCategory | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<NotificationCategory | 'all'>(
+    'all',
+  );
   const [page, setPage] = useState(1);
   const [prefs, setPrefs] = useState<Prefs>(() => loadPrefs());
-  const { isRead, isArchived, markRead, markAllRead, archive } = useNotificationReadState();
+  const { isRead, isArchived, markRead, markAllRead, archive } =
+    useNotificationReadState();
 
   const load = useCallback((): void => {
     setError(null);
@@ -87,10 +107,18 @@ export function NotificationsPage(): JSX.Element {
     [events],
   );
 
-  const unreadCount = withMeta.filter((e) => !isArchived(e.event.id) && !isRead(e.event.id)).length;
+  const unreadCount = withMeta.filter(
+    (e) => !isArchived(e.event.id) && !isRead(e.event.id),
+  ).length;
 
   const categoryCounts = useMemo(() => {
-    const counts: Record<NotificationCategory, number> = { booking: 0, payment: 0, review: 0, customer: 0, system: 0 };
+    const counts: Record<NotificationCategory, number> = {
+      booking: 0,
+      payment: 0,
+      review: 0,
+      customer: 0,
+      system: 0,
+    };
     for (const { event, meta } of withMeta) {
       if (isArchived(event.id)) continue;
       counts[meta.category] += 1;
@@ -153,11 +181,21 @@ export function NotificationsPage(): JSX.Element {
           <div>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-1 border-b border-border">
-                {([
-                  ['all', 'All', withMeta.filter((e) => !isArchived(e.event.id)).length],
-                  ['unread', 'Unread', unreadCount],
-                  ['archived', 'Archived', withMeta.filter((e) => isArchived(e.event.id)).length],
-                ] as [Lane, string, number][]).map(([key, label, count]) => (
+                {(
+                  [
+                    [
+                      'all',
+                      'All',
+                      withMeta.filter((e) => !isArchived(e.event.id)).length,
+                    ],
+                    ['unread', 'Unread', unreadCount],
+                    [
+                      'archived',
+                      'Archived',
+                      withMeta.filter((e) => isArchived(e.event.id)).length,
+                    ],
+                  ] as [Lane, string, number][]
+                ).map(([key, label, count]) => (
                   <button
                     key={key}
                     type="button"
@@ -176,7 +214,9 @@ export function NotificationsPage(): JSX.Element {
                     <span
                       className={cn(
                         'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                        lane === key ? 'bg-tint-brand text-primary' : 'bg-muted text-muted-foreground',
+                        lane === key
+                          ? 'bg-tint-brand text-primary'
+                          : 'bg-muted text-muted-foreground',
                       )}
                     >
                       {count}
@@ -211,7 +251,7 @@ export function NotificationsPage(): JSX.Element {
                             onClick={() => !read && markRead(event.id)}
                             className={cn(
                               'flex cursor-pointer items-start gap-3 p-4 hover:bg-muted',
-                              !read && 'bg-tint-brand/40',
+                              !read && 'bg-tint-brand',
                             )}
                           >
                             <span
@@ -220,20 +260,37 @@ export function NotificationsPage(): JSX.Element {
                                 TONE_BG[meta.tone],
                               )}
                             >
-                              <meta.icon aria-hidden="true" className={cn('h-4 w-4', TONE_TEXT[meta.tone])} strokeWidth={2} />
+                              <meta.icon
+                                aria-hidden="true"
+                                className={cn('h-4 w-4', TONE_TEXT[meta.tone])}
+                                strokeWidth={2}
+                              />
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-foreground">{event.title}</p>
-                              <p className="truncate text-xs text-muted-foreground">{event.detail}</p>
+                              <p className="truncate text-sm font-medium text-foreground">
+                                {event.title}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {event.detail}
+                              </p>
                             </div>
                             <div className="flex shrink-0 items-center gap-2">
-                              <span className="whitespace-nowrap text-xs text-muted-foreground" title={formatDateTime(event.at, timezone)}>
+                              <span
+                                className="whitespace-nowrap text-xs text-muted-foreground"
+                                title={formatDateTime(event.at, timezone)}
+                              >
                                 {formatRelative(event.at)}
                               </span>
                               {!read ? (
-                                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary" />
+                                <span
+                                  aria-hidden="true"
+                                  className="h-2 w-2 rounded-full bg-primary"
+                                />
                               ) : (
-                                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-transparent" />
+                                <span
+                                  aria-hidden="true"
+                                  className="h-2 w-2 rounded-full bg-transparent"
+                                />
                               )}
                               {lane !== 'archived' && (
                                 <button
@@ -270,14 +327,18 @@ export function NotificationsPage(): JSX.Element {
 
           <div className="space-y-6">
             <Card className="p-5">
-              <h2 className="mb-3 font-serif text-base font-semibold text-foreground">Filter notifications</h2>
+              <h2 className="mb-3 font-serif text-base font-semibold text-foreground">
+                Filter notifications
+              </h2>
               <div className="space-y-1">
                 <button
                   type="button"
                   onClick={() => setCategoryFilter('all')}
                   className={cn(
                     'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
-                    categoryFilter === 'all' ? 'bg-tint-brand text-primary' : 'text-foreground hover:bg-muted',
+                    categoryFilter === 'all'
+                      ? 'bg-tint-brand text-primary'
+                      : 'text-foreground hover:bg-muted',
                   )}
                 >
                   All notifications
@@ -290,7 +351,9 @@ export function NotificationsPage(): JSX.Element {
                     onClick={() => setCategoryFilter(cat)}
                     className={cn(
                       'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
-                      categoryFilter === cat ? 'bg-tint-brand text-primary' : 'text-foreground hover:bg-muted',
+                      categoryFilter === cat
+                        ? 'bg-tint-brand text-primary'
+                        : 'text-foreground hover:bg-muted',
                     )}
                   >
                     {CATEGORY_LABELS[cat]}
@@ -301,18 +364,46 @@ export function NotificationsPage(): JSX.Element {
             </Card>
 
             <Card className="p-5">
-              <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Notification preferences</h2>
-              <p className="mb-4 text-sm text-muted-foreground">Choose how you want to be notified.</p>
+              <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+                Notification preferences
+              </h2>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Choose how you want to be notified.
+              </p>
               <div className="space-y-4">
                 {[
-                  { key: 'email' as const, icon: Mail, label: 'Email notifications', desc: 'Receive updates via email' },
-                  { key: 'push' as const, icon: Bell, label: 'Push notifications', desc: 'Get instant push notifications' },
-                  { key: 'bookingReminders' as const, icon: Smartphone, label: 'Booking reminders', desc: 'Reminders for upcoming appointments' },
-                  { key: 'marketing' as const, icon: Tag, label: 'Marketing & offers', desc: 'Receive offers and promotions' },
+                  {
+                    key: 'email' as const,
+                    icon: Mail,
+                    label: 'Email notifications',
+                    desc: 'Receive updates via email',
+                  },
+                  {
+                    key: 'push' as const,
+                    icon: Bell,
+                    label: 'Push notifications',
+                    desc: 'Get instant push notifications',
+                  },
+                  {
+                    key: 'bookingReminders' as const,
+                    icon: Smartphone,
+                    label: 'Booking reminders',
+                    desc: 'Reminders for upcoming appointments',
+                  },
+                  {
+                    key: 'marketing' as const,
+                    icon: Tag,
+                    label: 'Marketing & offers',
+                    desc: 'Receive offers and promotions',
+                  },
                 ].map((row) => (
                   <div key={row.key} className="flex items-center justify-between gap-3">
                     <div className="flex items-start gap-2.5">
-                      <row.icon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+                      <row.icon
+                        aria-hidden="true"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                        strokeWidth={2}
+                      />
                       <div>
                         <p className="text-sm font-medium text-foreground">{row.label}</p>
                         <p className="text-xs text-muted-foreground">{row.desc}</p>
@@ -332,7 +423,8 @@ export function NotificationsPage(): JSX.Element {
               <p className="mb-1 flex items-center gap-1.5 font-serif text-base font-semibold text-foreground">
                 {unreadCount === 0 ? (
                   <>
-                    You're all caught up! <PartyPopper aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+                    You're all caught up!{' '}
+                    <PartyPopper aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                   </>
                 ) : (
                   'Stay on top of things'

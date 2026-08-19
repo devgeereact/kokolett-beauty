@@ -26,7 +26,8 @@ export const TONE_BG: Record<Tone, string> = {
   in_service: 'bg-tint-in-service',
   completed: 'bg-tint-completed',
   cancelled: 'bg-tint-cancelled',
-  primary: 'bg-tint-primary',
+  // Pale half of the brand pairing; there is no separate `--tint-primary`.
+  primary: 'bg-tint-brand',
   neutral: 'bg-muted',
   // Same red used for a no-show appointment — the highest-severity status
   // colour already in the system, reused here for "high priority" rather

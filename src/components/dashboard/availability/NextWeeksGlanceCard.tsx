@@ -35,7 +35,9 @@ export function NextWeeksGlanceCard({
 
   const today = toSalonDate(new Date(), timezone);
   const byDate = new Map((summary ?? []).map((s) => [s.on_date, s]));
-  const usuallyOpen = new Set(days.filter((d) => d.times.length > 0).map((d) => d.day_of_week));
+  const usuallyOpen = new Set(
+    days.filter((d) => d.times.length > 0).map((d) => d.day_of_week),
+  );
 
   // Days since the most recent Monday (ISO week), Sunday folded to 6 rather than 0.
   const todayDow = new Date(`${today}T00:00:00Z`).getUTCDay();
@@ -59,7 +61,7 @@ export function NextWeeksGlanceCard({
         </div>
       ) : (
         <>
-          <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+          <div className="mb-2 grid grid-cols-7 gap-1 text-center text-2xs font-semibold uppercase text-muted-foreground">
             {[1, 2, 3, 4, 5, 6, 0].map((dow) => (
               <span key={dow}>{DAYS_OF_WEEK[dow]?.name.slice(0, 1)}</span>
             ))}

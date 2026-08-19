@@ -207,7 +207,7 @@ export function DayPanel({
               >
                 {slot.local_time}
                 {slot.is_booked && (
-                  <span className="block truncate text-[10px] font-sans font-medium text-status-confirmed">
+                  <span className="block truncate text-2xs font-sans font-medium text-status-confirmed">
                     {slot.customer_name?.split(' ')[0] ?? 'Booked'}
                   </span>
                 )}

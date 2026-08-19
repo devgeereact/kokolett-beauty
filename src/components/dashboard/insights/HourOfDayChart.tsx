@@ -17,7 +17,7 @@ export function HourOfDayChart({ trend }: { trend: HourOfDayTrend[] }): JSX.Elem
             style={{ height: `${(t.count / maxCount) * 100}%` }}
           />
           {t.hour % 3 === 0 && (
-            <span className="text-[9px] text-muted-foreground">{t.hour}</span>
+            <span className="text-2xs text-muted-foreground">{t.hour}</span>
           )}
         </div>
       ))}

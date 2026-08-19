@@ -16,7 +16,7 @@ possible.
   visits, active/inactive badge, favourite-service badges, "…" menu),
   restyled as a `Card` following the exact pattern already established by
   `ApprovalCard`/`RequestRow` (selected state via `border-primary
-  ring-1 ring-primary`, hover via `hover:border-foreground/20`) rather than
+ring-1 ring-primary`, hover via `hover:border-foreground/20`) rather than
   inventing a new card shape.
 - `CustomersPage.tsx`: swapped the `<CustomerTable>` for a
   `grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4` of `CustomerCard`s.
@@ -94,7 +94,7 @@ it for a future priority pass.
   branches on whether it's scoped ("Nothing from them yet…") vs salon-wide.
 - `CustomerDetailPanel.tsx`: added a 4th tab, "Message", rendering
   `<CommunicationAssistancePanel timezone={timezone}
-  customerEmail={customer.email} />`. Verified live against real data:
+customerEmail={customer.email} />`. Verified live against real data:
   Bianca Chukwu (2 real notes) shows exactly her 2, correctly filtered out
   of the other 12 customers' notes; Funmi Ade (0 notes) shows the scoped
   empty state; both read/act correctly in dark mode too.
@@ -154,11 +154,11 @@ carries more fields).
 Measured `document.body.scrollHeight` vs `window.innerHeight` at 1440 wide,
 same method as Services:
 
-| height | fit? |
-|---|---|
-| 1024px | yes |
-| 900px | yes (900/900 exact) |
-| 800px | 836/800 (36px over) |
+| height | fit?                |
+| ------ | ------------------- |
+| 1024px | yes                 |
+| 900px  | yes (900/900 exact) |
+| 800px  | 836/800 (36px over) |
 
 Stopped at 900px as the practical baseline rather than chasing 800px like
 Services did — this card carries meaningfully more content (2 contact

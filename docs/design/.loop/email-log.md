@@ -18,7 +18,7 @@ None of that is real here, and the file's docstring says exactly why:
 `email_messages` is a **one-way transactional log** — an Inngest worker
 sends confirmations/reminders/receipts; nobody composes, receives, or
 replies to mail inside this dashboard. So the build is a list-and-detail
-*view* over that log — All mail/Sent/Queued/Failed lanes (matching the real
+_view_ over that log — All mail/Sent/Queued/Failed lanes (matching the real
 `email_status` enum, not invented folders), no Compose, no Drafts/Trash/
 Archived (nothing populates them), no reply/forward, no star (no schema
 column for it). Verified against real data: 136 real outbox rows, several

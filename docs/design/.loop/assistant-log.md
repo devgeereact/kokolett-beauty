@@ -13,8 +13,8 @@ real conversation history persisted to `localStorage`. Matched the
 reference almost exactly on the first screenshot.
 
 **Advisory-only framing kept, not traded for pixel-matching.** CLAUDE.md is
-explicit and binding: *"The AI assistant is advisory only and cannot mutate
-business data."* The reference has no such disclaimer — this build carries
+explicit and binding: _"The AI assistant is advisory only and cannot mutate
+business data."_ The reference has no such disclaimer — this build carries
 it twice (header subtitle, footer note under the chat) and that stays.
 Every "quick action" here fills the chat input with a prompt for the model
 to respond to in the transcript; none of them performs a real write
@@ -28,7 +28,7 @@ directly.
    pattern used everywhere else, `prefill={null}`.
 2. **Missing the sidebar's 4th card** ("Smarter business. More time for
    you."). Reference's version ends in an "Explore AI features" button —
-   **dropped the button, kept the message.** This page *is* the AI
+   **dropped the button, kept the message.** This page _is_ the AI
    features; there's no separate features page to send someone to, so a
    button here would be decorative and point nowhere real. Rebuilt as a
    plain tinted info card (icon + heading + description, no action),

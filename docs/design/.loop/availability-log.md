@@ -12,11 +12,11 @@ existing page's docstring already explained a deliberate, documented
 architecture decision. Confirmed via `docs/SCHEMA.md` and the migrations:
 
 - **Migration 0011 ("slots are the model") deliberately deleted**
-  `availability_rules` and `availability_exceptions` — a day is *only* a flat
+  `availability_rules` and `availability_exceptions` — a day is _only_ a flat
   list of published start times (`availability_slots`). There is no
   continuous "opening hours" range, no separate "breaks" entity, and no
-  per-day-of-week cap or toggle. `DayPanel.tsx`'s own doc comment: *"blocking
-  out an hour is simply not putting it on the list."*
+  per-day-of-week cap or toggle. `DayPanel.tsx`'s own doc comment: _"blocking
+  out an hour is simply not putting it on the list."_
 - `max_appointments_per_day` is one **global** `booking_settings` value, not
   per-weekday — the reference shows 8/8/8/10/10/6/0, implying a per-day
   figure that doesn't exist.
@@ -27,14 +27,14 @@ architecture decision. Confirmed via `docs/SCHEMA.md` and the migrations:
   single editable source — this screen already has a read-only mirror of
   that (`BookingRulesCard`, pre-existing) with an edit link, same pattern
   the reference itself uses via its own sidebar "Booking rules" card.
-- No stored date-*range* closure entity exists (no "Summer Break: 11–15 Aug"
+- No stored date-_range_ closure entity exists (no "Summer Break: 11–15 Aug"
   row) — closing a run of days means clearing each date individually via
   `DayPanel`.
 
 Given this, matching the reference's literal 6-column table + 4 tabs would
 mean fabricating 3 columns of data with no backing store and inventing a
 duplicate settings-editing surface. Instead, matched the reference's real
-*intent* — a compact per-day row, a closures list, a rules sidebar — using
+_intent_ — a compact per-day row, a closures list, a rules sidebar — using
 only what's genuinely real, same standard as every other screen in this
 loop (Customers' tags, Services' categories).
 
@@ -52,7 +52,7 @@ loop (Customers' tags, Services' categories).
   `DayPanel` in a `Modal` — positioned where the reference puts
   "+ Add special hours", bottom-left under the table.
 - **New `SpecialHoursClosuresCard`**: since there's no stored closure
-  entity, this *derives* real exceptions — any date in the generator's
+  entity, this _derives_ real exceptions — any date in the generator's
   filled horizon where actual published slots disagree with the weekly
   pattern (normally-open-but-empty = closed override; normally-closed-but-
   published = extra hours). Bounded to `status.filled_to` specifically
@@ -91,11 +91,11 @@ Same method as Services/Customers: `document.body.scrollHeight` vs
 reading equal to `innerHeight` only proves "fits or shorter," not "exactly
 fits" — cross-checked with screenshots too).
 
-| height | before restyle | after |
-|---|---|---|
-| 1024px | scrolled (~1090px content) | fits, real headroom |
-| 900px | — | fits exactly (900/900) |
-| 800px | — | 878/800 (78px over) |
+| height | before restyle             | after                  |
+| ------ | -------------------------- | ---------------------- |
+| 1024px | scrolled (~1090px content) | fits, real headroom    |
+| 900px  | —                          | fits exactly (900/900) |
+| 800px  | —                          | 878/800 (78px over)    |
 
 Stopped at the 900px baseline — same bar `customer-log.md` settled on for
 its own content-heavy screen. This page is the densest yet in the loop (a
@@ -131,8 +131,8 @@ interaction/hover/focus conventions (the exact classes already proven on
 - **Weekly schedule day rows had zero hover/focus feedback.** The button
   wrapping each row was a bare `flex ... text-left` — clickable with no
   affordance that it was. Added `rounded-md p-2 -mx-2
-  transition-colors hover:bg-muted focus-visible:ring-2
-  focus-visible:ring-ring`, matching the row-highlight language every other
+transition-colors hover:bg-muted focus-visible:ring-2
+focus-visible:ring-ring`, matching the row-highlight language every other
   clickable card/row in the app already uses. Verified visually
   (`availability-row-hover.png`) — the highlight now reads clearly and
   extends edge-to-edge.
@@ -153,7 +153,7 @@ interaction/hover/focus conventions (the exact classes already proven on
   rather than force a mismatched semantic.
 - **Loosened padding now that there was headroom to spare.** The prior
   pass compressed hard to guarantee no-scroll; re-measuring showed the
-  *right* sidebar column (900px), not the *left* schedule column, was the
+  _right_ sidebar column (900px), not the _left_ schedule column, was the
   actual height constraint — so the left column's cards (`p-3.5`→`p-4`)
   could regain some breathing room for free, with zero risk to the fit
   budget. Re-verified: still 900/900 exact fit, unchanged from before this

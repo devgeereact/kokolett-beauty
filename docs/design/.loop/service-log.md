@@ -20,6 +20,7 @@ salon's menu, not the reference's generic one), card grid, tabs
 (All/Active/Archived), pagination. Structure already close.
 
 Real gaps found:
+
 1. **"Add new service" was inline in the content**, not the header actions
    bar — every other finished screen (Approvals, Availability requests,
    Customers, Today, Appointments, Calendar) puts its primary action there,
@@ -131,11 +132,11 @@ Owner asked for 16 cards per page, fit to screen with no scroll.
 Measured `document.body.scrollHeight` vs `window.innerHeight` at three
 viewport heights (1440 wide) rather than eyeballing:
 
-| height | before | after |
-|---|---|---|
-| 1024px | fit | fit |
-| 900px | — | fit (900/900) |
-| 800px | — | 802/800 (2px over — imperceptible) |
+| height | before | after                              |
+| ------ | ------ | ---------------------------------- |
+| 1024px | fit    | fit                                |
+| 900px  | —      | fit (900/900)                      |
+| 800px  | —      | 802/800 (2px over — imperceptible) |
 
 Screenshotted at 800px to confirm it's not cramped despite the tight
 budget — still legible, matches the "not too dense" bar `service-16-fit-800.png`

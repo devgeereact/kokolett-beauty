@@ -39,6 +39,17 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {/*
+        Skip link, matching the dashboard's, so a keyboard user lands past the
+        header nav instead of tabbing through it on every page. Visually hidden
+        until focused, which is the only moment it is any use.
+      */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-toast focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+      >
+        Skip to content
+      </a>
       <header className="sticky top-0 z-sticky border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 md:gap-4 md:px-6 md:py-4">
           <Link
@@ -78,7 +89,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
         </div>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
 
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-5xl px-4 py-14 md:px-6">

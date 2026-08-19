@@ -203,7 +203,13 @@ describe('InboxPage — default tab freeze', () => {
     );
     expect(activeTabLabel()).toBe('Approvals');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Approve booking' }));
+    // `findByRole`, not `getByRole`. The button lives in ApprovalDetailPanel,
+    // which renders only once `selectedId` has been set, and that happens in an
+    // effect one render *after* the card text this test waited on above. Locally
+    // the two land in the same tick and `getByRole` appeared to work; on a
+    // loaded CI runner it did not, which is exactly the sort of race a
+    // synchronous query hides until it matters.
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve booking' }));
 
     // The approval lands, the row disappears, and pending_approval_count
     // (via the mocked refresh, exercising the same code path

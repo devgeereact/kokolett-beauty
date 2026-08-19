@@ -213,6 +213,36 @@ const TEMPLATE_REASON: Record<string, string> = {
 };
 
 /**
+ * Markup out, readable text left, for the `text/plain` half of a message.
+ *
+ * The tag strip loops to a fixed point rather than running once. A single pass
+ * of `replace(/<[^>]*>/g, '')` is not a strip at all: it removes the inner tag
+ * of `<scr<script>ipt>` and leaves a working `<script>` behind, which is what
+ * CodeQL's incomplete-multi-character-sanitization rule is about.
+ *
+ * Nothing was exploitable through this path, because the result becomes the
+ * plain-text alternative (never executed) and the first line of it becomes the
+ * preheader, which `layout()` escapes. But the owner's template body is
+ * arbitrary HTML she pasted from somewhere, this is the only thing standing
+ * between it and the text part, and "not exploitable in today's two call
+ * sites" is a poor thing to rely on.
+ */
+function toPlainText(html: string): string {
+  const withBreaks = html
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n');
+
+  let out = withBreaks;
+  let previous: string;
+  do {
+    previous = out;
+    out = out.replace(/<[^>]*>/g, '');
+  } while (out !== previous);
+
+  return out;
+}
+
+/**
  * Renders an owner-edited `email_templates` row instead of the hard-coded
  * copy below. The owner's HTML is substituted and dropped straight into the
  * same masthead/footer shell, so branding and the compliance footer stay
@@ -232,13 +262,7 @@ function renderOverride(template: string, override: TemplateOverride, p: Templat
   const reason =
     TEMPLATE_REASON[template] ?? 'You are receiving this because you have booked with Kokolett Beauty UK.';
 
-  const plainBody = applyTokensPlain(
-    override.html_body
-      .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<[^>]+>/g, ''),
-    tokens,
-  ).trim();
+  const plainBody = applyTokensPlain(toPlainText(override.html_body), tokens).trim();
 
   /**
    * The preheader is the grey line beside the subject in an inbox list.

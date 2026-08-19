@@ -81,6 +81,25 @@ function execCmd(command: string, value?: string): void {
 }
 
 /**
+ * Length of the copy the customer will actually read, with the markup taken
+ * out.
+ *
+ * Parsed rather than regex-stripped. `replace(/<[^>]+>/g, '')` looks like it
+ * removes tags and does not: one pass over `<scr<script>ipt>` leaves a working
+ * `<script>` behind, which is what CodeQL flags as incomplete multi-character
+ * sanitization. Nothing was exploitable here, because the result was only ever
+ * measured and never rendered, but a string that looks sanitised is exactly the
+ * kind of thing somebody later reaches for in a context where it matters.
+ *
+ * Parsing is also simply more accurate: `&amp;` counts as one character rather
+ * than five, and an attribute value no longer leaks into the total.
+ */
+function textLength(html: string): number {
+  return (new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '')
+    .length;
+}
+
+/**
  * The owner's overlay on a real outbox template (`email_templates`). Saving
  * here is what `send-emails` reads at send time once Active and Include in
  * automation are both on — see `emailService.getEmailTemplate`'s comment.
@@ -132,7 +151,7 @@ export function TemplateEditorPage(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row]);
 
-  const charCount = useMemo(() => bodyHtml.replace(/<[^>]+>/g, '').length, [bodyHtml]);
+  const charCount = useMemo(() => textLength(bodyHtml), [bodyHtml]);
 
   const insertVariable = (name: string): void => {
     const token = `{{${name}}}`;

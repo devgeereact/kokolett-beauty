@@ -176,7 +176,9 @@ describe('InboxPage — default tab freeze', () => {
 
     renderInbox('/dashboard/inbox');
 
-    await waitFor(() => expect(screen.getAllByText('Demo Customer').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('Demo Customer').length).toBeGreaterThan(0),
+    );
     expect(activeTabLabel()).toBe('Approvals');
 
     // Nothing the owner did — just the summary itself reporting the count
@@ -196,7 +198,9 @@ describe('InboxPage — default tab freeze', () => {
 
     // Bare URL, one pending approval — both the pre-fix and fixed code
     // default here, so this is the exact scenario from the bug report.
-    await waitFor(() => expect(screen.getAllByText('Demo Customer').length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText('Demo Customer').length).toBeGreaterThan(0),
+    );
     expect(activeTabLabel()).toBe('Approvals');
 
     await userEvent.click(screen.getByRole('button', { name: 'Approve booking' }));
@@ -204,10 +208,11 @@ describe('InboxPage — default tab freeze', () => {
     // The approval lands, the row disappears, and pending_approval_count
     // (via the mocked refresh, exercising the same code path
     // `loadApprovals()` really calls) drops to 0 — the trigger for the bug.
-    // The queue then falls back to its demo preview (real backend rows are
-    // empty), not a bare empty state.
+    // The queue then shows its real empty state.
     await waitFor(() => {
-      expect(screen.getByText(/Nothing is waiting for real right now/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Your published hours book instantly for everyone/),
+      ).toBeInTheDocument();
     });
 
     // Still Approvals. No click on Requests, no `?tab=` in the URL — the

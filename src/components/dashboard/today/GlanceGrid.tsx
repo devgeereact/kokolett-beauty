@@ -28,11 +28,19 @@ interface GlanceStat {
 export function GlanceGrid({
   appointments,
   todayCount,
+  collectedPence,
   timezone,
   className,
 }: {
   appointments: AppointmentDetailed[];
   todayCount: number | null;
+  /**
+   * Money actually logged against today's appointments, from
+   * `owner_dashboard_summary`. Not derived from `appointments.price_pence`:
+   * migration 0027 left that column a placeholder defaulting to 0, so summing
+   * it produced a headline revenue tile that read £0.00 every single day.
+   */
+  collectedPence: number | null;
   timezone: string;
   className?: string;
 }): JSX.Element {
@@ -52,15 +60,15 @@ export function GlanceGrid({
       .catch(() => setUtilizationPercent(null));
   }, [timezone]);
 
-  const { newClientsToday, estimatedRevenuePence } = useMemo(() => {
-    const newCustomerIds = new Set(
-      appointments
-        .filter((a) => (a.customer_completed_count ?? 0) === 0)
-        .map((a) => a.customer_id),
-    );
-    const revenue = appointments.reduce((sum, a) => sum + (a.price_pence ?? 0), 0);
-    return { newClientsToday: newCustomerIds.size, estimatedRevenuePence: revenue };
-  }, [appointments]);
+  const newClientsToday = useMemo(
+    () =>
+      new Set(
+        appointments
+          .filter((a) => (a.customer_completed_count ?? 0) === 0)
+          .map((a) => a.customer_id),
+      ).size,
+    [appointments],
+  );
 
   const stats: GlanceStat[] = [
     {
@@ -82,8 +90,8 @@ export function GlanceGrid({
     {
       key: 'revenue',
       icon: PoundSterling,
-      value: formatMoney(estimatedRevenuePence),
-      label: 'Est. revenue',
+      value: collectedPence === null ? '—' : formatMoney(collectedPence),
+      label: 'Taken today',
       to: routes.owner.reports,
       linkLabel: 'View report',
     },

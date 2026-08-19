@@ -101,7 +101,10 @@ export function TodayPage(): JSX.Element {
     () => new Date(start.getTime() + 60 * 24 * 60 * 60 * 1000),
     [start],
   );
-  const upcomingStatuses = useMemo<AppointmentStatus[]>(() => ['confirmed', 'checked_in'], []);
+  const upcomingStatuses = useMemo<AppointmentStatus[]>(
+    () => ['confirmed', 'checked_in'],
+    [],
+  );
   const { appointments: upcomingPool, refresh: refreshUpcoming } = useAppointments({
     from: start,
     to: upcomingHorizon,
@@ -354,7 +357,9 @@ export function TodayPage(): JSX.Element {
                   setMovingId(null);
                   setMoveError(null);
                 }}
-                onChoose={(startsAt) => void doOwnerReschedule(expandedAppointment.id, startsAt)}
+                onChoose={(startsAt) =>
+                  void doOwnerReschedule(expandedAppointment.id, startsAt)
+                }
               />
             </div>
           )}
@@ -394,6 +399,7 @@ export function TodayPage(): JSX.Element {
               className="flex-1"
               appointments={appointments}
               todayCount={summary?.today_count ?? null}
+              collectedPence={summary?.today_collected_pence ?? null}
               timezone={timezone}
             />
             <ApprovalsQueueCard className="flex-1" />

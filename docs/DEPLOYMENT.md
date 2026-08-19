@@ -67,6 +67,18 @@ npm run preview                      # smoke-test the production bundle before s
 The only shippable output is `dist/` plus the repo-root **`.htaccess`** (HTTPS
 redirect, SPA rewrite to `index.html`, MIME types, cache + security headers).
 
+**If the dev server (`npm run dev`) renders with no brand colour — plain
+black/white, `bg-primary`/`bg-background` etc. present in the DOM but computed
+to transparent — this is a stale Vite/PostCSS cache on a long-running dev
+server, not a code bug.** Confirmed 2026-08-19: `tailwind.config.ts` and
+`src/index.css` were correct on disk and in the compiled `<style>` tag's
+source text, but the emitted rule was the wrong shape
+(`background-color: var(--primary)` instead of
+`background-color: rgb(var(--primary) / <alpha-value>)`), because the running
+Vite process (up for hours) never picked up a rebuild. Fix: kill the dev
+server, `rm -rf node_modules/.vite`, restart `npm run dev`. No source change
+needed. Before touching any design token, rule this out first.
+
 ---
 
 ## 2. Ship the artifacts — into THIS app's own docroot

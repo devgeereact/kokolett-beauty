@@ -120,6 +120,22 @@ values ('review-under-test', 'Reviewer Under Test', 5);
 
 insert into public.calendar_feeds (token_hash) values ('not-a-real-feed-hash');
 
+-- Published availability. Unlike the catalogue tables, nothing in the
+-- migrations seeds these two, so on a fresh database they are empty and §5's
+-- "anon can read them" assertions have nothing to find — which is exactly how
+-- the first CI run failed tests 35 and 36. The booking page is built on these:
+-- if anon ever stops being able to read them the website silently offers no
+-- times at all, so they are worth asserting properly.
+insert into public.weekly_template (day_of_week, starts_at)
+values (1, '09:00'), (1, '11:00'), (2, '09:00')
+on conflict do nothing;
+
+insert into public.availability_slots (on_date, starts_at)
+values ((current_date + 400), '09:00'),
+       ((current_date + 400), '11:00'),
+       ((current_date + 401), '09:00')
+on conflict do nothing;
+
 -- --------------------------------------------------------------------------
 -- Probe: what can each role actually see?
 --

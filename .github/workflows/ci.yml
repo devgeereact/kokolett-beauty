@@ -68,16 +68,26 @@ jobs:
         with:
           deno-version: v2.x
 
+      # `working-directory` is load-bearing: Deno discovers its config from the
+      # CWD, not from the file being checked. Run from the repo root and it
+      # finds the app's package.json, treats the repo as an npm project, and
+      # downloads the whole Vite tree (324 packages, measured) before checking a
+      # function that imports none of it — then fails whenever any of them was
+      # published in the last 24 hours. From here it reads
+      # supabase/functions/deno.json and fetches only the 16 @supabase/*
+      # packages that jsr:@supabase/supabase-js actually depends on.
       - name: Typecheck Edge Functions
+        working-directory: supabase/functions
         run: |
-          for f in supabase/functions/*/index.ts supabase/functions/_shared/*.ts; do
+          for f in */index.ts _shared/*.ts; do
             deno check --no-lock --node-modules-dir=none "$f"
           done
 
       # `_shared/templates.ts` decides what every customer actually receives and
       # had no tests at all. These are Deno, so `npm test` cannot reach them.
       - name: Edge Function tests
-        run: deno test --no-lock --node-modules-dir=none --allow-read supabase/functions/
+        working-directory: supabase/functions
+        run: deno test --no-lock --node-modules-dir=none --allow-read .
 
       # Deliberately built with no .env present. Vite inlines VITE_* at build
       # time, so real keys here would land in a public log — and would also hide

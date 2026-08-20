@@ -482,9 +482,12 @@ mail previews.
 
 Not blockers for this week, but do not let them fade from view.
 
-- **CSP is still `Report-Only`.** It has never run against real traffic. Its
-  `connect-src` no longer needs `inn.gs`; trim that, watch it for a week, then promote
-  the header to enforcing.
+- ~~**CSP is still `Report-Only`.**~~ Enforcing since 2026-08-20. `script-src` pins the
+  inline theme bootstrap by hash instead of allowing `'unsafe-inline'`, and CI fails the
+  build if the two ever disagree. **To roll back**, rename the header in `.htaccess` to
+  `Content-Security-Policy-Report-Only` — it takes effect on the next request, with no
+  rebuild or redeploy. A service worker keeps whatever CSP it was installed under until
+  it updates, so an open tab can lag the change in either direction.
 - **`minimum_password_length = 6`** in `supabase/config.toml`. `src/lib/password.ts`
   enforces stronger rules, but only in the browser.
 - **The calendar has no keyboard equivalent for drag-to-reschedule.** The Move panel is
@@ -546,4 +549,8 @@ them for anything beyond "probably still true."
 - ~~**No RLS tests.**~~ ~~**CI runs no SQL.**~~ Both closed 2026-08-20:
   `supabase/tests/rls_test.sql` is a 45-assertion pgTAP suite, and CI's `database` job
   applies every migration to a fresh Postgres and runs it on each push.
-- **CSP is still `Report-Only`** and its `connect-src` no longer needs `inn.gs`.
+- ~~**CSP is still `Report-Only`.**~~ Promoted to enforcing 2026-08-20, after being
+  exercised against the real build rather than assumed: ten routes, the booking flow,
+  both themes, and isolated probes for the two dashboard-only patterns that could not be
+  reached without signing in (EmailPage's sandboxed `srcdoc` preview and `downloadCsv`'s
+  `blob:` URL). Zero violations. It caught one real bug first — see below.

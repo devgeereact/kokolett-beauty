@@ -1,8 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
+    /* ES2022 for `Array.prototype.at`, which four files use. This said ES2021
+       and typechecked anyway only because a transitive dependency in the
+       ESLint 8 tree ambiently augmented Array; upgrading to ESLint 10 dropped
+       that package and four TS2550 errors appeared with no source change. The
+       method has shipped and worked in production throughout — `lib` was
+       simply understating what the code targets. Vite's own build target
+       (vite.config.ts) stays es2020: `.at()` is a runtime method, not syntax,
+       so the transpile target neither polyfills nor removes it. */
+    "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
     "types": ["node", "vite/client", "vite-plugin-pwa/client"],

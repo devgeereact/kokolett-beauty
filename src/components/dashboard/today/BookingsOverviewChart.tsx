@@ -5,9 +5,12 @@ import { listAppointments } from '@/services/appointmentService';
 import { analyzeWeekBookings, percentChange, summarizeBusiness } from '@/lib/insights';
 import { addDays, dayName, salonDayRange, toSalonDate } from '@/lib/format';
 import { dayOfWeek, weekDates } from '@/lib/calendar';
+import { cn } from '@/lib/utils';
 import type { AppointmentDetailed } from '@/types';
 
 const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Monday-first, matching weekDates.
+
+type WeekPeriod = 'current' | 'previous';
 
 /** Bottom (Returning) segment stays one dark navy tone; the top (New)
  * segment is the accent colour only on today's bar, light blue otherwise —
@@ -25,7 +28,7 @@ function liveOnly(appointments: AppointmentDetailed[]): AppointmentDetailed[] {
 function trendLabel(delta: number | null): string {
   if (delta === null) return '';
   const rounded = Math.round(Math.abs(delta));
-  return `${delta >= 0 ? '▲' : '▼'} ${rounded}% vs last week`;
+  return `${delta >= 0 ? '▲' : '▼'} ${rounded}% vs previous week`;
 }
 
 interface WeekMetrics {
@@ -40,21 +43,34 @@ interface WeekMetrics {
 }
 
 /**
- * New-vs-returning bookings for the current salon week, plus the same
- * week-over-week deltas Reports shows — computed from two `listAppointments`
- * windows, same classification `summarizeBusiness` already uses elsewhere.
+ * New-vs-returning bookings for the selected salon week ("This week" or
+ * "Last week", via the header dropdown), plus the same week-over-week deltas
+ * Reports shows — computed from two `listAppointments` windows, same
+ * classification `summarizeBusiness` already uses elsewhere. The dropdown
+ * used to be a plain `<span>` that looked like a filter but did nothing;
+ * it's real state now, mirroring the working date-range `<select>` pattern
+ * on AppointmentsPage.
  */
-export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.Element {
+export function BookingsOverviewChart({
+  timezone,
+  className,
+}: {
+  timezone: string;
+  className?: string;
+}): JSX.Element {
+  const [period, setPeriod] = useState<WeekPeriod>('current');
   const [metrics, setMetrics] = useState<WeekMetrics | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setMetrics(null);
     const today = toSalonDate(new Date(), timezone);
-    const dates = weekDates(today);
+    const anchor = period === 'current' ? today : addDays(today, -7);
+    const dates = weekDates(anchor);
     const monday = dates[0]!;
     const sunday = dates[6]!;
-    const lastMonday = addDays(monday, -7);
-    const lastSunday = addDays(sunday, -7);
+    const priorMonday = addDays(monday, -7);
+    const priorSunday = addDays(sunday, -7);
 
     Promise.all([
       listAppointments({
@@ -62,19 +78,21 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
         to: salonDayRange(sunday, timezone).end,
       }),
       listAppointments({
-        from: salonDayRange(lastMonday, timezone).start,
-        to: salonDayRange(lastSunday, timezone).end,
+        from: salonDayRange(priorMonday, timezone).start,
+        to: salonDayRange(priorSunday, timezone).end,
       }),
     ])
-      .then(([thisWeekRaw, lastWeekRaw]) => {
+      .then(([selectedWeekRaw, priorWeekRaw]) => {
         if (cancelled) return;
-        const thisWeek = liveOnly(thisWeekRaw);
-        const lastWeek = liveOnly(lastWeekRaw);
-        const current = summarizeBusiness(thisWeek, []);
-        const previous = summarizeBusiness(lastWeek, []);
+        const selectedWeek = liveOnly(selectedWeekRaw);
+        const priorWeek = liveOnly(priorWeekRaw);
+        const current = summarizeBusiness(selectedWeek, []);
+        const previous = summarizeBusiness(priorWeek, []);
         setMetrics({
-          thisWeek,
-          todayDow: dayOfWeek(today),
+          thisWeek: selectedWeek,
+          // Only today's own week highlights a "you are here" bar — the
+          // previous week has no "today" in it.
+          todayDow: period === 'current' ? dayOfWeek(today) : -1,
           bookings: current.totalInWindow,
           bookingsDelta: percentChange(current.totalInWindow, previous.totalInWindow),
           returningRate: current.returningRate,
@@ -90,7 +108,7 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
     return () => {
       cancelled = true;
     };
-  }, [timezone]);
+  }, [timezone, period]);
 
   const week = metrics ? analyzeWeekBookings(metrics.thisWeek, timezone) : null;
   const byDay = new Map(week?.map((d) => [d.dayOfWeek, d]));
@@ -104,12 +122,20 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
   const axisTicks = [0, axisMax / 4, axisMax / 2, (axisMax * 3) / 4, axisMax];
 
   return (
-    <Card className="flex h-full flex-col p-4">
+    <Card className={cn('flex h-full flex-col p-4', className)}>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-serif text-base font-semibold text-foreground">
           Bookings overview
         </h2>
-        <span className="text-xs text-muted-foreground">This week</span>
+        <select
+          aria-label="Week"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value as WeekPeriod)}
+          className="rounded-sm border border-transparent bg-transparent text-xs text-muted-foreground hover:border-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="current">This week</option>
+          <option value="previous">Last week</option>
+        </select>
       </div>
 
       {!metrics && (
@@ -164,13 +190,12 @@ export function BookingsOverviewChart({ timezone }: { timezone: string }): JSX.E
             </span>
           </div>
 
-          {/* A fixed, compact chart centred in whatever leftover height the
-              card has, rather than the bars themselves stretching taller to
-              fill it — a bar chart that grows to match a neighbour's height
-              stops reading as "this week at a glance". The card only
-              stretches to match Availability requests beside it now (row2
-              has no other card), so that leftover is a few px, not a dead
-              zone. */}
+          {/* The chart itself has an explicit height (160px below); this
+              flex-1 + justify-center only centres that fixed-height block
+              within whatever the card's own `h-full` stretch (from the
+              grid's `items-stretch`) adds beyond it — a bar chart that grows
+              taller to fill a neighbour's height stops reading as "this
+              week at a glance". */}
           <div className="flex flex-1 flex-col justify-center">
             <div className="flex gap-3" style={{ height: 160 }}>
               <div className="flex h-full shrink-0 flex-col-reverse justify-between text-right text-xs text-muted-foreground">

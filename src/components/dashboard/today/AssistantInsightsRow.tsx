@@ -14,6 +14,7 @@ import {
 import { listQueuedRequests } from '@/services/requestService';
 import { dayName, firstNameOf, formatDateShort, toSalonDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 
 const FLEXIBILITY_LABELS: Record<string, string> = {
   any: 'flexible',
@@ -46,7 +47,13 @@ function mostCommonFlexibility(values: string[]): string | null {
  * row, not a separate data source. Advisory only: every card links to the
  * real screen where the owner takes the actual action.
  */
-export function AssistantInsightsRow({ timezone }: { timezone: string }): JSX.Element {
+export function AssistantInsightsRow({
+  timezone,
+  className,
+}: {
+  timezone: string;
+  className?: string;
+}): JSX.Element {
   const [cards, setCards] = useState<InsightCard[] | null>(null);
 
   useEffect(() => {
@@ -147,7 +154,7 @@ export function AssistantInsightsRow({ timezone }: { timezone: string }): JSX.El
   }, [timezone]);
 
   return (
-    <Card className="p-4">
+    <Card className={cn('p-4', className)}>
       <div className="mb-3 flex items-center gap-2">
         <h2 className="font-serif text-base font-semibold text-foreground">
           AI assistant
@@ -170,7 +177,7 @@ export function AssistantInsightsRow({ timezone }: { timezone: string }): JSX.El
       )}
 
       {cards && cards.length > 0 && (
-        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-5">
           {cards.map((card) => {
             const Icon = card.icon;
             return (

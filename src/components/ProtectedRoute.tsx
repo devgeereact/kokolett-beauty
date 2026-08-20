@@ -1,5 +1,5 @@
 import type { JSX, ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useIsOwner } from '@/hooks/useIsOwner';
 import { Spinner } from '@/components/ui/States';
@@ -14,8 +14,16 @@ import { Button } from '@/components/ui/Button';
  *
  * This is presentation only — the real boundary is RLS plus the `is_owner()`
  * guard inside each owner RPC.
+ *
+ * Mounted once as a pathless layout route wrapping every dashboard route (see
+ * `App.tsx`), not per-page — mounting it individually per route meant React
+ * Router unmounted and remounted it (and re-ran `useIsOwner`'s RPC round-trip)
+ * on every navigation between dashboard pages, which read as the app randomly
+ * signing the owner out. `children` is optional so a caller can still wrap a
+ * single element directly; with none given, `<Outlet />` renders whichever
+ * child route matched.
  */
-export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Element {
+export function ProtectedRoute({ children }: { children?: ReactNode }): JSX.Element {
   const { user, loading, signOut } = useSupabaseAuth();
   const { isOwner, loading: ownerLoading, failed, retry } = useIsOwner();
   const location = useLocation();
@@ -83,5 +91,5 @@ export function ProtectedRoute({ children }: { children: ReactNode }): JSX.Eleme
     );
   }
 
-  return <>{children}</>;
+  return <>{children ?? <Outlet />}</>;
 }

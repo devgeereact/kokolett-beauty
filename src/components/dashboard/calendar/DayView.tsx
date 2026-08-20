@@ -145,7 +145,7 @@ export function DayView({
       )}
       <div
         className={cn(
-          'flex flex-col overflow-hidden rounded-md border border-border bg-card',
+          'flex flex-col overflow-hidden rounded-md border border-border/60 bg-card',
           CALENDAR_GRID_HEIGHT_CLASS,
         )}
       >

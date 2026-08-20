@@ -130,12 +130,15 @@ export const CALENDAR_GRID_HEIGHT_CLASS = 'h-[calc(100vh-16rem)] min-h-[480px]';
 
 /**
  * Equal-height hour gridlines as a percentage-based repeating gradient, so
- * they render correctly at any container height.
+ * they render correctly at any container height. Half-strength `--border`
+ * (a true hairline, not a full table rule) — the grid should recede behind
+ * whatever's booked, not compete with it.
  */
 export function hourGridlines(rowCount: number): string {
   if (rowCount <= 0) return 'none';
   const rowPercent = 100 / rowCount;
-  return `repeating-linear-gradient(180deg, transparent, transparent calc(${rowPercent}% - 1px), var(--border) calc(${rowPercent}% - 1px), var(--border) ${rowPercent}%)`;
+  const line = 'rgb(var(--border) / 0.5)';
+  return `repeating-linear-gradient(180deg, transparent, transparent calc(${rowPercent}% - 1px), ${line} calc(${rowPercent}% - 1px), ${line} ${rowPercent}%)`;
 }
 
 const FALLBACK_RANGE: HourRange = { startMin: 8 * 60, endMin: 20 * 60 };

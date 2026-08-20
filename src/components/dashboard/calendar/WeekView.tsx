@@ -153,7 +153,7 @@ export function WeekView({
       )}
       <div
         className={cn(
-          'flex flex-col overflow-hidden rounded-md border border-border bg-card',
+          'flex flex-col overflow-hidden rounded-md border border-border/60 bg-card',
           CALENDAR_GRID_HEIGHT_CLASS,
         )}
       >
@@ -163,7 +163,7 @@ export function WeekView({
             for a full list of that day&apos;s times.
           </caption>
           <thead>
-            <tr className="border-b border-border">
+            <tr className="border-b border-border/50">
               <th scope="col" className="w-[52px] py-2.5 text-center">
                 <span className="text-2xs font-medium text-muted-foreground">Time</span>
                 <span className="block text-2xs text-muted-foreground">
@@ -174,7 +174,7 @@ export function WeekView({
                 <th
                   key={date}
                   scope="col"
-                  className="border-l border-border py-2.5 text-center font-medium"
+                  className="border-l border-border/40 py-2.5 text-center font-medium"
                 >
                   <button
                     type="button"
@@ -219,7 +219,7 @@ export function WeekView({
                         key={date}
                         data-day-date={date}
                         rowSpan={labels.length}
-                        className="relative border-l border-border align-top"
+                        className="relative border-l border-border/40 align-top"
                         style={
                           isToday
                             ? {

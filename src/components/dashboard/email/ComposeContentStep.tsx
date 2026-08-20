@@ -1,4 +1,4 @@
-import { type JSX, useCallback, useEffect, useState } from 'react';
+import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -52,17 +52,21 @@ export function ComposeContentStep({
   const [results, setResults] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const searchIdRef = useRef(0);
 
   const search = useCallback(async (): Promise<void> => {
+    const requestId = ++searchIdRef.current;
     setSearching(true);
     setSearchError(null);
     try {
       const rows = await listCustomers(query);
+      if (requestId !== searchIdRef.current) return;
       setResults(rows.slice(0, MAX_RESULTS));
     } catch (e) {
+      if (requestId !== searchIdRef.current) return;
       setSearchError(errorMessage(e));
     } finally {
-      setSearching(false);
+      if (requestId === searchIdRef.current) setSearching(false);
     }
   }, [query]);
 

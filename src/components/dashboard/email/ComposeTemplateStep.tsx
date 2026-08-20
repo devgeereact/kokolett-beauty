@@ -26,13 +26,21 @@ export function ComposeTemplateStep({
 }): JSX.Element {
   const [search, setSearch] = useState('');
 
+  // Auth-token and owner-internal templates (magic links, password resets,
+  // owner-only booking notifications) never belong in a message to an
+  // arbitrary recipient — excluded here regardless of search.
+  const composable = useMemo(
+    () => TEMPLATE_CATALOG.filter((t) => t.composable !== false),
+    [],
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return TEMPLATE_CATALOG;
-    return TEMPLATE_CATALOG.filter(
+    if (!q) return composable;
+    return composable.filter(
       (t) => t.label.toLowerCase().includes(q) || t.description.toLowerCase().includes(q),
     );
-  }, [search]);
+  }, [composable, search]);
 
   return (
     <div>

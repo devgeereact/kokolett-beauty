@@ -27,6 +27,13 @@ export interface TemplateMeta {
   icon: LucideIcon;
   /** `{{token}}` names this template's payload actually carries — see `buildTokens` in `supabase/functions/_shared/templates.ts`. */
   variables: string[];
+  /**
+   * False for templates that carry a live auth token (magic link, password
+   * reset) or another customer's contact details (owner-only notifications)
+   * — never safe to offer as a Compose starting point for a message to an
+   * arbitrary recipient. Defaults to true.
+   */
+  composable?: boolean;
 }
 
 const BOOKING_VARS = [
@@ -170,6 +177,7 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
     category: 'Account access',
     icon: Key,
     variables: ['manage_url'],
+    composable: false,
   },
   {
     key: 'owner_password_reset',
@@ -178,6 +186,7 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
     category: 'Account access',
     icon: Key,
     variables: ['reset_url', 'reset_ttl_minutes'],
+    composable: false,
   },
   {
     key: 'owner_approval_needed',
@@ -186,6 +195,7 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
     category: 'Owner notifications',
     icon: UserPlus,
     variables: OWNER_BOOKING_VARS,
+    composable: false,
   },
   {
     key: 'owner_booking_moved',
@@ -200,6 +210,7 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
       'previous_appointment_date',
       'previous_appointment_time',
     ],
+    composable: false,
   },
   {
     key: 'owner_new_booking',
@@ -208,6 +219,7 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
     category: 'Owner notifications',
     icon: Mail,
     variables: OWNER_BOOKING_VARS,
+    composable: false,
   },
   {
     key: 'owner_new_request',
@@ -215,6 +227,7 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
     description: 'Sent to the owner when a new availability request comes in.',
     category: 'Owner notifications',
     icon: Bell,
+    composable: false,
     variables: REQUEST_VARS,
   },
 ];

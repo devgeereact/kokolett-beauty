@@ -90,7 +90,13 @@ export function ComposeEmailModal({
    */
   const loadTemplateContent = async (key: string): Promise<void> => {
     const meta = templateMeta(key);
-    const example = usage?.get(key)?.example;
+    const candidate = usage?.get(key)?.example;
+    // Only ever borrow wording from a row that actually finished sending.
+    // A queued/sending/failed row can still carry a live magic-link or
+    // password-reset token (those are only nulled out on successful send),
+    // or another customer's contact details in an owner-notification
+    // template — never safe to lift into a message bound for someone else.
+    const example = candidate?.status === 'sent' ? candidate : null;
 
     if (example) {
       try {
@@ -140,7 +146,7 @@ export function ComposeEmailModal({
     setSending(true);
     setSendError(null);
     try {
-      await sendCustomEmailAsOwner(recipient.email, recipient.full_name, subject, body);
+      await sendCustomEmailAsOwner(recipient.email, recipient.full_name, subject.trim(), body.trim());
       onSent();
       onClose();
     } catch (e) {

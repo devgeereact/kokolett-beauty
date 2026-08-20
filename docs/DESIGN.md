@@ -443,9 +443,11 @@ review item.
 
 ## 12. Known issues and roadmap
 
-- **Tailwind 3.4 pin.** Tokens are custom properties referenced from the config rather than
-  Tailwind v4's `@theme inline`; names and intent match the v4 source this system was
-  specified against. _Migration trigger: when the app's other v4 blockers clear._
+- ~~**Tailwind 3.4 pin.**~~ Resolved 2026-08-20: the app is on Tailwind 4. Tokens stay
+  custom properties referenced from `tailwind.config.ts` via `@config`, rather than moving
+  into `@theme inline`, so this document and the config do not become two sources of truth
+  for the same values. Verified as a visual no-op — computed styles across 500 elements on
+  two pages were identical before and after.
 - **`color-mix()` support.** Tints require Chrome 111+ / Safari 16.2+ / Firefox 113+. Below
   that, tinted backgrounds fall back to transparent — the saturated text still renders
   legibly on `card`, so this degrades safely, but it is a known limit.

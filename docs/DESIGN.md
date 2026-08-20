@@ -414,11 +414,13 @@ Default tone is `neutral`. Not every tile needs to be orange.
   actually requires. `--control-height-lg` (44) exists for the dashboard controls that
   do want the floor, and the calendar's view switcher uses it.
 
-  One dashboard control cannot reach 44 even if it wanted to: the Week/Day
-  calendar's open-slot blocks. An hour row is grid height divided by hour count, and
-  the grid fits the viewport rather than scrolling (`src/lib/calendar.ts`), so an
-  18-hour span on a 768px-tall tablet in landscape gets 28px a row and 37×37 blocks.
-  44 would need 792px of grid where 510px exists. Arithmetic, not a setting.
+  One dashboard control is deliberately left short: the Week/Day calendar's open-slot
+  blocks, 37×37 on an iPad in landscape. The axis is fixed at 08:00–20:00, so twelve
+  hour rows share a grid that fits the viewport rather than scrolling — 512px, 42.7px
+  a row. Reaching 44 means moving both dimensions at once: roughly 72px more grid for
+  the height (a block is 8.33% of the body, so extra height buys very little), and
+  collapsing the 320px details rail for the width, which there is no breakpoint
+  between `lg` and `wide` to do. `src/lib/calendar.ts` carries the measurements.
 
   Say which surface you are on before quoting a number from this section.
   Time slots, form fields and the booking submit all meet it on every width.

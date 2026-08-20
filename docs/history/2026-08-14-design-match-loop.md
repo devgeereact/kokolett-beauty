@@ -684,7 +684,7 @@ Components already existed (`ApprovalCard`, `ApprovalDetailPanel`,
 `ApprovalStats`, `ApprovalPolicyFooter`, `demoApprovals.ts`) — this loop found
 and closed the remaining gaps rather than building from scratch.
 
-**Shell divergence, not fixed (per `build-loop.md`: shell already shipped).**
+**Shell divergence, not fixed (per the loop brief: shell already shipped).**
 The reference's sidebar (flat list, dark charcoal, profile card, salon footer
 card, theme toggle) and top bar (contextual search placeholder, no Refresh
 button, notification badge) reflect the _old_ pre-rebuild mockup. The shipped
@@ -1356,7 +1356,7 @@ fits" — cross-checked with screenshots too).
 | 900px  | —                          | fits exactly (900/900) |
 | 800px  | —                          | 878/800 (78px over)    |
 
-Stopped at the 900px baseline — same bar `customer-log.md` settled on for
+Stopped at the 900px baseline — same bar the [customer](#customer) section settled on for
 its own content-heavy screen. This page is the densest yet in the loop (a
 7-row table + a 4-row closures list + 4 sidebar cards), so 900px is a
 reasonable floor rather than chasing 800px and making the table
@@ -1443,7 +1443,7 @@ Target: `ReportsPage.tsx`, route `/dashboard/reports`. Ref:
 
 #### Already built
 
-Unlike most rows in `build-loop.md`, this page's own docstring (predating
+Unlike most rows in the screen table above, this page's own docstring (predating
 this pass) already documented a deliberate, largely-complete rebuild onto
 this exact reference: real stat tiles with trend arrows, real appointments/
 revenue line charts, a real status donut, a real service breakdown, a real
@@ -1664,7 +1664,7 @@ gap (header unread badge) and verified the rest matches.
 
 Target: `EmailPage.tsx`, route `/dashboard/email`. Ref: `docs/design/email.png`.
 
-`build-loop.md` flagged this as "currently an EmptyState stub" — stale.
+The loop brief flagged this as "currently an EmptyState stub" — stale.
 Like Reports/Assistant/Notifications, it's already a real, complete
 rebuild, with the exact architectural reasoning already documented in the
 file.
@@ -1728,7 +1728,7 @@ scope-creeping into another screen.
 Dark theme and mobile (390×844) both checked — clean, reflows correctly.
 `npx vitest run`: 154/154 passing. `tsc --noEmit` clean for every file this
 change touched (pre-existing, unrelated `DayView.tsx` errors excluded — see
-`notification-log.md` for that issue, still unresolved and not this
+the [notification](#notification) section for that issue, still unresolved and not this
 task's).
 
 #### Stop

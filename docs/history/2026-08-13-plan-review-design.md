@@ -215,7 +215,7 @@ doesn't currently support).
 
 **What's there:** Phase 5 step 19 correctly names the two highest-value a11y line items —
 "keyboardable calendar interactions" and "accessible drawer/dialog behavior" — and both are backed
-by an already-approved, far more rigorous spec (`2026-08-11-calendar-rebuild-design.md`): real
+by an already-approved, far more rigorous spec (`docs/history/2026-08-14-calendar-rebuild-design.md`): real
 `<table>` semantics, `AgendaList` as a fully keyboard-operable zero-drag alternative, 44×44px touch
 targets, `prefers-reduced-motion` handling.
 

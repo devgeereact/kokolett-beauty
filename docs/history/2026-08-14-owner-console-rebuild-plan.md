@@ -13,7 +13,7 @@ corrections, no palette change — colours already match hex-for-hex). Icons com
 new `lucide-react` dependency, first used in the sidebar. The app icon is cropped from
 the existing `logo.png` lockup with Python/Pillow into the square PWA/favicon set already
 wired in `vite.config.ts`. Navigation moves from a flat 7+2 list to seven labelled groups,
-keeping the tablet breakpoint fix from `owner-console-nav-breakpoint-decision.md` and the
+keeping the tablet breakpoint fix from `docs/history/2026-08-14-owner-console-nav-breakpoint-decision.md` and the
 already-shipped Inbox tab consolidation (no route un-merge).
 
 **Tech Stack:** React Router v6, Tailwind 3.4 (CSS-custom-property tokens), `lucide-react`
@@ -79,7 +79,7 @@ ACCOUNT        Settings
 5. **Icons are a genuinely new requirement**, not an invention: `design-token.png` ships
    a dedicated 24×24, 2px-stroke outline icon set, and the repo has no icon library today
    (`grep` of `package.json` confirms) — the exact gap
-   `owner-console-nav-breakpoint-decision.md` flagged as a real cost for icon-based nav
+   `docs/history/2026-08-14-owner-console-nav-breakpoint-decision.md` flagged as a real cost for icon-based nav
    variants. `lucide-react` matches the token sheet's spec exactly (24×24, 2px stroke,
    outline default), is tree-shakeable, MIT-licensed, and is the standard Tailwind
    pairing. Used for primary nav rows only (Task 3/6); group headers stay text-only

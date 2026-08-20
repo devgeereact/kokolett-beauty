@@ -93,7 +93,7 @@ real data` and `3d8a11f Build the Reports page` both predate the Phase 0
 quick-action launcher (Cmd+K)`, `8f3d71c Replace blocking
 window.confirm/alert with ConfirmDialog/Toast in the owner dashboard`.
 - The two specs cited for cross-reference (`2026-08-13-today-command-center…`
-  and `2026-08-11-calendar-rebuild-design.md`) are exactly Phase 5's "2026
+  and `docs/history/2026-08-14-calendar-rebuild-design.md`) are exactly Phase 5's "2026
   design-system modernization" and part of Phase 1/2's workflow redesign —
   but neither document cites a plan.md phase or step number anywhere. They
   were each generated from a direct owner ask ("rebrand Today," "make the
@@ -379,8 +379,8 @@ else in this document combined.
   already, correctly, abandoned in practice — the two shipped specs cited
   for this review don't reference a single plan.md step number, and they
   shipped faster than the plan's gating would have allowed.
-- The two audits this plan produced (`BASELINE-AUDIT.md`,
-  `CAPABILITY-MATRIX.md`) are genuinely excellent work — file:line grounded,
+- The two audits this plan produced (`docs/history/2026-08-13-baseline-audit.md`,
+  `docs/history/2026-08-13-capability-matrix.md`) are genuinely excellent work — file:line grounded,
   explicit about what wasn't checked ("Doubts / not fully verified"
   sections in both). That rigor is real and worth keeping; it's the
   _phase-gated packaging_ around it that doesn't fit a team of one.

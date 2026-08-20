@@ -67,7 +67,7 @@ SLA/urgency (how old, expiring soon)._
 **Summary:** The two live decision types (approvals, requests) are both fully
 wired end-to-end including the DB-enforced fairness rule, which is a
 genuinely strong result. The gaps are entirely about _afterwards_: no history
-of answered requests, no filter, no priority — echoing `BASELINE-AUDIT.md`'s
+of answered requests, no filter, no priority — echoing `docs/history/2026-08-13-baseline-audit.md`'s
 PRD-drift finding almost exactly.
 
 ---
@@ -99,7 +99,7 @@ behaviours:** `rescheduleAppointmentAsOwner` (Move panel, drag, AI Assistant's
 phase that treats "reschedule" as one settled capability needs to know it is
 currently two different features that happen to share a button label.
 
-**Summary:** Booking management is the job most affected by `BASELINE-AUDIT.md`'s
+**Summary:** Booking management is the job most affected by `docs/history/2026-08-13-baseline-audit.md`'s
 route/nav findings. Status-change and viewing are solid; the "regardless of
 date" and "reschedule from here" parts of the brief's own capability
 description are both weaker than the two individually-working Calendar/Today

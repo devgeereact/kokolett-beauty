@@ -34,10 +34,12 @@ that was never built; this list used to repeat it.
       periodic pass against `src/services/` and `src/hooks/` — both drift fast in this
       project (see the 2026-08-14 docs cleanup for the last correction).
 - [ ] **`google_place_id` is unset**, deliberately — the reviews sync stays idle and the
-      public Reviews block renders nothing (a clean empty state, not a fault). Set it in
-      Settings → Business, together with `GOOGLE_PLACES_API_KEY`, when reviews should
-      appear on the site. Everything else the owner had to key in is done: address,
-      phone, Instagram, review link, 402 published slots, 49 menu items, and the
+      public Reviews block renders nothing (a clean empty state, not a fault). Two
+      separate places, both required before reviews appear: `google_place_id` in
+      Settings → Business, and the `GOOGLE_PLACES_API_KEY` Edge Function secret
+      (`supabase secrets set`) — the one secret deliberately left unset. Everything
+      else the owner had to key in is done: address, phone, Instagram, review link,
+      402 published slots, 49 menu items, and the
       `HairSalon` structured data in `index.html` (`docs/GO-LIVE.md` §4).
 - [ ] **CI runs no SQL.** No `supabase db push`, no lint, no migration-apply check, no
       pgTAP — a migration that cannot apply reaches production undetected, which has

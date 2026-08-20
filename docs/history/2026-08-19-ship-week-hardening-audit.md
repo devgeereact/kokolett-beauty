@@ -1,7 +1,7 @@
 # Kokolett Beauty — ship-week hardening plan
 
 > **Archived 2026-08-20 — completed audit, formerly `docs/FEATURE_FIX.md`.** Every repository-side item was done; the 90 unticked `- [ ]` boxes below are the audit as written, not outstanding work. Several findings have since been fixed and are now wrong as stated — `sitemap.xml` points at the live `www` domain, `AGENTS.md` does state the women's-hair-only constraint, and `CLAUDE.md` no longer carries ruflo boilerplate. The items that genuinely remain open live in `docs/GO-LIVE.md` §7 and `docs/plan.md`.
-
+>
 > **Status, 2026-08-19:** everything below that could be done in the repository has
 > been done, and the full gate is green (`typecheck`, `lint`, `format:check`, `test`,
 > `test:hooks`, `deno check`, `build`). What is left is listed in

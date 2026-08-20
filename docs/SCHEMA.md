@@ -21,10 +21,11 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 
 ### Every table, and where it is documented
 
-Twenty-four tables exist. §3 details the twelve that came from `0001`/`0002`; the
-twelve added later are summarised here, with the migration that created them as the
-authoritative source. **`availability_rules` and `availability_exceptions` are dead** —
-`0011` dropped them, and §3 keeps them only as history.
+**Twenty-two tables are live.** Twenty-four were created; `0011` dropped
+`availability_rules` and `availability_exceptions`, so the two sections §3 still keeps
+for them are history, not schema. Of the twenty-two, §3 details the ten surviving from
+`0001`/`0002`; the twelve added later are summarised here, with the migration that
+created them as the authoritative source.
 
 | Table                   | Created by | What it holds                                                                                                                    |
 | ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |

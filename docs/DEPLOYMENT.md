@@ -168,7 +168,9 @@ booking ──► email_messages (queued)
 
 **Secrets.** `SMTP_HOST/PORT/USER/PASSWORD/FROM_EMAIL/FROM_NAME`, `SITE_URL`,
 `ALLOWED_ORIGIN` and `EMAIL_CRON_SECRET` are Edge Function secrets, set with
-`supabase secrets set`. The mailbox password comes from `.env` and is never
+`supabase secrets set`. `.env` is a **local** source only: the same mailbox password
+must also be deployed as the `SMTP_PASSWORD` Edge Function secret, or `send-emails`
+cannot authenticate and the outbox stops draining. `.env` itself is never
 committed.
 
 **Why the cron secret is in the Vault, not in a migration.** `send-emails` is
@@ -206,8 +208,9 @@ supabase db query --linked "select id, status_code, left(content,120) from net._
 ssh cpanel 'ls -t ~/mail/kokolettbeauty.com/booking/new | head'
 ```
 
-Scheduled jobs: `drain-email-queue` (5 min), `expire-pending-approvals` (hourly),
-`extend-weekly-template` (nightly), `purge-access-tokens` (nightly).
+Scheduled jobs — all five: `drain-email-queue` (5 min), `expire-pending-approvals`
+(hourly), `sync-google-reviews` (hourly), `extend-weekly-template` (nightly),
+`purge-access-tokens` (nightly).
 
 ## Auth: signup is closed
 

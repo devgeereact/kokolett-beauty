@@ -38,7 +38,11 @@ export function CalendarShell({ view, onViewChange }: CalendarShellProps): JSX.E
           aria-pressed={view === v.key}
           onClick={() => onViewChange(v.key)}
           className={cn(
-            'rounded-md px-3.5 py-1.5 text-sm font-medium',
+            /* `min-h-touch` rather than `py-1.5`: this switcher was 54x32, and it
+               is tapped constantly on the tablet the owner keeps the calendar
+               open on all day. `inline-flex items-center` keeps the label
+               centred once the box is taller than its line box. */
+            'inline-flex min-h-touch items-center rounded-md px-3.5 text-sm font-medium',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             view === v.key
               ? 'bg-tint-brand text-primary'

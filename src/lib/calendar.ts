@@ -100,6 +100,24 @@ export interface HourRange {
  * (docs/design/calendar.png shows the full opening-to-closing span on
  * screen at once, however many hours that is) — so rows are sized by
  * percentage of this fixed container height, not a per-hour pixel constant.
+ *
+ * THAT RULE AND THE 44px TOUCH FLOOR CANNOT BOTH HOLD, and this is the one
+ * that wins. An hour row is grid height / hour count, so on an iPad in
+ * landscape the salon's 18-hour span gets 510px and each row is 28px — the
+ * open-slot blocks measure 37x37. Reaching 44 a row would need 792px of grid,
+ * which a 768px-tall viewport does not have once the header, toolbar and
+ * legend are taken. It is arithmetic, not a value in this file: no breakpoint
+ * or padding change reaches it, and the only thing that would is internal
+ * scrolling, which is exactly what the mockup above rules out.
+ *
+ * Collapsing the right rail below `lg` was considered and rejected. It widens
+ * the columns but does nothing to row height, which is the binding dimension,
+ * and it would cost the details panel on every 1280px laptop — the system has
+ * three breakpoints on purpose (md/lg/wide, DESIGN.md §5.3) and there is no
+ * 1100px step to hide behind.
+ *
+ * The blocks clear WCAG 2.5.8's actual 24x24 requirement with room to spare.
+ * See docs/DESIGN.md §10 for why the dashboard is not held to 44 at all.
  */
 export const CALENDAR_GRID_HEIGHT_CLASS = 'h-[calc(100vh-16rem)] min-h-[480px]';
 

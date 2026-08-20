@@ -322,26 +322,35 @@ export function TodayPage(): JSX.Element {
           {loading && <LoadingState label="Loading today's appointments…" />}
           {error && <ErrorState error={error} onRetry={() => void refresh()} />}
 
-          {!loading && !error && appointments.length === 0 && (
-            <EmptyState
-              title="Nothing booked today"
-              description="When a customer books online it will appear here straight away."
-              action={
-                <Button variant="ghost" size="sm" onClick={() => void refresh()}>
-                  Refresh
-                </Button>
-              }
-            />
-          )}
-
-          {!loading && !error && appointments.length > 0 && (
-            <ScheduleTimeline
-              appointments={appointments}
-              timezone={timezone}
-              nextUpId={nextUpcoming[0]?.id ?? null}
-              expandedId={expandedId}
-              onToggle={(id) => setExpandedId((cur) => (cur === id ? null : id))}
-            />
+          {!loading && !error && (
+            <div className="relative flex min-h-0 flex-1 flex-col">
+              <ScheduleTimeline
+                appointments={appointments}
+                timezone={timezone}
+                nextUpId={nextUpcoming[0]?.id ?? null}
+                expandedId={expandedId}
+                onToggle={(id) => setExpandedId((cur) => (cur === id ? null : id))}
+              />
+              {/* The hour grid renders regardless of whether today has any
+                  bookings — an empty day is still today's calendar, not a
+                  reason to hide it. The empty-state message sits as an
+                  overlay on top of that grid rather than replacing it. */}
+              {appointments.length === 0 && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+                  <div className="pointer-events-auto rounded-md bg-card">
+                    <EmptyState
+                      title="Nothing booked today"
+                      description="When a customer books online it will appear here straight away."
+                      action={
+                        <Button variant="ghost" size="sm" onClick={() => void refresh()}>
+                          Refresh
+                        </Button>
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Reschedule stays an inline panel, not a popup — it's opened from

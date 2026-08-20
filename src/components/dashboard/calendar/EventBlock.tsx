@@ -1,5 +1,5 @@
 import { type JSX, memo } from 'react';
-import { STATUS_DOTS, STATUS_PILL_BG } from '@/lib/status';
+import { STATUS_BORDER, STATUS_DOTS, STATUS_PILL_BG } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { AppointmentStatus } from '@/types';
 
@@ -33,7 +33,9 @@ export interface EventBlockProps {
  * the same `--tint-*` background `statusPillClass()` uses elsewhere — with
  * `text-foreground` text instead (passes by construction at 15% mix against
  * `--card`), plus the status dot — colour supports the block, the dot and
- * label still carry it on their own.
+ * label still carry it on their own. A saturated `STATUS_BORDER` left edge
+ * (a decorative border, held to 3:1 not 4.5:1) gives the block a clear
+ * colour identity at a glance without touching text contrast at all.
  */
 function EventBlockImpl({
   topPercent,
@@ -87,14 +89,16 @@ function EventBlockImpl({
       onPointerDown={onPointerDown}
       style={style}
       className={cn(
-        'absolute inset-x-1 overflow-hidden rounded-md border border-border px-2 py-1',
+        'absolute inset-x-1 overflow-hidden rounded-md border border-border border-l-4 px-2.5 py-1.5 shadow-card',
         status ? STATUS_PILL_BG[status] : 'bg-card',
+        status ? STATUS_BORDER[status] : 'border-l-border',
         'text-left text-xs text-foreground',
+        'transition-shadow duration-150 ease-out hover:brightness-95',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         draggable && 'cursor-grab touch-none active:cursor-grabbing',
       )}
     >
-      <span className="flex items-center gap-1 font-mono text-2xs font-semibold">
+      <span className="flex items-center gap-1.5 font-mono text-2xs font-semibold">
         <span
           aria-hidden="true"
           className={cn(
@@ -104,7 +108,7 @@ function EventBlockImpl({
         />
         {time}
       </span>
-      <span className="block truncate">{label}</span>
+      <span className="block truncate font-medium">{label}</span>
     </button>
   );
 }

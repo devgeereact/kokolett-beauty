@@ -64,6 +64,26 @@ export const STATUS_PILL_BG: Record<AppointmentStatus, string> = {
   no_show: 'bg-tint-no-show',
 };
 
+/**
+ * Saturated left-edge accent for the Day/Week calendar's `EventBlock` — a
+ * decorative border, not text, so the 3:1 non-text contrast floor applies
+ * rather than 4.5:1, and every `--status-*` value already clears that by a
+ * wide margin. Pairs with `STATUS_PILL_BG`'s pale fill: the block still
+ * reads as its own colour at a glance instead of a uniform grey box with a
+ * hue only visible in a 6px dot.
+ */
+export const STATUS_BORDER: Record<AppointmentStatus, string> = {
+  pending_approval: 'border-l-status-pending',
+  confirmed: 'border-l-status-confirmed',
+  checked_in: 'border-l-status-confirmed',
+  in_service: 'border-l-status-in-service',
+  completed: 'border-l-status-completed',
+  cancelled: 'border-l-status-cancelled',
+  rejected: 'border-l-status-cancelled',
+  rescheduled: 'border-l-status-cancelled',
+  no_show: 'border-l-status-no-show',
+};
+
 const STATUS_PILL_TEXT: Record<AppointmentStatus, string> = {
   pending_approval: 'text-status-pending',
   confirmed: 'text-status-confirmed',

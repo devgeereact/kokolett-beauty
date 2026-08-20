@@ -1,0 +1,389 @@
+-- RLS regression suite.
+--
+-- Row-level security IS the security model of this app: the browser holds an
+-- anon key and RLS is what stands between it and the salon's schedule, customer
+-- list, contact details and payment history. Until this file existed nothing
+-- asserted any of it — `docs/GO-LIVE.md` §7 and `docs/plan.md` both carried
+-- "no RLS tests" as the highest-value gap.
+--
+-- Run with `supabase test db`: it starts a throwaway Postgres, applies every
+-- migration in order, installs pgTAP, and runs this file. CI does that on every
+-- push (`.github/workflows/ci.yml`).
+--
+-- WHY THIS SEEDS ROWS FIRST. A count of zero proves nothing on an empty table —
+-- it is indistinguishable from a policy that works. Probing the live database
+-- on 2026-08-20 found six of the sensitive tables empty (`payments`,
+-- `subscribers`, `customer_access_tokens`, `ai_recommendations`,
+-- `availability_requests`, `google_reviews`), so a naive "anon sees 0 rows"
+-- suite would have reported six passes while asserting nothing whatsoever.
+-- Every table below is given a row first, so "anon sees 0" is a real denial.
+--
+-- Everything runs inside a transaction that is rolled back.
+
+begin;
+
+create extension if not exists pgtap with schema extensions;
+-- pgTAP installs into `extensions`; put it on the path so the assertions
+-- below can be called unqualified.
+set local search_path = extensions, public;
+
+select plan(45);
+
+-- --------------------------------------------------------------------------
+-- Fixtures, created before any role switch.
+-- --------------------------------------------------------------------------
+
+-- `is_owner()` is `exists (select 1 from staff where id = auth.uid())` and
+-- `staff.id` references auth.users, so both identities have to be real auth
+-- users or the owner-side assertions would prove nothing.
+--
+-- Inserting into auth.users fires `handle_new_user()`, which gives each of them
+-- their own `profiles` and `app_settings` row. That is why §3 does not assert
+-- those two tables: a signed-in user seeing exactly their own row there is the
+-- policy working, not a leak.
+insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+                        email_confirmed_at, created_at, updated_at)
+values ('11111111-1111-1111-1111-111111111111',
+        '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'owner@rls.test', '', now(), now(), now()),
+       ('22222222-2222-2222-2222-222222222222',
+        '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'intruder@rls.test', '', now(), now(), now())
+on conflict (id) do nothing;
+
+-- Only the first is staff. The second is the signed-in-but-not-the-owner case,
+-- which an anon-only suite would miss entirely.
+insert into public.staff (id, role)
+values ('11111111-1111-1111-1111-111111111111', 'owner')
+on conflict (id) do nothing;
+
+insert into public.services (id, name, slug, duration_min, price_pence)
+values ('55555555-5555-5555-5555-555555555555', 'RLS Test Service',
+        'rls-test-service', 60, 0);
+
+insert into public.customers (id, email, full_name)
+values ('33333333-3333-3333-3333-333333333333', 'customer@rls.test',
+        'Customer Under Test');
+
+insert into public.customer_access_tokens (customer_id, token_hash, expires_at)
+values ('33333333-3333-3333-3333-333333333333', 'not-a-real-hash',
+        now() + interval '1 day');
+
+-- Far future so it cannot collide with a real booking under the
+-- `appointments_no_overlap` exclusion constraint.
+insert into public.appointments (id, reference, customer_id, service_id,
+                                 starts_at, ends_at, status, price_pence)
+values ('44444444-4444-4444-4444-444444444444', 'KB-RLST01',
+        '33333333-3333-3333-3333-333333333333',
+        '55555555-5555-5555-5555-555555555555',
+        now() + interval '400 days',
+        now() + interval '400 days 1 hour', 'confirmed', 0);
+
+insert into public.payments (appointment_id, amount_pence, recorded_by)
+values ('44444444-4444-4444-4444-444444444444', 4500,
+        '11111111-1111-1111-1111-111111111111');
+
+insert into public.email_messages (template, to_email, subject)
+values ('booking_confirmed', 'customer@rls.test', 'Subject under test');
+
+insert into public.subscribers (email) values ('subscriber@rls.test');
+
+insert into public.availability_requests (full_name, email)
+values ('Requester Under Test', 'requester@rls.test');
+
+insert into public.ai_recommendations (kind, title)
+values ('test', 'Recommendation under test');
+
+insert into public.google_reviews (id, author_name, rating)
+values ('review-under-test', 'Reviewer Under Test', 5);
+
+insert into public.calendar_feeds (token_hash) values ('not-a-real-feed-hash');
+
+-- --------------------------------------------------------------------------
+-- Probe: what can each role actually see?
+--
+-- Counting happens inside a DO block that switches role and resets it before
+-- writing the result, so the probed role never needs rights on the results
+-- table or on pgTAP itself.
+--
+-- A table the role cannot reach at all (no GRANT — what `0038` did to
+-- `email_templates`) raises insufficient_privilege rather than returning 0.
+-- That is a stronger denial than RLS, recorded as -1 so the two are never
+-- silently conflated.
+-- --------------------------------------------------------------------------
+
+create temp table rls_probe (
+  tbl     text   not null,
+  as_role text   not null,
+  visible bigint not null,
+  primary key (tbl, as_role)
+) on commit drop;
+
+do $probe$
+declare
+  t text;
+  r record;
+  n bigint;
+begin
+  for r in
+    select * from (values
+      ('anon',          null::text),
+      ('authenticated', '22222222-2222-2222-2222-222222222222'),
+      ('owner',         '11111111-1111-1111-1111-111111111111')
+    ) as v(role_label, subject_id)
+  loop
+    foreach t in array array[
+      'appointments','customers','email_messages','customer_access_tokens','staff',
+      'payments','subscribers','ai_recommendations','calendar_feeds','email_templates',
+      'google_place_snapshot','day_decided','profiles','app_settings',
+      'availability_requests','services','service_categories','service_menu',
+      'booking_settings','availability_slots','weekly_template','google_reviews'
+    ] loop
+      begin
+        if r.subject_id is null then
+          set local role anon;
+          set local request.jwt.claims = '{"role":"anon"}';
+        else
+          set local role authenticated;
+          perform set_config('request.jwt.claims',
+                             json_build_object('sub', r.subject_id,
+                                               'role', 'authenticated')::text,
+                             true);
+        end if;
+
+        execute format('select count(*) from public.%I', t) into n;
+        reset role;
+      exception when insufficient_privilege then
+        reset role;
+        n := -1;
+      end;
+
+      insert into rls_probe values (t, r.role_label, n);
+    end loop;
+  end loop;
+  reset role;
+end
+$probe$;
+
+-- Guard against the suite silently testing nothing: if the fixtures had not
+-- landed, every "sees 0 rows" assertion below would pass for the wrong reason.
+do $guard$
+begin
+  if (select count(*) from public.appointments) = 0
+     or (select count(*) from public.payments) = 0 then
+    raise exception 'fixtures did not seed — the denial assertions would be vacuous';
+  end if;
+end
+$guard$;
+
+-- --------------------------------------------------------------------------
+-- 1. RLS is on everywhere. A new table shipped without it is the likeliest
+--    future regression, and no per-table assertion below would catch it.
+-- --------------------------------------------------------------------------
+
+select is(
+  (select count(*) from pg_class c
+     join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity),
+  0::bigint,
+  'every table in public has row level security enabled'
+);
+
+-- --------------------------------------------------------------------------
+-- 2. An anonymous visitor — which is what the shipped browser bundle is —
+--    cannot read anything private. These are the tables that would matter in
+--    a breach.
+-- --------------------------------------------------------------------------
+
+select is((select visible from rls_probe where tbl='appointments' and as_role='anon'),
+          0::bigint, 'anon cannot read appointments');
+select is((select visible from rls_probe where tbl='customers' and as_role='anon'),
+          0::bigint, 'anon cannot read customers');
+select is((select visible from rls_probe where tbl='email_messages' and as_role='anon'),
+          0::bigint, 'anon cannot read email_messages');
+select is((select visible from rls_probe where tbl='customer_access_tokens' and as_role='anon'),
+          0::bigint, 'anon cannot read customer_access_tokens');
+select is((select visible from rls_probe where tbl='staff' and as_role='anon'),
+          0::bigint, 'anon cannot read staff');
+select is((select visible from rls_probe where tbl='payments' and as_role='anon'),
+          0::bigint, 'anon cannot read payments');
+select is((select visible from rls_probe where tbl='subscribers' and as_role='anon'),
+          0::bigint, 'anon cannot read subscribers');
+select is((select visible from rls_probe where tbl='ai_recommendations' and as_role='anon'),
+          0::bigint, 'anon cannot read ai_recommendations');
+select is((select visible from rls_probe where tbl='calendar_feeds' and as_role='anon'),
+          0::bigint, 'anon cannot read calendar_feeds');
+select is((select visible from rls_probe where tbl='profiles' and as_role='anon'),
+          0::bigint, 'anon cannot read profiles');
+select is((select visible from rls_probe where tbl='app_settings' and as_role='anon'),
+          0::bigint, 'anon cannot read app_settings');
+select is((select visible from rls_probe where tbl='day_decided' and as_role='anon'),
+          0::bigint, 'anon cannot read day_decided');
+select is((select visible from rls_probe where tbl='availability_requests' and as_role='anon'),
+          0::bigint, 'anon cannot read availability_requests — it may insert, never select');
+select is((select visible from rls_probe where tbl='google_place_snapshot' and as_role='anon'),
+          0::bigint, 'anon cannot read google_place_snapshot — public read revoked in 0038');
+select is((select visible from rls_probe where tbl='email_templates' and as_role='anon'),
+          (-1)::bigint, 'anon holds no grant at all on email_templates — 0038 revoked it');
+
+-- --------------------------------------------------------------------------
+-- 3. A signed-in user who is not the owner is no better off.
+--
+-- This is what an anon-only suite misses. `is_owner()` is membership of
+-- `staff`, not merely holding a session. Anyone can obtain a valid JWT; it must
+-- buy them nothing.
+-- --------------------------------------------------------------------------
+
+select is((select visible from rls_probe where tbl='appointments' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read appointments');
+select is((select visible from rls_probe where tbl='customers' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read customers');
+select is((select visible from rls_probe where tbl='email_messages' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read email_messages');
+select is((select visible from rls_probe where tbl='customer_access_tokens' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read customer_access_tokens');
+select is((select visible from rls_probe where tbl='payments' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read payments');
+select is((select visible from rls_probe where tbl='subscribers' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read subscribers');
+select is((select visible from rls_probe where tbl='staff' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read staff');
+select is((select visible from rls_probe where tbl='calendar_feeds' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read calendar_feeds');
+select is((select visible from rls_probe where tbl='ai_recommendations' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read ai_recommendations');
+select is((select visible from rls_probe where tbl='availability_requests' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read availability_requests');
+
+-- --------------------------------------------------------------------------
+-- 4. The owner can. Without this the suite would pass just as happily if RLS
+--    denied everyone and the dashboard were entirely broken.
+-- --------------------------------------------------------------------------
+
+select cmp_ok((select visible from rls_probe where tbl='appointments' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read appointments');
+select cmp_ok((select visible from rls_probe where tbl='customers' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read customers');
+select cmp_ok((select visible from rls_probe where tbl='email_messages' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read email_messages');
+select cmp_ok((select visible from rls_probe where tbl='payments' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read payments');
+select cmp_ok((select visible from rls_probe where tbl='subscribers' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read subscribers');
+select cmp_ok((select visible from rls_probe where tbl='customer_access_tokens' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read customer_access_tokens');
+select cmp_ok((select visible from rls_probe where tbl='calendar_feeds' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read calendar_feeds');
+select cmp_ok((select visible from rls_probe where tbl='availability_requests' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read availability_requests');
+
+-- --------------------------------------------------------------------------
+-- 5. The public surface stays public.
+--
+-- Booking is anonymous by design (docs/PRD.md §4), so over-locking is a real
+-- failure mode too. A policy tightened here takes the website down rather than
+-- leaking anything, and would otherwise be caught only by a person loading the
+-- site and noticing there are no times.
+-- --------------------------------------------------------------------------
+
+select cmp_ok((select visible from rls_probe where tbl='availability_slots' and as_role='anon'),
+              '>', 0::bigint, 'anon can read availability_slots — the booking page needs them');
+select cmp_ok((select visible from rls_probe where tbl='weekly_template' and as_role='anon'),
+              '>', 0::bigint, 'anon can read weekly_template — opening hours are public');
+select cmp_ok((select visible from rls_probe where tbl='service_menu' and as_role='anon'),
+              '>', 0::bigint, 'anon can read service_menu — the website lists it');
+select cmp_ok((select visible from rls_probe where tbl='service_categories' and as_role='anon'),
+              '>', 0::bigint, 'anon can read service_categories');
+select cmp_ok((select visible from rls_probe where tbl='booking_settings' and as_role='anon'),
+              '>', 0::bigint, 'anon can read booking_settings — the booking rules are public');
+select cmp_ok((select visible from rls_probe where tbl='google_reviews' and as_role='anon'),
+              '>', 0::bigint, 'anon can read google_reviews — they render on the marketing site');
+
+-- --------------------------------------------------------------------------
+-- 6. Writes. Reading is only half of it: the public booking path is a
+--    SECURITY DEFINER function precisely so the table itself stays closed
+--    (docs/RULES.md §9.3).
+--
+-- The three verbs do NOT fail alike, and assuming they do is how a test ends up
+-- asserting nothing. INSERT raises 42501, because a row that no policy admits
+-- is a violation. UPDATE and DELETE raise nothing at all: USING simply matches
+-- no rows, so they report success having touched zero. Both are correct
+-- denials; only the first is an error. Verified against the live database on
+-- 2026-08-20 before this suite was written.
+-- --------------------------------------------------------------------------
+
+-- Every verb is attempted inside a DO block that switches role and resets it
+-- before anything is asserted. pgTAP keeps its plan counter in temp objects
+-- owned by the session role, so calling an assertion while `set local role
+-- anon` is active dies with "permission denied for table" — the outcome has to
+-- be captured first and asserted afterwards.
+--
+-- The UPDATE and DELETE are scoped to the fixture rows rather than written
+-- bare. An unfiltered `delete from public.appointments` is what
+-- `.claude/hookify.unfiltered-delete-live-data.local.md` exists to stop, after
+-- one destroyed a real customer's booking with no backup. Naming the target is
+-- also the better test: it proves anon cannot delete a specific row it knows
+-- the id of, which is the actual attack.
+
+create temp table write_probe (
+  op            text not null primary key,
+  sqlstate_out  text,
+  rows_affected int
+) on commit drop;
+
+do $writes$
+declare st text; updated int; removed int;
+begin
+  begin
+    set local role anon;
+    set local request.jwt.claims = '{"role":"anon"}';
+    insert into public.appointments (reference, customer_id, service_id,
+                                     starts_at, ends_at, status, price_pence)
+    values ('KB-RLST02', '33333333-3333-3333-3333-333333333333',
+            '55555555-5555-5555-5555-555555555555',
+            now() + interval '401 days',
+            now() + interval '401 days 1 hour', 'confirmed', 0);
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into write_probe values ('insert', st, null);
+
+  set local role anon;
+  set local request.jwt.claims = '{"role":"anon"}';
+
+  update public.customers
+     set full_name = 'renamed by an attacker'
+   where id = '33333333-3333-3333-3333-333333333333';
+  get diagnostics updated = ROW_COUNT;
+
+  delete from public.appointments where reference = 'KB-RLST01';
+  get diagnostics removed = ROW_COUNT;
+
+  reset role;
+
+  insert into write_probe values ('update', null, updated), ('delete', null, removed);
+end
+$writes$;
+
+select is((select sqlstate_out from write_probe where op = 'insert'),
+          '42501',
+          'anon cannot insert an appointment — book_appointment() is the only path');
+
+select is((select rows_affected from write_probe where op = 'update'),
+          0, 'an anon UPDATE on a known customer row matches nothing');
+select is((select full_name from public.customers
+            where id = '33333333-3333-3333-3333-333333333333'),
+          'Customer Under Test', 'and the customer name is untouched');
+
+select is((select rows_affected from write_probe where op = 'delete'),
+          0, 'an anon DELETE of a known appointment matches nothing');
+select is((select count(*) from public.appointments
+            where reference = 'KB-RLST01'),
+          1::bigint, 'and that appointment is still there');
+
+select * from finish();
+
+rollback;

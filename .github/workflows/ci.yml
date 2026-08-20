@@ -90,3 +90,35 @@ jobs:
           test -f dist/sw.js || { echo "::error::dist/sw.js missing — the PWA would work online and silently fail offline"; exit 1; }
           test -f dist/manifest.webmanifest || { echo "::error::dist/manifest.webmanifest missing — the app is not installable"; exit 1; }
           test -f .htaccess || { echo "::error::.htaccess missing — it is not in dist/ and must be copied to the docroot by hand; without it every deep link 404s while the home page works"; exit 1; }
+
+  # Until this job existed, CI ran no SQL at all: a migration that could not
+  # apply reached production undetected, which has happened once already (0002
+  # created the citext extension after the table that used it). This applies
+  # every migration from scratch, in order, and then asserts the security model
+  # they describe.
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # `db start` applies supabase/migrations in filename order against a fresh
+      # Postgres. If any migration cannot apply, this step fails and nothing
+      # below runs — which is the check that was missing.
+      - name: Start Postgres and apply every migration
+        run: supabase db start
+
+      # pgTAP suite in supabase/tests/. RLS is the entire security boundary
+      # between the shipped anon key and the salon's customer data, and nothing
+      # asserted it before this.
+      - name: RLS tests
+        run: supabase test db
+
+      - name: Stop
+        if: always()
+        run: supabase stop --no-backup

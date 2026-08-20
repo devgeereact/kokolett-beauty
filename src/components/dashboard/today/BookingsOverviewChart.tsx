@@ -63,6 +63,7 @@ export function BookingsOverviewChart({
 
   useEffect(() => {
     let cancelled = false;
+    setMetrics(null);
     const today = toSalonDate(new Date(), timezone);
     const anchor = period === 'current' ? today : addDays(today, -7);
     const dates = weekDates(anchor);

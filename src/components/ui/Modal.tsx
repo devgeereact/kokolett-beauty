@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { type JSX, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FOCUSABLE_SELECTOR, useFocusTrap } from '@/hooks/useFocusTrap';
 import { cn } from '@/lib/utils';

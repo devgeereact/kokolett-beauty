@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';

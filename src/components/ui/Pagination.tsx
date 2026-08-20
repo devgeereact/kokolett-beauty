@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { cn } from '@/lib/utils';
 
 /** First, last, current ± 1, with `null` standing in for an ellipsis gap. */

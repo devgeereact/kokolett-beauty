@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Card } from '@/components/ui/Card';
 import { formatDateLong, formatTime } from '@/lib/format';
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { listAppointments } from '@/services/appointmentService';

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type JSX, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, PoundSterling, TrendingUp, UserPlus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';

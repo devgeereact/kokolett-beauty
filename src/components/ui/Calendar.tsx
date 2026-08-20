@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { DayPicker, type DayPickerProps } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 

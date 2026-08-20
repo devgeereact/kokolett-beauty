@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

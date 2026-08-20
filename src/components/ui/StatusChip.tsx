@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { cn } from '@/lib/utils';
 import { STATUS_DOTS, STATUS_LABELS, statusPillClass } from '@/lib/status';
 import type { AppointmentStatus } from '@/types';

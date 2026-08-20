@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { AppointmentDetailModal } from '@/components/dashboard/AppointmentDetailModal';
 import { MoveAppointmentPanel } from '@/components/dashboard/calendar/MoveAppointmentPanel';
 import { Modal } from '@/components/ui/Modal';

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Calendar as CalendarIcon, Clock, Hash, Mail, Phone, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 /**
  * The live "now" marker. Reuses the `destructive` token (the closest
  * existing red in the palette, docs/DESIGN.md §3) rather than adding a new

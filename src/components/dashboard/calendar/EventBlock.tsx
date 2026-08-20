@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { type JSX, memo } from 'react';
 import { STATUS_DOTS } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { AppointmentStatus } from '@/types';

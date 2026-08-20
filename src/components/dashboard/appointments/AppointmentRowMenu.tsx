@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';

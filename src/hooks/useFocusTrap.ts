@@ -23,7 +23,7 @@ const FOCUSABLE_SELECTOR =
  */
 export function useFocusTrap(
   open: boolean,
-  panelRef: RefObject<HTMLElement>,
+  panelRef: RefObject<HTMLElement | null>,
   onEscape: () => void,
 ): void {
   useEffect(() => {

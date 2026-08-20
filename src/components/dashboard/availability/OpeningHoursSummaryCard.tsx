@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Clock } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { DAYS_OF_WEEK } from '@/lib/format';

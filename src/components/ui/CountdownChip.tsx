@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { formatCountdown } from '@/lib/format';
 import { TONE_BG, TONE_TEXT, type Tone } from '@/lib/tone';
 import { cn } from '@/lib/utils';

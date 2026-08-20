@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { type JSX, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Reviews } from '@/components/public/Reviews';

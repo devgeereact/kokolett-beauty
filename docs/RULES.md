@@ -30,6 +30,13 @@ do not merge.
 - Follow the Rules of Hooks (lint-enforced). Keep `useEffect` deps honest.
 - One component per file; name the file after the component (`PascalCase.tsx`).
 - Derive state; don't duplicate it. Lift state only as far as needed.
+- **`JSX` must be imported.** React 19's `@types/react` removed the global `JSX`
+  namespace, so a component returning `: JSX.Element` needs
+  `import type { JSX } from 'react'` (or `type JSX` added to an existing `react`
+  import). It is not ambient any more; `tsc` fails with `TS2503` without it.
+- **`useRef<T>(null)` is `RefObject<T | null>`**, also since React 19. A prop or
+  hook parameter that receives one must be typed `RefObject<T | null>` — widen the
+  signature rather than casting at each call site.
 
 ## 4. Styling
 
@@ -63,12 +70,17 @@ do not merge.
 - Every PR must pass `typecheck` + `lint` (zero warnings) before review.
 - **CodeRabbit only reviews pull requests** — use branch → PR → merge. Work pushed
   straight to the default branch is never reviewed.
-- **CodeRabbit review is manual on this repo, and does not start on its own.** The
-  repository is public, and CodeRabbit does not auto-review open-source repos: it
-  posts `Review skipped: manual review required for this OSS repository` and passes
-  the check, so a PR can look fully green having never been reviewed. Trigger it by
-  commenting `@coderabbitai review` on the PR (`@coderabbitai full review` to re-run
-  from scratch). Do not read a green CodeRabbit check as a review.
+- **CodeRabbit review is manual on this repo, and does not start on its own.**
+  CodeRabbit's own explanation: _"This repository does not receive automatic reviews
+  because it has fewer than 10 stars."_ It posts `Review skipped: manual review
+required for this OSS repository` and **passes** the check, so a PR can look fully
+  green having never been reviewed. Do not read a green CodeRabbit check as a review.
+- **Triggering it, and its two limits.** Comment `@coderabbitai review` on the PR, or
+  tick the "🔍 Trigger review" checkbox in CodeRabbit's own comment. Two things stop
+  it: it is **incremental** and will not re-review a commit it has already seen, so
+  push a fix before asking again; and the account is **rate limited**, so a burst of
+  reviews in one session leaves later PRs unreviewed. When that happens the check
+  still reads green — check the comment, not the tick.
 - **CodeRabbit** checks: no unused vars/imports, correct RLS scoping, no leaked
   credentials or unsanitized keys, adherence to this file.
 

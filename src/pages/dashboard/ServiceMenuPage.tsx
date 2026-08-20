@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { type JSX, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import {

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import type { DayOfWeekTrend } from '@/lib/insights';
 
 /** Monday-first, matching the app's own weekday convention everywhere else. */

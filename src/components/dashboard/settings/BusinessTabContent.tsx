@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type JSX, useCallback, useEffect, useState } from 'react';
 import { CalendarSubscription } from '@/components/dashboard/CalendarSubscription';
 import { ShareLink } from '@/components/dashboard/ShareLink';
 import { Button } from '@/components/ui/Button';

@@ -51,7 +51,8 @@ export default defineConfig({
       manifest: {
         name: 'Kokolett Beauty UK',
         short_name: 'Kokolett',
-        description: 'Salon booking and operations for Kokolett Beauty UK — passwordless for customers, one dashboard for the owner.',
+        description:
+          'Salon booking and operations for Kokolett Beauty UK — passwordless for customers, one dashboard for the owner.',
         theme_color: '#e05d38',
         background_color: '#e8ebed',
         display: 'standalone',
@@ -158,17 +159,38 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       output: {
-        // Split vendors so the app shell stays tiny and cache-stable.
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js'],
-          // `framer-motion` used to have a chunk here. Nothing in src/ ever
-          // imported it, so rollup emitted a 1,053-byte empty file and the
-          // package sat in the dependency tree collecting Dependabot PRs.
-          // `date-fns` is not listed either: no app code imports it directly,
-          // it arrives transitively through react-day-picker, so naming it
-          // here only split a dependency of the chunk it already belongs to.
-          calendar: ['react-day-picker'],
+        /**
+         * Split vendors so the app shell stays tiny and cache-stable.
+         *
+         * This is the function form because Rollup 5 (Vite 8) removed the
+         * object form outright — `manualChunks: { name: [...] }` now fails
+         * typecheck with TS2769 and does nothing at runtime.
+         *
+         * The object form used to pull each named package's private
+         * dependency subtree along with it. A function sees one module at a
+         * time and has no such notion, so anything that must travel with a
+         * chunk has to be named: `scheduler` is react-dom's own dependency
+         * and belongs in `react-vendor`, not in the app bundle.
+         *
+         * `framer-motion` used to have a chunk here. Nothing in src/ ever
+         * imported it, so rollup emitted a 1,053-byte empty file and the
+         * package sat in the dependency tree collecting Dependabot PRs.
+         * `date-fns` is not listed either: no app code imports it directly,
+         * it arrives transitively through react-day-picker, so naming it
+         * here only split a dependency of the chunk it already belongs to.
+         */
+        manualChunks(id: string): string | undefined {
+          if (!id.includes('node_modules')) return undefined;
+          if (
+            /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(
+              id,
+            )
+          ) {
+            return 'react-vendor';
+          }
+          if (id.includes('@supabase')) return 'supabase';
+          if (id.includes('react-day-picker')) return 'calendar';
+          return undefined;
         },
       },
     },

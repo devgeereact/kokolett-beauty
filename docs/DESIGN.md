@@ -12,6 +12,16 @@ utilities and nothing else. **A component never contains a raw colour, radius, s
 z-index value** — and that is enforced by the config rather than requested by this document
 (§11).
 
+**Build wiring, since Tailwind 4.** `src/index.css` starts with `@import 'tailwindcss'`
+rather than the old `@tailwind base/components/utilities` trio, and pulls the config in
+explicitly with `@config '../tailwind.config.ts'`. Tailwind 4 is CSS-first by default, but
+this design system is a closed set that this document describes section by section, so the
+config file stays the single source of truth instead of being forked into a `@theme` block.
+`darkMode: 'class'` no longer comes from the config either — the `.dark` variant is declared
+in `src/index.css` with `@custom-variant`. PostCSS loads `@tailwindcss/postcss`; plain
+`tailwindcss` as a PostCSS plugin now throws. Autoprefixer is gone, its job absorbed by
+Tailwind's own Lightning CSS pass.
+
 Sections marked **RULE** are normative and blocking at review. Everything else is rationale.
 
 §1–§13 are the visual token system. §15 is app-shell mechanics that are not visual tokens

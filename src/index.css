@@ -2,9 +2,16 @@
    @import cannot start until this file has downloaded and parsed, which
    put the webfonts at the end of a serial request chain on every cold
    load. See the comment beside the <link> tags in index.html. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Tailwind 4 is CSS-first, but the design system is a 332-line closed set
+   (theme-level colours, screens, fontSize, radius, shadow, z-index) that
+   docs/DESIGN.md documents section by section. `@config` keeps that file as
+   the single source of truth rather than forking it into two places. */
+@config '../tailwind.config.ts';
+
+/* v3 read `darkMode: 'class'` from the config; v4 needs the variant declared here. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * Kokolett Beauty UK — token layer.

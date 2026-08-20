@@ -482,12 +482,6 @@ mail previews.
 
 Not blockers for this week, but do not let them fade from view.
 
-- **CI runs no SQL.** No `db push`, no lint, no pgTAP. A migration that cannot apply
-  still reaches production undetected, which has happened once already (`0002` created
-  the `citext` extension after the table that used it).
-- **No RLS tests.** Nothing asserts that anon cannot read `appointments` or
-  `customers`, or that a non-owner authenticated session is denied. The entire security
-  model is unverified by any automated check. This is the highest-value test to add.
 - **CSP is still `Report-Only`.** It has never run against real traffic. Its
   `connect-src` no longer needs `inn.gs`; trim that, watch it for a week, then promote
   the header to enforcing.
@@ -549,9 +543,7 @@ them for anything beyond "probably still true."
   Settings → Business when you want reviews on the site.
 - **`GOOGLE_PLACES_API_KEY`** is the one Edge Function secret not set, for the same
   reason.
-- **No RLS tests.** Nothing asserts that anon cannot read `appointments` or
-  `customers`. The security model is still unverified by any automated check, and this
-  is the highest-value thing to add next.
-- **CI runs no SQL.** The three migrations here were validated by hand in a rolled-back
-  transaction. That worked, but it is a person remembering to do it.
+- ~~**No RLS tests.**~~ ~~**CI runs no SQL.**~~ Both closed 2026-08-20:
+  `supabase/tests/rls_test.sql` is a 45-assertion pgTAP suite, and CI's `database` job
+  applies every migration to a fresh Postgres and runs it on each push.
 - **CSP is still `Report-Only`** and its `connect-src` no longer needs `inn.gs`.

@@ -1,0 +1,19 @@
+{
+  "//": [
+    "Scopes Deno to this directory. Without it, Deno walks up, finds the app's",
+    "package.json and treats the whole frontend as an npm project — so",
+    "`deno check` on a function that imports only deno.land, jsr: and relative",
+    "paths would download chai, tapable, lightningcss and the rest of the Vite",
+    "tree before checking anything.",
+    "",
+    "That is not merely slow. It made CI fail on 2026-08-20 for a reason with",
+    "nothing to do with this code: Deno refuses npm packages published in the",
+    "last 24 hours (the minimum-dependency-age supply-chain guard), and a",
+    "@rolldown binary in Vite 8's tree had just been released. Every npm release",
+    "anywhere in the frontend tree was a coin flip on the Edge Function step.",
+    "",
+    "These functions have no npm dependencies. This file keeps it that way."
+  ],
+  "lock": false,
+  "nodeModulesDir": "none"
+}

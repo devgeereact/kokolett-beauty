@@ -13,6 +13,12 @@ do not merge.
   `deno check` (CI does this).
 - **Respect the folder map** in `docs/ARCHITECTURE.md`. No new top-level folders
   without updating that doc first.
+- **A new table ships with RLS on, and with a test.** `supabase/tests/rls_test.sql`
+  asserts that every table in `public` has row-level security enabled, so a table added
+  without it fails CI. Add the table to that file's probe list too: the blanket check
+  catches a missing `enable row level security`, but only a named assertion catches a
+  policy that is present and wrong. Run it with `supabase test db` (needs Docker); CI's
+  `database` job runs it against a fresh Postgres on every push.
 - **No import cycles.** Direction is `pages → services → lib`; components use
   `hooks`/`context`. `lib` imports nothing from `pages`/`components`.
 

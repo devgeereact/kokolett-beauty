@@ -41,12 +41,6 @@ that was never built; this list used to repeat it.
       else the owner had to key in is done: address, phone, Instagram, review link,
       402 published slots, 49 menu items, and the
       `HairSalon` structured data in `index.html` (`docs/GO-LIVE.md` §4).
-- [ ] **CI runs no SQL.** No `supabase db push`, no lint, no migration-apply check, no
-      pgTAP — a migration that cannot apply reaches production undetected, which has
-      happened once already (0002 created `citext` after the table that used it).
-- [ ] **No RLS tests.** Nothing asserts that anon cannot read `appointments` or
-      `customers`, or that a non-owner authenticated session is denied. The whole
-      security model is unverified by any automated check. Highest-value test to add.
 
 ### Explicitly not doing
 

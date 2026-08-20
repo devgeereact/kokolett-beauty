@@ -58,15 +58,27 @@ function EventBlockImpl({
         disabled={!onClick}
         style={style}
         className={cn(
-          'absolute inset-x-1 flex items-center justify-center rounded-md border-2 border-dashed',
-          'border-border text-xs text-muted-foreground',
+          // Quiet by default — a stack of bold dashed boxes down every open
+          // hour reads as clutter next to the calendar's other clean
+          // surfaces. Only the row's own hour gridline marks the slot at
+          // rest; the click affordance itself shows on hover/focus rather
+          // than being permanently boxed.
+          'group absolute inset-x-1 flex items-center justify-center rounded-md text-2xs',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           onClick
-            ? 'hover:border-primary hover:text-primary'
-            : 'cursor-not-allowed opacity-50',
+            ? 'cursor-pointer hover:bg-accent'
+            : 'cursor-not-allowed',
         )}
       >
-        {label}
+        <span
+          className={cn(
+            'truncate opacity-0 transition-opacity duration-150',
+            'group-hover:opacity-100 group-focus-visible:opacity-100',
+            onClick ? 'text-primary' : 'text-muted-foreground',
+          )}
+        >
+          {label}
+        </span>
       </button>
     );
   }

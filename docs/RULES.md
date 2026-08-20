@@ -63,6 +63,12 @@ do not merge.
 - Every PR must pass `typecheck` + `lint` (zero warnings) before review.
 - **CodeRabbit only reviews pull requests** — use branch → PR → merge. Work pushed
   straight to the default branch is never reviewed.
+- **CodeRabbit review is manual on this repo, and does not start on its own.** The
+  repository is public, and CodeRabbit does not auto-review open-source repos: it
+  posts `Review skipped: manual review required for this OSS repository` and passes
+  the check, so a PR can look fully green having never been reviewed. Trigger it by
+  commenting `@coderabbitai review` on the PR (`@coderabbitai full review` to re-run
+  from scratch). Do not read a green CodeRabbit check as a review.
 - **CodeRabbit** checks: no unused vars/imports, correct RLS scoping, no leaked
   credentials or unsanitized keys, adherence to this file.
 

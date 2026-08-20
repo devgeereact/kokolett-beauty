@@ -54,9 +54,19 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 md:gap-4 md:px-6 md:py-4">
           <Link
             to={routes.public.home}
-            className="whitespace-nowrap font-serif text-base font-semibold tracking-tight text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-lg"
+            /* The words live inside ONE span, which is the flex box's only item.
+               Applying `inline-flex` straight to the link makes "Kokolett " and the
+               coloured span two items and drops the whitespace between them — the
+               wordmark rendered "KokolettBeauty", and a CSS `gap` only papers over
+               it visually: `textContent` stays unspaced, so screen readers and
+               copy-paste get one word. Nesting keeps normal inline flow, and the
+               real space with it, while the flex box centres it against
+               `min-h-touch`. */
+            className="inline-flex min-h-touch items-center whitespace-nowrap font-serif text-base font-semibold tracking-tight text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:text-lg"
           >
-            Kokolett <span className="text-primary">Beauty</span>
+            <span>
+              Kokolett <span className="text-primary">Beauty</span>
+            </span>
           </Link>
 
           <nav aria-label="Main" className="flex items-center gap-0.5 md:gap-2">
@@ -67,7 +77,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 end={link.to === routes.public.home}
                 className={({ isActive }) =>
                   cn(
-                    'whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium md:px-3',
+                    'min-h-touch items-center whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium md:px-3',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     link.phone ? 'inline-flex' : 'hidden md:inline-flex',
                     isActive
@@ -81,7 +91,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             ))}
             <Link
               to={routes.public.book}
-              className="ml-1 inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-10"
+              className="ml-1 inline-flex min-h-touch items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Book
             </Link>

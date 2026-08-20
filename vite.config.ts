@@ -30,7 +30,7 @@ export default defineConfig({
     },
   },
 
-  // Port block 08 is allocated to kokolett-beauty (see ~/CLAUDE.md §4).
+  // Port block 08 is allocated to kokolett-beauty (see ~/.claude/CLAUDE.md, "Dev-server ports").
   // strictPort makes a collision fail loudly instead of drifting to another port,
   // which would silently fall outside the Supabase redirect allow-list.
   server: { port: 5082, strictPort: true },

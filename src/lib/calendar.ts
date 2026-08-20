@@ -101,23 +101,30 @@ export interface HourRange {
  * screen at once, however many hours that is) — so rows are sized by
  * percentage of this fixed container height, not a per-hour pixel constant.
  *
- * THAT RULE AND THE 44px TOUCH FLOOR CANNOT BOTH HOLD, and this is the one
- * that wins. An hour row is grid height / hour count, so on an iPad in
- * landscape the salon's 18-hour span gets 510px and each row is 28px — the
- * open-slot blocks measure 37x37. Reaching 44 a row would need 792px of grid,
- * which a 768px-tall viewport does not have once the header, toolbar and
- * legend are taken. It is arithmetic, not a value in this file: no breakpoint
- * or padding change reaches it, and the only thing that would is internal
- * scrolling, which is exactly what the mockup above rules out.
+ * THAT RULE AND THE 44px TOUCH FLOOR PULL AGAINST EACH OTHER, and this one
+ * wins. An hour row is grid height / hour count. The axis is fixed at
+ * 08:00-20:00 (`openingHoursRange`), so twelve rows share
+ * `calc(100vh-16rem)`: 512px on an iPad in landscape, 42.7px a row, and the
+ * open-slot blocks come out 37x37 because a block is `heightPercent` of the
+ * grid *body*, a few px under the row it sits in.
  *
- * Collapsing the right rail below `lg` was considered and rejected. It widens
- * the columns but does nothing to row height, which is the binding dimension,
- * and it would cost the details panel on every 1280px laptop — the system has
- * three breakpoints on purpose (md/lg/wide, DESIGN.md §5.3) and there is no
- * 1100px step to hide behind.
+ * Closing that is not the small change it looks like, and both dimensions have
+ * to move at once:
  *
- * The blocks clear WCAG 2.5.8's actual 24x24 requirement with room to spare.
- * See docs/DESIGN.md §10 for why the dashboard is not held to 44 at all.
+ *   HEIGHT. A block is 60 minutes = 8.33% of the body, so 16px of extra grid
+ *   buys 1.3px of block. Measured: 15rem -> 38px, 14rem -> 40, 13rem -> 41,
+ *   12rem -> 42. Reaching 44 needs roughly 72px more grid than there is.
+ *
+ *   WIDTH. 37px is eight columns inside ~400px, which is what is left at `lg`
+ *   once the 320px details rail appears. Grid height does nothing for it.
+ *   Only collapsing the rail would, and there is no breakpoint between `lg`
+ *   (1024) and `wide` (1440) to hang that on — the system has three on
+ *   purpose (DESIGN.md §5.3), and taking the rail off every 1280px laptop to
+ *   win 7px on a tablet is a bad trade.
+ *
+ * So it is a redesign of the calendar's geometry, not a value in this file.
+ * 37x37 clears WCAG 2.5.8's actual 24x24 requirement; see docs/DESIGN.md §10
+ * for why the dashboard is not held to 44 at all.
  */
 export const CALENDAR_GRID_HEIGHT_CLASS = 'h-[calc(100vh-16rem)] min-h-[480px]';
 

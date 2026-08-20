@@ -92,6 +92,8 @@ export function TemplatesPage(): JSX.Element {
   useEffect(() => {
     if (!exampleId) {
       setPreview(null);
+      setPreviewLoading(false);
+      setPreviewError(null);
       return;
     }
     let cancelled = false;

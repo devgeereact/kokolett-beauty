@@ -13,7 +13,6 @@ import { DayOfWeekChart } from '@/components/dashboard/insights/DayOfWeekChart';
 import { HourOfDayChart } from '@/components/dashboard/insights/HourOfDayChart';
 import { StatTrendTile } from '@/components/dashboard/reports/StatTrendTile';
 import { TrendLineChart } from '@/components/dashboard/reports/TrendLineChart';
-import { StatusDonutChart } from '@/components/dashboard/reports/StatusDonutChart';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -210,43 +209,6 @@ export function ReportsPage(): JSX.Element {
               colorVar="var(--chart-3)"
               formatValue={(n) => `£${n}`}
             />
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            <StatusDonutChart data={overview.byStatus} />
-
-            <Card className="p-5 lg:col-span-2">
-              <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-                Appointments by service
-              </h2>
-              {overview.byService.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No appointments in this period.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {overview.byService.map((s) => {
-                    const max = overview.byService[0]!.count;
-                    return (
-                      <div key={s.name} className="flex items-center gap-3">
-                        <span className="w-32 shrink-0 truncate text-sm text-foreground">
-                          {s.name}
-                        </span>
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className="h-full rounded-full bg-primary"
-                            style={{ width: `${Math.max(4, (s.count / max) * 100)}%` }}
-                          />
-                        </div>
-                        <span className="w-10 shrink-0 text-right text-sm text-muted-foreground">
-                          {s.count}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">

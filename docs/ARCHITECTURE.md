@@ -62,7 +62,7 @@ src/
 │   ├── reportsService.ts            # reporting queries
 │   ├── assistantService.ts          # data feed for the client-side AI insights module
 │   ├── dashboardService.ts          # Today-page summary stats
-│   ├── settingsService.ts           # salon profile + policy settings
+│   ├── emailService.ts              # outbox reads, template editing, one-off owner sends
 │   ├── profileService.ts            # owner account profile
 │   ├── reviewService.ts             # Google review sync
 │   ├── subscriberService.ts         # mailing-list subscribe

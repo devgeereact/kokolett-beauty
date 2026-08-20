@@ -12,7 +12,7 @@ was modified; `docs/plan.md` and every other tracked file are untouched.
 
 `docs/plan.md` is well-structured as a document, but it is reviewing a codebase that
 no longer exists. The plan was committed at **2026-08-13 16:38:27**. Two other docs —
-`docs/BASELINE-AUDIT.md` and `docs/CAPABILITY-MATRIX.md` — were committed **almost two
+`docs/history/2026-08-13-baseline-audit.md` and `docs/history/2026-08-13-capability-matrix.md` — were committed **almost two
 hours earlier that same day** (14:39:57), and between the commit those audits were
 graded against (`acc7117`) and current `HEAD` (`4727434`), **29 more commits touched
 `src/`**, including the entire 7-nav restructure, the Inbox merge, and the Cmd+K quick
@@ -101,20 +101,20 @@ right move.
 
 ## What already exists (required section)
 
-| Plan item                                                                | Status in current `HEAD`                                      | Evidence                                                                                                                                                                                                                                                    |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 0 step 1 (baseline vs docs/routes)                                 | **Done**                                                      | `docs/BASELINE-AUDIT.md`, commit `c00a9fb`/`f382d1b`/`b01c8ad`, dated 2026-08-13 14:39:57 — before `plan.md`'s own commit                                                                                                                                   |
-| Phase 0 step 2 (capability matrix)                                       | **Done**                                                      | `docs/CAPABILITY-MATRIX.md`, same commit `b01c8ad`                                                                                                                                                                                                          |
-| Phase 1 step 3 (7-nav model)                                             | **Done**                                                      | `src/components/dashboard/DashboardLayout.tsx:57-73`, comment cites "docs/plan.md Phase 1 step 3" directly                                                                                                                                                  |
-| Phase 1 step 5 (Inbox merges Approvals+Requests)                         | **Done**                                                      | `src/App.tsx:76-84` (redirects `/dashboard/approvals`→`inbox?tab=approvals`, `/dashboard/requests`→`inbox?tab=requests`), `src/pages/dashboard/InboxPage.tsx` (392 lines) + `InboxPage.test.tsx` (220 lines)                                                |
-| Phase 1 step 6 (WeeklyDefault/AppointmentType under Calendar & Capacity) | **Done**                                                      | `src/components/dashboard/CalendarCapacityTabs.tsx` (shared sub-nav across `CalendarPage`/`AppointmentTypePage`/`WeeklyDefaultPage`), `DashboardLayout.tsx` `activePaths` grouping                                                                          |
-| Phase 1 step 7 (relabel/remove Reports & Assistant nav)                  | **Tried and reversed**                                        | `DashboardLayout.tsx:75-81`: _"Real, shipped pages that sit outside the plan's 7-nav model — kept reachable, visually secondary rather than hidden or relabelled… neither is a stub or redirect."_                                                          |
-| Phase 2 step 9 (cross-nav quick actions)                                 | **Done**                                                      | `src/components/dashboard/QuickActionLauncher.tsx` + `QuickActionLauncher.test.tsx` (406 lines), Cmd+K, wired in `DashboardLayout.tsx` header                                                                                                               |
-| Phase 2 step 10 (kill blocking browser dialogs)                          | **Mostly done**                                               | `ConfirmDialog.tsx` + test exist; `TodayPage` has an undo banner per `CAPABILITY-MATRIX.md` §1. Not independently re-verified for zero remaining `window.confirm`/`alert` — flagged as a doubt, not a finding.                                              |
-| Phase 3 step 11 (Reports module)                                         | **Done, zero new RPCs**                                       | `src/pages/dashboard/ReportsPage.tsx` (132 lines) + `src/services/reportsService.ts` — pure aggregation over `listAppointments`/`listWeeklyTemplate`/`listCustomers` (existing reads) via `src/lib/insights.ts`                                             |
-| Phase 3 step 12 (AI Assistant advisory queue)                            | **Substantially done, different mechanism than plan implies** | `src/pages/dashboard/AssistantPage.tsx` (81 lines, 8 real panel modules) + `src/lib/insights.ts` — client-side, deterministic, zero Supabase writes. See Architecture Review §1 for the open ambiguity this leaves.                                         |
-| Phase 3 step 13 (Email Ops)                                              | **Backend exists, UI doesn't**                                | `supabase/migrations/0005`/`0006` (outbox), `0014` (drain-on-schedule cron), `0016` (retire unsent mail) — the data model and the drain job are live; there is no owner-facing page over it                                                                 |
-| Phase 4 step 14 (reschedule semantics bug)                               | **Real, still open**                                          | `TodayPage.tsx`'s inline reschedule calls `createAppointmentAsOwner` (duplicate-creation) instead of `rescheduleAppointmentAsOwner` (atomic retire-and-recreate) — confirmed independently by `docs/CAPABILITY-MATRIX.md` §1 and §3's cross-cutting finding |
+| Plan item                                                                | Status in current `HEAD`                                      | Evidence                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phase 0 step 1 (baseline vs docs/routes)                                 | **Done**                                                      | `docs/history/2026-08-13-baseline-audit.md`, commit `c00a9fb`/`f382d1b`/`b01c8ad`, dated 2026-08-13 14:39:57 — before `plan.md`'s own commit                                                                                                                                   |
+| Phase 0 step 2 (capability matrix)                                       | **Done**                                                      | `docs/history/2026-08-13-capability-matrix.md`, same commit `b01c8ad`                                                                                                                                                                                                          |
+| Phase 1 step 3 (7-nav model)                                             | **Done**                                                      | `src/components/dashboard/DashboardLayout.tsx:57-73`, comment cites "docs/plan.md Phase 1 step 3" directly                                                                                                                                                                     |
+| Phase 1 step 5 (Inbox merges Approvals+Requests)                         | **Done**                                                      | `src/App.tsx:76-84` (redirects `/dashboard/approvals`→`inbox?tab=approvals`, `/dashboard/requests`→`inbox?tab=requests`), `src/pages/dashboard/InboxPage.tsx` (392 lines) + `InboxPage.test.tsx` (220 lines)                                                                   |
+| Phase 1 step 6 (WeeklyDefault/AppointmentType under Calendar & Capacity) | **Done**                                                      | `src/components/dashboard/CalendarCapacityTabs.tsx` (shared sub-nav across `CalendarPage`/`AppointmentTypePage`/`WeeklyDefaultPage`), `DashboardLayout.tsx` `activePaths` grouping                                                                                             |
+| Phase 1 step 7 (relabel/remove Reports & Assistant nav)                  | **Tried and reversed**                                        | `DashboardLayout.tsx:75-81`: _"Real, shipped pages that sit outside the plan's 7-nav model — kept reachable, visually secondary rather than hidden or relabelled… neither is a stub or redirect."_                                                                             |
+| Phase 2 step 9 (cross-nav quick actions)                                 | **Done**                                                      | `src/components/dashboard/QuickActionLauncher.tsx` + `QuickActionLauncher.test.tsx` (406 lines), Cmd+K, wired in `DashboardLayout.tsx` header                                                                                                                                  |
+| Phase 2 step 10 (kill blocking browser dialogs)                          | **Mostly done**                                               | `ConfirmDialog.tsx` + test exist; `TodayPage` has an undo banner per `CAPABILITY-MATRIX.md` §1. Not independently re-verified for zero remaining `window.confirm`/`alert` — flagged as a doubt, not a finding.                                                                 |
+| Phase 3 step 11 (Reports module)                                         | **Done, zero new RPCs**                                       | `src/pages/dashboard/ReportsPage.tsx` (132 lines) + `src/services/reportsService.ts` — pure aggregation over `listAppointments`/`listWeeklyTemplate`/`listCustomers` (existing reads) via `src/lib/insights.ts`                                                                |
+| Phase 3 step 12 (AI Assistant advisory queue)                            | **Substantially done, different mechanism than plan implies** | `src/pages/dashboard/AssistantPage.tsx` (81 lines, 8 real panel modules) + `src/lib/insights.ts` — client-side, deterministic, zero Supabase writes. See Architecture Review §1 for the open ambiguity this leaves.                                                            |
+| Phase 3 step 13 (Email Ops)                                              | **Backend exists, UI doesn't**                                | `supabase/migrations/0005`/`0006` (outbox), `0014` (drain-on-schedule cron), `0016` (retire unsent mail) — the data model and the drain job are live; there is no owner-facing page over it                                                                                    |
+| Phase 4 step 14 (reschedule semantics bug)                               | **Real, still open**                                          | `TodayPage.tsx`'s inline reschedule calls `createAppointmentAsOwner` (duplicate-creation) instead of `rescheduleAppointmentAsOwner` (atomic retire-and-recreate) — confirmed independently by `docs/history/2026-08-13-capability-matrix.md` §1 and §3's cross-cutting finding |
 
 ---
 
@@ -129,7 +129,7 @@ eng review of a planning document should resolve:
 - **Reconciling `feat/today-payment-log`'s migration `0027` into `docs/plan.md`'s file
   list.** Flagged as a real gap (see Architecture Review §4) but fixing it means
   editing the plan, which is out of scope for this review.
-- **Verifying `docs/BASELINE-AUDIT.md`'s "doubts / not fully verified" items**
+- **Verifying `docs/history/2026-08-13-baseline-audit.md`'s "doubts / not fully verified" items**
   (`pg_cron` job existence, `send-emails` Edge Function body, `useRealtimeAppointments`
   internals). Those audits already flagged them honestly as unverified; re-verifying
   them is Phase-0-refresh work, not eng-review work.
@@ -267,8 +267,8 @@ dependency annotations per step). Two document-level issues:
    components** in current `HEAD`; both were folded into `InboxPage.tsx`. A reader
    who opens those paths in this checkout gets a 404, not stale content — worse than
    drift, it's dead links.
-2. **DRY violation across planning docs:** `docs/BASELINE-AUDIT.md`,
-   `docs/CAPABILITY-MATRIX.md`, and `docs/plan.md` now each independently describe the
+2. **DRY violation across planning docs:** `docs/history/2026-08-13-baseline-audit.md`,
+   `docs/history/2026-08-13-capability-matrix.md`, and `docs/plan.md` now each independently describe the
    same route/nav state with different currency (audit docs are current as of commit
    `acc7117`/`f382d1b`, plan is current as of nothing — it doesn't cite a commit at
    all). None of the three docs cross-reference each other's findings in a way that
@@ -295,7 +295,7 @@ There is no pgTAP, no `supabase/tests`, no DB-level test harness of any kind.
 ```
 PLAN'S VERIFICATION ITEMS                              EXISTING TEST INFRASTRUCTURE
 [+] 1. IA verification (route-audit, dead links)        [GAP] No automated route-audit script;
-                                                                docs/BASELINE-AUDIT.md did this
+                                                                docs/history/2026-08-13-baseline-audit.md did this
                                                                 by hand, once, against a stale commit
 [+] 2. Workflow UAT scripts (4 owner journeys)           [GAP] No E2E/Playwright/Cypress config found
                                                                 anywhere in the repo — these would be

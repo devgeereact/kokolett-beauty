@@ -21,7 +21,7 @@ ones myself against primary sources:
   messages both sibling docs cite.
 - Read `src/components/dashboard/DashboardLayout.tsx` directly: its `entries[]` array is literally
   the plan's 7-nav model, with a code comment citing `docs/plan.md Phase 1 step 3` by name, and a
-  `secondaryEntries[]` array (Reports, AI Assistant) with a comment citing `docs/BASELINE-AUDIT.md`.
+  `secondaryEntries[]` array (Reports, AI Assistant) with a comment citing `docs/history/2026-08-13-baseline-audit.md`.
   Confirmed, not inferred.
 - Went one step further than either sibling doc: walked the **full chronological commit order**
   (not just `git log -30`) and found that **the single item both sibling reviews flagged as the
@@ -44,8 +44,8 @@ single riskiest bet in the 24 steps — not a repeat of the git-archaeology or d
 
 - **Branch:** `chore/gstack-init-and-plan-doc`, working tree clean, HEAD `4727434`.
 - **`docs/plan.md` was added in commit `175121c`** ("add 2026 owner-first upgrade plan and refresh
-  platform preview mockup") — chronologically _after_ `docs/BASELINE-AUDIT.md` (`c00a9fb`) and
-  `docs/CAPABILITY-MATRIX.md` (`902809f`/`a46fd03`), i.e. the plan was written with both audits
+  platform preview mockup") — chronologically _after_ `docs/history/2026-08-13-baseline-audit.md` (`c00a9fb`) and
+  `docs/history/2026-08-13-capability-matrix.md` (`902809f`/`a46fd03`), i.e. the plan was written with both audits
   already in hand.
 - **Since `docs/plan.md` was committed, at least 5 more Phase-4/5-relevant fixes have shipped**,
   none of them plan-gated: `d6d6781` (reschedule duplicate-booking bug — Phase 4 step 14's exact
@@ -85,7 +85,7 @@ process; it benefits from being cut down to what's still true and re-issued as a
    authenticates through Supabase Auth… and is the only account that can mutate salon data."
 3. **What happens if we do nothing further on this plan?** Almost nothing bad, in the short term —
    the app is live, the core booking loop works end to end (per `docs/PRD.md` §12's acceptance
-   criteria, cross-checked against `docs/BASELINE-AUDIT.md`/`docs/CAPABILITY-MATRIX.md`, both of
+   criteria, cross-checked against `docs/history/2026-08-13-baseline-audit.md`/`docs/history/2026-08-13-capability-matrix.md`, both of
    which found Day Operations and Customer Management essentially complete). The real cost of doing
    nothing is `docs/plan.md` itself continuing to actively mislead: a future session (human or agent)
    reading it cold will plan against Phase 3's "missing production modules" that have been built and
@@ -95,7 +95,7 @@ process; it benefits from being cut down to what's still true and re-issued as a
 
 | Plan phase/step                                            | Claimed state in `docs/plan.md`      | Actual state, verified this run                                                                                                                                                                                                                                                                                                |
 | ---------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Phase 0 (baseline, capability matrix)                      | To be produced                       | **Done.** `docs/BASELINE-AUDIT.md`, `docs/CAPABILITY-MATRIX.md` exist, file:line grounded.                                                                                                                                                                                                                                     |
+| Phase 0 (baseline, capability matrix)                      | To be produced                       | **Done.** `docs/history/2026-08-13-baseline-audit.md`, `docs/history/2026-08-13-capability-matrix.md` exist, file:line grounded.                                                                                                                                                                                               |
 | Phase 1 step 3 (7-nav model)                               | To be built                          | **Done.** `DashboardLayout.tsx:57-73`, code comment cites the plan step by name.                                                                                                                                                                                                                                               |
 | Phase 1 step 5 (Inbox consolidation)                       | To be built                          | **Done.** `InboxPage.tsx`, `?tab=` state, SLA urgency styling.                                                                                                                                                                                                                                                                 |
 | Phase 1 step 6 (orphaned pages first-class under Calendar) | To be built                          | **Done.** `CalendarCapacityTabs.tsx` — 3-route segmented tab strip.                                                                                                                                                                                                                                                            |
@@ -107,7 +107,7 @@ process; it benefits from being cut down to what's still true and re-issued as a
 | Phase 4 step 14 (reschedule semantics)                     | To be fixed                          | **Done, verified this run.** `d6d6781` + `a257b44`. `TodayPage.tsx:118-123` now calls `rescheduleAppointmentAsOwner`.                                                                                                                                                                                                          |
 | Phase 5 step 17 (token/ARIA drift)                         | To be resolved                       | **Partially done.** `AssistantPage.tsx`'s ARIA tabs fixed (`b150cf3`); `SettingsPage.tsx:164-173` still has the identical bug (verified live this run — `role="tablist"`/`role="tab"`/`aria-selected` present); `InboxPage.tsx`'s tab toggle still has **no** `aria-pressed`/`aria-selected` at all (verified — zero matches). |
 | Phase 5/PRD §4.2 (request filter/priority/history)         | Implied by Growth-nav's one sentence | **Not built.** Verified: zero `priority` or filter-control references in `RequestsPanel.tsx`.                                                                                                                                                                                                                                  |
-| Growth (offer/promotion mechanism)                         | Implied by Growth-nav's one sentence | **Not built**, per `docs/CAPABILITY-MATRIX.md`'s grep, not independently re-checked this run (low priority, see below).                                                                                                                                                                                                        |
+| Growth (offer/promotion mechanism)                         | Implied by Growth-nav's one sentence | **Not built**, per `docs/history/2026-08-13-capability-matrix.md`'s grep, not independently re-checked this run (low priority, see below).                                                                                                                                                                                     |
 
 **Reading this table as a founder:** roughly two-thirds of the plan's substantive content is already
 shipped. What remains open is small, concrete, and already diagnosed by someone (mostly this repo's
@@ -253,7 +253,7 @@ converging on two different backend behaviours — is now closed. No other edge 
 specified with comparable rigor; Growth-nav's "manage website-facing offer/requests/subscribers/
 reviews" is one sentence covering four distinct sub-features with zero edge-case treatment.
 
-**Section 5 — Code Quality.** DRY/dead-code findings already surfaced by `docs/CAPABILITY-MATRIX.md`
+**Section 5 — Code Quality.** DRY/dead-code findings already surfaced by `docs/history/2026-08-13-capability-matrix.md`
 (unused `settingsService.ts`/`app_settings`, `listAllRequests()` built but never called, four
 renamed-but-undocumented services) are cheap, isolated cleanups — not scope for a phase, just noise
 worth sweeping in whatever PR next touches those files.
@@ -495,7 +495,7 @@ review's own findings; nothing here warrants deferral or dismissal.
 
 - [ ] **T5 (P2, Hold pending T4)** — product — Scope Growth-nav's build-out (request filter/priority/
       history view, offer/promotion mechanism) only if T4 confirms revenue/volume is the constraint
-  - Surfaced by: Riskiest Assumption, `docs/CAPABILITY-MATRIX.md` §5
+  - Surfaced by: Riskiest Assumption, `docs/history/2026-08-13-capability-matrix.md` §5
   - Files: `src/components/dashboard/RequestsPanel.tsx`, `src/services/requestService.ts`, new Growth
     surfaces TBD
   - Verify: not applicable until scoped

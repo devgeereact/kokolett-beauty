@@ -1,11 +1,11 @@
 # Owner Console Rebuild — Tokens, Icons, App Icon & Navigation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Archived 2026-08-20 — shipped.** The grouped sidebar, token pass, icon set and app icon are live; see `src/components/dashboard/DashboardLayout.tsx` and `tailwind.config.ts`. Unticked `- [ ]` boxes are the plan as written, not outstanding work. Paths it cites under `docs/planning/` and `docs/history/2026-08-14-design-match-loop.md` moved into `docs/history/` on 2026-08-20.
 
 **Goal:** Reconcile `docs/design/design-token.png` against the shipped token set, add an
 icon system, replace the placeholder app icon/favicon with the real Kokolett mark from
 `docs/design/logo.png`, and rebuild `DashboardLayout`'s navigation onto the grouped IA
-supplied by the owner — the prep pass `docs/design/build-loop.md`'s per-screen rebuild
+supplied by the owner — the prep pass `docs/history/2026-08-14-design-match-loop.md`'s per-screen rebuild
 depends on.
 
 **Architecture:** Token/shadow fixes land in `tailwind.config.ts` (two concrete value
@@ -22,8 +22,8 @@ Vitest, `tsc --noEmit`.
 
 **Spec:** `docs/design/design-system.png`, `docs/design/design-token.png`,
 `docs/design/logo.png`; supersedes the "flat, ungrouped nav" verdict in
-`docs/planning/owner-console-nav-breakpoint-decision.md` (keeps that doc's `md:` tablet
-breakpoint fix); extends `docs/planning/owner-console-visual-refresh-brief.md` §5.1;
+`docs/history/2026-08-14-owner-console-nav-breakpoint-decision.md` (keeps that doc's `md:` tablet
+breakpoint fix); extends `docs/history/2026-08-14-owner-console-visual-refresh-brief.md` §5.1;
 user-supplied nav hierarchy (verbatim, in chat) is reproduced in full in §0 below.
 
 ## 0. New navigation hierarchy (source of truth for Task 6)
@@ -754,7 +754,7 @@ git commit -m "feat(dashboard): rebuild sidebar nav onto the grouped Owner Conso
 
 ## Handoff to the per-screen rebuild
 
-Once this plan ships, `docs/design/build-loop.md`'s screen list should be re-read against
+Once this plan ships, `docs/history/2026-08-14-design-match-loop.md`'s screen list should be re-read against
 the new routes this plan adds (`routes.owner.email`, `routes.owner.templates`) and the
 corrected `activePaths` — its row mapping for "Availability" and "Appointment" predates
 this plan's IA split and may need a one-line update, not a rewrite. That's the next

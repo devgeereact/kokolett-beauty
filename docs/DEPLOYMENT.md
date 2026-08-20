@@ -42,13 +42,25 @@ leaks.
       not quote a fixed price for a hair appointment, and `appointments.price_pence` is
       a placeholder that defaults to 0 (see `0027_payment_log.sql`). What was actually
       taken is logged per appointment in `payments`.
-- [ ] Edge Function secrets set (`supabase secrets set`): SMTP credentials,
-      `MAGIC_LINK_SECRET`, AI provider key, service-role key.
+- [ ] Edge Function secrets set (`supabase secrets set`): `SMTP_HOST`, `SMTP_PORT`,
+      `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`,
+      `EMAIL_CRON_SECRET`, `REVIEWS_CRON_SECRET`, `OPENROUTER_API_KEY`,
+      `GOOGLE_PLACES_API_KEY`, and optionally `SITE_URL` / `ALLOWED_ORIGIN` (both
+      default to `https://www.kokolettbeauty.com`). `SUPABASE_URL`,
+      `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are injected by the platform
+      — do **not** set them by hand. There is no `MAGIC_LINK_SECRET` and no separate
+      "AI provider key": a customer magic link is a random token whose SHA-256 hash is
+      stored in `customer_access_tokens` (nothing is signed, so there is no signing
+      secret to set), and the only model credential is `OPENROUTER_API_KEY`.
 - [ ] **Sending domain authenticated — SPF, DKIM and DMARC.** This is not optional.
       Every confirmation, reminder and magic link rides on email; unauthenticated mail
       lands in spam and the passwordless promise fails silently.
-- [ ] `pg_cron` jobs scheduled: `expire_pending_approvals()` hourly, the email drain
-      every 15 minutes, `ai/daily-insights` at 06:00.
+- [ ] `pg_cron` jobs scheduled — five of them, exactly as the migrations create them
+      (`select jobname, schedule, active from cron.job order by jobname;`):
+      `expire-pending-approvals` `7 * * * *`, `drain-email-queue` `*/5 * * * *`,
+      `sync-google-reviews` `41 * * * *`, `extend-weekly-template` `13 2 * * *`,
+      `purge-access-tokens` `23 4 * * *`. There is no AI job: insights are computed
+      client-side in `src/lib/insights.ts`, not on a schedule.
 - [ ] Sentry project created in the **EU region** with PII scrubbing enabled — this app
       holds UK residents' personal data and the region cannot be changed later.
 - [ ] Send one test booking through the live SMTP path and confirm the `.ics` opens

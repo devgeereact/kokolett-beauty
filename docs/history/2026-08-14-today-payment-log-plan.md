@@ -1,6 +1,6 @@
 # Today Command Center + Payment Log Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Archived 2026-08-20 — shipped.** Implemented as migration `0027_payment_log.sql`, `src/services/paymentService.ts` and the Today page. Unticked `- [ ]` boxes are the plan as written, not outstanding work.
 
 **Goal:** Replace the Today page's placeholder "Expected takings" stat (a
 sum of `price_pence`, never a real charge) with a real, owner-logged
@@ -21,7 +21,7 @@ so there's no new interaction pattern for the owner to learn.
 **Tech Stack:** PostgreSQL/PL-pgSQL (Supabase), Supabase CLI, React 18 +
 TypeScript strict, Tailwind 3.4.
 
-**Spec:** `docs/superpowers/specs/2026-08-13-today-command-center-payment-log-design.md`
+**Spec:** `docs/history/2026-08-14-today-payment-log-design.md`
 
 ## Global Constraints
 

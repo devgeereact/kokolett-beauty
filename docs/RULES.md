@@ -37,8 +37,10 @@ do not merge.
 - **No** `.module.css`, no CSS-in-JS. `style={{}}` only for genuinely dynamic geometry
   (a chart bar's height, a calendar block's offset).
 - Mobile-first: base styles, then `md:` / `lg:` / `wide:` overrides. **There is no
-  `sm:`, `xl:` or `2xl:`** — `tailwind.config.ts` declares exactly four ranges and
-  removes the rest, so those prefixes emit nothing at all.
+  `sm:`, `xl:` or `2xl:`** — `tailwind.config.ts` sets `screens` at theme level to
+  exactly three breakpoints (`md` 768px, `lg` 1024px, `wide` 1440px), replacing
+  Tailwind's defaults rather than extending them, so any other prefix emits nothing
+  at all. Four ranges result: base, `md`, `lg`, `wide`.
 - Compose conditional classes with `cn()` (never string-concatenate classes).
 
 ## 5. Data & security
@@ -125,8 +127,14 @@ do not merge.
 
 ### 9.6 AI
 
-- AI output is advisory. It is written to `ai_recommendations` with status `pending`.
-- No AI code path may write to `appointments`, `customers`, or `availability_*`.
+- AI output is advisory. Two separate things wear the word "assistant" — the
+  deterministic client-side insights module (`src/lib/insights.ts`) and the LLM chat
+  (`supabase/functions/ai-assistant-chat`). Neither writes business data; see
+  `docs/ARCHITECTURE.md` §6b. The `ai_recommendations` table exists in the schema and
+  the generated types but nothing reads or writes it — do not build against it.
+- No AI code path may write to `appointments`, `customers`, or `availability_*`. The
+  chat can _propose_ a booking or a one-off email; the write happens client-side under
+  the owner's own session only when she clicks Confirm.
 - Never put a customer's private notes, full contact details, or another customer's
   data into a model prompt.
 - Always render AI-drafted copy in an editable field before it is sent. The owner's

@@ -83,7 +83,6 @@
   #   supabase.co        REST, Auth, Edge Functions; wss for realtime bookings
   #   ik.imagekit.io     media delivery
   #   *.sentry.io        error + trace ingest (EU region host is o<id>.ingest.de.sentry.io)
-  #   inn.gs             Inngest event dispatch (write-only key)
   #   fonts.googleapis   the stylesheet; fonts.gstatic serves the font files
   #
   # 'unsafe-inline' for style-src is required by the inline theme script's
@@ -91,7 +90,7 @@
   # carry it — but the theme bootstrap in index.html is an inline <script>, so
   # 'unsafe-inline' there is what report-only mode is meant to reveal. Prefer a
   # hash over blanket inline when this is promoted to enforcing.
-  Header always set Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://ik.imagekit.io; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ik.imagekit.io https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://inn.gs; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  Header always set Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://ik.imagekit.io; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ik.imagekit.io https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
 </IfModule>
 
 # ---- Pretty error handling ------------------------------------

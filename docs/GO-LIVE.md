@@ -39,7 +39,9 @@
 > `functions list`, `secrets list`, `config push`) and the live site over HTTPS —
 > not from a summary either.
 
-Generated 2026-08-19, alongside `docs/FEATURE_FIX.md`. That document records what was
+Generated 2026-08-19, alongside what is now
+`docs/history/2026-08-19-ship-week-hardening-audit.md` (then `docs/FEATURE_FIX.md`).
+That document records what was
 changed in the repository; this one is the part no amount of code could supply. Work
 through it top to bottom: the order matters in section 3, and section 4 is what proves
 the rest of it landed.

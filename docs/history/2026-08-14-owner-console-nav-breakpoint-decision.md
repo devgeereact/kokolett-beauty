@@ -1,5 +1,7 @@
 # Design Shotgun — Owner Console Nav Shell
 
+> **Archived 2026-08-20 — superseded, not shipped as written.** This explores a simplified 7-entry nav (Today / Inbox / Calendar & Capacity / Bookings / Customers / Growth / Settings) that was **never built**. The shipped sidebar is grouped into Workspace, Bookings, Customers, Salon, Insights, Communications and Account — see `src/components/dashboard/DashboardLayout.tsx`. Its `md:` breakpoint reasoning did carry over; its nav model did not.
+
 Exploration for the sidebar/nav shell that replaces
 `src/components/dashboard/DashboardLayout.tsx` under the simplified 7-nav Owner
 Console IA (`docs/plan.md` Phase 1 step 3): **Today, Inbox, Calendar & Capacity,
@@ -179,7 +181,7 @@ against wayfinding structure (C). Concretely:
    problem, and there was no human reviewer for a comparison board anyway.
 2. **Reconciled two device framings.** `docs/PRD.md` §3 frames the owner's
    primary device as a phone ("the day's schedule in one glance on a phone");
-   the task brief and `docs/superpowers/specs/2026-08-11-calendar-rebuild-design.md`
+   the task brief and `docs/history/2026-08-14-calendar-rebuild-design.md`
    frame it as a salon tablet left open overnight. Treated these as two real
    surfaces rather than picking one: phone stays served by the mobile drawer,
    tablet by the persistent sidebar — which is why the breakpoint fix (not a

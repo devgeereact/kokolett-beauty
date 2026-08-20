@@ -1,5 +1,7 @@
 # Owner Console shell — component markup patterns
 
+> **Archived 2026-08-20 — superseded, not shipped as written.** Markup reference for the 7-entry nav that was never built. The shipped sidebar is the grouped one in `src/components/dashboard/DashboardLayout.tsx`. Read this for Tailwind patterns, never as a description of the current shell.
+
 Component-level Tailwind reference for the new 7-nav Owner Console shell
 (`docs/plan.md` Phase 1, step 3: Today, Inbox, Calendar & Capacity, Bookings,
 Customers, Growth, Settings). This is a pattern-library excerpt, not a page —
@@ -249,7 +251,7 @@ shipped component yet and are additions this spec makes explicit:
 
     <!-- Divider + visually-secondary entries: two shipped, real pages that
          sit outside the 7-nav model (Reports, AI Assistant — see
-         docs/BASELINE-AUDIT.md) but must stay reachable, not hidden. Kept
+         docs/history/2026-08-13-baseline-audit.md) but must stay reachable, not hidden. Kept
          out of the primary list per docs/plan.md step 7 ("relabel dead-nav
          entries... to preserve trust") without removing access. -->
     <div class="my-2 border-t border-sidebar-border" aria-hidden="true"></div>
@@ -344,7 +346,7 @@ font-semibold`. This spec follows the narrower, already-shipped reading
   genuinely disagree and only one is what's actually live.
 - **"Collected today" replaces "Expected takings."** The currently-shipped
   fourth stat sums a placeholder price snapshot and labels it "Expected
-  takings" — `docs/superpowers/specs/2026-08-13-today-command-center-payment-log-design.md`
+  takings" — `docs/history/2026-08-14-today-payment-log-design.md`
   (approved, not yet implemented) replaces that with a real owner-entered
   figure under the key `today_collected_pence`. Using "Collected today" here
   is a forward reference to that approved-but-unbuilt spec, not something

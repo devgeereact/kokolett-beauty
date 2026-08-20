@@ -152,7 +152,9 @@ export function App(): JSX.Element {
                     land somewhere real. */}
                 <Route
                   path={routes.owner.approvals}
-                  element={<Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />}
+                  element={
+                    <Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />
+                  }
                 />
                 <Route
                   path={routes.owner.requests}
@@ -168,11 +170,17 @@ export function App(): JSX.Element {
                 <Route path={routes.owner.settings} element={<SettingsPage />} />
 
                 <Route path={routes.owner.calendar} element={<CalendarPage />} />
-                <Route path={routes.owner.weeklyDefault} element={<WeeklyDefaultPage />} />
+                <Route
+                  path={routes.owner.weeklyDefault}
+                  element={<WeeklyDefaultPage />}
+                />
 
                 <Route path={routes.owner.assistant} element={<AssistantPage />} />
                 <Route path={routes.owner.reports} element={<ReportsPage />} />
-                <Route path={routes.owner.notifications} element={<NotificationsPage />} />
+                <Route
+                  path={routes.owner.notifications}
+                  element={<NotificationsPage />}
+                />
                 <Route path={routes.owner.email} element={<EmailPage />} />
                 <Route path={routes.owner.templates} element={<TemplatesPage />} />
                 <Route

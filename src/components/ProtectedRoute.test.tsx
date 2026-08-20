@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, MemoryRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 
 const mockAuth = vi.hoisted(() => ({
   user: null as { id: string } | null,
@@ -131,5 +131,68 @@ describe('ProtectedRoute', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
     expect(mockOwner.retry).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * The actual production shape post-fix: one pathless parent route mounts
+   * `<ProtectedRoute><Outlet/></ProtectedRoute>` once, and every dashboard
+   * page is a plain child route with no wrapper of its own — this is what
+   * stops the gate (and its `is_owner` check) from remounting per navigation.
+   * `renderAt` above still covers the explicit-children usage; this covers
+   * the `children ?? <Outlet/>` fallback the fix introduced.
+   */
+  describe('as a layout route (children ?? <Outlet/>)', () => {
+    function renderLayout(initialPath: string): void {
+      render(
+        <MemoryRouter initialEntries={[initialPath]}>
+          <Routes>
+            <Route path="/login" element={<LoginPageStub />} />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Outlet />
+                </ProtectedRoute>
+              }
+            >
+              <Route
+                path="/dashboard"
+                element={
+                  <div>
+                    <p>Today</p>
+                    <Link to="/dashboard/inbox">Go to inbox</Link>
+                  </div>
+                }
+              />
+              <Route path="/dashboard/inbox" element={<p>Inbox</p>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>,
+      );
+    }
+
+    it('gates first entry into a nested route exactly like the explicit-children usage', () => {
+      Object.assign(mockAuth, { user: null, loading: false });
+      Object.assign(mockOwner, { isOwner: false, loading: false, failed: false });
+
+      renderLayout('/dashboard/inbox');
+      expect(screen.getByText('Login page')).toBeInTheDocument();
+    });
+
+    it('lets an owner navigate between sibling child routes without hitting the gate again', async () => {
+      Object.assign(mockAuth, { user: { id: 'u1' }, loading: false });
+      Object.assign(mockOwner, { isOwner: true, loading: false, failed: false });
+
+      renderLayout('/dashboard');
+      expect(screen.getByText('Today')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('link', { name: 'Go to inbox' }));
+
+      expect(screen.getByText('Inbox')).toBeInTheDocument();
+      expect(screen.queryByText('Login page')).not.toBeInTheDocument();
+      expect(screen.queryByText('No access')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Cannot reach the salon right now'),
+      ).not.toBeInTheDocument();
+    });
   });
 });

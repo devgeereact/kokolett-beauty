@@ -403,6 +403,14 @@ Default tone is `neutral`. Not every tile needs to be orange.
   so a tabbed-to element never lands underneath it.
 - **2.5.8 Target size** — minimum 24×24 by the standard; this system uses **44×44**
   (`min-h-touch` / `min-w-touch`), which sets the minimum size of a time-slot button.
+  Time slots, form fields and the booking submit all meet it on every width.
+  **The month grid meets it on height only.** Seven 44px cells need 308px, and a
+  320–390px viewport has less than that once the page gutter and card padding are
+  taken, so `Calendar` at `size="lg"` floors the day button's height at 44 and lets
+  width follow the column: 32px at 320, 42px at 390, over 44 from about 400 up.
+  The shortfall is covered by 2.5.8's spacing exception — 46px between centres
+  against a 24px requirement — and closing it properly would mean a different
+  layout for the smallest phones, not a bigger number here.
 - **2.1.1 Keyboard** — the booking flow is fully keyboard-operable, including the date grid
   (arrow keys) and slot list.
 - **3.3.1 / 3.3.2 Errors and labels** — every field has a real `<label>`; errors are

@@ -3,9 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, Calendar, ChevronRight, Scissors, Settings2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
-import type { SettingsTab } from './tabs';
 
 const ICON_TONE = 'bg-tint-brand text-primary';
+
+/**
+ * `BusinessTabContent` (which owns #booking-rules) mounts unconditionally
+ * alongside this card, but stays in its own loading state until its
+ * `booking_settings` fetch resolves — so the target can briefly not exist
+ * yet on a slow connection. Retry a few times rather than silently no-op.
+ */
+function scrollToBookingRules(attempt = 0): void {
+  const el = document.getElementById('booking-rules');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  if (attempt >= 20) return;
+  window.setTimeout(() => scrollToBookingRules(attempt + 1), 150);
+}
 
 function Row({
   icon: Icon,
@@ -42,12 +57,12 @@ function Row({
   );
 }
 
-/** Shortcuts out of the Settings hub — some to whole other pages, one to the Business tab itself. */
-export function BusinessSettingsNavCard({
-  onTab,
-}: {
-  onTab: (tab: SettingsTab) => void;
-}): JSX.Element {
+/**
+ * Shortcuts out of Settings — most to whole other pages, "Booking settings"
+ * to the Booking rules card further down this same page (Settings is now a
+ * single scroll, not a tab set).
+ */
+export function BusinessSettingsNavCard(): JSX.Element {
   const navigate = useNavigate();
 
   return (
@@ -84,7 +99,7 @@ export function BusinessSettingsNavCard({
           icon={Settings2}
           label="Booking settings"
           desc="Control how appointments work"
-          onClick={() => onTab('business')}
+          onClick={() => scrollToBookingRules()}
         />
         <Row
           icon={Bell}

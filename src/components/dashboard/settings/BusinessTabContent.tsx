@@ -173,7 +173,7 @@ export function BusinessTabContent(): JSX.Element {
           </Field>
         </Card>
 
-        <Card className="p-5">
+        <Card id="booking-rules" className="scroll-mt-6 p-5">
           <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
             Booking rules
           </h2>

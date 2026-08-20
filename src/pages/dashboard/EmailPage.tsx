@@ -1,9 +1,17 @@
 import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Download, Inbox, Mail, Search, Send, XCircle } from 'lucide-react';
+import {
+  ArrowRight,
+  Download,
+  Inbox,
+  Mail,
+  PenSquare,
+  Search,
+  Send,
+  XCircle,
+} from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AdvisorySection } from '@/components/dashboard/assistant/AdvisorySection';
-import { EmailDraftingPanel } from '@/components/dashboard/assistant/EmailDraftingPanel';
+import { ComposeEmailModal } from '@/components/dashboard/email/ComposeEmailModal';
 import { EmailStatusBadge } from '@/components/dashboard/email/EmailStatusBadge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -33,11 +41,12 @@ const LANES: { key: Lane; label: string; icon: typeof Inbox }[] = [
 
 /**
  * The real outbox (`docs/design/email.png`, restyled to what this system
- * actually is). `email_messages` is a one-way transactional log — the
- * Inngest worker sends confirmations, reminders and receipts; nobody
- * composes, replies to, or receives mail inside the dashboard. So this is a
- * mail-client-shaped *list and detail view* over that log, not a client:
- * no Compose, no folders that don't exist (Drafts, Trash), no reply/forward.
+ * actually is). `email_messages` is a one-way transactional log the
+ * `send-emails` drain job works through — confirmations, reminders,
+ * receipts, and now one-off messages the owner writes herself via Compose.
+ * So this is mostly a *list and detail view* over that log (no folders that
+ * don't exist, like Drafts or Trash; no reply/forward) plus the one write
+ * this app allows: `sendCustomEmailAsOwner`, wired through `ComposeEmailModal`.
  */
 export function EmailPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
@@ -49,6 +58,7 @@ export function EmailPage(): JSX.Element {
   const [preview, setPreview] = useState<EmailPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   const load = useCallback((): void => {
     setError(null);
@@ -158,10 +168,16 @@ export function EmailPage(): JSX.Element {
       title="Email"
       subtitle="Every message the salon's outbox has sent — confirmations, reminders and receipts."
       actions={
-        <Button variant="ghost" size="sm" onClick={exportCsv}>
-          <Download aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-          Export
-        </Button>
+        <>
+          <Button variant="ghost" size="sm" onClick={exportCsv}>
+            <Download aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+            Export
+          </Button>
+          <Button size="sm" onClick={() => setComposeOpen(true)}>
+            <PenSquare aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+            Compose
+          </Button>
+        </>
       }
     >
       {!messages ? (
@@ -346,12 +362,11 @@ export function EmailPage(): JSX.Element {
         </div>
       )}
 
-      <AdvisorySection
-        title="Email drafting"
-        description="AI-drafted copy for a one-off message to a customer."
-      >
-        <EmailDraftingPanel timezone={timezone} />
-      </AdvisorySection>
+      <ComposeEmailModal
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        onSent={load}
+      />
     </DashboardLayout>
   );
 }

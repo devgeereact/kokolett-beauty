@@ -36,9 +36,9 @@ Live at **https://www.kokolettbeauty.com**
 
 | Layer            | Choice                          | Why                                            |
 | ---------------- | ------------------------------- | ---------------------------------------------- |
-| Framework        | React 18 + Vite 6               | Fast HMR, tiny hashed bundles                  |
+| Framework        | React 19 + Vite 8               | Fast HMR, tiny hashed bundles                  |
 | Language         | TypeScript (strict)             | Safety enforced in CI                          |
-| Styling          | Tailwind CSS (NativeWind-ready) | Utility-first, portable to Expo later          |
+| Styling          | Tailwind CSS 4 (web only)       | Utility-first, closed token set                |
 | PWA              | `vite-plugin-pwa` (Workbox)     | Precached app shell + runtime caching          |
 | Auth + DB        | Supabase (PostgreSQL + RLS)     | Managed Postgres, row-level security           |
 | Server logic     | Supabase Edge Functions (Deno)  | Seven functions: email, reviews, AI, access    |

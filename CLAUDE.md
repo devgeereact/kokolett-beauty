@@ -42,7 +42,8 @@ Never in a file.
   No server runtime of any kind.
 - **TypeScript strict.** No implicit `any`; explicit return types on functions
   and hooks.
-- **Styling:** NativeWind / Tailwind classes, tokens from `tailwind.config.ts`.
+- **Styling:** Tailwind classes only, tokens from `tailwind.config.ts`. Not
+  NativeWind — see `docs/DESIGN.md` §12.
 - **Offloaded systems:** Supabase (Auth/DB + RLS, seven Deno Edge Functions,
   `pg_cron` jobs), ImageKit (transformed URLs for service images only), Sentry
   (monitoring). There is no Inngest — the email pipeline is a Postgres trigger plus

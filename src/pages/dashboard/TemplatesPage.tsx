@@ -2,11 +2,17 @@ import { type JSX, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pencil, Search } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { TemplatePreviewFrame } from '@/components/dashboard/templates/TemplatePreviewFrame';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { LoadingState, ErrorState } from '@/components/ui/States';
-import { getTemplateUsage, type TemplateUsage } from '@/services/emailService';
+import {
+  getTemplateUsage,
+  previewEmailMessage,
+  type EmailPreview,
+  type TemplateUsage,
+} from '@/services/emailService';
 import {
   TEMPLATE_CATALOG,
   templateMeta,
@@ -43,6 +49,9 @@ export function TemplatesPage(): JSX.Element {
   const [lane, setLane] = useState<Lane>('all');
   const [search, setSearch] = useState('');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [preview, setPreview] = useState<EmailPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const load = (): void => {
     setError(null);
@@ -78,6 +87,30 @@ export function TemplatesPage(): JSX.Element {
 
   const selected = selectedKey ? templateMeta(selectedKey) : null;
   const selectedUsage = selectedKey ? usage?.get(selectedKey) : null;
+  const exampleId = selectedUsage?.example?.id ?? null;
+
+  useEffect(() => {
+    if (!exampleId) {
+      setPreview(null);
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    previewEmailMessage(exampleId)
+      .then((p) => {
+        if (!cancelled) setPreview(p);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setPreviewError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [exampleId]);
 
   if (error) {
     return (
@@ -89,7 +122,6 @@ export function TemplatesPage(): JSX.Element {
 
   if (selected) {
     const example = selectedUsage?.example;
-    const payload = (example?.payload as Record<string, unknown> | undefined) ?? {};
     return (
       <DashboardLayout
         title="Templates"
@@ -165,22 +197,13 @@ export function TemplatesPage(): JSX.Element {
                   To {example.to_email} ·{' '}
                   {formatDateTime(example.sent_at ?? example.created_at, timezone)}
                 </p>
-                {Object.keys(payload).length > 0 && (
-                  <dl className="space-y-1.5 border-t border-border pt-3 text-sm">
-                    {Object.entries(payload)
-                      .filter(([, v]) => v !== null && v !== undefined && v !== '')
-                      .map(([key, value]) => (
-                        <div key={key} className="flex justify-between gap-3">
-                          <dt className="shrink-0 text-muted-foreground">
-                            {key.replace(/_/g, ' ')}
-                          </dt>
-                          <dd className="truncate text-right text-foreground">
-                            {String(value)}
-                          </dd>
-                        </div>
-                      ))}
-                  </dl>
-                )}
+                <div className="border-t border-border pt-3">
+                  <TemplatePreviewFrame
+                    preview={preview}
+                    loading={previewLoading}
+                    error={previewError}
+                  />
+                </div>
               </div>
             )}
           </Card>

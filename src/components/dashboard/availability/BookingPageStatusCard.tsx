@@ -17,8 +17,8 @@ export function BookingPageStatusCard(): JSX.Element {
   };
 
   return (
-    <Card className="p-4">
-      <div className="mb-2 flex items-center justify-between">
+    <Card className="p-5">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="font-serif text-base font-semibold text-foreground">
           Booking page status
         </h2>

@@ -1,5 +1,5 @@
 import { type JSX, useState } from 'react';
-import { Building2, Pencil } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
@@ -50,18 +50,13 @@ export function OrganisationDetailsCard(): JSX.Element {
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
-            <Building2 aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
-          </span>
-          <div>
-            <h2 className="font-serif text-base font-semibold text-foreground">
-              Organisation details
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Manage your salon business information.
-            </p>
-          </div>
+        <div>
+          <h2 className="font-serif text-base font-semibold text-foreground">
+            Organisation details
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Manage your salon business information.
+          </p>
         </div>
         {!editing && (
           <Button variant="ghost" size="sm" onClick={startEditing}>

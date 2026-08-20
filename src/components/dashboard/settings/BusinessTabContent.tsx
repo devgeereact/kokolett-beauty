@@ -128,7 +128,7 @@ export function BusinessTabContent(): JSX.Element {
 
   return (
     <div className="space-y-6">
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
         <Card className="p-5">
           <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
             Salon details
@@ -273,7 +273,7 @@ export function BusinessTabContent(): JSX.Element {
         </Card>
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
         <Card className="p-5">
           <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
             Google reviews
@@ -329,7 +329,7 @@ export function BusinessTabContent(): JSX.Element {
         )}
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
         <Card className="p-5">
           <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
             Links to share

@@ -67,21 +67,10 @@ export function BusinessSettingsNavCard(): JSX.Element {
 
   return (
     <Card className="p-5">
-      <div className="mb-2 flex items-center gap-3">
-        <span
-          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${ICON_TONE}`}
-        >
-          <Settings2 aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
-        </span>
-        <div>
-          <h2 className="font-serif text-base font-semibold text-foreground">
-            Business settings
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Configure your salon operations.
-          </p>
-        </div>
-      </div>
+      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+        Business settings
+      </h2>
+      <p className="mb-3 text-sm text-muted-foreground">Configure your salon operations.</p>
       <div className="divide-y divide-border">
         <Row
           icon={Scissors}

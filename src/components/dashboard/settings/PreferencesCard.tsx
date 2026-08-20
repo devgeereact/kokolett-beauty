@@ -1,5 +1,5 @@
 import { type JSX, useState } from 'react';
-import { Clock, Globe, Moon, SlidersHorizontal, Sun, SunMoon } from 'lucide-react';
+import { Clock, Globe, Moon, Sun, SunMoon } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Field';
 import { useTheme } from '@/context/ThemeContext';
@@ -46,17 +46,8 @@ export function PreferencesCard(): JSX.Element {
 
   return (
     <Card className="p-5">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
-          <SlidersHorizontal aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
-        </span>
-        <div>
-          <h2 className="font-serif text-base font-semibold text-foreground">
-            Preferences
-          </h2>
-          <p className="text-sm text-muted-foreground">App appearance and behaviour.</p>
-        </div>
-      </div>
+      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Preferences</h2>
+      <p className="mb-4 text-sm text-muted-foreground">App appearance and behaviour.</p>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">

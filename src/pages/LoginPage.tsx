@@ -12,10 +12,12 @@ import { Field, Input } from '@/components/ui/Field';
 /**
  * Owner sign-in.
  *
- * Magic link is the intended route — the salon has one administrator and no
- * password worth managing. Password sign-in stays available because magic links
- * depend on email delivery, and an owner locked out on a Saturday morning by an
- * SMTP problem is a worse failure than a password field.
+ * Email + password is the default route — it's the faster, more familiar
+ * flow and doesn't depend on mail delivery. Magic link stays one tap away as
+ * a secondary path for exactly the moment a password is no use: the owner
+ * can't remember it. The separate "Forgotten your password?" action beneath
+ * the password field is a third, distinct path — it emails a reset link
+ * rather than signing her straight in.
  *
  * Customers never come here. They are not `auth.users` at all; they arrive via
  * a single-use token on `/access/:token`.
@@ -25,7 +27,7 @@ type Mode = 'link' | 'password';
 export function LoginPage(): JSX.Element {
   const { user, loading } = useSupabaseAuth();
   const location = useLocation();
-  const [mode, setMode] = useState<Mode>('link');
+  const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -83,6 +85,19 @@ export function LoginPage(): JSX.Element {
 
   const submit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
+
+    // The form carries `noValidate` (custom error styling below, not the
+    // browser's), so an empty required field would otherwise sail straight
+    // into a Supabase call instead of stopping here.
+    if (!email.trim()) {
+      setError('Enter your email address to continue.');
+      return;
+    }
+    if (mode === 'password' && !password) {
+      setError('Enter your password to continue.');
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
@@ -242,7 +257,7 @@ export function LoginPage(): JSX.Element {
             >
               {mode === 'link'
                 ? 'Sign in with a password instead'
-                : 'Email me a link instead'}
+                : "Can't remember your password? Email me a sign-in link instead"}
             </button>
           </form>
         )}

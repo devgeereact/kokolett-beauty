@@ -3,12 +3,6 @@ import { listCustomers } from '@/services/customerService';
 import { listWeeklyTemplate } from '@/services/availabilityService';
 import { addDays, salonDayRange, toSalonDate } from '@/lib/format';
 import {
-  STATUS_CATEGORY,
-  STATUS_CATEGORY_LABELS,
-  STATUS_CATEGORIES,
-  type StatusCategory,
-} from '@/lib/status';
-import {
   analyzeDayOfWeekTrend,
   analyzeHourOfDayTrend,
   rankRepeatCustomers,
@@ -31,8 +25,6 @@ export interface ReportsOverview {
   /** Same shape, the equal-length period immediately before `from` — the trend comparison. */
   previous: ReportsOverview['totals'];
   seriesByDay: { date: string; appointments: number; revenuePence: number }[];
-  byStatus: { category: StatusCategory; label: string; count: number }[];
-  byService: { name: string; count: number }[];
   topCustomers: RepeatCustomerInsight[];
   recentBookings: AppointmentDetailed[];
   busiestDay: { name: string; count: number } | null;
@@ -117,28 +109,6 @@ export async function getReportsOverview(
     .map(([date, v]) => ({ date, ...v }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  const statusCounts = new Map<StatusCategory, number>();
-  for (const a of counted) {
-    const cat = STATUS_CATEGORY[a.status];
-    statusCounts.set(cat, (statusCounts.get(cat) ?? 0) + 1);
-  }
-  const byStatus = STATUS_CATEGORIES.filter((c) => (statusCounts.get(c) ?? 0) > 0).map(
-    (c) => ({
-      category: c,
-      label: STATUS_CATEGORY_LABELS[c],
-      count: statusCounts.get(c) ?? 0,
-    }),
-  );
-
-  const serviceCounts = new Map<string, number>();
-  for (const a of counted) {
-    const name = a.service_name ?? 'Other';
-    serviceCounts.set(name, (serviceCounts.get(name) ?? 0) + 1);
-  }
-  const byService = [...serviceCounts.entries()]
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count);
-
   const dayOfWeekCounts = new Map<string, number>();
   for (const a of counted) {
     const day = toSalonDate(a.starts_at, timezone);
@@ -155,8 +125,6 @@ export async function getReportsOverview(
     totals: computeTotals(appointments, newCustomers),
     previous: computeTotals(prevAppointments, prevNewCustomers),
     seriesByDay,
-    byStatus,
-    byService,
     topCustomers: rankRepeatCustomers(customers, completed).slice(0, 5),
     recentBookings: [...appointments]
       .sort((a, b) => b.starts_at.localeCompare(a.starts_at))

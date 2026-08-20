@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, Calendar, ChevronRight, Scissors, Settings2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
-import type { SettingsTab } from './tabs';
 
 const ICON_TONE = 'bg-tint-brand text-primary';
 
@@ -42,12 +41,12 @@ function Row({
   );
 }
 
-/** Shortcuts out of the Settings hub — some to whole other pages, one to the Business tab itself. */
-export function BusinessSettingsNavCard({
-  onTab,
-}: {
-  onTab: (tab: SettingsTab) => void;
-}): JSX.Element {
+/**
+ * Shortcuts out of Settings — most to whole other pages, "Booking settings"
+ * to the Booking rules card further down this same page (Settings is now a
+ * single scroll, not a tab set).
+ */
+export function BusinessSettingsNavCard(): JSX.Element {
   const navigate = useNavigate();
 
   return (
@@ -84,7 +83,11 @@ export function BusinessSettingsNavCard({
           icon={Settings2}
           label="Booking settings"
           desc="Control how appointments work"
-          onClick={() => onTab('business')}
+          onClick={() =>
+            document
+              .getElementById('booking-rules')
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
         />
         <Row
           icon={Bell}

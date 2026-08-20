@@ -482,7 +482,15 @@ mail previews.
 
 Not blockers for this week, but do not let them fade from view.
 
-- ~~**CSP is still `Report-Only`.**~~ Enforcing since 2026-08-20. `script-src` pins the
+- ~~**CSP is still `Report-Only`.**~~ Enforcing **and deployed** 2026-08-20 14:39 UTC —
+  `.htaccess` is not in `dist/` and no build ships it, so the repo change did nothing
+  until it was rsynced to the docroot. Verified live afterwards: the header is
+  `content-security-policy` with no report-only variant, its hash matches the inline
+  script in the **deployed** `index.html`, all nine routes return 200, the booking flow
+  reaches the details step, both themes render, and the console is clean. The service
+  worker's `google-fonts` cache now exists, which is the proof the `connect-src` fix
+  landed — under the old policy that fetch was blocked. The pre-change `.htaccess` is at
+  `~/private_backups/kokolettbeauty-htaccess-pre-csp-2026-08-20.bak` on the server. `script-src` pins the
   inline theme bootstrap by hash instead of allowing `'unsafe-inline'`, and CI fails the
   build if the two ever disagree. **To roll back**, rename the header in `.htaccess` to
   `Content-Security-Policy-Report-Only` — it takes effect on the next request, with no

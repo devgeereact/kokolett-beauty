@@ -406,18 +406,13 @@ export function TodayPage(): JSX.Element {
           </div>
         </div>
 
-        {/* h-full: stretches to match Availability requests beside it, now
-            that Recent notifications is gone that's only ~20px of headroom
-            (not the old multi-card stack), so the chart's own centring
-            absorbs it invisibly instead of leaving a dead zone. */}
-        <div className="h-full lg:col-span-6">
-          <BookingsOverviewChart timezone={timezone} />
-        </div>
+        <BookingsOverviewChart className="lg:col-span-6" timezone={timezone} />
         <AvailabilityRequestsCard className="lg:col-span-3" />
-      </div>
 
-      <div className="mt-4">
-        <AssistantInsightsRow timezone={timezone} />
+        {/* Full-width row inside the same grid — not a bolted-on section
+            below it — so it shares the grid's own gap-4 rhythm and its
+            horizontal edges line up with every card above it. */}
+        <AssistantInsightsRow className="lg:col-span-12" timezone={timezone} />
       </div>
 
       <Modal

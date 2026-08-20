@@ -30,6 +30,27 @@ set local search_path = extensions, public;
 select plan(45);
 
 -- --------------------------------------------------------------------------
+-- Grants. This is what makes the suite a test of RLS rather than of luck.
+--
+-- `supabase/migrations/` never grants table privileges. Production has them
+-- because the hosted platform applies default privileges to `anon` and
+-- `authenticated` when the project is created — that is platform setup, not
+-- migration content. A database built from the migrations alone therefore
+-- refuses every role at the GRANT layer, before a single policy is consulted,
+-- and the first CI run of this file failed all 39 behavioural assertions with
+-- "permission denied" for exactly that reason.
+--
+-- Granting here deliberately puts the fresh database in the *worse* position
+-- than production: every role may reach every table, so anything that still
+-- denies them is RLS doing it, and nothing else. A policy that only appeared to
+-- work because a grant happened to be missing would fail this suite.
+-- --------------------------------------------------------------------------
+
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public
+  to anon, authenticated;
+
+-- --------------------------------------------------------------------------
 -- Fixtures, created before any role switch.
 -- --------------------------------------------------------------------------
 
@@ -224,7 +245,7 @@ select is((select visible from rls_probe where tbl='availability_requests' and a
 select is((select visible from rls_probe where tbl='google_place_snapshot' and as_role='anon'),
           0::bigint, 'anon cannot read google_place_snapshot — public read revoked in 0038');
 select is((select visible from rls_probe where tbl='email_templates' and as_role='anon'),
-          (-1)::bigint, 'anon holds no grant at all on email_templates — 0038 revoked it');
+          0::bigint, 'anon cannot read email_templates even when granted — RLS denies it');
 
 -- --------------------------------------------------------------------------
 -- 3. A signed-in user who is not the owner is no better off.

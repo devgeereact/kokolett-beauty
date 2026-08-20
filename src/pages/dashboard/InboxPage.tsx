@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Zap } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';

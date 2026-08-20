@@ -5,6 +5,7 @@ import {
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
+  type JSX,
 } from 'react';
 import { cn } from '@/lib/utils';
 

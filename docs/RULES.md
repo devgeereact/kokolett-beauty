@@ -30,6 +30,13 @@ do not merge.
 - Follow the Rules of Hooks (lint-enforced). Keep `useEffect` deps honest.
 - One component per file; name the file after the component (`PascalCase.tsx`).
 - Derive state; don't duplicate it. Lift state only as far as needed.
+- **`JSX` must be imported.** React 19's `@types/react` removed the global `JSX`
+  namespace, so a component returning `: JSX.Element` needs
+  `import type { JSX } from 'react'` (or `type JSX` added to an existing `react`
+  import). It is not ambient any more; `tsc` fails with `TS2503` without it.
+- **`useRef<T>(null)` is `RefObject<T | null>`**, also since React 19. A prop or
+  hook parameter that receives one must be typed `RefObject<T | null>` — widen the
+  signature rather than casting at each call site.
 
 ## 4. Styling
 

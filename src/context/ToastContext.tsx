@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type JSX,
 } from 'react';
 import { ToastStack } from '@/components/ui/Toast';
 import type { ToastItem, ToastOptions } from '@/types';

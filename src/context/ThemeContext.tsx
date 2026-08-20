@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type ReactNode,
+  type JSX,
 } from 'react';
 import type { ResolvedTheme, ThemeMode } from '@/types';
 

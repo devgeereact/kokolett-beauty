@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useRef, useState } from 'react';
 import { Calendar } from '@/components/ui/Calendar';
 import { formatLocalDate, parseLocalDate } from '@/lib/localDate';
 import { cn } from '@/lib/utils';

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Card } from '@/components/ui/Card';
 import type { StatusCategory } from '@/lib/status';
 

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Button } from '@/components/ui/Button';
 
 /** Shared header for the three search steps: a way back without losing the

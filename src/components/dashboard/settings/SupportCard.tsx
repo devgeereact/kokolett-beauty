@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { ChevronRight, HelpCircle, Mail, MessageSquareText } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Calendar } from '@/components/ui/Calendar';
 import { formatLocalDate, parseLocalDate } from '@/lib/localDate';
 

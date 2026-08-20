@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { JSX, ReactNode } from 'react';
 import { TONE_BG, TONE_TEXT, type Tone } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 

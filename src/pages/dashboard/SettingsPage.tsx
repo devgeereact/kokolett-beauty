@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type JSX, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AccountSummaryCard } from '@/components/dashboard/settings/AccountSummaryCard';
 import { BillingCard } from '@/components/dashboard/settings/BillingCard';

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { type JSX, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import type { ToastItem } from '@/types';

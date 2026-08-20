@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { type JSX, memo } from 'react';
 import {
   CALENDAR_GRID_HEIGHT_CLASS,
   dayNumber,

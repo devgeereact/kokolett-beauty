@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import {
   CALENDAR_GRID_HEIGHT_CLASS,
   WEEKDAY_HEADINGS,

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { CalendarClock, CircleCheck, Download, Hourglass } from 'lucide-react';
 import { StatTile } from '@/components/ui/StatTile';
 import { formatDuration } from '@/lib/format';

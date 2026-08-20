@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type JSX, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
 

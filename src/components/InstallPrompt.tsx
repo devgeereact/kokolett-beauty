@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/Button';
 

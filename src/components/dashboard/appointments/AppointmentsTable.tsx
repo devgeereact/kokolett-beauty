@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, type JSX } from 'react';
 import { Eye } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Pagination } from '@/components/ui/Pagination';

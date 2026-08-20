@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { type JSX, memo, useMemo } from 'react';
 import {
   CALENDAR_GRID_HEIGHT_CLASS,
   hourGridlines,

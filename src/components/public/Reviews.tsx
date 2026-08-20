@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { fetchReviews, type ReviewsSnapshot } from '@/services/reviewService';
 import { cn } from '@/lib/utils';

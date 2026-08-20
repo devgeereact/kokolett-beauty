@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarOff, CalendarPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';

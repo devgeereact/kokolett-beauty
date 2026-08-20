@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Calendar, ChevronRight, Scissors, Settings2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';

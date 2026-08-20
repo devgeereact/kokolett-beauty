@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import type { HourOfDayTrend } from '@/lib/insights';
 
 /** Bookings by salon-local start hour, as a vertical bar chart — where peak hour actually falls. */

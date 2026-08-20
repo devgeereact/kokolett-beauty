@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type JSX, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, LoadingState } from '@/components/ui/States';
 import { useAvailability } from '@/hooks/useAvailability';

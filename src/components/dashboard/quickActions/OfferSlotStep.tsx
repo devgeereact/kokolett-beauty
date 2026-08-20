@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type RefObject,
+  type JSX,
+} from 'react';
 import { Field, Input } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { StepHeader } from '@/components/dashboard/quickActions/StepHeader';
@@ -28,7 +35,7 @@ export function OfferSlotStep({
   onBack,
   onClose,
 }: {
-  searchInputRef: RefObject<HTMLInputElement>;
+  searchInputRef: RefObject<HTMLInputElement | null>;
   onSelect: (request: QueuedRequest) => void;
   onBack: () => void;
   onClose: () => void;

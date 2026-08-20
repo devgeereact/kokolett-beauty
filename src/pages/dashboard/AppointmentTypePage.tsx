@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { CalendarCapacityTabs } from '@/components/dashboard/CalendarCapacityTabs';
 import { Button } from '@/components/ui/Button';

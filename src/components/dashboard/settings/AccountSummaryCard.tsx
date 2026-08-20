@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Mail, Pencil, Phone, UserCircle } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import type { Tone } from '@/lib/tone';
 import type { EmailMessage } from '@/types';

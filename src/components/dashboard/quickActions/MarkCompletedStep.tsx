@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type RefObject,
+  type JSX,
+} from 'react';
 import { Field, Input } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { StatusChip } from '@/components/ui/StatusChip';
@@ -39,7 +46,7 @@ export function MarkCompletedStep({
   onClose,
 }: {
   timezone: string;
-  searchInputRef: RefObject<HTMLInputElement>;
+  searchInputRef: RefObject<HTMLInputElement | null>;
   /** The id of the appointment currently being marked complete, if any —
    * disables just that row while the write is in flight. */
   completingId: string | null;

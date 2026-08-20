@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Checkbox } from '@/components/ui/Field';
 import {

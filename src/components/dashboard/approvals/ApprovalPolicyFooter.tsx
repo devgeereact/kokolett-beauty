@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarClock, CalendarPlus } from 'lucide-react';
 import { Card } from '@/components/ui/Card';

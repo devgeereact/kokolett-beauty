@@ -401,8 +401,26 @@ Default tone is `neutral`. Not every tile needs to be orange.
 - **2.4.7 / 2.4.11 Focus visible and not obscured** — the `:focus-visible` ring is defined
   once in `index.css` and must not be removed. `scroll-padding-top` clears the sticky header
   so a tabbed-to element never lands underneath it.
-- **2.5.8 Target size** — minimum 24×24 by the standard; this system uses **44×44**
-  (`min-h-touch` / `min-w-touch`), which sets the minimum size of a time-slot button.
+- **2.5.8 Target size** — minimum 24×24 by the standard. **On customer-facing
+  surfaces this system uses 44×44** (`min-h-touch` / `min-w-touch`): the booking flow,
+  the public header nav, time slots, form fields and every public CTA. Those are used
+  once, in a hurry, on a phone, by someone who has never seen the interface before.
+
+  **The owner dashboard runs at 36–40px by design and is not held to 44.** Its controls
+  come from `--control-height-sm` (36), `--control-height` (40) and `--nav-item-height`
+  (40) — see §15.2 — because density is what makes a tool you use all day workable, and
+  the owner is a practised user on a known interface. Measured at tablet width, 79 of
+  101 dashboard controls sit under 44×44; all of them clear the 24×24 the standard
+  actually requires. `--control-height-lg` (44) exists for the dashboard controls that
+  do want the floor, and the calendar's view switcher uses it.
+
+  One dashboard control cannot reach 44 even if it wanted to: the Week/Day
+  calendar's open-slot blocks. An hour row is grid height divided by hour count, and
+  the grid fits the viewport rather than scrolling (`src/lib/calendar.ts`), so an
+  18-hour span on a 768px-tall tablet in landscape gets 28px a row and 37×37 blocks.
+  44 would need 792px of grid where 510px exists. Arithmetic, not a setting.
+
+  Say which surface you are on before quoting a number from this section.
   Time slots, form fields and the booking submit all meet it on every width.
   **The month grid meets it on height only.** Seven 44px cells need 308px, and a
   320–390px viewport has less than that once the page gutter and card padding are
@@ -411,6 +429,7 @@ Default tone is `neutral`. Not every tile needs to be orange.
   The shortfall is covered by 2.5.8's spacing exception — 46px between centres
   against a 24px requirement — and closing it properly would mean a different
   layout for the smallest phones, not a bigger number here.
+
 - **2.1.1 Keyboard** — the booking flow is fully keyboard-operable, including the date grid
   (arrow keys) and slot list.
 - **3.3.1 / 3.3.2 Errors and labels** — every field has a real `<label>`; errors are

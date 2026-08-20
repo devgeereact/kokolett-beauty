@@ -52,8 +52,8 @@ export function OpeningHoursSummaryCard({ days }: { days: TemplateDay[] }): JSX.
   ];
 
   return (
-    <Card className="p-4">
-      <h2 className="mb-2 font-serif text-base font-semibold text-foreground">
+    <Card className="p-5">
+      <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
         Opening hours summary
       </h2>
       <dl className="space-y-1.5">

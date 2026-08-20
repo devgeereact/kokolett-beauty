@@ -93,6 +93,10 @@ export function WeeklyDefaultPage(): JSX.Element {
   const [weeks, setWeeks] = useState('8');
   const [newTime, setNewTime] = useState<Record<number, string>>({});
   const [confirmingReplace, setConfirmingReplace] = useState(false);
+  // Bumped whenever a day's published times actually change, so
+  // `SpecialHoursClosuresCard` refetches even when that edit doesn't move
+  // `status.filled_to` (an ordinary single-day edit usually doesn't).
+  const [dayEditVersion, setDayEditVersion] = useState(0);
   // Accordion: one day's editor open at a time, none by default — the
   // reference's "Weekly schedule" is one compact row per day, not seven
   // always-expanded chip editors stacked on top of each other.
@@ -216,13 +220,35 @@ export function WeeklyDefaultPage(): JSX.Element {
 
       <div className="grid gap-3 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
-          <Card className="p-4">
-            <h2 className="font-serif text-lg font-semibold text-foreground">
+          <Card className="p-5">
+            <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
               Weekly schedule
             </h2>
             <p className="mb-2 text-sm text-muted-foreground">
               Set the times you normally work. A day with no times is a day you are
               normally closed.
+            </p>
+            <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+              This is your repeating pattern only — changes here don&rsquo;t reach the
+              calendar on their own.{' '}
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(true)}
+                className="font-medium text-primary hover:underline"
+              >
+                Show advanced options
+              </button>{' '}
+              below to apply it.
+              {status?.filled_to && (
+                <>
+                  {' '}
+                  Calendar is currently filled up to{' '}
+                  <span className="font-medium text-foreground">
+                    {formatDateLong(`${status.filled_to}T12:00:00Z`, 'UTC')}
+                  </span>
+                  .
+                </>
+              )}
             </p>
 
             <div>
@@ -439,8 +465,8 @@ export function WeeklyDefaultPage(): JSX.Element {
 
           {showAdvanced && (
             <>
-              <Card className="p-4">
-                <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <Card className="p-5">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
                       Put it on the calendar
@@ -527,8 +553,8 @@ export function WeeklyDefaultPage(): JSX.Element {
                 )}
               </Card>
 
-              <Card className="p-4">
-                <h3 className="mb-3 font-serif text-base font-semibold text-foreground">
+              <Card className="p-5">
+                <h3 className="mb-4 font-serif text-base font-semibold text-foreground">
                   How this behaves
                 </h3>
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -577,6 +603,7 @@ export function WeeklyDefaultPage(): JSX.Element {
             timezone={timezone}
             days={days}
             filledTo={status?.filled_to ?? null}
+            refreshToken={dayEditVersion}
             onEditDate={openDayEditor}
           />
         </div>
@@ -613,7 +640,10 @@ export function WeeklyDefaultPage(): JSX.Element {
           date={dayEditorDate}
           timezone={timezone}
           appointmentMinutes={appointmentMinutes}
-          onChanged={() => void load()}
+          onChanged={() => {
+            setDayEditVersion((v) => v + 1);
+            void load();
+          }}
         />
       </Modal>
 

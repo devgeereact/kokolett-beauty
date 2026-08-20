@@ -37,11 +37,20 @@ export function SpecialHoursClosuresCard({
   timezone,
   days,
   filledTo,
+  refreshToken,
   onEditDate,
 }: {
   timezone: string;
   days: TemplateDay[];
   filledTo: string | null;
+  /**
+   * Bumped by the parent whenever a day's published times actually change
+   * (a `DayPanel` save or copy). `filledTo` alone doesn't move on an
+   * ordinary single-day edit, so without this the card kept showing
+   * pre-edit exceptions until something else — like applying the weekly
+   * pattern — happened to change `filledTo` too.
+   */
+  refreshToken: number;
   onEditDate: (date: string) => void;
 }): JSX.Element {
   const [summary, setSummary] = useState<DaySummary[] | null>(null);
@@ -58,8 +67,7 @@ export function SpecialHoursClosuresCard({
     listMonthSummary(today, windowEnd)
       .then(setSummary)
       .catch(() => setSummary([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timezone, filledTo]);
+  }, [timezone, filledTo, today, windowEnd, refreshToken]);
 
   const usuallyOpen = new Set(
     days.filter((d) => d.times.length > 0).map((d) => d.day_of_week),
@@ -79,11 +87,11 @@ export function SpecialHoursClosuresCard({
   const hiddenCount = allExceptions.length - exceptions.length;
 
   return (
-    <Card className="p-4">
-      <h2 className="font-serif text-lg font-semibold text-foreground">
+    <Card className="p-5">
+      <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
         Special hours &amp; closures
       </h2>
-      <p className="mb-2 text-sm text-muted-foreground">
+      <p className="mb-4 text-sm text-muted-foreground">
         Dates that differ from your normal week — a day off, or extra hours added.
       </p>
 

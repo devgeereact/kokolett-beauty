@@ -21,7 +21,9 @@ type Step = 'template' | 'compose';
  * characters (never re-rendered as HTML, so there's nothing to sanitise
  * beyond what `textContent` already strips). */
 function htmlToText(html: string): string {
-  return (new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '').trim();
+  return (
+    new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
+  ).trim();
 }
 
 /**
@@ -146,7 +148,12 @@ export function ComposeEmailModal({
     setSending(true);
     setSendError(null);
     try {
-      await sendCustomEmailAsOwner(recipient.email, recipient.full_name, subject.trim(), body.trim());
+      await sendCustomEmailAsOwner(
+        recipient.email,
+        recipient.full_name,
+        subject.trim(),
+        body.trim(),
+      );
       onSent();
       onClose();
     } catch (e) {
@@ -157,7 +164,12 @@ export function ComposeEmailModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} ariaLabel="Compose email" className="max-w-modal-lg">
+    <Modal
+      open={open}
+      onClose={onClose}
+      ariaLabel="Compose email"
+      className="max-w-modal-lg"
+    >
       <div className="rounded-xl border border-border bg-popover p-5 text-popover-foreground">
         {step === 'template' ? (
           <ComposeTemplateStep

@@ -77,7 +77,11 @@ export function ComposeContentStep({
   }, [search, recipient]);
 
   const canSend =
-    !sending && !contentLoading && !!recipient && subject.trim() !== '' && body.trim() !== '';
+    !sending &&
+    !contentLoading &&
+    !!recipient &&
+    subject.trim() !== '' &&
+    body.trim() !== '';
 
   return (
     <div>
@@ -179,7 +183,11 @@ export function ComposeContentStep({
           )}
           <Field label="Subject">
             {({ id }) => (
-              <Input id={id} value={subject} onChange={(e) => onSubjectChange(e.target.value)} />
+              <Input
+                id={id}
+                value={subject}
+                onChange={(e) => onSubjectChange(e.target.value)}
+              />
             )}
           </Field>
           <Field label="Body">

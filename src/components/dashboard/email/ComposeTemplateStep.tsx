@@ -116,7 +116,9 @@ export function ComposeTemplateStep({
                       {t.label}
                     </span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {u ? `Used ${u.count} time${u.count === 1 ? '' : 's'}` : 'Not sent yet'}
+                      {u
+                        ? `Used ${u.count} time${u.count === 1 ? '' : 's'}`
+                        : 'Not sent yet'}
                     </span>
                   </span>
                 </button>

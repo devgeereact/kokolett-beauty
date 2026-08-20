@@ -38,8 +38,8 @@ import { routes } from '@/lib/routes';
 /**
  * Reports, rebuilt onto `docs/design/reports.png`'s Overview tab — real
  * stat tiles with a trend vs the equal-length period before, real time
- * series, a real status donut and service breakdown, all computed live from
- * `appointments_detailed` (no separate stored report). The reference's other
+ * series, all computed live from `appointments_detailed` (no separate
+ * stored report). The reference's other
  * six tabs (Appointments/Revenue/Customers/Services/Staff/Availability)
  * aren't built — this salon has one staff member and one bookable service
  * today, so most of that tab set would either duplicate this Overview or

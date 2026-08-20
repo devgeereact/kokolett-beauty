@@ -1,7 +1,9 @@
 # Calendar rebuild — design spec
 
+> **Archived 2026-08-20 — shipped.** The week/day/month calendar this specifies is live in `src/pages/dashboard/CalendarPage.tsx`. Kept as the record of why the calendar is shaped the way it is; not a plan, and not a description of current code.
+
 **Date:** 2026-08-11
-**Status:** Approved, pending implementation plan
+**Status:** Shipped — see the archival note above
 **Scope:** Phase 1 of the owner-dashboard redesign (see
 `docs/history/2026-08-06-intake-decisions.md` / session notes for the full
 9-piece decomposition: Calendar → Nav/Today,
@@ -278,13 +280,13 @@ localhost early rather than only at the very end:
 
 1. `WeekView` / `DayView` / `MonthView` rendering real data, **no drag
    yet** — this alone is visually the whole ask and is safe to look at
-   immediately. (Shipped — `docs/superpowers/plans/2026-08-11-calendar-week-day-views.md`.)
+   immediately. (Shipped — `docs/history/2026-08-14-calendar-week-day-views-plan.md`.)
 2. Migration `0024` + `rescheduleAppointmentAsOwner`, validated live in a
    rolled-back transaction, **plus** the `AppointmentCard` "Move" panel in
    the same pass — the original draft of this list had the panel before
    the migration, which doesn't work: there is no write path for a modal
    to call until the RPC exists. Combined into one plan:
-   `docs/superpowers/plans/2026-08-11-reschedule-as-owner-and-move-modal.md`.
+   `docs/history/2026-08-14-reschedule-as-owner-plan.md`.
    This is also what ships the accessible, keyboard-operable reschedule
    path — `AgendaList` already opens `AppointmentCard` for a booked entry,
    and `AppointmentCard` is where "Move" lives.

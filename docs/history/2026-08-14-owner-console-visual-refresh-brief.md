@@ -1,10 +1,12 @@
 # Design consultation — Owner Console shell extension
 
+> **Archived 2026-08-20 — shipped.** The visual refresh it briefs is live. Kept for the reasoning behind the token and shell decisions.
+
 **Run:** `/design-consultation`, non-interactive (headless subagent, no human reviewer
 present for this session — see §8 for exactly which calls that affects).
 **Date:** 2026-08-13
 **Scope:** Extend the Today page's approved refresh direction
-(`docs/superpowers/specs/2026-08-13-today-command-center-payment-log-design.md`) to the
+(`docs/history/2026-08-14-today-payment-log-design.md`) to the
 other six navs of the 7-nav Owner Console shell — Inbox, Calendar & Capacity, Bookings,
 Customers, Growth, Settings — plus the shared sidebar chrome. **This is an extension
 brief, not a new design system.** It proposes zero new colours and treats

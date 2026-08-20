@@ -33,21 +33,14 @@ that was never built; this list used to repeat it.
 - [ ] **`docs/ARCHITECTURE.md` §2 service list and `docs/HOOKS.md`** should get a
       periodic pass against `src/services/` and `src/hooks/` — both drift fast in this
       project (see the 2026-08-14 docs cleanup for the last correction).
-- [x] ~~**Owner data.**~~ Done: address, phone, Instagram and review link are set, 402
-      slots are published and the service menu has 49 items. Only `google_place_id`
-      remains, deliberately.
-- [ ] **Owner data (remainder).** The salon's real address, phone, opening hours, service menu and
-      Google review URL still have to be entered in Settings. The footer and the policy
-      pages render nothing where they are blank, and the `HairSalon` structured data in
-      `index.html` cannot claim `address`/`telephone`/`openingHours` until they exist.
-- [x] ~~**`.env` for the production build.**~~ Done: `VITE_APP_URL` is the www form,
-      Sentry is live on a real EU DSN. The ImageKit endpoint is still a placeholder and
-      that is fine, since all 49 menu items have a null `image_path`.
-- [ ] **`.env` (superseded).** The live bundle was built from
-      `.env.example` placeholders: `VITE_APP_URL` pointed at the **non-www** apex (it
-      feeds the owner's magic-link redirect), the ImageKit endpoint was
-      `your_imagekit_id`, and the Sentry DSN was a placeholder, so error reporting is
-      off in production.
+- [ ] **`google_place_id` is unset**, deliberately — the reviews sync stays idle and the
+      public Reviews block renders nothing (a clean empty state, not a fault). Two
+      separate places, both required before reviews appear: `google_place_id` in
+      Settings → Business, and the `GOOGLE_PLACES_API_KEY` Edge Function secret
+      (`supabase secrets set`) — the one secret deliberately left unset. Everything
+      else the owner had to key in is done: address, phone, Instagram, review link,
+      402 published slots, 49 menu items, and the
+      `HairSalon` structured data in `index.html` (`docs/GO-LIVE.md` §4).
 - [ ] **CI runs no SQL.** No `supabase db push`, no lint, no migration-apply check, no
       pgTAP — a migration that cannot apply reaches production undetected, which has
       happened once already (0002 created `citext` after the table that used it).

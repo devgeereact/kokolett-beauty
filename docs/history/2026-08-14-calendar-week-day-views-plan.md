@@ -1,6 +1,6 @@
 # Calendar Week/Day/Month Views Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Archived 2026-08-20 — shipped.** Implemented in `src/pages/dashboard/CalendarPage.tsx` and the `src/components/dashboard/calendar/` tree. The unticked `- [ ]` boxes below are the plan as written, not outstanding work.
 
 **Goal:** Replace the month-grid-only `CalendarPage` with Week / Day / Month views on an Apple-Calendar-style hour-axis grid, rendering real appointment and open-slot data with a live now-line — no drag-to-reschedule yet (that's a follow-on plan against migration `0024`).
 

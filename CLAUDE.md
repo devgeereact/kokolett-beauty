@@ -34,8 +34,8 @@ Never in a file.
 | Visual/design tokens         | `docs/DESIGN.md`        |
 | Product scope & metrics      | `docs/PRD.md`           |
 | Deploy process & safety      | `docs/DEPLOYMENT.md`    |
-| Live/proposed engineering specs | `docs/planning/`     |
-| Point-in-time audits & decisions | `docs/history/`     |
+| Hand-keyed go-live steps     | `docs/GO-LIVE.md`       |
+| Shipped plans, audits, decisions | `docs/history/` — archive; why, not what |
 
 ## Hard constraints
 - **Static build only.** Output is `dist/`, deployed via Git/FTP to cPanel.
@@ -53,9 +53,10 @@ Never in a file.
 - **Money is integer pence. Time is UTC in storage, `Europe/London` on screen.**
 - **The AI assistant can propose but never execute.** It can read business data and propose two writes — booking an appointment, sending a one-off customer email — but calling either only produces a card in the chat; the actual write (`createAppointmentAsOwner` / `sendCustomEmailAsOwner`) happens client-side, under the owner's own session, only when she clicks Confirm. The AI assistant edge function itself has no path to execute a write on its own.
 - Copy is British English.
-- **Women's hair only.** Cutting, colouring, styling, treatments. Not a general
-  beauty salon — no nails, brows, lashes or aesthetics — and not unisex. The word
-  "Beauty" in the name is branding, not scope. Structured data uses `HairSalon`.
+- **Women's hair only.** Cutting, colouring, styling, braids, locs, weaves and
+  treatments. Not a general beauty salon — no nails, brows, lashes or aesthetics —
+  and not unisex, and not barbering. The word "Beauty" in the name is branding, not
+  scope. Structured data uses `HairSalon`.
 
 ## Working style
 - Prefer editing an existing file over creating a new one.

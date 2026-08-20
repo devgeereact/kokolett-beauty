@@ -1,6 +1,6 @@
 # Reschedule As Owner + Move Modal Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Archived 2026-08-20 — shipped.** Live as migrations `0024`–`0026` plus the Move panel in the appointment edit modal. Unticked `- [ ]` boxes are the plan as written, not outstanding work.
 
 **Goal:** Give the owner a keyboard-operable way to move a booked appointment
 to a new date/time from the Calendar page — a new DB function

@@ -3,8 +3,8 @@
 **Skill:** `/plan-design-review` (gstack) · **Run mode:** non-interactive (no human designer available)
 **Scope:** Phase 1 — Information architecture redesign (steps 3–7); Phase 5 — UX/Design system
 modernization (steps 17–20). Phases 0, 2, 3, 4, 6 are out of scope for this run.
-**Reviewer grounding:** `docs/DESIGN.md` (token contract), `docs/superpowers/specs/2026-08-13-today-command-center-payment-log-design.md`,
-`docs/superpowers/specs/2026-08-11-calendar-rebuild-design.md`, and the current `src/` implementation
+**Reviewer grounding:** `docs/DESIGN.md` (token contract), `docs/history/2026-08-14-today-payment-log-design.md`,
+`docs/history/2026-08-14-calendar-rebuild-design.md`, and the current `src/` implementation
 (`DashboardLayout.tsx`, `InboxPage.tsx`, `CalendarCapacityTabs.tsx`, `CalendarShell.tsx`,
 `ConfirmDialog.tsx`, `QuickActionLauncher.tsx`).
 **Output policy for this run:** `docs/plan.md` and `docs/DESIGN.md` were **not** edited. Every "fix"
@@ -78,7 +78,7 @@ framing (age, expiring soon, next action) is IA that respects urgency, not just 
   differently, possibly with the ARIA-tabs footgun described in Pass 6).
 - Step 7 ("Temporarily remove or relabel dead-nav entries... to preserve trust") describes a
   _worse_ solution than what shipped. The actual decision — keep both reachable, visually
-  de-emphasized, cited in code as "neither is a stub or redirect" (`docs/BASELINE-AUDIT.md`) — is
+  de-emphasized, cited in code as "neither is a stub or redirect" (`docs/history/2026-08-13-baseline-audit.md`) — is
   more trustworthy than removal or relabelling and should be the policy documented, not a
   temporary stopgap description.
 - No mobile IA statement at all, despite `DashboardLayout.tsx` already handling it (identical nav
@@ -215,7 +215,7 @@ doesn't currently support).
 
 **What's there:** Phase 5 step 19 correctly names the two highest-value a11y line items —
 "keyboardable calendar interactions" and "accessible drawer/dialog behavior" — and both are backed
-by an already-approved, far more rigorous spec (`2026-08-11-calendar-rebuild-design.md`): real
+by an already-approved, far more rigorous spec (`docs/history/2026-08-14-calendar-rebuild-design.md`): real
 `<table>` semantics, `AgendaList` as a fully keyboard-operable zero-drag alternative, 44×44px touch
 targets, `prefers-reduced-motion` handling.
 

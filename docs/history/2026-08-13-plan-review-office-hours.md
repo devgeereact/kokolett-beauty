@@ -33,7 +33,7 @@ not the market).
 
 **[JUDGMENT CALL]** Skipped Phase 3.5 (cross-model second opinion via Codex
 or a Claude subagent). The decisive evidence in this review is a direct read
-of `git log`, `docs/BASELINE-AUDIT.md`, and `docs/CAPABILITY-MATRIX.md` —
+of `git log`, `docs/history/2026-08-13-baseline-audit.md`, and `docs/history/2026-08-13-capability-matrix.md` —
 already more specific and load-bearing than a cold-read summary from an
 independent model would be. A second opinion is most valuable when the
 first analyst hasn't done the legwork; here the legwork is the finding.
@@ -66,7 +66,7 @@ shipped**, and it shipped by a different mechanism than the plan describes.
 
 Direct evidence, read from this repo, not inferred:
 
-- `docs/BASELINE-AUDIT.md` and `docs/CAPABILITY-MATRIX.md` — Phase 0, Tasks
+- `docs/history/2026-08-13-baseline-audit.md` and `docs/history/2026-08-13-capability-matrix.md` — Phase 0, Tasks
   1–2 — exist on disk, dated 2026-08-13, and are thorough (they cite
   file:line evidence for every claim).
 - `git log --oneline` shows Phase 1's core move already merged: `5012def
@@ -93,7 +93,7 @@ real data` and `3d8a11f Build the Reports page` both predate the Phase 0
 quick-action launcher (Cmd+K)`, `8f3d71c Replace blocking
 window.confirm/alert with ConfirmDialog/Toast in the owner dashboard`.
 - The two specs cited for cross-reference (`2026-08-13-today-command-center…`
-  and `2026-08-11-calendar-rebuild-design.md`) are exactly Phase 5's "2026
+  and `docs/history/2026-08-14-calendar-rebuild-design.md`) are exactly Phase 5's "2026
   design-system modernization" and part of Phase 1/2's workflow redesign —
   but neither document cites a plan.md phase or step number anywhere. They
   were each generated from a direct owner ask ("rebrand Today," "make the
@@ -219,7 +219,7 @@ correctness bugs the audits already found, not process:
   calls `create_appointment_as_owner` (creates a duplicate, leaves the
   original dangling) while every other reschedule path calls
   `reschedule_appointment_as_owner` (atomic retire-and-recreate).
-  `docs/CAPABILITY-MATRIX.md` §1 and §3 both flag this independently. This
+  `docs/history/2026-08-13-capability-matrix.md` §1 and §3 both flag this independently. This
   is real data-integrity risk (Phase 4's actual point) and it's small,
   scoped, and already fully diagnosed — a day of work, not a phase.
 - `AppointmentTypePage` (price/duration) and `WeeklyDefaultPage` (weekly
@@ -360,7 +360,7 @@ shipping the bug fixes B already identifies as ready now.
 
 None blocking — this review is advisory. The fixes it recommends
 prioritizing (reschedule bug, orphaned-page recheck) are already fully
-diagnosed in `docs/CAPABILITY-MATRIX.md` and need no further research
+diagnosed in `docs/history/2026-08-13-capability-matrix.md` and need no further research
 before someone picks them up.
 
 ## The Assignment
@@ -379,8 +379,8 @@ else in this document combined.
   already, correctly, abandoned in practice — the two shipped specs cited
   for this review don't reference a single plan.md step number, and they
   shipped faster than the plan's gating would have allowed.
-- The two audits this plan produced (`BASELINE-AUDIT.md`,
-  `CAPABILITY-MATRIX.md`) are genuinely excellent work — file:line grounded,
+- The two audits this plan produced (`docs/history/2026-08-13-baseline-audit.md`,
+  `docs/history/2026-08-13-capability-matrix.md`) are genuinely excellent work — file:line grounded,
   explicit about what wasn't checked ("Doubts / not fully verified"
   sections in both). That rigor is real and worth keeping; it's the
   _phase-gated packaging_ around it that doesn't fit a team of one.

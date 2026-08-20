@@ -160,7 +160,7 @@ availability offer. All branded, all logged, all retried on failure.
 | Returning-customer rate    | Approval turnaround time (target < 4 h)            |
 | Google review conversion   | Email delivery success rate (target ≥ 99%)         |
 | Appointment utilisation    | Magic-link exchange success rate                   |
-| Average booking value      | AI recommendation acceptance rate                  |
+| Average booking value      | Assistant proposals confirmed by the owner         |
 | Cancellation rate          | Dashboard time-to-interactive                      |
 | No-show rate               | Availability-request conversion rate               |
 

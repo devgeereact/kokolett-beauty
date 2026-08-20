@@ -1,11 +1,11 @@
 # Owner Console Rebuild — Tokens, Icons, App Icon & Navigation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Archived 2026-08-20 — shipped.** The grouped sidebar, token pass, icon set and app icon are live; see `src/components/dashboard/DashboardLayout.tsx` and `tailwind.config.ts`. Unticked `- [ ]` boxes are the plan as written, not outstanding work. Paths it cites under `docs/planning/` and `docs/history/2026-08-14-design-match-loop.md` moved into `docs/history/` on 2026-08-20.
 
 **Goal:** Reconcile `docs/design/design-token.png` against the shipped token set, add an
 icon system, replace the placeholder app icon/favicon with the real Kokolett mark from
 `docs/design/logo.png`, and rebuild `DashboardLayout`'s navigation onto the grouped IA
-supplied by the owner — the prep pass `docs/design/build-loop.md`'s per-screen rebuild
+supplied by the owner — the prep pass `docs/history/2026-08-14-design-match-loop.md`'s per-screen rebuild
 depends on.
 
 **Architecture:** Token/shadow fixes land in `tailwind.config.ts` (two concrete value
@@ -13,7 +13,7 @@ corrections, no palette change — colours already match hex-for-hex). Icons com
 new `lucide-react` dependency, first used in the sidebar. The app icon is cropped from
 the existing `logo.png` lockup with Python/Pillow into the square PWA/favicon set already
 wired in `vite.config.ts`. Navigation moves from a flat 7+2 list to seven labelled groups,
-keeping the tablet breakpoint fix from `owner-console-nav-breakpoint-decision.md` and the
+keeping the tablet breakpoint fix from `docs/history/2026-08-14-owner-console-nav-breakpoint-decision.md` and the
 already-shipped Inbox tab consolidation (no route un-merge).
 
 **Tech Stack:** React Router v6, Tailwind 3.4 (CSS-custom-property tokens), `lucide-react`
@@ -22,8 +22,8 @@ Vitest, `tsc --noEmit`.
 
 **Spec:** `docs/design/design-system.png`, `docs/design/design-token.png`,
 `docs/design/logo.png`; supersedes the "flat, ungrouped nav" verdict in
-`docs/planning/owner-console-nav-breakpoint-decision.md` (keeps that doc's `md:` tablet
-breakpoint fix); extends `docs/planning/owner-console-visual-refresh-brief.md` §5.1;
+`docs/history/2026-08-14-owner-console-nav-breakpoint-decision.md` (keeps that doc's `md:` tablet
+breakpoint fix); extends `docs/history/2026-08-14-owner-console-visual-refresh-brief.md` §5.1;
 user-supplied nav hierarchy (verbatim, in chat) is reproduced in full in §0 below.
 
 ## 0. New navigation hierarchy (source of truth for Task 6)
@@ -79,7 +79,7 @@ ACCOUNT        Settings
 5. **Icons are a genuinely new requirement**, not an invention: `design-token.png` ships
    a dedicated 24×24, 2px-stroke outline icon set, and the repo has no icon library today
    (`grep` of `package.json` confirms) — the exact gap
-   `owner-console-nav-breakpoint-decision.md` flagged as a real cost for icon-based nav
+   `docs/history/2026-08-14-owner-console-nav-breakpoint-decision.md` flagged as a real cost for icon-based nav
    variants. `lucide-react` matches the token sheet's spec exactly (24×24, 2px stroke,
    outline default), is tree-shakeable, MIT-licensed, and is the standard Tailwind
    pairing. Used for primary nav rows only (Task 3/6); group headers stay text-only
@@ -754,7 +754,7 @@ git commit -m "feat(dashboard): rebuild sidebar nav onto the grouped Owner Conso
 
 ## Handoff to the per-screen rebuild
 
-Once this plan ships, `docs/design/build-loop.md`'s screen list should be re-read against
+Once this plan ships, `docs/history/2026-08-14-design-match-loop.md`'s screen list should be re-read against
 the new routes this plan adds (`routes.owner.email`, `routes.owner.templates`) and the
 corrected `activePaths` — its row mapping for "Availability" and "Appointment" predates
 this plan's IA split and may need a one-line update, not a rewrite. That's the next

@@ -19,12 +19,42 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0038_close_privileged_grants.sql`            | Revoked `drain_email_queue()`, `sync_google_reviews()` and `booked_times_on()` from every client role; dropped the public read on `google_place_snapshot`.                                       |
 | `0039_book_appointment_input_rules.sql`       | Email validation, length ceilings and a per-address rate limit on the public booking path.                                                                                                       |
 
-**This document is behind the migrations.** It describes twelve tables; twenty-four
-exist. Undocumented, all created after `0002`: `availability_slots`, `weekly_template`,
-`day_decided`, `service_menu`, `payments`, `email_templates`, `google_reviews`,
-`google_place_snapshot`, `calendar_feeds`, `subscribers`. Read
-`supabase/migrations/` for those, and treat the sections below as accurate only where
-they agree with it.
+### Every table, and where it is documented
+
+**Twenty-two tables are live.** Twenty-four were created; `0011` dropped
+`availability_rules` and `availability_exceptions`, so the two sections §3 still keeps
+for them are history, not schema. Of the twenty-two, §3 details the ten surviving from
+`0001`/`0002`; the twelve added later are summarised here, with the migration that
+created them as the authoritative source.
+
+| Table                   | Created by | What it holds                                                                                                                    |
+| ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`              | `0001`     | `auth.users` mirror: `id`, `email`, `full_name`, `avatar_url`                                                                    |
+| `app_settings`          | `0001`     | per-user `theme` (`dark`/`light`) and `notifications_enabled`, one row per profile                                               |
+| `availability_slots`    | `0011`     | **the availability model.** One row = one bookable start: `on_date`, `starts_at`, `note`; unique on the pair                     |
+| `weekly_template`       | `0013`     | the repeating week: `day_of_week` (0 = Sunday), `starts_at`. Rolled forward nightly by `extend-weekly-template`                  |
+| `day_decided`           | `0013`     | `on_date` primary key + `decided_by` (`owner`/`template`) — records a deliberate closure so the template can't refill it         |
+| `service_menu`          | `0018`     | website menu copy: `group_name`, `name`, `note`, `sort_order`, `active`; `0031` added `duration_min`, `buffer_min`, `image_path` |
+| `payments`              | `0027`     | money actually taken: `appointment_id`, `amount_pence` (> 0), `note`, `recorded_by`. `appointments.price_pence` stays 0          |
+| `email_templates`       | `0032`     | owner-editable overlay keyed by template `key`; `0037` added `include_in_automation`, default-off in practice                    |
+| `google_reviews`        | `0017`     | synced review cache: `author_name`, `rating`, `body`, `published_at`, `fetched_at`                                               |
+| `google_place_snapshot` | `0017`     | single-row (`id boolean primary key`) aggregate: `rating`, `rating_count`, `last_error`. `0038` removed its public read          |
+| `calendar_feeds`        | `0019`     | ICS feed tokens: `token_hash`, `label`, `fetch_count`, `revoked_at`. The raw token exists only in the URL                        |
+| `subscribers`           | `0017`     | mailing list: `email` (citext, unique), `source`, `confirmed`, `unsubscribed_at`                                                 |
+
+Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
+`google_place_id`, `address_line`, `phone` (`0017`) and `business_name`,
+`business_category`, `country` (`0033`); `availability_requests` gained `owner_note`
+(`0030`); `email_messages` gained `payload jsonb` (`0005`).
+
+**`ai_recommendations` exists but is dead.** Created by `0002`, present in
+`src/types/database.types.ts`, read and written by nothing. The shipped assistant is
+`src/lib/insights.ts` (client-side) plus the `ai-assistant-chat` Edge Function; neither
+uses a queue. Do not build against it — see `docs/ARCHITECTURE.md` §6b.
+
+**§8 onwards is a migration-by-migration narrative that stops at `0027`.** For
+`0028`–`0039` the table above and `supabase/migrations/` are the record; the summary
+table at the top of this document covers the load-bearing ones.
 
 ---
 
@@ -207,12 +237,14 @@ Delivery log and retry queue: `template`, `to_email`, `subject`, optional
 `bounced`), `attempts`, `last_error`, `provider_id`, `scheduled_for`, `sent_at`.
 Indexed on `(status, scheduled_for)` so the scheduled `drain_email_queue()` job (pg_cron + pg_net) can claim due rows cheaply.
 
-### `ai_recommendations`
+### `ai_recommendations` — **dead table, do not build against it**
 
-Advisory queue. `kind`, `title`, `rationale`, `payload jsonb`, `confidence` (0–1),
-`status` (`pending`/`accepted`/`dismissed`/`expired`), `acted_at`, `acted_by`.
-Nothing here mutates the business — accepting a recommendation runs a separate,
-explicit action.
+Advisory queue as designed: `kind`, `title`, `rationale`, `payload jsonb`,
+`confidence` (0–1), `status` (`pending`/`accepted`/`dismissed`/`expired`), `acted_at`,
+`acted_by`. **Nothing in the shipped app reads or writes it.** The assistant that
+exists is `src/lib/insights.ts` computed client-side, plus the `ai-assistant-chat`
+Edge Function whose proposals are confirmed by the owner in the browser. Left in place
+because dropping a table costs a migration for no gain; see `docs/ARCHITECTURE.md` §6b.
 
 ## 4. Functions
 
@@ -272,11 +304,19 @@ select id, 'owner' from public.profiles where email = 'owner@example.com';
 
 ## 7. Scheduled jobs (`pg_cron`)
 
-| Schedule    | Job                                                                  |
-| ----------- | -------------------------------------------------------------------- |
-| hourly      | `select public.expire_pending_approvals();`                          |
-| every 5 min | drain due `email_messages` (`pg_cron` calls `drain_email_queue()`)   |
-| daily 06:00 | `ai/daily-insights` — utilisation, waitlist matches, demand patterns |
+Five jobs, created by the migrations. Verify with
+`select jobname, schedule, active from cron.job order by jobname;`.
+
+| Job                        | Schedule      | What it does                                                      |
+| -------------------------- | ------------- | ----------------------------------------------------------------- |
+| `expire-pending-approvals` | `7 * * * *`   | `select public.expire_pending_approvals();` — releases held slots |
+| `drain-email-queue`        | `*/5 * * * *` | drains due `email_messages` via `drain_email_queue()` + `pg_net`  |
+| `sync-google-reviews`      | `41 * * * *`  | refreshes `google_reviews` / `google_place_snapshot`              |
+| `extend-weekly-template`   | `13 2 * * *`  | rolls `weekly_template` forward into `availability_slots`         |
+| `purge-access-tokens`      | `23 4 * * *`  | deletes spent/expired `customer_access_tokens`                    |
+
+There is **no AI job.** An earlier design had a daily `ai/daily-insights` run; the
+shipped assistant computes client-side in `src/lib/insights.ts` instead.
 
 ## 8. Migration `0003_owner_ops.sql`
 

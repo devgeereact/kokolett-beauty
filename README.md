@@ -196,8 +196,9 @@ Full details live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - [`docs/HOOKS.md`](docs/HOOKS.md) — custom hook contracts
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deploy playbook & safety rules
 - [`docs/plan.md`](docs/plan.md) — the living punch list of what's actually open
-- [`docs/planning/`](docs/planning/) — active engineering specs and plans
-- [`docs/history/`](docs/history/) — archived audits, reviews and decisions
+- [`docs/GO-LIVE.md`](docs/GO-LIVE.md) — what has to be keyed in by hand, and how it was verified
+- [`docs/history/`](docs/history/) — shipped plans, audits, reviews and decisions. Archive, not
+  current state: read it for *why*, never for *what the code does now*
 
 ## License
 MIT — do whatever you want, no warranty.

@@ -12,7 +12,7 @@ was modified; `docs/plan.md` and every other tracked file are untouched.
 
 `docs/plan.md` is well-structured as a document, but it is reviewing a codebase that
 no longer exists. The plan was committed at **2026-08-13 16:38:27**. Two other docs —
-`docs/BASELINE-AUDIT.md` and `docs/CAPABILITY-MATRIX.md` — were committed **almost two
+`docs/history/2026-08-13-baseline-audit.md` and `docs/history/2026-08-13-capability-matrix.md` — were committed **almost two
 hours earlier that same day** (14:39:57), and between the commit those audits were
 graded against (`acc7117`) and current `HEAD` (`4727434`), **29 more commits touched
 `src/`**, including the entire 7-nav restructure, the Inbox merge, and the Cmd+K quick
@@ -54,7 +54,7 @@ one phase — data-integrity hardening — that's actually still open and actual
 urgent.
 
 **Recommendation: re-baseline `docs/plan.md` before anyone executes it.** Fold in
-`BASELINE-AUDIT.md` and `CAPABILITY-MATRIX.md` as inputs, re-run route/nav discovery
+`docs/history/2026-08-13-baseline-audit.md` and `docs/history/2026-08-13-capability-matrix.md` as inputs, re-run route/nav discovery
 against current `HEAD` (not `acc7117`), reconcile the `feat/today-payment-log`
 worktree's schema/RPC additions, and rewrite Phases 0–2 as a changelog of what already
 shipped plus what's still open, rather than a forward plan. Phases 3–6 need re-scoping
@@ -69,7 +69,7 @@ missing modules") are wrong.
    Phases 0–2. See "What already exists" below — this is the single largest finding.
 2. **Minimum set of changes to achieve the stated goal?** Given the above, the
    near-term minimum isn't "execute Phases 0–2" — it's "audit what's already shipped,
-   close the four or five specific capability gaps `CAPABILITY-MATRIX.md` already
+   close the four or five specific capability gaps `docs/history/2026-08-13-capability-matrix.md` already
    found (orphaned routes, 30-day search cap, split reschedule mechanisms, missing
    request history), then start Phase 3/4 fresh." That's a materially smaller plan
    than the 24-step document implies.
@@ -101,20 +101,20 @@ right move.
 
 ## What already exists (required section)
 
-| Plan item                                                                | Status in current `HEAD`                                      | Evidence                                                                                                                                                                                                                                                    |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 0 step 1 (baseline vs docs/routes)                                 | **Done**                                                      | `docs/BASELINE-AUDIT.md`, commit `c00a9fb`/`f382d1b`/`b01c8ad`, dated 2026-08-13 14:39:57 — before `plan.md`'s own commit                                                                                                                                   |
-| Phase 0 step 2 (capability matrix)                                       | **Done**                                                      | `docs/CAPABILITY-MATRIX.md`, same commit `b01c8ad`                                                                                                                                                                                                          |
-| Phase 1 step 3 (7-nav model)                                             | **Done**                                                      | `src/components/dashboard/DashboardLayout.tsx:57-73`, comment cites "docs/plan.md Phase 1 step 3" directly                                                                                                                                                  |
-| Phase 1 step 5 (Inbox merges Approvals+Requests)                         | **Done**                                                      | `src/App.tsx:76-84` (redirects `/dashboard/approvals`→`inbox?tab=approvals`, `/dashboard/requests`→`inbox?tab=requests`), `src/pages/dashboard/InboxPage.tsx` (392 lines) + `InboxPage.test.tsx` (220 lines)                                                |
-| Phase 1 step 6 (WeeklyDefault/AppointmentType under Calendar & Capacity) | **Done**                                                      | `src/components/dashboard/CalendarCapacityTabs.tsx` (shared sub-nav across `CalendarPage`/`AppointmentTypePage`/`WeeklyDefaultPage`), `DashboardLayout.tsx` `activePaths` grouping                                                                          |
-| Phase 1 step 7 (relabel/remove Reports & Assistant nav)                  | **Tried and reversed**                                        | `DashboardLayout.tsx:75-81`: _"Real, shipped pages that sit outside the plan's 7-nav model — kept reachable, visually secondary rather than hidden or relabelled… neither is a stub or redirect."_                                                          |
-| Phase 2 step 9 (cross-nav quick actions)                                 | **Done**                                                      | `src/components/dashboard/QuickActionLauncher.tsx` + `QuickActionLauncher.test.tsx` (406 lines), Cmd+K, wired in `DashboardLayout.tsx` header                                                                                                               |
-| Phase 2 step 10 (kill blocking browser dialogs)                          | **Mostly done**                                               | `ConfirmDialog.tsx` + test exist; `TodayPage` has an undo banner per `CAPABILITY-MATRIX.md` §1. Not independently re-verified for zero remaining `window.confirm`/`alert` — flagged as a doubt, not a finding.                                              |
-| Phase 3 step 11 (Reports module)                                         | **Done, zero new RPCs**                                       | `src/pages/dashboard/ReportsPage.tsx` (132 lines) + `src/services/reportsService.ts` — pure aggregation over `listAppointments`/`listWeeklyTemplate`/`listCustomers` (existing reads) via `src/lib/insights.ts`                                             |
-| Phase 3 step 12 (AI Assistant advisory queue)                            | **Substantially done, different mechanism than plan implies** | `src/pages/dashboard/AssistantPage.tsx` (81 lines, 8 real panel modules) + `src/lib/insights.ts` — client-side, deterministic, zero Supabase writes. See Architecture Review §1 for the open ambiguity this leaves.                                         |
-| Phase 3 step 13 (Email Ops)                                              | **Backend exists, UI doesn't**                                | `supabase/migrations/0005`/`0006` (outbox), `0014` (drain-on-schedule cron), `0016` (retire unsent mail) — the data model and the drain job are live; there is no owner-facing page over it                                                                 |
-| Phase 4 step 14 (reschedule semantics bug)                               | **Real, still open**                                          | `TodayPage.tsx`'s inline reschedule calls `createAppointmentAsOwner` (duplicate-creation) instead of `rescheduleAppointmentAsOwner` (atomic retire-and-recreate) — confirmed independently by `docs/CAPABILITY-MATRIX.md` §1 and §3's cross-cutting finding |
+| Plan item                                                                | Status in current `HEAD`                                      | Evidence                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phase 0 step 1 (baseline vs docs/routes)                                 | **Done**                                                      | `docs/history/2026-08-13-baseline-audit.md`, commit `c00a9fb`/`f382d1b`/`b01c8ad`, dated 2026-08-13 14:39:57 — before `plan.md`'s own commit                                                                                                                                   |
+| Phase 0 step 2 (capability matrix)                                       | **Done**                                                      | `docs/history/2026-08-13-capability-matrix.md`, same commit `b01c8ad`                                                                                                                                                                                                          |
+| Phase 1 step 3 (7-nav model)                                             | **Done**                                                      | `src/components/dashboard/DashboardLayout.tsx:57-73`, comment cites "docs/plan.md Phase 1 step 3" directly                                                                                                                                                                     |
+| Phase 1 step 5 (Inbox merges Approvals+Requests)                         | **Done**                                                      | `src/App.tsx:76-84` (redirects `/dashboard/approvals`→`inbox?tab=approvals`, `/dashboard/requests`→`inbox?tab=requests`), `src/pages/dashboard/InboxPage.tsx` (392 lines) + `InboxPage.test.tsx` (220 lines)                                                                   |
+| Phase 1 step 6 (WeeklyDefault/AppointmentType under Calendar & Capacity) | **Done**                                                      | `src/components/dashboard/CalendarCapacityTabs.tsx` (shared sub-nav across `CalendarPage`/`AppointmentTypePage`/`WeeklyDefaultPage`), `DashboardLayout.tsx` `activePaths` grouping                                                                                             |
+| Phase 1 step 7 (relabel/remove Reports & Assistant nav)                  | **Tried and reversed**                                        | `DashboardLayout.tsx:75-81`: _"Real, shipped pages that sit outside the plan's 7-nav model — kept reachable, visually secondary rather than hidden or relabelled… neither is a stub or redirect."_                                                                             |
+| Phase 2 step 9 (cross-nav quick actions)                                 | **Done**                                                      | `src/components/dashboard/QuickActionLauncher.tsx` + `QuickActionLauncher.test.tsx` (406 lines), Cmd+K, wired in `DashboardLayout.tsx` header                                                                                                                                  |
+| Phase 2 step 10 (kill blocking browser dialogs)                          | **Mostly done**                                               | `ConfirmDialog.tsx` + test exist; `TodayPage` has an undo banner per `docs/history/2026-08-13-capability-matrix.md` §1. Not independently re-verified for zero remaining `window.confirm`/`alert` — flagged as a doubt, not a finding.                                         |
+| Phase 3 step 11 (Reports module)                                         | **Done, zero new RPCs**                                       | `src/pages/dashboard/ReportsPage.tsx` (132 lines) + `src/services/reportsService.ts` — pure aggregation over `listAppointments`/`listWeeklyTemplate`/`listCustomers` (existing reads) via `src/lib/insights.ts`                                                                |
+| Phase 3 step 12 (AI Assistant advisory queue)                            | **Substantially done, different mechanism than plan implies** | `src/pages/dashboard/AssistantPage.tsx` (81 lines, 8 real panel modules) + `src/lib/insights.ts` — client-side, deterministic, zero Supabase writes. See Architecture Review §1 for the open ambiguity this leaves.                                                            |
+| Phase 3 step 13 (Email Ops)                                              | **Backend exists, UI doesn't**                                | `supabase/migrations/0005`/`0006` (outbox), `0014` (drain-on-schedule cron), `0016` (retire unsent mail) — the data model and the drain job are live; there is no owner-facing page over it                                                                                    |
+| Phase 4 step 14 (reschedule semantics bug)                               | **Real, still open**                                          | `TodayPage.tsx`'s inline reschedule calls `createAppointmentAsOwner` (duplicate-creation) instead of `rescheduleAppointmentAsOwner` (atomic retire-and-recreate) — confirmed independently by `docs/history/2026-08-13-capability-matrix.md` §1 and §3's cross-cutting finding |
 
 ---
 
@@ -129,7 +129,7 @@ eng review of a planning document should resolve:
 - **Reconciling `feat/today-payment-log`'s migration `0027` into `docs/plan.md`'s file
   list.** Flagged as a real gap (see Architecture Review §4) but fixing it means
   editing the plan, which is out of scope for this review.
-- **Verifying `docs/BASELINE-AUDIT.md`'s "doubts / not fully verified" items**
+- **Verifying `docs/history/2026-08-13-baseline-audit.md`'s "doubts / not fully verified" items**
   (`pg_cron` job existence, `send-emails` Edge Function body, `useRealtimeAppointments`
   internals). Those audits already flagged them honestly as unverified; re-verifying
   them is Phase-0-refresh work, not eng-review work.
@@ -144,7 +144,7 @@ eng review of a planning document should resolve:
 
 ### 1. AI Assistant's mechanism ambiguity carries into Phase 3 step 12 unresolved
 
-`CAPABILITY-MATRIX.md` §"AI assistant" and `BASELINE-AUDIT.md` finding #6 already
+`docs/history/2026-08-13-capability-matrix.md` §"AI assistant" and `docs/history/2026-08-13-baseline-audit.md` finding #6 already
 establish: `docs/ARCHITECTURE.md` describes the assistant as an Edge Function that
 writes `pending`-status rows to an `ai_recommendations` table; the real, shipped
 assistant is `src/lib/insights.ts` — a pure, client-side, zero-write TypeScript module
@@ -267,8 +267,8 @@ dependency annotations per step). Two document-level issues:
    components** in current `HEAD`; both were folded into `InboxPage.tsx`. A reader
    who opens those paths in this checkout gets a 404, not stale content — worse than
    drift, it's dead links.
-2. **DRY violation across planning docs:** `docs/BASELINE-AUDIT.md`,
-   `docs/CAPABILITY-MATRIX.md`, and `docs/plan.md` now each independently describe the
+2. **DRY violation across planning docs:** `docs/history/2026-08-13-baseline-audit.md`,
+   `docs/history/2026-08-13-capability-matrix.md`, and `docs/plan.md` now each independently describe the
    same route/nav state with different currency (audit docs are current as of commit
    `acc7117`/`f382d1b`, plan is current as of nothing — it doesn't cite a commit at
    all). None of the three docs cross-reference each other's findings in a way that
@@ -295,7 +295,7 @@ There is no pgTAP, no `supabase/tests`, no DB-level test harness of any kind.
 ```
 PLAN'S VERIFICATION ITEMS                              EXISTING TEST INFRASTRUCTURE
 [+] 1. IA verification (route-audit, dead links)        [GAP] No automated route-audit script;
-                                                                docs/BASELINE-AUDIT.md did this
+                                                                docs/history/2026-08-13-baseline-audit.md did this
                                                                 by hand, once, against a stale commit
 [+] 2. Workflow UAT scripts (4 owner journeys)           [GAP] No E2E/Playwright/Cypress config found
                                                                 anywhere in the repo — these would be
@@ -389,7 +389,7 @@ two gaps:
    `reportsService.ts:30-34` runs `Promise.all([listAppointments, listWeeklyTemplate,
 listCustomers])` on every page load with a fixed 180-day window and no caching —
    fine at current data volume (a single-location, single-stylist salon), but
-   `listCustomers()` is separately flagged in `CAPABILITY-MATRIX.md` as capped at 200
+   `listCustomers()` is separately flagged in `docs/history/2026-08-13-capability-matrix.md` as capped at 200
    rows with no pagination. If Reports and the Assistant both independently call
    `listCustomers()`/`listAppointments()` on their own page loads (confirmed: neither
    service shares a cache), that's two full re-fetches of the same ~180-day window
@@ -406,8 +406,8 @@ listCustomers])` on every page load with a fixed 180-day window and no caching �
 | Phase | Stated dependency                                       | Actual state                                                                                                                                                                                                                                                                                                    | Correctness verdict                                                                        |
 | ----- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | 0     | Blocks all phases                                       | Already executed (audits committed before the plan)                                                                                                                                                                                                                                                             | **Dependency claim is stale** — nothing currently blocks on it because it already happened |
-| 1     | Depends on Phase 0                                      | Steps 3, 5, 6 shipped; step 7 shipped-then-reversed; step 4 partially true (structural separation exists, but `CAPABILITY-MATRIX.md`'s "Bookings" gaps — 30-day cap, missing reschedule wiring — mean the _outcome_ Phase 2 step 8 wants from Phase 1 isn't fully delivered yet)                                | **Mostly satisfied, not verified as complete**                                             |
-| 2     | Depends on Phase 1                                      | Step 9 shipped; step 10 mostly shipped; step 8 (explicit outcomes) not formally written anywhere, though the raw material for it is in `CAPABILITY-MATRIX.md`                                                                                                                                                   | **Substantially satisfied**                                                                |
+| 1     | Depends on Phase 0                                      | Steps 3, 5, 6 shipped; step 7 shipped-then-reversed; step 4 partially true (structural separation exists, but `docs/history/2026-08-13-capability-matrix.md`'s "Bookings" gaps — 30-day cap, missing reschedule wiring — mean the _outcome_ Phase 2 step 8 wants from Phase 1 isn't fully delivered yet)        | **Mostly satisfied, not verified as complete**                                             |
+| 2     | Depends on Phase 1                                      | Step 9 shipped; step 10 mostly shipped; step 8 (explicit outcomes) not formally written anywhere, though the raw material for it is in `docs/history/2026-08-13-capability-matrix.md`                                                                                                                           | **Substantially satisfied**                                                                |
 | 3     | Depends on Phase 2                                      | Reports/Assistant already exist independent of Phase 2 completion — they didn't wait for Phase 2 and don't structurally need to have. The stated dependency is **broader than the real one**: Email Ops (the only genuinely unbuilt piece) has no real dependency on Phase 2's quick-actions/dialog work either | **Dependency overstated** — could parallelize starting now                                 |
 | 4     | Depends on "Phase 1 route/workflow ownership" (step 14) | Step 14's bug is real and independent of Phase 1's nav work — it's a service-layer fix (`TodayPage.tsx` calling the wrong function), unrelated to which nav item hosts the page                                                                                                                                 | **Dependency mischaracterized** — step 14 could ship today, independent of any other phase |
 | 5     | Parallel with Phase 4                                   | No conflict found                                                                                                                                                                                                                                                                                               | **Correct as stated**                                                                      |
@@ -425,13 +425,13 @@ other or on unfinished Phase 1/2 work the way the plan currently implies.
 
 Once re-baselined to reflect what's actually left, the remaining work splits cleanly:
 
-| Workstream                                                                                                                                        | Modules touched                                                                                                                                    | Depends on                        |
-| ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| Reschedule-semantics fix (Phase 4 step 14 + regression test)                                                                                      | `src/pages/dashboard/TodayPage.tsx`, `src/services/appointmentService.ts` (read-only reference), new test file                                     | —                                 |
-| Email Ops module (Phase 3 step 13)                                                                                                                | New `src/pages/dashboard/EmailOpsPage.tsx`, `src/services/` (new read service over outbox), `src/lib/routes.ts`, `DashboardLayout.tsx` (nav entry) | —                                 |
-| RPC contract-test harness (prerequisite to Phase 4 step 15 / Phase 6 step 21)                                                                     | New `supabase/tests/` or `src/services/*.rpc.test.ts` pattern, CI config                                                                           | —                                 |
-| `feat/today-payment-log` reconciliation into Phase 4's RPC guard scope                                                                            | `docs/plan.md` (editing it — outside this review's scope), `supabase/migrations/0027`                                                              | Merge of `feat/today-payment-log` |
-| Booking-management capability gaps from `CAPABILITY-MATRIX.md` (30-day search cap, reschedule wiring on `AppointmentsPage`, request history view) | `src/pages/dashboard/AppointmentsPage.tsx`, `src/services/requestService.ts` (`listAllRequests` already exists, just needs a caller)               | —                                 |
+| Workstream                                                                                                                                                                | Modules touched                                                                                                                                    | Depends on                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Reschedule-semantics fix (Phase 4 step 14 + regression test)                                                                                                              | `src/pages/dashboard/TodayPage.tsx`, `src/services/appointmentService.ts` (read-only reference), new test file                                     | —                                 |
+| Email Ops module (Phase 3 step 13)                                                                                                                                        | New `src/pages/dashboard/EmailOpsPage.tsx`, `src/services/` (new read service over outbox), `src/lib/routes.ts`, `DashboardLayout.tsx` (nav entry) | —                                 |
+| RPC contract-test harness (prerequisite to Phase 4 step 15 / Phase 6 step 21)                                                                                             | New `supabase/tests/` or `src/services/*.rpc.test.ts` pattern, CI config                                                                           | —                                 |
+| `feat/today-payment-log` reconciliation into Phase 4's RPC guard scope                                                                                                    | `docs/plan.md` (editing it — outside this review's scope), `supabase/migrations/0027`                                                              | Merge of `feat/today-payment-log` |
+| Booking-management capability gaps from `docs/history/2026-08-13-capability-matrix.md` (30-day search cap, reschedule wiring on `AppointmentsPage`, request history view) | `src/pages/dashboard/AppointmentsPage.tsx`, `src/services/requestService.ts` (`listAllRequests` already exists, just needs a caller)               | —                                 |
 
 **Execution order:** Launch the reschedule fix, the Email Ops module, and the RPC
 test-harness stand-up in three parallel worktrees — none share a module directory and
@@ -453,14 +453,14 @@ function.
 Synthesized from this review's findings.
 
 - [ ] **T1 (P1, human: ~2h / CC: ~15min)** — TodayPage — Fix inline reschedule to call `rescheduleAppointmentAsOwner` instead of `createAppointmentAsOwner`
-  - Surfaced by: Architecture Review / Phase dependency correctness — `CAPABILITY-MATRIX.md`'s cross-cutting reschedule finding, independently confirmed
+  - Surfaced by: Architecture Review / Phase dependency correctness — `docs/history/2026-08-13-capability-matrix.md`'s cross-cutting reschedule finding, independently confirmed
   - Files: `src/pages/dashboard/TodayPage.tsx`, `src/services/appointmentService.ts`
   - Verify: new regression test asserting no duplicate appointment is created and the original is retired
 - [ ] **T2 (P1, human: ~1d / CC: ~1h)** — supabase — Stand up an RPC contract-test harness (rolled-back-transaction pattern) before Phase 4/6 depend on it
   - Surfaced by: Test Review — zero DB-level test infrastructure exists today
   - Files: new `supabase/tests/` or equivalent, CI wiring
   - Verify: harness runs a `book_appointment` happy-path + rejection-path test against a rolled-back transaction with no side effects
-- [ ] **T3 (P2, human: ~1d / CC: ~2h)** — docs — Re-baseline `docs/plan.md` against current `HEAD`, folding in `BASELINE-AUDIT.md`/`CAPABILITY-MATRIX.md` and the `feat/today-payment-log` worktree
+- [ ] **T3 (P2, human: ~1d / CC: ~2h)** — docs — Re-baseline `docs/plan.md` against current `HEAD`, folding in `docs/history/2026-08-13-baseline-audit.md`/`docs/history/2026-08-13-capability-matrix.md` and the `feat/today-payment-log` worktree
   - Surfaced by: Executive summary — plan predates its own Phase 0 output and 29 subsequent commits
   - Files: `docs/plan.md` (out of scope for this review to edit directly — task for whoever owns the plan)
   - Verify: every "Relevant files" path resolves in this checkout, not a worktree; every phase status reflects current `HEAD`
@@ -469,7 +469,7 @@ Synthesized from this review's findings.
   - Files: new `src/pages/dashboard/EmailOpsPage.tsx`, `src/services/` (new read service), `src/lib/routes.ts`, `DashboardLayout.tsx`
   - Verify: page renders failed/bounced rows and retry state from the existing outbox table
 - [ ] **T5 (P3, human: ~2h / CC: ~20min)** — booking management — Wire `listAllRequests()` into a request-history view (dead code today, built "for the history view" per its own doc comment)
-  - Surfaced by: What already exists / `CAPABILITY-MATRIX.md` §2
+  - Surfaced by: What already exists / `docs/history/2026-08-13-capability-matrix.md` §2
   - Files: `src/components/dashboard/RequestsPanel.tsx` or new history component, `src/services/requestService.ts`
   - Verify: answered/declined requests are visible after leaving the open queue
 
@@ -500,7 +500,7 @@ normally be an `AskUserQuestion` was resolved here instead. Revisit any of these
    `## GSTACK REVIEW REPORT` to `docs/plan.md`.** This is a deliberate deviation from
    the skill's normal "Plan File Review Report" step, per the task's explicit
    instruction not to edit any existing tracked file.
-5. **Treated `CAPABILITY-MATRIX.md`'s "Doubts / not fully verified" items as
+5. **Treated `docs/history/2026-08-13-capability-matrix.md`'s "Doubts / not fully verified" items as
    ground truth rather than re-verifying them myself** (e.g. `pg_cron` job existence,
    `send-emails` Edge Function internals). Re-verifying was out of this review's
    budget; I inherited their confidence level rather than upgrading or downgrading it.

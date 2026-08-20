@@ -17,7 +17,13 @@
     />
     <link rel="canonical" href="https://www.kokolettbeauty.com/" />
 
-    <!-- iOS PWA support -->
+    <!-- iOS PWA support.
+         Both spellings are needed, and neither is redundant. `mobile-web-app-capable`
+         is the standard name; Chrome warns once per page load that the `apple-`
+         prefixed one is deprecated. But iOS Safari only honours the `apple-` form for
+         standalone mode, so dropping it would take the salon's installed app out of
+         full screen and back into a browser chrome on every iPhone it is on. -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="/icons/pwa-192.png" />

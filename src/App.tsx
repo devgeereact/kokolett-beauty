@@ -1,5 +1,5 @@
 import { Suspense, lazy, type JSX } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
@@ -92,19 +92,6 @@ const SettingsPage = lazy(() =>
   import('@/pages/dashboard/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 );
 
-/**
- * Owner routes are wrapped individually rather than by a layout route, because
- * each page owns its own `DashboardLayout` header, badges and actions — a
- * shared parent would have to guess them.
- */
-function owner(element: JSX.Element): JSX.Element {
-  return (
-    <ProtectedRoute>
-      <Suspense fallback={<LoadingState />}>{element}</Suspense>
-    </ProtectedRoute>
-  );
-}
-
 export function App(): JSX.Element {
   return (
     <ThemeProvider>
@@ -133,59 +120,75 @@ export function App(): JSX.Element {
               <Route path="/login" element={<LoginPage />} />
               <Route path={routes.auth.resetPassword} element={<ResetPasswordPage />} />
 
-              <Route path={routes.owner.dashboard} element={owner(<TodayPage />)} />
-              <Route path={routes.owner.inbox} element={owner(<InboxPage />)} />
-              {/* Approvals and Requests used to be separate destinations
-                  (Requests a tab inside AppointmentsPage, Approvals its own
-                  page). Both queues now live in InboxPage; these routes stay
-                  mounted purely as redirects so old links and bookmarks still
-                  land somewhere real. */}
+              {/*
+                Every dashboard route nests under one shared gate instead of
+                each wrapping ProtectedRoute individually. React Router
+                unmounts the whole previous route element on a navigation
+                between siblings, so wrapping per-route remounted
+                ProtectedRoute (and re-ran useIsOwner's is_owner RPC) on every
+                click between dashboard pages — a fresh loading spinner, and
+                under latency a false "Cannot reach the salon"/"No access"
+                screen that reads as a logout even though the Supabase session
+                was untouched. Mounting the gate once here means it re-checks
+                on true entry into the dashboard (and on refresh), not on
+                internal navigation. Each page still owns its own
+                DashboardLayout — that did not depend on the gate boundary.
+              */}
               <Route
-                path={routes.owner.approvals}
-                element={owner(
-                  <Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />,
-                )}
-              />
-              <Route
-                path={routes.owner.requests}
-                element={owner(
-                  <Navigate to={`${routes.owner.inbox}?tab=requests`} replace />,
-                )}
-              />
-              <Route
-                path={routes.owner.appointments}
-                element={owner(<AppointmentsPage />)}
-              />
-              <Route path={routes.owner.customers} element={owner(<CustomersPage />)} />
-              <Route
-                path={routes.owner.appointmentType}
-                element={owner(<AppointmentTypePage />)}
-              />
-              <Route
-                path={routes.owner.serviceMenu}
-                element={owner(<ServiceMenuPage />)}
-              />
-              <Route path={routes.owner.settings} element={owner(<SettingsPage />)} />
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingState />}>
+                      <Outlet />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              >
+                <Route path={routes.owner.dashboard} element={<TodayPage />} />
+                <Route path={routes.owner.inbox} element={<InboxPage />} />
+                {/* Approvals and Requests used to be separate destinations
+                    (Requests a tab inside AppointmentsPage, Approvals its own
+                    page). Both queues now live in InboxPage; these routes stay
+                    mounted purely as redirects so old links and bookmarks still
+                    land somewhere real. */}
+                <Route
+                  path={routes.owner.approvals}
+                  element={
+                    <Navigate to={`${routes.owner.inbox}?tab=approvals`} replace />
+                  }
+                />
+                <Route
+                  path={routes.owner.requests}
+                  element={<Navigate to={`${routes.owner.inbox}?tab=requests`} replace />}
+                />
+                <Route path={routes.owner.appointments} element={<AppointmentsPage />} />
+                <Route path={routes.owner.customers} element={<CustomersPage />} />
+                <Route
+                  path={routes.owner.appointmentType}
+                  element={<AppointmentTypePage />}
+                />
+                <Route path={routes.owner.serviceMenu} element={<ServiceMenuPage />} />
+                <Route path={routes.owner.settings} element={<SettingsPage />} />
 
-              <Route path={routes.owner.calendar} element={owner(<CalendarPage />)} />
-              <Route
-                path={routes.owner.weeklyDefault}
-                element={owner(<WeeklyDefaultPage />)}
-              />
+                <Route path={routes.owner.calendar} element={<CalendarPage />} />
+                <Route
+                  path={routes.owner.weeklyDefault}
+                  element={<WeeklyDefaultPage />}
+                />
 
-              <Route path={routes.owner.assistant} element={owner(<AssistantPage />)} />
-              <Route path={routes.owner.reports} element={owner(<ReportsPage />)} />
-              <Route
-                path={routes.owner.notifications}
-                element={owner(<NotificationsPage />)}
-              />
-              <Route path={routes.owner.email} element={owner(<EmailPage />)} />
-              <Route path={routes.owner.templates} element={owner(<TemplatesPage />)} />
-              <Route
-                path="/dashboard/templates/:key/edit"
-                element={owner(<TemplateEditorPage />)}
-              />
-              <Route path={routes.owner.profile} element={owner(<ProfilePage />)} />
+                <Route path={routes.owner.assistant} element={<AssistantPage />} />
+                <Route path={routes.owner.reports} element={<ReportsPage />} />
+                <Route
+                  path={routes.owner.notifications}
+                  element={<NotificationsPage />}
+                />
+                <Route path={routes.owner.email} element={<EmailPage />} />
+                <Route path={routes.owner.templates} element={<TemplatesPage />} />
+                <Route
+                  path="/dashboard/templates/:key/edit"
+                  element={<TemplateEditorPage />}
+                />
+                <Route path={routes.owner.profile} element={<ProfilePage />} />
+              </Route>
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

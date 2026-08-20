@@ -79,6 +79,14 @@ npm run preview                      # smoke-test the production bundle before s
 The only shippable output is `dist/` plus the repo-root **`.htaccess`** (HTTPS
 redirect, SPA rewrite to `index.html`, MIME types, cache + security headers).
 
+**`.htaccess` and `dist/` have to ship together now.** The CSP has been enforcing
+since 2026-08-20 and its `script-src` pins `index.html`'s inline theme bootstrap by
+hash. Deploy a new `dist/` whose inline script changed, against the old `.htaccess`,
+and the browser refuses to run it — no theme on first paint, no visible error. CI
+recomputes the hash and fails when the two disagree, so this can only happen by
+deploying the two halves separately. If it does, rename the header to
+`Content-Security-Policy-Report-Only` to unbreak it immediately, then fix the hash.
+
 **If the dev server (`npm run dev`) renders with no brand colour — plain
 black/white, `bg-primary`/`bg-background` etc. present in the DOM but computed
 to transparent — this is a stale Vite/PostCSS cache on a long-running dev

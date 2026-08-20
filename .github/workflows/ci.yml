@@ -95,6 +95,38 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The CSP pins the inline theme bootstrap by hash rather than allowing
+      # 'unsafe-inline'. Edit that script without updating .htaccess and the
+      # browser silently refuses to run it: no theme on first paint, and no
+      # error anyone sees. Recomputing the hash here turns that into a failed
+      # build instead of a production bug.
+      - name: Assert the CSP script hash matches the built HTML
+        run: |
+          python3 - <<'PYEOF'
+          import base64, hashlib, re, sys
+
+          html = open('dist/index.html', encoding='utf-8').read()
+          scripts = [
+              m.group(2)
+              for m in re.finditer(r'<script(?![^>]*\bsrc=)([^>]*)>(.*?)</script>', html, re.S)
+              if 'ld+json' not in m.group(1)          # data block, never executed
+          ]
+          if len(scripts) != 1:
+              sys.exit(f'::error::expected exactly 1 inline script in dist/index.html, found {len(scripts)}. '
+                       'Every executable inline script needs its own hash in .htaccess.')
+
+          want = 'sha256-' + base64.b64encode(hashlib.sha256(scripts[0].encode()).digest()).decode()
+          htaccess = open('.htaccess', encoding='utf-8').read()
+
+          if want not in htaccess:
+              have = re.findall(r"'sha256-[A-Za-z0-9+/=]+'", htaccess)
+              sys.exit(f"::error::.htaccess CSP does not carry the hash of the inline script in "
+                       f"dist/index.html.\n  expected: '{want}'\n  found in .htaccess: {have or 'none'}\n"
+                       f"  Replace the script-src hash with the expected value.")
+
+          print(f'CSP script hash matches: {want}')
+          PYEOF
+
       - name: Assert PWA artefacts exist
         run: |
           test -f dist/sw.js || { echo "::error::dist/sw.js missing — the PWA would work online and silently fail offline"; exit 1; }

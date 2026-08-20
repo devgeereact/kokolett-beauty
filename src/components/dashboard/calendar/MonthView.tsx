@@ -7,7 +7,7 @@ import {
   monthGrid,
 } from '@/lib/calendar';
 import { formatTime } from '@/lib/format';
-import { STATUS_DOTS } from '@/lib/status';
+import { STATUS_DOTS, STATUS_PILL_BG } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { DaySummary } from '@/services/availabilityService';
 import type { AppointmentDetailed } from '@/types';
@@ -82,7 +82,7 @@ export function MonthView({
               aria-label={`${date}: ${row?.slot_count ?? 0} times, ${row?.booked_count ?? 0} booked`}
               aria-current={isToday ? 'date' : undefined}
               className={cn(
-                'flex min-h-0 flex-col items-start gap-0.5 overflow-hidden border-b border-r border-border p-2 text-left',
+                'flex min-h-0 flex-col items-start gap-1 overflow-hidden border-b border-r border-border p-2 text-left',
                 'focus-visible:relative focus-visible:z-sticky focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 inMonth ? 'bg-card hover:bg-muted' : 'bg-muted',
               )}
@@ -101,7 +101,10 @@ export function MonthView({
               </span>
 
               {inMonth && (
-                <>
+                // A separate flex group (not just more siblings in the cell's
+                // own gap-1 stack) so the "N times" fact and the appointment
+                // pills read as one unit, set apart from the day badge above.
+                <div className="flex min-h-0 w-full flex-col gap-1 overflow-hidden">
                   {/*
                     The published-times count is a fact of its own — how many
                     slots are open that day — independent of whether any of
@@ -115,32 +118,37 @@ export function MonthView({
                       {row.slot_count} time{row.slot_count === 1 ? '' : 's'}
                     </span>
                   )}
-                  {pills.map((a) => (
-                    <span
-                      key={a.id}
-                      className="flex w-full items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-2xs font-medium text-foreground"
-                    >
+                  <div className="flex w-full flex-col gap-0.5">
+                    {pills.map((a) => (
                       <span
-                        aria-hidden="true"
+                        key={a.id}
                         className={cn(
-                          'h-1.5 w-1.5 shrink-0 rounded-full',
-                          STATUS_DOTS[a.status],
+                          'flex w-full items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium text-foreground',
+                          STATUS_PILL_BG[a.status],
                         )}
-                      />
-                      <span className="min-w-0 flex-1 truncate">
-                        {a.customer_name?.split(' ')[0] ?? 'Customer'}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'h-1.5 w-1.5 shrink-0 rounded-full',
+                            STATUS_DOTS[a.status],
+                          )}
+                        />
+                        <span className="min-w-0 flex-1 truncate">
+                          {a.customer_name?.split(' ')[0] ?? 'Customer'}
+                        </span>
+                        <span className="shrink-0 font-mono text-2xs text-muted-foreground">
+                          {formatTime(a.starts_at, timezone)}
+                        </span>
                       </span>
-                      <span className="shrink-0 font-mono text-2xs text-muted-foreground">
-                        {formatTime(a.starts_at, timezone)}
+                    ))}
+                    {overflow > 0 && (
+                      <span className="text-2xs text-muted-foreground">
+                        +{overflow} more
                       </span>
-                    </span>
-                  ))}
-                  {overflow > 0 && (
-                    <span className="text-2xs text-muted-foreground">
-                      +{overflow} more
-                    </span>
-                  )}
-                </>
+                    )}
+                  </div>
+                </div>
               )}
             </button>
           );

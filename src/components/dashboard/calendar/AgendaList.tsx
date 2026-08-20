@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { STATUS_DOTS } from '@/lib/status';
+import { STATUS_DOTS, STATUS_PILL_BG } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { AppointmentStatus } from '@/types';
 
@@ -29,7 +29,11 @@ export function AgendaList({
   }
 
   return (
-    <ul className="divide-y divide-border">
+    // gap-1 between rows, not `divide-y`: each booked row now carries its
+    // own status tint (the same `STATUS_PILL_BG` fill Day/Week/Month use), so
+    // a full-width divider line would cut across that colour block instead of
+    // separating rows cleanly.
+    <ul className="flex flex-col gap-1">
       {entries.map((entry) => (
         <li key={entry.key}>
           <button
@@ -37,8 +41,9 @@ export function AgendaList({
             onClick={entry.onClick}
             disabled={!entry.onClick}
             className={cn(
-              'flex w-full items-center gap-2.5 py-2 text-left text-sm',
+              'flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              entry.variant === 'booked' && entry.status && STATUS_PILL_BG[entry.status],
               entry.onClick ? 'hover:text-primary' : 'cursor-not-allowed opacity-50',
             )}
           >
@@ -53,7 +58,9 @@ export function AgendaList({
                     : 'bg-muted-foreground',
               )}
             />
-            <span className="w-11 shrink-0 font-mono text-xs text-muted-foreground">
+            {/* Same 52px column width as Day/Week's time gutter, so the
+                three grid views and this list line up when switched between. */}
+            <span className="w-[52px] shrink-0 font-mono text-xs text-muted-foreground">
               {entry.time}
             </span>
             <span className="min-w-0 flex-1 truncate">{entry.label}</span>

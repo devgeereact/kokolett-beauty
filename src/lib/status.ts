@@ -46,8 +46,13 @@ export function statusLabel(status: AppointmentStatus): string {
  * *white* text is what fails contrast; a status colour used as small text on
  * its own near-white tint clears 4.5:1 easily, so the label itself can carry
  * the hue here without repeating that mistake).
+ *
+ * Exported so the calendar grid (Day/Week's `EventBlock`, `MonthView`) can
+ * tint its own event blocks with the same background `statusPillClass()`
+ * uses — one status→colour source of truth instead of each view keeping its
+ * own copy of the map.
  */
-const STATUS_PILL_BG: Record<AppointmentStatus, string> = {
+export const STATUS_PILL_BG: Record<AppointmentStatus, string> = {
   pending_approval: 'bg-tint-pending',
   confirmed: 'bg-tint-confirmed',
   checked_in: 'bg-tint-confirmed',

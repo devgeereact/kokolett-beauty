@@ -16,6 +16,23 @@ import { dayName, firstNameOf, formatDateShort, toSalonDate } from '@/lib/format
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
+/**
+ * Up to 5 cards can be built (gap/quiet-day/requested-window/opening-hours/
+ * draft-reply), but any subset can be missing depending on what the salon's
+ * data actually supports today — a fixed `lg:grid-cols-5` left a blank
+ * column-width of empty space whenever fewer than 5 rendered. Literal class
+ * strings, not a template (`lg:grid-cols-${n}`), because Tailwind's
+ * extractor is static — see `TONE_CLASSES` in `lib/tone.ts` for the same
+ * pattern.
+ */
+const LG_COLS_BY_COUNT: Record<number, string> = {
+  1: 'lg:grid-cols-1',
+  2: 'lg:grid-cols-2',
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5',
+};
+
 const FLEXIBILITY_LABELS: Record<string, string> = {
   any: 'flexible',
   morning: 'morning',
@@ -177,7 +194,12 @@ export function AssistantInsightsRow({
       )}
 
       {cards && cards.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 lg:grid-cols-5">
+        <div
+          className={cn(
+            'grid grid-cols-1 gap-4 min-[480px]:grid-cols-2',
+            LG_COLS_BY_COUNT[Math.min(cards.length, 5)],
+          )}
+        >
           {cards.map((card) => {
             const Icon = card.icon;
             return (

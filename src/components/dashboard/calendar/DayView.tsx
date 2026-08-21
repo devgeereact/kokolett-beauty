@@ -149,7 +149,7 @@ export function DayView({
           CALENDAR_GRID_HEIGHT_CLASS,
         )}
       >
-        <table className="w-full flex-1 border-collapse text-sm">
+        <table className="h-full w-full border-collapse text-sm">
           <caption className="sr-only">Schedule for {date}</caption>
           <tbody className="h-full">
             {labels.map((label, i) => (

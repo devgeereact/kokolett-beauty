@@ -157,7 +157,7 @@ export function WeekView({
           CALENDAR_GRID_HEIGHT_CLASS,
         )}
       >
-        <table className="w-full flex-1 border-collapse text-sm">
+        <table className="h-full w-full border-collapse text-sm">
           <caption className="sr-only">
             Week of {dates[0]} to {dates[6]}. Select a day heading, or switch to Day view,
             for a full list of that day&apos;s times.

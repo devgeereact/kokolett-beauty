@@ -56,7 +56,7 @@ but is not how the product behaves today.
 ```
 Visit site → Choose open date → Choose time → Enter contact details → Review → Submit
   → Confirmed instantly
-  → Confirmation email + .ics → Reminders (24h, 2h) → Appointment
+  → Confirmation email + .ics → Reminders (24h, 1h) → Appointment
   → Completed → Thank-you email → Google review request
 ```
 

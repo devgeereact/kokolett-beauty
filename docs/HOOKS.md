@@ -83,7 +83,7 @@ export function useAvailability(
 ): UseAvailability;
 ```
 
-**Slots are generated in the database, not the browser.** Anon has no `SELECT` on `appointments` — deliberately, per the closing comment of `0002_salon.sql` — and a policy broad enough to compute availability client-side would publish the salon's entire schedule. `public.available_slots()` does the subtraction under `security definer` and returns only free starts, applying opening rules, exceptions, lead time, horizon, the daily cap and the overlap check.
+**Slots are generated in the database, not the browser.** Anon has no `SELECT` on `appointments` — deliberately, per the closing comment of `0002_salon.sql` — and a policy broad enough to compute availability client-side would publish the salon's entire schedule. `public.available_slots(p_from, p_to)` does the subtraction under `security definer` and returns only free starts: the published `availability_slots` rows, minus live appointments, minus lead time, capped at `booking_settings.max_horizon_days` and the daily cap. Opening rules and exceptions are not consulted — `0011` dropped both tables, and a day is now exactly its own list of times.
 
 ## 6. `useAppointments`
 

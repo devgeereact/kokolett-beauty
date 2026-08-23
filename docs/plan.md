@@ -30,9 +30,18 @@ that was never built; this list used to repeat it.
       conversion, returning-customer rate and request-conversion have no dedicated
       surface. **Hold until the owner confirms the real constraint is booking
       volume/revenue rather than admin time** — don't scope this speculatively.
-- [ ] **`docs/ARCHITECTURE.md` §2 service list and `docs/HOOKS.md`** should get a
-      periodic pass against `src/services/` and `src/hooks/` — both drift fast in this
-      project (see the 2026-08-14 docs cleanup for the last correction).
+- [ ] **The docs drift fast — they need a periodic pass against the code.** Last done
+      2026-08-24, which found and fixed: the migration range (three files said `0039`,
+      disk had `0046`), a **sixth** `pg_cron` job that three files still counted as
+      five (`purge-expired-personal-data`, added by `0046`), the second reminder
+      (`0018` moved it from 2h to 1h; PRD and ARCHITECTURE still said 2h), four
+      references to `availability_rules`/`availability_exceptions` as if they were live
+      tables (`0011` dropped both), `ARCHITECTURE.md` §6's whole data-flow example
+      (stale route, stale service, stale RPC arity), §6a's "client dispatch" trigger
+      column (a leftover from the Inngest design), and the completion email
+      (`appointment_completed`, always, not `review_request` when a URL is set).
+      `SCHEMA.md` §8's narrative still stops at `0027` by design — the migration file
+      headers are the record past that.
 - [ ] **`google_place_id` is unset**, deliberately — the reviews sync stays idle and the
       public Reviews block renders nothing (a clean empty state, not a fault). Two
       separate places, both required before reviews appear: `google_place_id` in

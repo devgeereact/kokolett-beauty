@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0039`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0046`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -9,23 +9,30 @@ redid the fix properly.)
 `handle_new_user()`. `0002_salon.sql` creates the salon domain. Everything after that
 reshapes it, and some of it is load-bearing for reading the rest of this document:
 
-| Migration                                     | What it changed                                                                                                                                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `0011_slots_are_the_model.sql`                | **Dropped `availability_rules` and `availability_exceptions`.** Published availability is now explicit rows in `availability_slots`. The two sections below describing those tables are history. |
-| `0022_slots_and_mail_keep_their_promises.sql` | Rewrote `book_appointment()` to its current 6-argument form (no `p_service_id`) and fixed the BST slot-alignment bug.                                                                            |
-| `0027_payment_log.sql`                        | Added `payments`. `appointments.price_pence` is a placeholder that defaults to 0; money actually taken lives in `payments`.                                                                      |
-| `0032_email_templates.sql`                    | Added `email_templates`, the owner's editable overlay.                                                                                                                                           |
-| `0037_email_templates_opt_in.sql`             | Made that overlay opt-in, so a seeded draft cannot replace tested copy.                                                                                                                          |
-| `0038_close_privileged_grants.sql`            | Revoked `drain_email_queue()`, `sync_google_reviews()` and `booked_times_on()` from every client role; dropped the public read on `google_place_snapshot`.                                       |
-| `0039_book_appointment_input_rules.sql`       | Email validation, length ceilings and a per-address rate limit on the public booking path.                                                                                                       |
+| Migration                                         | What it changed                                                                                                                                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `0011_slots_are_the_model.sql`                    | **Dropped `availability_rules` and `availability_exceptions`.** Published availability is now explicit rows in `availability_slots`. The two sections below describing those tables are history. |
+| `0022_slots_and_mail_keep_their_promises.sql`     | Rewrote `book_appointment()` to its current 6-argument form (no `p_service_id`) and fixed the BST slot-alignment bug.                                                                            |
+| `0027_payment_log.sql`                            | Added `payments`. `appointments.price_pence` is a placeholder that defaults to 0; money actually taken lives in `payments`.                                                                      |
+| `0032_email_templates.sql`                        | Added `email_templates`, the owner's editable overlay.                                                                                                                                           |
+| `0037_email_templates_opt_in.sql`                 | Made that overlay opt-in, so a seeded draft cannot replace tested copy.                                                                                                                          |
+| `0038_close_privileged_grants.sql`                | Revoked `drain_email_queue()`, `sync_google_reviews()` and `booked_times_on()` from every client role; dropped the public read on `google_place_snapshot`.                                       |
+| `0039_book_appointment_input_rules.sql`           | Email validation, length ceilings and a per-address rate limit on the public booking path.                                                                                                       |
+| `0040_email_status_cancelled.sql`                 | `cancelled` joins the email status enum, so a retired reminder stops being counted as a delivery failure on the owner's Email screen.                                                            |
+| `0041_cancellation_reaches_the_owner.sql`         | A cancellation now emails the owner, not only the in-app notification feed.                                                                                                                      |
+| `0042_erasing_a_customer_leaves_nothing.sql`      | Erasure reaches the four other tables that held personal data — the mailing list, enquiries, the outbox and access tokens.                                                                       |
+| `0043_trigger_functions_are_not_api.sql`          | Revoked the default `execute to public` on seven `security definer` trigger functions; the triggers themselves are unaffected.                                                                   |
+| `0044_finish_the_erasures_already_requested.sql`  | Re-ran the full erasure over every customer already carrying a `deleted_at` from the weaker `0035` path.                                                                                         |
+| `0045_availability_reaches_the_whole_horizon.sql` | `available_slots` scanned a hard-coded 62 days while `max_horizon_days` is 90. The cap is now the setting.                                                                                       |
+| `0046_personal_data_stops_accumulating.sql`       | Put a retention end date on `email_messages` and `availability_requests`, which held personal data indefinitely.                                                                                 |
 
 ### Every table, and where it is documented
 
 **Twenty-two tables are live.** Twenty-four were created; `0011` dropped
-`availability_rules` and `availability_exceptions`, so the two sections §3 still keeps
-for them are history, not schema. Of the twenty-two, §3 details the ten surviving from
-`0001`/`0002`; the twelve added later are summarised here, with the migration that
-created them as the authoritative source.
+`availability_rules` and `availability_exceptions`, and the two §3 sections still
+carrying their names are marked as history rather than schema. Of the twenty-two, §3
+details the ten surviving from `0001`/`0002`; the twelve added later are summarised
+here, with the migration that created them as the authoritative source.
 
 | Table                   | Created by | What it holds                                                                                                                    |
 | ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -53,8 +60,10 @@ Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
 uses a queue. Do not build against it — see `docs/ARCHITECTURE.md` §6b.
 
 **§8 onwards is a migration-by-migration narrative that stops at `0027`.** For
-`0028`–`0039` the table above and `supabase/migrations/` are the record; the summary
-table at the top of this document covers the load-bearing ones.
+`0028`–`0046` the table above and `supabase/migrations/` are the record; the summary
+table at the top of this document covers the load-bearing ones. Each of those files
+opens with a comment explaining what it changed and why — that header is the primary
+source for anything past `0027`, not this document.
 
 ---
 
@@ -67,11 +76,11 @@ account.
 
 So access is modelled in three tiers:
 
-| Tier         | Who       | Mechanism                                                                                                                             |
-| ------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Public read  | anyone    | Explicit allow-list policies on `services`, `service_categories`, `availability_rules`, `availability_exceptions`, `booking_settings` |
-| Public write | anyone    | **None directly.** Bookings go through `book_appointment()` (`security definer`). Availability requests have a narrow INSERT policy   |
-| Owner        | the salon | `public.is_owner()` — true when `auth.uid()` is present in `staff`                                                                    |
+| Tier         | Who       | Mechanism                                                                                                                           |
+| ------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Public read  | anyone    | Explicit allow-list policies on `services`, `service_categories`, `availability_slots`, `weekly_template`, `booking_settings`       |
+| Public write | anyone    | **None directly.** Bookings go through `book_appointment()` (`security definer`). Availability requests have a narrow INSERT policy |
+| Owner        | the salon | `public.is_owner()` — true when `auth.uid()` is present in `staff`                                                                  |
 
 `is_owner()` reads a table rather than a JWT claim, so access cannot be forged by a
 client shaping its own token.
@@ -98,10 +107,11 @@ customers ──1:N── appointments ──N:1──┘
     ├──1:N── customer_access_tokens
     └──1:N── availability_requests ──0:1── appointments (converted)
 
-availability_rules       (weekly template)
-availability_exceptions  (closures, breaks, extra hours)
+availability_slots       (the availability model: one row = one bookable start)
+weekly_template          (the repeating week, a generator for the above)
+day_decided              (dates already ruled on, so the generator skips them)
 booking_settings         (single row)
-ai_recommendations       (advisory queue)
+ai_recommendations       (dead — see the note above §1)
 ```
 
 ## 3. Tables
@@ -154,28 +164,34 @@ Passwordless identity. Email is the primary key in practice; mobile is secondary
 
 Single row, enforced by `id boolean primary key default true check (id)`.
 
-| Column                     | Default         | Meaning                                                |
-| -------------------------- | --------------- | ------------------------------------------------------ |
-| `timezone`                 | `Europe/London` | all local-time reasoning uses this                     |
-| `slot_granularity_min`     | 15              | slot alignment                                         |
-| `default_buffer_min`       | 10              | fallback when a service sets none                      |
-| `lead_time_min`            | 120             | earliest bookable, from now                            |
-| `max_horizon_days`         | 90              | furthest bookable                                      |
-| `max_appointments_per_day` | 8               | hard daily cap                                         |
-| `cancellation_window_h`    | 24              | free-cancellation window                               |
-| `approve_first_time`       | true            | **hybrid switch** — off means everyone books instantly |
-| `approval_window_h`        | 12              | how long a first-time hold survives                    |
-| `google_review_url`        | null            | destination for the review request email               |
+| Column                     | Default         | Meaning                                                                                                                                                                                                                    |
+| -------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `timezone`                 | `Europe/London` | all local-time reasoning uses this                                                                                                                                                                                         |
+| `slot_granularity_min`     | 15              | slot alignment                                                                                                                                                                                                             |
+| `default_buffer_min`       | 10              | fallback when a service sets none                                                                                                                                                                                          |
+| `lead_time_min`            | 120             | earliest bookable, from now                                                                                                                                                                                                |
+| `max_horizon_days`         | 90              | furthest bookable                                                                                                                                                                                                          |
+| `max_appointments_per_day` | 8               | hard daily cap                                                                                                                                                                                                             |
+| `cancellation_window_h`    | 24              | free-cancellation window                                                                                                                                                                                                   |
+| `approve_first_time`       | true            | **hybrid switch** — off means everyone books instantly. The column default is `true`, but `0007` set the live row `false` and it has stayed there; read the row, not this column, before reasoning about booking behaviour |
+| `approval_window_h`        | 12              | how long a first-time hold survives                                                                                                                                                                                        |
+| `google_review_url`        | null            | destination for the review request email                                                                                                                                                                                   |
 
-### `availability_rules`
+### `availability_rules` — **dropped by `0011`, kept here as history**
 
-Weekly template. `day_of_week` 0–6 with **0 = Sunday**, matching Postgres
-`extract(dow …)`. Unique on `(day_of_week, opens_at)` so a day can have split shifts.
+### `availability_exceptions` — **dropped by `0011`, kept here as history**
 
-### `availability_exceptions`
+Neither table exists. `0011_slots_are_the_model.sql` dropped both; published
+availability is now explicit rows in `availability_slots`, generated by
+`weekly_template` and fenced by `day_decided` (§13). They are described in §13 and
+the history is worth reading — four overlapping ways to say when the owner was free
+is what the rebuild removed — but nothing in the running system reads either name.
 
-Date-specific overrides. `kind` ∈ `closure` | `extra_hours` | `break`. A `closure` with
-null times is a whole-day closure.
+For the record, as they were: `availability_rules` was the weekly template,
+`day_of_week` 0–6 with **0 = Sunday**, unique on `(day_of_week, opens_at)` so a day
+could have split shifts. `availability_exceptions` held date-specific overrides,
+`kind` ∈ `closure` | `extra_hours` | `break`, a null-timed `closure` meaning the
+whole day.
 
 ### `appointments`
 
@@ -282,7 +298,8 @@ function is the boundary that actually matters.
 | Table                                                                     | anon                    | customer (via Edge Fn)    | owner |
 | ------------------------------------------------------------------------- | ----------------------- | ------------------------- | ----- |
 | `services`, `service_categories`                                          | SELECT (active)         | ✓                         | ALL   |
-| `availability_rules`, `availability_exceptions`, `booking_settings`       | SELECT                  | ✓                         | ALL   |
+| `availability_slots`, `weekly_template`, `booking_settings`               | SELECT                  | ✓                         | ALL   |
+| `day_decided`                                                             | none                    | —                         | ALL   |
 | `appointments`                                                            | none (RPC only)         | own rows, server-resolved | ALL   |
 | `customers`                                                               | none                    | own row, server-resolved  | ALL   |
 | `availability_requests`                                                   | INSERT (`status='new'`) | —                         | ALL   |
@@ -304,16 +321,17 @@ select id, 'owner' from public.profiles where email = 'owner@example.com';
 
 ## 7. Scheduled jobs (`pg_cron`)
 
-Five jobs, created by the migrations. Verify with
+Six jobs, created by the migrations. Verify with
 `select jobname, schedule, active from cron.job order by jobname;`.
 
-| Job                        | Schedule      | What it does                                                      |
-| -------------------------- | ------------- | ----------------------------------------------------------------- |
-| `expire-pending-approvals` | `7 * * * *`   | `select public.expire_pending_approvals();` — releases held slots |
-| `drain-email-queue`        | `*/5 * * * *` | drains due `email_messages` via `drain_email_queue()` + `pg_net`  |
-| `sync-google-reviews`      | `41 * * * *`  | refreshes `google_reviews` / `google_place_snapshot`              |
-| `extend-weekly-template`   | `13 2 * * *`  | rolls `weekly_template` forward into `availability_slots`         |
-| `purge-access-tokens`      | `23 4 * * *`  | deletes spent/expired `customer_access_tokens`                    |
+| Job                           | Schedule      | What it does                                                                        |
+| ----------------------------- | ------------- | ----------------------------------------------------------------------------------- |
+| `expire-pending-approvals`    | `7 * * * *`   | `select public.expire_pending_approvals();` — releases held slots                   |
+| `drain-email-queue`           | `*/5 * * * *` | drains due `email_messages` via `drain_email_queue()` + `pg_net`                    |
+| `sync-google-reviews`         | `41 * * * *`  | refreshes `google_reviews` / `google_place_snapshot`                                |
+| `extend-weekly-template`      | `13 2 * * *`  | rolls `weekly_template` forward into `availability_slots`                           |
+| `purge-access-tokens`         | `23 4 * * *`  | deletes spent/expired `customer_access_tokens`                                      |
+| `purge-expired-personal-data` | `31 3 * * 0`  | `0046`'s two-year retention sweep over `email_messages` and `availability_requests` |
 
 There is **no AI job.** An earlier design had a daily `ai/daily-insights` run; the
 shipped assistant computes client-side in `src/lib/insights.ts` instead.
@@ -401,15 +419,15 @@ mid-write — the booking and its notification commit or roll back together.
 Enqueued by `notify_appointment_created`, `notify_appointment_status_changed`
 and `notify_availability_request`:
 
-| Moment            | Customer                                            | Owner                   |
-| ----------------- | --------------------------------------------------- | ----------------------- |
-| Booking held      | `booking_held`                                      | `owner_approval_needed` |
-| Booking confirmed | `booking_confirmed` + both reminders                | `owner_new_booking`     |
-| Approved          | `booking_approved` + both reminders                 | —                       |
-| Declined          | `booking_declined`                                  | —                       |
-| Cancelled         | `booking_cancelled`                                 | —                       |
-| Completed         | `review_request` (+2h, only if a review URL is set) | —                       |
-| Enquiry raised    | `request_received`                                  | `owner_new_request`     |
+| Moment            | Customer                                       | Owner                   |
+| ----------------- | ---------------------------------------------- | ----------------------- |
+| Booking held      | `booking_held`                                 | `owner_approval_needed` |
+| Booking confirmed | `booking_confirmed` + both reminders           | `owner_new_booking`     |
+| Approved          | `booking_approved` + both reminders            | —                       |
+| Declined          | `booking_declined`                             | —                       |
+| Cancelled         | `booking_cancelled`                            | —                       |
+| Completed         | `appointment_completed` (+2h, always — `0018`) | —                       |
+| Enquiry raised    | `request_received`                             | `owner_new_request`     |
 
 Reminders are queued when the booking becomes live, not by a nightly sweep, so a
 scheduler outage delays a reminder instead of losing it. A reminder whose send

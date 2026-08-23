@@ -22,7 +22,7 @@ leaks.
 
 ## 0. Before the first deploy
 
-- [ ] All migrations applied, in filename order (`0001_init.sql` through `0039_*`).
+- [ ] All migrations applied, in filename order (`0001_init.sql` through `0046_*`).
       `supabase db push --linked`.
 - [ ] `0027_payment_log.sql` pushed (`supabase db push --linked`) before or together with
       any build that reads `today_collected_pence` — otherwise the Today page's
@@ -55,12 +55,13 @@ leaks.
 - [ ] **Sending domain authenticated — SPF, DKIM and DMARC.** This is not optional.
       Every confirmation, reminder and magic link rides on email; unauthenticated mail
       lands in spam and the passwordless promise fails silently.
-- [ ] `pg_cron` jobs scheduled — five of them, exactly as the migrations create them
+- [ ] `pg_cron` jobs scheduled — six of them, exactly as the migrations create them
       (`select jobname, schedule, active from cron.job order by jobname;`):
       `expire-pending-approvals` `7 * * * *`, `drain-email-queue` `*/5 * * * *`,
       `sync-google-reviews` `41 * * * *`, `extend-weekly-template` `13 2 * * *`,
-      `purge-access-tokens` `23 4 * * *`. There is no AI job: insights are computed
-      client-side in `src/lib/insights.ts`, not on a schedule.
+      `purge-access-tokens` `23 4 * * *`, `purge-expired-personal-data` `31 3 * * 0`.
+      There is no AI job: insights are computed client-side in `src/lib/insights.ts`,
+      not on a schedule.
 - [ ] Sentry project created in the **EU region** with PII scrubbing enabled — this app
       holds UK residents' personal data and the region cannot be changed later.
 - [ ] Send one test booking through the live SMTP path and confirm the `.ics` opens
@@ -216,9 +217,9 @@ supabase db query --linked "select id, status_code, left(content,120) from net._
 ssh cpanel 'ls -t ~/mail/kokolettbeauty.com/booking/new | head'
 ```
 
-Scheduled jobs — all five: `drain-email-queue` (5 min), `expire-pending-approvals`
+Scheduled jobs — all six: `drain-email-queue` (5 min), `expire-pending-approvals`
 (hourly), `sync-google-reviews` (hourly), `extend-weekly-template` (nightly),
-`purge-access-tokens` (nightly).
+`purge-access-tokens` (nightly), `purge-expired-personal-data` (weekly, Sunday).
 
 ## Auth: signup is closed
 

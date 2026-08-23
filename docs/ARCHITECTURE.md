@@ -50,8 +50,10 @@ src/
 ├── services/      # typed data access over Supabase
 │   ├── serviceCatalogService.ts     # website service catalogue + categories
 │   ├── serviceMenuService.ts        # owner-side service-menu management
-│   ├── availabilityService.ts       # slot generation from rules
-│   ├── bookingService.ts            # book_appointment RPC wrapper
+│   ├── availabilityService.ts       # owner-side: day slots, month summary,
+│   │                                #   weekly template. Not the customer read
+│   ├── bookingService.ts            # the public path: available_slots,
+│   │                                #   book_appointment, availability requests
 │   ├── bookingSettingsService.ts    # the single booking_settings row
 │   ├── appointmentService.ts        # lifecycle transitions
 │   ├── requestService.ts            # availability-request queue + offers
@@ -60,7 +62,8 @@ src/
 │   ├── paymentService.ts            # log_payment RPC wrapper (migration 0027)
 │   ├── calendarFeedService.ts       # ICS calendar feed
 │   ├── reportsService.ts            # reporting queries
-│   ├── assistantService.ts          # data feed for the client-side AI insights module
+│   ├── assistantService.ts          # data feed for the client-side insights module
+│   ├── aiChatService.ts             # calls the ai-assistant-chat Edge Function
 │   ├── dashboardService.ts          # Today-page summary stats
 │   ├── emailService.ts              # outbox reads, template editing, one-off owner sends
 │   ├── profileService.ts            # owner account profile
@@ -166,21 +169,26 @@ not a literal HTTP 403.
 ## 6. Data flow example — a customer books a slot
 
 ```
-BookingPage (/book/:serviceSlug)
-  → useAvailability(serviceId, month)
-      → availabilityService.getSlots()
-          reads services + availability_rules + availability_exceptions
-          + booking_settings (all public-read), subtracts live appointments,
-          returns aligned TimeSlot[]
+BookPage (/book)                            // one appointment type, so no
+  → useAvailability(appointmentMinutes, …)  // service slug and no service step
+      → bookingService.fetchAvailableSlots()
+          → supabase.rpc('available_slots', { p_from, p_to })  // security definer
+              free starts only, computed in the database: the published slot
+              list minus live appointments, minus lead time, capped at
+              booking_settings.max_horizon_days
+          ← aligned TimeSlot[], grouped by salon-local date
 
   → user picks a slot, enters details, confirms
 
-  → bookingService.book(...)
-      → supabase.rpc('book_appointment', { … })      // security definer
-          validates service, alignment, lead time, horizon, availability,
-          daily cap → upserts customer → decides status:
-             returning (has a completed appointment) → 'confirmed'
-             first-time                              → 'pending_approval'
+  → bookingService.submitBooking(...)
+      → supabase.rpc('book_appointment', { … })      // security definer, 6 args
+          validates alignment (against the salon's wall clock, not UTC),
+          lead time, horizon, that the time is published, the daily cap
+          (advisory-locked on the local date), name, mobile, email format
+          and a per-address rate limit
+          → upserts the customer by lowercased email → decides status:
+             approve_first_time off (the live setting) → 'confirmed'
+             on, and first-time                        → 'pending_approval'
           → INSERT; the gist exclusion constraint settles any race
       ← { appointment_id, reference, status }
 
@@ -188,10 +196,12 @@ BookingPage (/book/:serviceSlug)
   → on other coded errors: map the code to human copy (never surface Postgres text)
 
   → a Postgres trigger on `appointments` calls queue_email(), which writes
-    a row per message into `email_messages` (status 'queued'):
+    a row per message into `email_messages` (status 'queued'), in the same
+    transaction as the booking:
           • the customer's confirmation, or the "held for approval" email
           • the owner's "new booking" / "approval needed" notification
-          • the 24h and 2h reminders, scheduled ahead
+          • the 24h and 1h reminders, scheduled ahead — and skipped outright
+            if their send time has already passed
 
   → pg_cron runs drain_email_queue() every 5 minutes. It reads the shared
     secret from Supabase Vault and POSTs to the send-emails Edge Function
@@ -204,17 +214,25 @@ credential. Everything requiring a secret happens in a Supabase Edge Function.
 
 ## 6a. Background workflows
 
-| Event                                           | Trigger           | Effect                                                              |
-| ----------------------------------------------- | ----------------- | ------------------------------------------------------------------- |
-| `appointment/booked`                            | client dispatch   | Confirmation or hold email, `.ics`, schedule reminders, owner alert |
-| `appointment/approved` / `appointment/rejected` | owner action      | Notify the customer                                                 |
-| `appointment/reminder.due`                      | scheduled         | 24h and 2h reminders                                                |
-| `appointment/cancelled` / `rescheduled`         | owner or customer | Notify both sides, release the slot                                 |
-| `appointment/completed`                         | owner action      | Thank-you, then the Google review request                           |
-| `availability-request/created`                  | client dispatch   | Owner notification + customer acknowledgement                       |
-| `email/send`                                    | internal          | SMTP send with retry, backoff and logging                           |
-| _(none — see §6b)_                              | —                 | AI insights are computed on page load, not scheduled                |
-| `approvals/expire`                              | `pg_cron` hourly  | `expire_pending_approvals()` releases stale holds                   |
+Nothing here is dispatched by the client. Every row below is either a Postgres
+trigger firing inside the writing transaction, or a `pg_cron` job — the names in the
+first column are descriptions, not event topics on a bus.
+
+| Moment                            | Fired by                                | Effect                                                                                 |
+| --------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------- |
+| Appointment created               | `notify_appointment_created` trigger    | Confirmation or hold email, `.ics`, owner alert, and both reminders queued ahead       |
+| Approved / rejected               | `notify_appointment_status_changed`     | Notify the customer                                                                    |
+| Cancelled / rescheduled / no-show | `notify_appointment_status_changed`     | Notify both sides, retire every unsent message about the booking, release the slot     |
+| Completed                         | `notify_appointment_status_changed`     | `appointment_completed` at +2h, always — the review ask is folded in when a URL is set |
+| Availability request raised       | `notify_availability_request` trigger   | Owner notification + customer acknowledgement                                          |
+| Reminders                         | queued at booking, not swept            | 24h and 1h. A scheduler outage delays a reminder rather than losing it                 |
+| Outbound send                     | `drain-email-queue`, `pg_cron` every 5m | SMTP send with retry, backoff and logging                                              |
+| Stale holds                       | `expire-pending-approvals`, hourly      | `expire_pending_approvals()` releases them                                             |
+| The repeating week                | `extend-weekly-template`, nightly       | Fills undecided days forward to the booking horizon                                    |
+| Review cache                      | `sync-google-reviews`, hourly           | Refreshes `google_reviews` / `google_place_snapshot`                                   |
+| Spent tokens                      | `purge-access-tokens`, nightly          | Deletes used and expired `customer_access_tokens`                                      |
+| Retention                         | `purge-expired-personal-data`, weekly   | `0046`'s two-year sweep of `email_messages` and `availability_requests`                |
+| _(none — see §6b)_                | —                                       | AI insights are computed on page load, not scheduled                                   |
 
 ## 6b. AI boundary
 

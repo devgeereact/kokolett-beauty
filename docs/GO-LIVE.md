@@ -508,6 +508,10 @@ Not blockers for this week, but do not let them fade from view.
 Verified against the live project on 2026-08-19. [Not done](#not-done) above is now
 empty.
 
+**This table is a dated snapshot, not current state.** The migration row was true on
+2026-08-19; `0040`–`0046` have landed since. Re-run the checks rather than reading the
+row as an answer.
+
 |                         |                                                                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Migrations              | `0001`–`0039` applied, 0 pending                                                                                                      |

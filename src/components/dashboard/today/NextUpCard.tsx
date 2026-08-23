@@ -46,7 +46,22 @@ function NextUpRow({
             {' – '}
             {formatTime(appointment.ends_at, timezone)}
             {' ('}
-            {formatDuration(appointment.service_duration_min ?? 0)}
+            {/* Measured from the two times printed either side of it, not from
+                `service_duration_min`. The booked block is the service length
+                plus its buffer, so reading the service length here rendered
+                "17:00 – 17:55 (45m)" — a card contradicting itself, and
+                disagreeing with the Appointments list and detail panel, which
+                both show the block. */}
+            {formatDuration(
+              Math.max(
+                0,
+                Math.round(
+                  (new Date(appointment.ends_at).getTime() -
+                    new Date(appointment.starts_at).getTime()) /
+                    60_000,
+                ),
+              ),
+            )}
             {')'}
           </p>
           <StatusChip status={appointment.status} className="mt-2" />

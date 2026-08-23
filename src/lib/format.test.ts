@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  addMonths,
   formatCountdown,
   formatMoney,
   greetingForHour,
@@ -164,5 +165,25 @@ describe('greetingForHour', () => {
     expect(greetingForHour(17)).toBe('Good afternoon');
     expect(greetingForHour(18)).toBe('Good evening');
     expect(greetingForHour(23)).toBe('Good evening');
+  });
+});
+
+describe('addMonths', () => {
+  it('adds whole calendar months', () => {
+    expect(addMonths('2026-08-23', 3)).toBe('2026-11-23');
+    expect(addMonths('2026-01-15', 1)).toBe('2026-02-15');
+  });
+
+  it('clamps to the end of a shorter month instead of overflowing into the next', () => {
+    // The bug this guards: `setUTCMonth` alone turns 31 January into 3 March,
+    // so "publish one month ahead" would quietly publish a month and three days.
+    expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
+    expect(addMonths('2026-08-31', 1)).toBe('2026-09-30');
+    expect(addMonths('2026-05-31', 3)).toBe('2026-08-31');
+  });
+
+  it('handles a leap February and rolls over the year', () => {
+    expect(addMonths('2028-01-31', 1)).toBe('2028-02-29');
+    expect(addMonths('2026-11-30', 3)).toBe('2027-02-28');
   });
 });

@@ -25,7 +25,7 @@ import {
   type WeeklyTemplateStatus,
 } from '@/services/availabilityService';
 import { errorMessage } from '@/lib/errors';
-import { addDays, DAYS_OF_WEEK, formatDateLong, toSalonDate } from '@/lib/format';
+import { addMonths, DAYS_OF_WEEK, formatDateLong, toSalonDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
@@ -90,7 +90,7 @@ export function WeeklyDefaultPage(): JSX.Element {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [fill, setFill] = useState({ from: '09:00', to: '17:00', every: '60' });
-  const [weeks, setWeeks] = useState('8');
+  const [months, setMonths] = useState('3');
   const [newTime, setNewTime] = useState<Record<number, string>>({});
   const [confirmingReplace, setConfirmingReplace] = useState(false);
   // Bumped whenever a day's published times actually change, so
@@ -138,9 +138,9 @@ export function WeeklyDefaultPage(): JSX.Element {
   };
 
   const apply = async (replace: boolean): Promise<void> => {
-    const weeksAhead = Number(weeks);
-    if (!Number.isFinite(weeksAhead) || weeksAhead < 1) {
-      setFormError('Choose how many weeks to fill.');
+    const monthsAhead = Number(months);
+    if (!Number.isFinite(monthsAhead) || monthsAhead < 1) {
+      setFormError('Choose how far ahead to publish.');
       return;
     }
 
@@ -151,7 +151,7 @@ export function WeeklyDefaultPage(): JSX.Element {
       const from = toSalonDate(new Date(), timezone);
       const result = await applyWeeklyTemplate(
         from,
-        addDays(from, weeksAhead * 7),
+        addMonths(from, monthsAhead),
         replace,
       );
       setMessage(
@@ -169,7 +169,7 @@ export function WeeklyDefaultPage(): JSX.Element {
 
   // 'Replace every day' overwrites days the owner has already decided, so it
   // gates on a confirmation; 'Fill empty days' only ever touches days nobody
-  // has ruled on, so it runs straight away. The weeks-ahead validation still
+  // has ruled on, so it runs straight away. The months-ahead validation still
   // has to happen before the dialog opens — an invalid value should surface
   // its error immediately rather than behind a confirmation for an apply that
   // is about to fail anyway.
@@ -178,9 +178,9 @@ export function WeeklyDefaultPage(): JSX.Element {
       void apply(false);
       return;
     }
-    const weeksAhead = Number(weeks);
-    if (!Number.isFinite(weeksAhead) || weeksAhead < 1) {
-      setFormError('Choose how many weeks to fill.');
+    const monthsAhead = Number(months);
+    if (!Number.isFinite(monthsAhead) || monthsAhead < 1) {
+      setFormError('Choose how far ahead to publish.');
       return;
     }
     setConfirmingReplace(true);
@@ -489,21 +489,26 @@ export function WeeklyDefaultPage(): JSX.Element {
                 <div className="flex flex-wrap items-end gap-4 rounded-md border border-border p-3">
                   <div>
                     <label
-                      htmlFor="weeks-ahead"
+                      htmlFor="months-ahead"
                       className="mb-1 block text-xs font-medium text-foreground"
                     >
                       How far ahead
                     </label>
+                    {/* Months, not weeks. The salon publishes and thinks in
+                        months, customers can see three months of times, and
+                        "8 weeks" asked the owner to translate between two
+                        units to work out whether she had covered the period a
+                        customer can actually book. Three months is the whole
+                        horizon, so it is the default. */}
                     <Select
-                      id="weeks-ahead"
+                      id="months-ahead"
                       className="w-40"
-                      value={weeks}
-                      onChange={(e) => setWeeks(e.target.value)}
+                      value={months}
+                      onChange={(e) => setMonths(e.target.value)}
                     >
-                      <option value="2">2 weeks</option>
-                      <option value="4">4 weeks</option>
-                      <option value="8">8 weeks</option>
-                      <option value="12">12 weeks</option>
+                      <option value="1">1 month</option>
+                      <option value="2">2 months</option>
+                      <option value="3">3 months</option>
                     </Select>
                   </div>
 

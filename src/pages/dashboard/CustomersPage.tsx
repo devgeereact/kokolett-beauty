@@ -13,11 +13,10 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import {
+  eraseCustomer,
   getCustomer,
-  hardDeleteCustomer,
   listCustomersWithStats,
   setCustomerNote,
-  softDeleteCustomer,
   updateCustomerDetails,
   type CustomerContactDraft,
   type CustomerWithStats,
@@ -72,9 +71,6 @@ export function CustomersPage(): JSX.Element {
   const [savingContact, setSavingContact] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
   const [pendingErase, setPendingErase] = useState<CustomerWithStats | null>(null);
-  const [pendingHardDelete, setPendingHardDelete] = useState<CustomerWithStats | null>(
-    null,
-  );
   const [page, setPage] = useState(1);
   // 12, not 9: the grid is 1/2/3 columns (mobile/tablet/desktop) — 12 is the
   // smallest count divisible by both 2 and 3, so the last row is never
@@ -205,26 +201,17 @@ export function CustomersPage(): JSX.Element {
 
   const erase = async (customer: CustomerWithStats): Promise<void> => {
     try {
-      await softDeleteCustomer(customer.id);
+      const outcome = await eraseCustomer(customer.id);
       setSelected(null);
       setDetailOpen(false);
+      showToast({
+        message:
+          outcome === 'anonymised'
+            ? `${customer.full_name} erased. Their paid appointments stay on the books with no personal details attached.`
+            : `${customer.full_name} erased.`,
+      });
       await load(search);
     } catch (e) {
-      showToast({ message: errorMessage(e) });
-    }
-  };
-
-  const hardDelete = async (customer: CustomerWithStats): Promise<void> => {
-    try {
-      await hardDeleteCustomer(customer.id);
-      setSelected(null);
-      setDetailOpen(false);
-      showToast({ message: `${customer.full_name} deleted.` });
-      await load(search);
-    } catch (e) {
-      // HAS_PAYMENT (migration 0035) is the one expected failure — everything
-      // else is a real error, but both surface the same way here since
-      // there's nothing more the owner can do about either from this dialog.
       showToast({ message: errorMessage(e) });
     }
   };
@@ -377,7 +364,6 @@ export function CustomersPage(): JSX.Element {
               setBooking(true);
             }}
             onErase={() => setPendingErase(selected)}
-            onHardDelete={() => setPendingHardDelete(selected)}
             onConsentChange={(consent) =>
               setCustomers((prev) =>
                 prev.map((c) =>
@@ -411,14 +397,15 @@ export function CustomersPage(): JSX.Element {
 
       <ConfirmDialog
         open={pendingErase !== null}
-        title="Erase personal details?"
+        title="Erase this customer?"
         message={
           pendingErase
-            ? `This is the UK GDPR deletion path for ${pendingErase.full_name}. Their appointment history stays for your records, but their contact details and notes are removed and they will arrive as a new customer if they book again.`
+            ? `This removes everything the salon holds about ${pendingErase.full_name}: their contact details, notes, availability requests, every email ever sent to them, and their place on the mailing list. If any of their appointments has a payment logged, those appointments stay on the books with no personal details attached, so your figures still balance. There is no undo, and they arrive as a new customer if they book again.`
             : ''
         }
         tone="destructive"
-        confirmLabel="Erase details"
+        requireTyped="DELETE"
+        confirmLabel="Erase everything"
         onConfirm={() => {
           if (!pendingErase) return;
           const customer = pendingErase;
@@ -428,24 +415,6 @@ export function CustomersPage(): JSX.Element {
         onCancel={() => setPendingErase(null)}
       />
 
-      <ConfirmDialog
-        open={pendingHardDelete !== null}
-        title="Delete this customer permanently?"
-        message={
-          pendingHardDelete
-            ? `This removes ${pendingHardDelete.full_name} and every one of their appointments from the database entirely — not the same as Erase, which keeps appointment history for your records. There is no undo. Refused if any of their appointments has a logged payment.`
-            : ''
-        }
-        tone="destructive"
-        confirmLabel="Delete permanently"
-        onConfirm={() => {
-          if (!pendingHardDelete) return;
-          const customer = pendingHardDelete;
-          setPendingHardDelete(null);
-          void hardDelete(customer);
-        }}
-        onCancel={() => setPendingHardDelete(null)}
-      />
 
       {/*
         "Customer messages" moved into CustomerDetailPanel's own Message tab

@@ -61,7 +61,6 @@ export function CustomerDetailPanel({
   onClose,
   onBookFollowUp,
   onErase,
-  onHardDelete,
   onConsentChange,
 }: {
   customer: CustomerWithStats;
@@ -82,9 +81,9 @@ export function CustomerDetailPanel({
   onClose: () => void;
   onBookFollowUp: () => void;
   /** UK GDPR erasure — anonymises in place, keeps appointment history. */
+  /** Full erasure — the only deletion this app offers. */
   onErase: () => void;
   /** A genuine hard delete — the row and their appointments gone outright. */
-  onHardDelete: () => void;
   onConsentChange: (consent: boolean) => void;
 }): JSX.Element {
   const [tab, setTab] = useState<Tab>('overview');
@@ -246,17 +245,7 @@ export function CustomerDetailPanel({
                     }}
                     className="block w-full rounded-md px-3 py-2 text-left text-sm text-destructive hover:bg-muted"
                   >
-                    Erase personal details
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onHardDelete();
-                    }}
-                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-destructive hover:bg-muted"
-                  >
-                    Delete permanently
+                    Erase this customer
                   </button>
                 </div>
               )}

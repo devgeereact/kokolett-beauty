@@ -1251,6 +1251,10 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: undefined
       }
+      erase_customer_as_owner: {
+        Args: { p_customer_id: string }
+        Returns: string
+      }
       drain_email_queue: { Args: never; Returns: number }
       expire_pending_approvals: { Args: never; Returns: number }
       extend_weekly_template: { Args: never; Returns: number }
@@ -1491,7 +1495,7 @@ export type Database = {
         | "converted"
         | "declined"
         | "expired"
-      email_status: "queued" | "sending" | "sent" | "failed" | "bounced"
+      email_status: "queued" | "sending" | "sent" | "cancelled" | "failed" | "bounced"
       exception_kind: "closure" | "extra_hours" | "break"
       recommendation_status: "pending" | "accepted" | "dismissed" | "expired"
     }
@@ -1643,7 +1647,7 @@ export const Constants = {
         "declined",
         "expired",
       ],
-      email_status: ["queued", "sending", "sent", "failed", "bounced"],
+      email_status: ["queued", "sending", "sent", "cancelled", "failed", "bounced"],
       exception_kind: ["closure", "extra_hours", "break"],
       recommendation_status: ["pending", "accepted", "dismissed", "expired"],
     },

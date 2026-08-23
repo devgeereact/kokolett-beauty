@@ -144,7 +144,8 @@ export const RequestsQueue = forwardRef<
         q &&
         !r.full_name.toLowerCase().includes(q) &&
         !r.email.toLowerCase().includes(q) &&
-        !(r.notes ?? '').toLowerCase().includes(q)
+        !(r.notes ?? '').toLowerCase().includes(q) &&
+        !(r.preferred_times ?? '').toLowerCase().includes(q)
       )
         return false;
       return true;

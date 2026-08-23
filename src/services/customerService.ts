@@ -178,39 +178,35 @@ export async function updateCustomerDetails(
   if (error) throw error;
 }
 
-/**
- * UK GDPR erasure. Soft delete, because `appointments.customer_id` is
- * `on delete restrict` — a hard delete would either fail or take the salon's
- * financial history with it. The unique index on email is partial
- * (`where deleted_at is null`), so the same person can book again afterwards
- * and arrives as a new customer, which is the correct outcome after erasure.
- */
-export async function softDeleteCustomer(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('customers')
-    .update({
-      deleted_at: new Date().toISOString(),
-      marketing_consent: false,
-      notes: null,
-    })
-    .eq('id', id);
-
-  if (error) throw error;
-}
+/** What the database did with the row, so the toast can say which. */
+export type ErasureOutcome = 'deleted' | 'anonymised';
 
 /**
- * A genuine hard delete — the customer row and every one of their
- * appointments removed outright, not anonymised in place. `soft_delete`
- * above is still the right tool for a real customer's GDPR erasure request
- * (keeps appointment history for accounting, per its own doc comment); this
- * is for the opposite case — a duplicate, test, or mistaken profile with no
- * history worth keeping. `delete_customer_as_owner` (migration 0035) refuses
- * outright if any of their appointments has a logged payment, so this can
- * never silently erase billing history.
+ * UK GDPR erasure, and the only deletion path this app offers.
+ *
+ * It replaces two that were both wrong. "Erase personal details" was a
+ * client-side update setting `deleted_at`, `marketing_consent` and `notes` —
+ * it never touched `full_name`, `email` or `mobile`, so an erased customer's
+ * name, address and phone number went on rendering in Appointments and
+ * Reports, and their address stayed on the mailing list. "Delete permanently"
+ * removed the customer and their appointments but left their address in the
+ * outbox and their contact details in `availability_requests`, and refused
+ * outright the moment any appointment had a payment against it — which is
+ * precisely when a real erasure request is hardest to honour.
+ *
+ * `erase_customer_as_owner` (migration 0042) does the whole job in one
+ * transaction and picks the ending itself: `deleted` when there is no money to
+ * protect, `anonymised` when there is, keeping the appointment rows for the
+ * books with every personal field stripped. Either way nothing identifying is
+ * left anywhere, including the mailing list.
  */
-export async function hardDeleteCustomer(id: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_customer_as_owner', { p_customer_id: id });
+export async function eraseCustomer(id: string): Promise<ErasureOutcome> {
+  const { data, error } = await supabase.rpc('erase_customer_as_owner', {
+    p_customer_id: id,
+  });
+
   if (error) throw error;
+  return data === 'anonymised' ? 'anonymised' : 'deleted';
 }
 
 /**

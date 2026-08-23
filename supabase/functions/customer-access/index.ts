@@ -30,15 +30,29 @@ const TOKEN_TTL_MINUTES = 30;
 const MAX_PER_HOUR = 3;
 const SITE = 'https://www.kokolettbeauty.com';
 
+// Local dev only — `ALLOWED_ORIGIN` is a single production value, so without
+// this the magic-link request is the one customer journey that cannot be
+// exercised against a dev server at all. `ai-assistant-chat` and
+// `render-email-preview` have carried the same list for a while; this function
+// and `owner-password-reset` were the two left behind, which is why a local
+// "email me a link" failed as an opaque CORS error rather than doing anything.
+// The list is fixed and loopback-only: it can never widen to an attacker origin.
+const DEV_ORIGINS = ['http://localhost:5082', 'http://127.0.0.1:5082'];
+
 function env(name: string, fallback = ''): string {
   return Deno.env.get(name) ?? fallback;
 }
 
-const CORS = {
-  'Access-Control-Allow-Origin': env('ALLOWED_ORIGIN', SITE),
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+function corsHeaders(requestOrigin: string | null): Record<string, string> {
+  const configured = env('ALLOWED_ORIGIN', SITE);
+  const origin =
+    requestOrigin && DEV_ORIGINS.includes(requestOrigin) ? requestOrigin : configured;
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
 
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
@@ -46,6 +60,7 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: CORS });

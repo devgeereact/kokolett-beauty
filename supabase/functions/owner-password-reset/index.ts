@@ -41,13 +41,24 @@ function env(name: string, fallback = ''): string {
   return Deno.env.get(name) ?? fallback;
 }
 
-const CORS = {
-  'Access-Control-Allow-Origin': env('ALLOWED_ORIGIN', SITE),
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+// Loopback only, and a fixed list — see the same note in `customer-access`.
+// Without it the owner's own "forgotten your password" flow is untestable
+// against a dev server, which is a poor thing to discover during an outage.
+const DEV_ORIGINS = ['http://localhost:5082', 'http://127.0.0.1:5082'];
+
+function corsHeaders(requestOrigin: string | null): Record<string, string> {
+  const configured = env('ALLOWED_ORIGIN', SITE);
+  const origin =
+    requestOrigin && DEV_ORIGINS.includes(requestOrigin) ? requestOrigin : configured;
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+}
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const CORS = corsHeaders(req.headers.get('origin'));
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: CORS });

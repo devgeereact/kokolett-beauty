@@ -61,8 +61,21 @@ revoke all on function public.purge_expired_personal_data() from public, anon, a
 -- Weekly is the right cadence: this deletes rows that crossed a two-year line,
 -- so running it nightly would only ever find a handful and running it monthly
 -- would leave data up to a month past its retention.
-select cron.schedule(
-  'purge-expired-personal-data',
-  '31 3 * * 0',
-  $cron$select public.purge_expired_personal_data()$cron$
-);
+--
+-- Guarded and unscheduled first, matching every other scheduled job here (0014).
+-- The guard is what lets CI apply this file against a stack without `pg_cron`;
+-- the unschedule is what makes re-applying it idempotent rather than leaving two
+-- jobs racing each other over the same rows.
+do $$
+begin
+  if exists (select 1 from pg_extension where extname = 'pg_cron') then
+    perform cron.unschedule(jobid) from cron.job
+     where jobname = 'purge-expired-personal-data';
+    perform cron.schedule(
+      'purge-expired-personal-data',
+      '31 3 * * 0',
+      $cron$select public.purge_expired_personal_data()$cron$);
+  else
+    raise notice 'pg_cron not installed; retention purge not scheduled.';
+  end if;
+end $$;

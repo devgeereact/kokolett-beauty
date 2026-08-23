@@ -65,9 +65,7 @@ function EventBlockImpl({
           // than being permanently boxed.
           'group absolute inset-x-1 flex items-center justify-center rounded-md text-2xs',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          onClick
-            ? 'cursor-pointer hover:bg-accent'
-            : 'cursor-not-allowed',
+          onClick ? 'cursor-pointer hover:bg-accent' : 'cursor-not-allowed',
         )}
       >
         <span

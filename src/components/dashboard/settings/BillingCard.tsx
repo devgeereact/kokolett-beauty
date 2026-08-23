@@ -13,7 +13,9 @@ export function BillingCard(): JSX.Element {
   return (
     <Card className="max-w-xl p-5">
       <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Billing</h2>
-      <p className="mb-3 text-sm text-muted-foreground">Subscription and payment details.</p>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Subscription and payment details.
+      </p>
       <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
         This dashboard is your own — there's no subscription or invoice to manage. Nothing
         to show here.

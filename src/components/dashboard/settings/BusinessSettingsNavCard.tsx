@@ -70,7 +70,9 @@ export function BusinessSettingsNavCard(): JSX.Element {
       <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
         Business settings
       </h2>
-      <p className="mb-3 text-sm text-muted-foreground">Configure your salon operations.</p>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Configure your salon operations.
+      </p>
       <div className="divide-y divide-border">
         <Row
           icon={Scissors}

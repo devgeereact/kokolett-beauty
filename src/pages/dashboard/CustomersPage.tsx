@@ -415,7 +415,6 @@ export function CustomersPage(): JSX.Element {
         onCancel={() => setPendingErase(null)}
       />
 
-
       {/*
         "Customer messages" moved into CustomerDetailPanel's own Message tab
         — replying from a specific customer's profile, not a salon-wide

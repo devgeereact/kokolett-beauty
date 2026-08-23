@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { readAuthLink } from '@/lib/authLink';
 import { routes } from '@/lib/routes';
 import { MIN_PASSWORD_LENGTH, passwordProblem } from '@/lib/password';
 import { reportError } from '@/lib/sentry';
@@ -70,20 +71,19 @@ export function ResetPasswordPage(): JSX.Element {
      * which flow the client is in, and is what the function now sends.
      */
     const consumeCredentialFromUrl = async (): Promise<void> => {
-      const query = new URLSearchParams(window.location.search);
-      const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const credential = readAuthLink(window.location.search, window.location.hash);
 
-      // GoTrue reports a refused or expired link this way rather than by
-      // omitting the token, and it deserves the invalid state immediately.
-      if (query.get('error') ?? fragment.get('error')) {
+      if (credential?.kind === 'error') {
         if (active) setPhase('invalid');
         return;
       }
 
-      const tokenHash = query.get('token_hash');
-      if (tokenHash && query.get('type') === 'recovery') {
+      // Only a recovery credential belongs on this page. `readAuthLink` has
+      // already narrowed `type` to a known literal, so an invented one never
+      // reaches `verifyOtp`.
+      if (credential?.kind === 'token_hash' && credential.type === 'recovery') {
         const { error: otpError } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
+          token_hash: credential.tokenHash,
           type: 'recovery',
         });
         if (!active) return;
@@ -92,12 +92,10 @@ export function ResetPasswordPage(): JSX.Element {
         return;
       }
 
-      const accessToken = fragment.get('access_token');
-      const refreshToken = fragment.get('refresh_token');
-      if (accessToken && refreshToken) {
+      if (credential?.kind === 'session') {
         const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
+          access_token: credential.accessToken,
+          refresh_token: credential.refreshToken,
         });
         if (!active) return;
         setPhase(sessionError ? 'invalid' : 'ready');

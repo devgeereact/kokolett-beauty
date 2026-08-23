@@ -1,6 +1,7 @@
 import { useEffect, useState, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { readAuthLink } from '@/lib/authLink';
 import { routes } from '@/lib/routes';
 import { reportError } from '@/lib/sentry';
 
@@ -45,43 +46,40 @@ export function AuthLinkHandler(): JSX.Element | null {
   const [working, setWorking] = useState(false);
 
   useEffect(() => {
-    const query = new URLSearchParams(window.location.search);
-    const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-
-    const tokenHash = query.get('token_hash');
-    const accessToken = fragment.get('access_token');
-    const refreshToken = fragment.get('refresh_token');
-    const type = query.get('type') ?? fragment.get('type');
-
     // `/reset-password` reads its own credential, and `/access/:token` is the
     // customer magic link, which is this app's own scheme rather than GoTrue's.
     const path = window.location.pathname;
     if (path === routes.auth.resetPassword || path.startsWith('/access/')) return;
 
-    const hasCredential = Boolean(tokenHash ?? (accessToken && refreshToken));
-    if (!hasCredential) return;
+    const credential = readAuthLink(window.location.search, window.location.hash);
+    if (credential === null) return;
 
     let active = true;
     setWorking(true);
 
-    /** Recovery must land on the page that can actually change a password. */
+    // `type` is already narrowed to a known literal by `readAuthLink`, so this
+    // picks between two constants rather than routing on attacker input.
     const destination =
-      type === 'recovery' ? routes.auth.resetPassword : routes.owner.dashboard;
+      credential.kind !== 'error' && credential.type === 'recovery'
+        ? routes.auth.resetPassword
+        : routes.owner.dashboard;
 
     void (async () => {
       try {
-        if (tokenHash) {
+        if (credential.kind === 'error') {
+          throw new Error('Auth link reported an error');
+        }
+
+        if (credential.kind === 'token_hash') {
           const { error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            // GoTrue's `type` values pass through unchanged; `magiclink`,
-            // `recovery`, `invite` and `email` are all valid here.
-            type: (type ?? 'magiclink') as 'magiclink' | 'recovery' | 'invite' | 'email',
+            token_hash: credential.tokenHash,
+            type: credential.type,
           });
           if (error) throw error;
-        } else if (accessToken && refreshToken) {
+        } else {
           const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+            access_token: credential.accessToken,
+            refresh_token: credential.refreshToken,
           });
           if (error) throw error;
         }
@@ -91,13 +89,16 @@ export function AuthLinkHandler(): JSX.Element | null {
         // back button.
         void navigate(destination, { replace: true });
       } catch (e) {
-        reportError(e, { where: 'AuthLinkHandler', type });
+        reportError(e, { where: 'AuthLinkHandler' });
         if (!active) return;
         // Send them somewhere that can explain itself rather than leaving a
         // dead token in the URL of whatever page they happened to land on.
-        void navigate(type === 'recovery' ? routes.auth.resetPassword : '/login', {
-          replace: true,
-        });
+        void navigate(
+          destination === routes.auth.resetPassword ? destination : '/login',
+          {
+            replace: true,
+          },
+        );
       } finally {
         if (active) setWorking(false);
       }

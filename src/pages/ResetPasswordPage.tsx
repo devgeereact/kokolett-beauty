@@ -24,6 +24,15 @@ import { Spinner } from '@/components/ui/States';
  */
 type Phase = 'checking' | 'ready' | 'invalid' | 'done';
 
+/**
+ * Take the credential out of the address bar once it has been exchanged for a
+ * session. It is single-use and already spent by this point, but it has no
+ * business sitting in history, or in the `Referer` of anything this page loads.
+ */
+function scrubUrl(): void {
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
 export function ResetPasswordPage(): JSX.Element {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('checking');
@@ -43,12 +52,69 @@ export function ResetPasswordPage(): JSX.Element {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setPhase('ready');
     });
 
-    void supabase.auth.getSession().then(({ data }) => {
+    /**
+     * Read the credential out of the URL ourselves, in both shapes.
+     *
+     * This page used to wait for the client library to do it and treated "no
+     * session yet" as a dead link — which made every recovery link fail, for a
+     * reason no amount of resending could fix. The client is configured
+     * `flowType: 'pkce'`, but `owner-password-reset` mints its link with
+     * `auth.admin.generateLink`, and an admin-generated link is implicit-flow:
+     * GoTrue verifies the token and redirects here with the session in the URL
+     * *fragment*. A PKCE client will not touch that fragment — it is looking
+     * for a `?code=` it can trade using a verifier this browser never stored,
+     * because the flow began on a server. So the token was spent, a session was
+     * genuinely issued, and this page said "no longer valid" anyway.
+     *
+     * `token_hash` is tried first because it is the shape that does not care
+     * which flow the client is in, and is what the function now sends.
+     */
+    const consumeCredentialFromUrl = async (): Promise<void> => {
+      const query = new URLSearchParams(window.location.search);
+      const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+
+      // GoTrue reports a refused or expired link this way rather than by
+      // omitting the token, and it deserves the invalid state immediately.
+      if (query.get('error') ?? fragment.get('error')) {
+        if (active) setPhase('invalid');
+        return;
+      }
+
+      const tokenHash = query.get('token_hash');
+      if (tokenHash && query.get('type') === 'recovery') {
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery',
+        });
+        if (!active) return;
+        setPhase(otpError ? 'invalid' : 'ready');
+        scrubUrl();
+        return;
+      }
+
+      const accessToken = fragment.get('access_token');
+      const refreshToken = fragment.get('refresh_token');
+      if (accessToken && refreshToken) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (!active) return;
+        setPhase(sessionError ? 'invalid' : 'ready');
+        scrubUrl();
+        return;
+      }
+
+      // Nothing in the URL: either the library already consumed it, or this is
+      // a bare visit to /reset-password.
+      const { data } = await supabase.auth.getSession();
       if (!active) return;
       setPhase((current) =>
         current === 'checking' ? (data.session ? 'ready' : 'invalid') : current,
       );
-    });
+    };
+
+    void consumeCredentialFromUrl();
 
     return () => {
       active = false;

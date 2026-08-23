@@ -17,6 +17,7 @@ import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
 import { LoginPage } from '@/pages/LoginPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { AuthLinkHandler } from '@/components/AuthLinkHandler';
 import { routes } from '@/lib/routes';
 
 /**
@@ -98,6 +99,10 @@ export function App(): JSX.Element {
       <ToastProvider>
         <AuthProvider>
           <BrowserRouter>
+            {/* Above the routes on purpose: an auth credential in the URL has
+                to be consumed before any gate can redirect away from the page
+                it landed on. */}
+            <AuthLinkHandler />
             <Routes>
               <Route path={routes.public.home} element={<HomePage />} />
               <Route path={routes.public.book} element={<BookPage />} />

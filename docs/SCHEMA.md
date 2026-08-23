@@ -148,7 +148,7 @@ Passwordless identity. Email is the primary key in practice; mobile is secondary
 | `mobile`, `full_name`, `notes`  | text        | `notes` is owner-private                                         |
 | `marketing_consent`             | bool        | separate from booking consent; `consent_updated_at` records when |
 | `first_seen_at`, `last_seen_at` | timestamptz |                                                                  |
-| `deleted_at`                    | timestamptz | soft delete for GDPR erasure while preserving financial history  |
+| `deleted_at`                    | timestamptz | set only by `erase_customer_as_owner` when payments force the row to be kept; the row is anonymised, not merely flagged |
 
 ### `booking_settings`
 
@@ -381,8 +381,11 @@ offered; `lead_time_min` and `max_horizon_days`; breaks and partial closures;
 overlap against live appointments using the same status set as
 `appointments_no_overlap`; and `max_appointments_per_day`.
 
-The range is capped at 62 days regardless of what is asked for — it is callable
-by `anon`, and an unbounded range is a cheap way to make the database expensive.
+The range is capped at `max_horizon_days` regardless of what is asked for — it is
+callable by `anon`, and an unbounded range is a cheap way to make the database
+expensive. That cap used to be a hard-coded 62 days, which silently contradicted
+the 90-day setting: the salon published three months of times and this function
+would not return the last month of them to anybody.
 
 Wall-clock windows are converted to instants before slots are generated, so a
 day containing a DST change still produces real times.

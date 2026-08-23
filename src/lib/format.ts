@@ -296,6 +296,28 @@ export function addDays(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Add whole calendar months to a `yyyy-mm-dd` date.
+ *
+ * `setUTCMonth` alone overflows: 31 January plus one month lands on 2 or 3
+ * March, because there is no 31 February for it to land on. The salon publishes
+ * availability in months, so "three months from the 31st" has to mean the end
+ * of that third month rather than a date a few days into the fourth. Setting
+ * the day to 1 before the month shift and clamping afterwards is what keeps it
+ * on the month the owner picked.
+ */
+export function addMonths(date: string, months: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  const lastDayOfMonth = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  d.setUTCDate(Math.min(day, lastDayOfMonth));
+  return d.toISOString().slice(0, 10);
+}
+
 /** "09:00:00" → "09:00". Postgres `time` columns carry seconds we never show. */
 export function trimSeconds(time: string): string {
   return time.slice(0, 5);

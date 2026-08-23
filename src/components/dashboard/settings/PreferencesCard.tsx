@@ -46,7 +46,9 @@ export function PreferencesCard(): JSX.Element {
 
   return (
     <Card className="p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Preferences</h2>
+      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+        Preferences
+      </h2>
       <p className="mb-4 text-sm text-muted-foreground">App appearance and behaviour.</p>
 
       <div className="space-y-4">

@@ -206,6 +206,7 @@ const TEMPLATE_REASON: Record<string, string> = {
   owner_password_reset: 'You are receiving this because a password reset was requested for the salon dashboard.',
   owner_approval_needed: 'You are receiving this as the owner of Kokolett Beauty UK.',
   owner_booking_moved: 'You are receiving this as the owner of Kokolett Beauty UK.',
+  owner_cancelled: 'You are receiving this as the owner of Kokolett Beauty UK.',
   owner_new_booking: 'You are receiving this as the owner of Kokolett Beauty UK.',
   owner_new_request: 'You are receiving this as the owner of Kokolett Beauty UK.',
   owner_custom_message:
@@ -804,6 +805,26 @@ export function render(template: string, p: TemplatePayload, override?: Template
           'You are receiving this as the owner of Kokolett Beauty UK.',
         ),
         text: `${p.customer_name} has booked in.\n\n${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\n${SITE}/dashboard/calendar`,
+      };
+
+    case 'owner_cancelled':
+      return {
+        html: layout(
+          'A booking was cancelled',
+          `${p.customer_name ?? ''}, ${when(p.starts_at, tz)}`,
+          line(
+            `<strong style="color:${INK}">${esc(p.customer_name)}</strong> has cancelled. This time is free again:`,
+          ) +
+            details(p, 'Freed') +
+            line(
+              `${esc(p.customer_email)}${p.customer_mobile ? ` &nbsp;·&nbsp; ${esc(p.customer_mobile)}` : ''}`,
+            ) +
+            (p.reason ? aside(`Their reason: ${esc(p.reason)}`) : '') +
+            button(`${SITE}/dashboard/calendar`, 'Open the calendar'),
+          p,
+          'You are receiving this as the owner of Kokolett Beauty UK.',
+        ),
+        text: `${p.customer_name} has cancelled.\n\nFreed: ${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}${p.reason ? `\n\nTheir reason: ${p.reason}` : ''}\n\n${SITE}/dashboard/calendar`,
       };
 
     case 'owner_new_request':

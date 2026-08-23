@@ -145,8 +145,11 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
   an email template, or an AI prompt.
 - Marketing consent is separate from booking consent. Never default it to true, never
   bundle it into a terms checkbox.
-- Deletion is a soft delete (`deleted_at`) that preserves financial history while
-  removing personal data from all views.
+- Deletion goes through `erase_customer_as_owner`, and there is exactly one path.
+  It clears the customer, the mailing list, their enquiries, the outbox and their
+  access tokens. Where no payment is attached it deletes outright; where one is,
+  it keeps the appointment rows for the books and anonymises everything personal
+  on them. Never add a second, weaker "hide the row" path beside it.
 - Do not log email addresses, phone numbers, or customer names to Sentry. Scrub them.
 
 ### 9.6 AI

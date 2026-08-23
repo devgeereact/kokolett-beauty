@@ -78,6 +78,7 @@ export function EmailPage(): JSX.Element {
       queued: 0,
       sending: 0,
       sent: 0,
+      cancelled: 0,
       failed: 0,
       bounced: 0,
     };

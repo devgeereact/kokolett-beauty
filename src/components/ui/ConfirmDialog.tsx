@@ -1,4 +1,4 @@
-import { type JSX, useEffect, useId, useRef } from 'react';
+import { type JSX, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/Button';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
@@ -12,6 +12,16 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   /** `destructive` renders the confirm action in the destructive `Button` variant. */
   tone?: 'default' | 'destructive';
+  /**
+   * A word the owner must type before Confirm becomes usable.
+   *
+   * Reserved for the genuinely irreversible. Most destructive actions in this
+   * dashboard are recoverable — a cancelled appointment still exists, a no-show
+   * can be unmarked — and gating those behind typing would train the habit of
+   * typing without reading. Erasing a customer is not recoverable, so it should
+   * not look or feel like the actions that are.
+   */
+  requireTyped?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -45,14 +55,17 @@ export function ConfirmDialog({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   tone = 'default',
+  requireTyped,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps): JSX.Element | null {
+  const [typed, setTyped] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const messageId = useId();
+  const typedId = useId();
 
   // Focus moves into the dialog on open, and back to whatever triggered it on
   // close — so a boolean-toggled panel never leaves focus stranded on a
@@ -62,6 +75,7 @@ export function ConfirmDialog({
   // default.
   useEffect(() => {
     if (!open) return undefined;
+    setTyped('');
     triggerRef.current = document.activeElement as HTMLElement | null;
     cancelRef.current?.focus();
     return () => {
@@ -109,13 +123,38 @@ export function ConfirmDialog({
         >
           {message}
         </p>
-        <div className="mt-5 flex justify-end gap-2">
+        {requireTyped && (
+          <div className="mt-4">
+            <label
+              htmlFor={typedId}
+              className="mb-1.5 block text-sm font-medium text-foreground"
+            >
+              Type <span className="font-mono font-semibold">{requireTyped}</span> to
+              confirm
+            </label>
+            <input
+              id={typedId}
+              type="text"
+              value={typed}
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(e) => setTyped(e.target.value)}
+              className={cn(
+                'min-h-touch w-full rounded-md border border-border bg-background px-3 py-2',
+                'font-mono text-sm text-foreground',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              )}
+            />
+          </div>
+        )}
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button ref={cancelRef} variant="ghost" size="sm" onClick={onCancel}>
             {cancelLabel}
           </Button>
           <Button
             variant={tone === 'destructive' ? 'destructive' : 'primary'}
             size="sm"
+            disabled={requireTyped ? typed.trim() !== requireTyped : false}
             onClick={onConfirm}
           >
             {confirmLabel}

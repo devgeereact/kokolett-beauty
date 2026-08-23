@@ -198,6 +198,23 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
     composable: false,
   },
   {
+    key: 'owner_cancelled',
+    label: 'Owner: booking cancelled',
+    description:
+      'Sent to the owner when a customer cancels. The one event that frees a chair at short notice, so it does not wait for her to open the dashboard.',
+    category: 'Owner notifications',
+    icon: CalendarX,
+    variables: [
+      'customer_name',
+      'customer_email',
+      'customer_mobile',
+      'appointment_date',
+      'appointment_time',
+      'reason',
+    ],
+    composable: false,
+  },
+  {
     key: 'owner_booking_moved',
     label: 'Owner: booking moved',
     description: 'Sent to the owner when a customer reschedules themselves.',

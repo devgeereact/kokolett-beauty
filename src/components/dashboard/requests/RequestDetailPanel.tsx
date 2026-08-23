@@ -256,6 +256,17 @@ export function RequestDetailPanel({
             />
             {FLEXIBILITY_LABELS[request.flexibility] ?? request.flexibility}
           </p>
+          {/* What she typed into "Anything more specific?" on the request form.
+              It was written to `preferred_times` and then rendered nowhere at
+              all, so the salon asked a customer when she could come in and
+              never saw the answer. It sits under the time-of-day line because
+              that is the question it refines — not in Notes, which is the
+              separate answer to "what are you after?". */}
+          {request.preferred_times && (
+            <p className="ml-6 text-sm text-muted-foreground">
+              &ldquo;{request.preferred_times}&rdquo;
+            </p>
+          )}
           <p className="flex items-center gap-2">
             <Scissors
               aria-hidden="true"

@@ -91,7 +91,11 @@ export function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       weekStartsOn={1}
-      className={cn(size === 'lg' ? 'w-full p-4 md:p-6' : 'p-3', className)}
+      /* `relative` is load-bearing: `nav` below is `absolute`, so without a
+         positioned root it anchors to the page instead of the calendar and the
+         month arrows land at the top of the document, under the sticky header —
+         invisible and unclickable, stranding the customer in one month. */
+      className={cn('relative', size === 'lg' ? 'w-full p-4 md:p-6' : 'p-3', className)}
       classNames={{
         months: 'flex flex-col gap-4',
         month: 'w-full space-y-3',

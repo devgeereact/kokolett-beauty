@@ -226,3 +226,59 @@ describe('ConfirmDialog', () => {
     expect(onConfirm).toHaveBeenCalledOnce();
   });
 });
+
+/**
+ * Type-to-confirm exists to separate the irreversible from the merely
+ * destructive. Erasing a customer removes data that cannot be recovered from
+ * anywhere in this system, so it must not be reachable by the same reflex that
+ * cancels a booking.
+ */
+describe('type-to-confirm', () => {
+  it('keeps Confirm disabled until the exact word is typed', async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(
+      <ConfirmDialog
+        open
+        title="Erase this customer?"
+        message="There is no undo."
+        tone="destructive"
+        requireTyped="DELETE"
+        confirmLabel="Erase everything"
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    const confirm = screen.getByRole('button', { name: 'Erase everything' });
+    expect(confirm).toBeDisabled();
+
+    // A near miss is still a miss — case matters, so a stray lower-case
+    // reflex cannot get through.
+    await user.type(screen.getByRole('textbox'), 'delete');
+    expect(confirm).toBeDisabled();
+
+    await user.clear(screen.getByRole('textbox'));
+    await user.type(screen.getByRole('textbox'), 'DELETE');
+    expect(confirm).toBeEnabled();
+
+    await user.click(confirm);
+    expect(onConfirm).toHaveBeenCalledOnce();
+  });
+
+  it('does not gate a dialog that has no confirmation word', () => {
+    render(
+      <ConfirmDialog
+        open
+        title="Cancel this booking?"
+        message="The customer will be notified."
+        tone="destructive"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm' })).toBeEnabled();
+  });
+});

@@ -42,7 +42,13 @@ export default defineConfig({
     VitePWA({
       // 'generateSW' lets Workbox build the service worker for us.
       strategies: 'generateSW',
-      registerType: 'prompt', // we surface our own update UI; never auto-reload
+      /* Was 'prompt' with our own update UI, on the reasoning that a reload
+         should never surprise the owner. That reasoning cost us an evening:
+         a password-recovery link opened from her inbox loaded the *precached*
+         shell, so a deployed auth fix simply did not run, and no amount of
+         redeploying could reach a browser that was never asking for new HTML.
+         An update she has to notice and accept is not an update. */
+      registerType: 'autoUpdate',
       injectRegister: null, // registration handled manually in src/main.tsx
 
       // Files pulled into the precache manifest (the "app shell").
@@ -78,7 +84,11 @@ export default defineConfig({
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: false, // wait for user to accept the update
+        skipWaiting: true, // see registerType above — stale shells broke auth
+        /* Belt and braces for the same problem: a navigation carrying an auth
+           credential must reach the network rather than being answered from
+           the precached shell. */
+        navigateFallbackDenylist: [/token_hash=/, /[?&]code=/, /type=recovery/],
         runtimeCaching: [
           {
             // ImageKit CDN — cache-first, images rarely change.

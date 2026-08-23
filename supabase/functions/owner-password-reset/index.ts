@@ -120,10 +120,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
     options: { redirectTo: `${env('SITE_URL', SITE)}/reset-password` },
   });
 
-  if (linkError || !link?.properties?.action_link) {
+  if (linkError || !link?.properties?.hashed_token) {
     console.error('[owner-password-reset] generateLink failed', linkError?.message);
     return ok();
   }
+
+  // Send the `token_hash` form rather than GoTrue's own `action_link`.
+  //
+  // `action_link` points at /auth/v1/verify, which verifies the token and then
+  // redirects to the app with the session in the URL *fragment* — the implicit
+  // flow. The browser client runs `flowType: 'pkce'` and will not read that
+  // fragment: it wants a `?code=` it can trade using a verifier stored when the
+  // flow started, and this flow started on a server, so no verifier exists.
+  // The result was a recovery that worked perfectly at GoTrue's end (token
+  // spent, session issued) and reported "this link is no longer valid" to the
+  // owner every single time, with resending unable to help.
+  //
+  // `token_hash` is flow-agnostic: the page calls `verifyOtp` with it and gets
+  // a session whichever flow the client is configured for.
+  const resetUrl =
+    `${env('SITE_URL', SITE)}/reset-password` +
+    `?token_hash=${encodeURIComponent(link.properties.hashed_token)}&type=recovery`;
 
   await supabase.from('email_messages').insert({
     template: 'owner_password_reset',
@@ -134,7 +151,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     payload: {
       // Live credential. `send-emails` scrubs the payload once delivered, which
       // is what stops a working recovery link sitting in the database.
-      reset_url: link.properties.action_link,
+      reset_url: resetUrl,
       reset_ttl_minutes: LINK_TTL_MINUTES,
     },
   });

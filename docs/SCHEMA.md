@@ -141,13 +141,13 @@ Index: `services_active_idx (is_active, sort_order) where archived_at is null`.
 
 Passwordless identity. Email is the primary key in practice; mobile is secondary.
 
-| Column                          | Type        | Notes                                                            |
-| ------------------------------- | ----------- | ---------------------------------------------------------------- |
-| `id`                            | uuid PK     |                                                                  |
-| `email`                         | citext      | unique on `lower(email)` among non-deleted rows                  |
-| `mobile`, `full_name`, `notes`  | text        | `notes` is owner-private                                         |
-| `marketing_consent`             | bool        | separate from booking consent; `consent_updated_at` records when |
-| `first_seen_at`, `last_seen_at` | timestamptz |                                                                  |
+| Column                          | Type        | Notes                                                                                                                   |
+| ------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `id`                            | uuid PK     |                                                                                                                         |
+| `email`                         | citext      | unique on `lower(email)` among non-deleted rows                                                                         |
+| `mobile`, `full_name`, `notes`  | text        | `notes` is owner-private                                                                                                |
+| `marketing_consent`             | bool        | separate from booking consent; `consent_updated_at` records when                                                        |
+| `first_seen_at`, `last_seen_at` | timestamptz |                                                                                                                         |
 | `deleted_at`                    | timestamptz | set only by `erase_customer_as_owner` when payments force the row to be kept; the row is anonymised, not merely flagged |
 
 ### `booking_settings`

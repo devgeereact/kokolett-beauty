@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { readAuthLink } from '@/lib/authLink';
 import { routes } from '@/lib/routes';
 import { MIN_PASSWORD_LENGTH, passwordProblem } from '@/lib/password';
 import { reportError } from '@/lib/sentry';
@@ -24,6 +25,15 @@ import { Spinner } from '@/components/ui/States';
  */
 type Phase = 'checking' | 'ready' | 'invalid' | 'done';
 
+/**
+ * Take the credential out of the address bar once it has been exchanged for a
+ * session. It is single-use and already spent by this point, but it has no
+ * business sitting in history, or in the `Referer` of anything this page loads.
+ */
+function scrubUrl(): void {
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
 export function ResetPasswordPage(): JSX.Element {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('checking');
@@ -43,12 +53,66 @@ export function ResetPasswordPage(): JSX.Element {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') setPhase('ready');
     });
 
-    void supabase.auth.getSession().then(({ data }) => {
+    /**
+     * Read the credential out of the URL ourselves, in both shapes.
+     *
+     * This page used to wait for the client library to do it and treated "no
+     * session yet" as a dead link — which made every recovery link fail, for a
+     * reason no amount of resending could fix. The client is configured
+     * `flowType: 'pkce'`, but `owner-password-reset` mints its link with
+     * `auth.admin.generateLink`, and an admin-generated link is implicit-flow:
+     * GoTrue verifies the token and redirects here with the session in the URL
+     * *fragment*. A PKCE client will not touch that fragment — it is looking
+     * for a `?code=` it can trade using a verifier this browser never stored,
+     * because the flow began on a server. So the token was spent, a session was
+     * genuinely issued, and this page said "no longer valid" anyway.
+     *
+     * `token_hash` is tried first because it is the shape that does not care
+     * which flow the client is in, and is what the function now sends.
+     */
+    const consumeCredentialFromUrl = async (): Promise<void> => {
+      const credential = readAuthLink(window.location.search, window.location.hash);
+
+      if (credential?.kind === 'error') {
+        if (active) setPhase('invalid');
+        return;
+      }
+
+      // Only a recovery credential belongs on this page. `readAuthLink` has
+      // already narrowed `type` to a known literal, so an invented one never
+      // reaches `verifyOtp`.
+      if (credential?.kind === 'token_hash' && credential.type === 'recovery') {
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: credential.tokenHash,
+          type: 'recovery',
+        });
+        if (!active) return;
+        setPhase(otpError ? 'invalid' : 'ready');
+        scrubUrl();
+        return;
+      }
+
+      if (credential?.kind === 'session') {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: credential.accessToken,
+          refresh_token: credential.refreshToken,
+        });
+        if (!active) return;
+        setPhase(sessionError ? 'invalid' : 'ready');
+        scrubUrl();
+        return;
+      }
+
+      // Nothing in the URL: either the library already consumed it, or this is
+      // a bare visit to /reset-password.
+      const { data } = await supabase.auth.getSession();
       if (!active) return;
       setPhase((current) =>
         current === 'checking' ? (data.session ? 'ready' : 'invalid') : current,
       );
-    });
+    };
+
+    void consumeCredentialFromUrl();
 
     return () => {
       active = false;

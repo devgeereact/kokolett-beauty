@@ -28,6 +28,7 @@ export default tseslint.config(
     ignores: [
       'dist',
       'dev-dist',
+      'coverage',
       'node_modules',
       'eslint.config.js',
       'postcss.config.js',

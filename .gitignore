@@ -10,6 +10,7 @@ node_modules/
 # Build & PWA outputs
 dist/
 dev-dist/
+coverage/
 web-build/
 build/
 .output/

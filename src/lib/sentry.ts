@@ -1,5 +1,28 @@
-import * as Sentry from '@sentry/react';
 import { env } from '@/lib/env';
+import { redactAccessToken } from '@/lib/redact';
+
+/**
+ * The monitoring shim every screen imports.
+ *
+ * This module deliberately contains no static reference to `@sentry/react`.
+ * It used to, and because `ErrorBoundary` imports `reportError` from here, the
+ * SDK landed in a chunk that `index.html` modulepreloaded — 99 kB gzipped
+ * downloaded before first paint by a customer on a phone trying to book. The
+ * real client now lives in `sentry.client.ts` and is fetched after first paint.
+ *
+ * Two rules hold this in place:
+ *  - nothing static may import `@/lib/sentry.client`;
+ *  - a failure to load monitoring must never break the page it monitors, so
+ *    every path here swallows its own error.
+ */
+
+type SentryClient = typeof import('@/lib/sentry.client');
+
+/** How many pre-load reports to hold. A boot loop must not grow unbounded. */
+const PENDING_LIMIT = 20;
+
+/** Give the browser a few seconds of idle, then load regardless. */
+const IDLE_TIMEOUT_MS = 3000;
 
 /**
  * A DSN that is present but obviously a placeholder.
@@ -21,65 +44,75 @@ function isUsableDsn(dsn: string): boolean {
 
 const dsnConfigured = isUsableDsn(env.sentryDsn);
 
-/**
- * Replace the token in a `/access/<token>` URL with a placeholder.
- *
- * A customer's magic link is a bearer credential sitting in the URL path, and
- * it stays there until `MyBookingsPage` has redeemed it and scrubbed the
- * address bar. Both `browserTracingIntegration` and `replayIntegration` record
- * the full URL, and they start before that happens, so live magic links were
- * being shipped to Sentry. `maskAllText` does not help: it masks DOM text, not
- * URLs. Anyone with Sentry access could then read a customer's booking history
- * and cancel their appointments for the 30 minutes the link is valid.
- */
-export function redactAccessToken(value: string): string {
-  return value.replace(/\/access\/[^/?#\s]+/gi, '/access/[redacted]');
-}
+let client: SentryClient | null = null;
+let loading: Promise<SentryClient | null> | null = null;
+const pending: Array<[unknown, Record<string, unknown> | undefined]> = [];
 
-function redactDeep<T>(value: T): T {
-  if (typeof value === 'string') return redactAccessToken(value) as unknown as T;
-  if (Array.isArray(value)) return value.map(redactDeep) as unknown as T;
-  if (value && typeof value === 'object') {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value)) out[k] = redactDeep(v);
-    return out as unknown as T;
+function flushPending(loaded: SentryClient): void {
+  while (pending.length > 0) {
+    const next = pending.shift();
+    if (!next) break;
+    try {
+      loaded.captureException(next[0], next[1]);
+    } catch {
+      /* monitoring must never break the page it monitors */
+    }
   }
-  return value;
 }
 
-/** Initialize Sentry once at startup. No-ops without a usable DSN. */
+/** Load and initialize the real client once. Resolves to null if it fails. */
+function loadClient(): Promise<SentryClient | null> {
+  loading ??= import('@/lib/sentry.client')
+    .then((mod) => {
+      mod.initSentryClient();
+      client = mod;
+      flushPending(mod);
+      return mod;
+    })
+    .catch(() => {
+      pending.length = 0;
+      return null;
+    });
+  return loading;
+}
+
+/**
+ * Schedule monitoring to start after first paint. No-ops without a usable DSN.
+ *
+ * `requestIdleCallback` is not in Safari before 16.4, and this is a
+ * phone-first booking flow, so the timeout fallback is load-bearing rather
+ * than defensive.
+ */
 export function initSentry(): void {
   if (!dsnConfigured) return;
-
-  Sentry.init({
-    dsn: env.sentryDsn,
-    environment: env.mode,
-    enabled: env.isProd, // don't spam Sentry from local dev
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
-    ],
-    tracesSampleRate: 0.2,
-    replaysSessionSampleRate: 0.0,
-    replaysOnErrorSampleRate: 1.0,
-
-    // Belt and braces: the token can reach Sentry through the event itself
-    // (request URL, transaction name, stack frames) or through a navigation
-    // breadcrumb, so both are scrubbed.
-    beforeSend(event) {
-      return redactDeep(event);
-    },
-    beforeBreadcrumb(breadcrumb) {
-      return redactDeep(breadcrumb);
-    },
-  });
+  const start = (): void => {
+    void loadClient();
+  };
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(start, { timeout: IDLE_TIMEOUT_MS });
+  } else {
+    setTimeout(start, IDLE_TIMEOUT_MS);
+  }
 }
 
-/** Report a handled error with optional context. */
+/**
+ * Report a handled error with optional context.
+ *
+ * An error raised before the client has loaded is queued and sent once it
+ * arrives, and it pulls the load forward rather than waiting for idle — so
+ * deferring monitoring costs latency on an early error, never the report.
+ */
 export function reportError(error: unknown, context?: Record<string, unknown>): void {
   if (!dsnConfigured) {
     console.error(error, context);
     return;
   }
-  Sentry.captureException(error, context ? { extra: context } : undefined);
+  if (client) {
+    client.captureException(error, context);
+    return;
+  }
+  if (pending.length < PENDING_LIMIT) pending.push([error, context]);
+  void loadClient();
 }
+
+export { redactAccessToken };

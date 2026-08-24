@@ -199,7 +199,14 @@ export default defineConfig({
             return 'react-vendor';
           }
           if (id.includes('@supabase')) return 'supabase';
-          if (id.includes('react-day-picker')) return 'calendar';
+          if (id.includes('@sentry')) return 'sentry';
+          /* `react-day-picker` used to be named here as a `calendar` chunk.
+             Naming it forced date-fns AND rollup's CJS shim for `react` into
+             the same chunk, and the entry graph needs that shim — so the
+             marketing home page modulepreloaded all 22 kB gzipped of a
+             calendar it never renders. Left unnamed, the package follows the
+             dynamic `import()` in `components/ui/Calendar.tsx` into its own
+             chunk and the entry keeps only the shim. */
           return undefined;
         },
       },

@@ -11,6 +11,16 @@ updates:
     # supply-chain attack. Backported from Vitalcare-Training-Hub.
     cooldown:
       default-days: 7
+    # TypeScript 7 is out, and no release of typescript-eslint accepts it —
+    # every 8.x still peers `typescript >=4.8.4 <6.1.0`. npm cannot resolve the
+    # bump, so Dependabot's whole npm run aborted with
+    # `typescript · dependency_file_not_resolvable`, and every other npm
+    # update went down with it. Majors are ignored rather than the package:
+    # 5.x updates still arrive. Remove this once typescript-eslint ships TS 7
+    # support.
+    ignore:
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     groups:
       dev-dependencies:
         dependency-type: development

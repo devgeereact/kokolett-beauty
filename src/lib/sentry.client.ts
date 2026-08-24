@@ -38,6 +38,9 @@ export function initSentryClient(): void {
 }
 
 /** Forward a handled error to Sentry. */
-export function captureException(error: unknown, context?: Record<string, unknown>): void {
+export function captureException(
+  error: unknown,
+  context?: Record<string, unknown>,
+): void {
   Sentry.captureException(error, context ? { extra: context } : undefined);
 }

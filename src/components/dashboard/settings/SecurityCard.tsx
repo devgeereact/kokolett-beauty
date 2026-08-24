@@ -122,7 +122,9 @@ export function SecurityCard(): JSX.Element {
 
   return (
     <Card className="p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Security</h2>
+      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
+        Security
+      </h2>
       <p className="mb-3 text-sm text-muted-foreground">Keep your account safe.</p>
 
       <div className="divide-y divide-border">

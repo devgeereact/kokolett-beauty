@@ -27,7 +27,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # 20 is deprecated on GitHub runners: the job still ran, but the
           # actions were silently forced onto Node 24 anyway, so the pinned

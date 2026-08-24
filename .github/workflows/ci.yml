@@ -145,7 +145,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: latest
 

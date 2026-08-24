@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Wait a week before proposing a newly published version. Compromised
+    # releases are typically pulled within days of publication, so the delay
+    # costs nothing and takes this repo out of the blast radius of a fresh
+    # supply-chain attack. Backported from Vitalcare-Training-Hub.
+    cooldown:
+      default-days: 7
     groups:
       dev-dependencies:
         dependency-type: development
@@ -13,3 +19,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    # A compromised action runs with the workflow's own token.
+    cooldown:
+      default-days: 7

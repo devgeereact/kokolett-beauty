@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { listWeeklyTemplate } from '@/services/availabilityService';
+import { useRealtimeTable } from '@/hooks/useRealtimeTable';
 
 export interface HoursLine {
   /** e.g. "Tuesday – Sunday" or "Monday" */
@@ -36,51 +37,50 @@ export function useUsualHours(): { lines: HoursLine[]; loading: boolean } {
   const [lines, setLines] = useState<HoursLine[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let active = true;
+  const load = useCallback(async (): Promise<void> => {
+    try {
+      const template = await listWeeklyTemplate();
+      const byDay = new Map(template.map((d) => [d.day_of_week, d.times]));
 
-    void listWeeklyTemplate()
-      .then((template) => {
-        if (!active) return;
+      // First and last appointment start is the honest summary of a list of
+      // discrete times; the salon does not work "09:00 to 17:00 continuously".
+      const summarise = (day: number): string | null => {
+        const times = (byDay.get(day) ?? []).slice().sort();
+        if (times.length === 0) return null;
+        return times.length === 1
+          ? times[0]!
+          : `${times[0]} – ${times[times.length - 1]}`;
+      };
 
-        const byDay = new Map(template.map((d) => [d.day_of_week, d.times]));
+      const grouped: HoursLine[] = [];
+      for (const day of ORDER) {
+        const hours = summarise(day);
+        const previous = grouped[grouped.length - 1];
 
-        // First and last appointment start is the honest summary of a list of
-        // discrete times; the salon does not work "09:00 to 17:00 continuously".
-        const summarise = (day: number): string | null => {
-          const times = (byDay.get(day) ?? []).slice().sort();
-          if (times.length === 0) return null;
-          return times.length === 1
-            ? times[0]!
-            : `${times[0]} – ${times[times.length - 1]}`;
-        };
-
-        const grouped: HoursLine[] = [];
-        for (const day of ORDER) {
-          const hours = summarise(day);
-          const previous = grouped[grouped.length - 1];
-
-          // Extend the run only if this day is adjacent in the displayed order.
-          if (previous && previous.hours === hours) {
-            previous.days = `${previous.days.split(' – ')[0]} – ${DAY_NAMES[day]}`;
-          } else {
-            grouped.push({ days: DAY_NAMES[day] ?? '', hours });
-          }
+        // Extend the run only if this day is adjacent in the displayed order.
+        if (previous && previous.hours === hours) {
+          previous.days = `${previous.days.split(' – ')[0]} – ${DAY_NAMES[day]}`;
+        } else {
+          grouped.push({ days: DAY_NAMES[day] ?? '', hours });
         }
+      }
 
-        setLines(grouped);
-      })
-      .catch(() => {
-        if (active) setLines([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
+      setLines(grouped);
+    } catch {
+      setLines([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  // The footer is often left open for a while; picking up a change the
+  // owner makes to the weekly template without a reload is the whole point
+  // of "usual hours" being live rather than a screenshot of the schedule.
+  useRealtimeTable('weekly_template', () => void load());
 
   return { lines, loading };
 }

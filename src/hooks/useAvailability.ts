@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchAvailableSlots } from '@/services/bookingService';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useRealtimeTable } from '@/hooks/useRealtimeTable';
 import { addDays, toSalonDate } from '@/lib/format';
 import type { TimeSlot } from '@/types';
 
@@ -89,6 +90,11 @@ export function useAvailability(
   useEffect(() => {
     void load();
   }, [load]);
+
+  // A visitor sitting on "Next available" while the owner opens or closes a
+  // slot on the calendar should see that without reloading — same live
+  // pattern as `useUsualHours`.
+  useRealtimeTable('availability_slots', () => void load());
 
   return {
     slotsByDate,

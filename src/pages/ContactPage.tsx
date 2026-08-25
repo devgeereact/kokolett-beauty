@@ -144,8 +144,8 @@ export function ContactPage(): JSX.Element {
           })}
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-[1.1fr_.9fr]">
-          <Card className="p-6">
+        <div className="grid items-stretch gap-10 lg:grid-cols-[1.1fr_.9fr]">
+          <Card className="flex flex-col p-6">
             <h2 className="font-serif text-xl font-semibold text-foreground">
               Send a message
             </h2>
@@ -160,7 +160,10 @@ export function ContactPage(): JSX.Element {
                 the salon is open.
               </p>
             ) : (
-              <form onSubmit={(e) => void onSubmit(e)} className="mt-6 space-y-4">
+              <form
+                onSubmit={(e) => void onSubmit(e)}
+                className="mt-6 flex flex-1 flex-col space-y-4"
+              >
                 <div>
                   <label
                     htmlFor="contact-name"
@@ -232,7 +235,7 @@ export function ContactPage(): JSX.Element {
           </Card>
 
           <div className="flex flex-col gap-6">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border shadow-card">
+            <div className="relative min-h-64 flex-1 overflow-hidden rounded-xl border border-border shadow-card">
               <div
                 className="absolute inset-0"
                 style={{ background: photoPlaceholderBackground(2) }}

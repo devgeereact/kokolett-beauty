@@ -1,13 +1,15 @@
-import { type JSX, useMemo, useState } from 'react';
+import { type JSX, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { PhotoCard } from '@/components/ui/PhotoCard';
+import { Pagination } from '@/components/ui/Pagination';
 import { useServiceMenu } from '@/hooks/useServiceMenu';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
 const ALL = 'all';
+const PAGE_SIZE = 12;
 
 /**
  * A photo grid of the work, filterable by category — the highest-value page
@@ -25,6 +27,7 @@ export function GalleryPage(): JSX.Element {
   );
   const { groups, loading } = useServiceMenu();
   const [activeGroup, setActiveGroup] = useState<string>(ALL);
+  const [page, setPage] = useState(1);
 
   const visibleGroups = useMemo(
     () => (activeGroup === ALL ? groups : groups.filter((g) => g.group_name === activeGroup)),
@@ -34,6 +37,14 @@ export function GalleryPage(): JSX.Element {
   const items = visibleGroups.flatMap((g) =>
     g.items.map((item) => ({ ...item, group_name: g.group_name })),
   );
+
+  // Changing category (or the menu itself refreshing) can leave `page`
+  // pointing past the end of a now-shorter list.
+  useEffect(() => {
+    setPage(1);
+  }, [activeGroup]);
+
+  const pageItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <SiteShell>
@@ -91,19 +102,30 @@ export function GalleryPage(): JSX.Element {
             instead.
           </p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((item, i) => (
-              <PhotoCard
-                key={`${item.group_name}-${item.name}`}
-                imagePath={item.image_path}
-                placeholderTone={i}
-                tag={item.group_name}
-                title={item.name}
-                ctaLabel="Book this"
-                ctaHref={routes.public.book}
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {pageItems.map((item, i) => (
+                <PhotoCard
+                  key={`${item.group_name}-${item.name}`}
+                  imagePath={item.image_path}
+                  placeholderTone={i}
+                  tag={item.group_name}
+                  title={item.name}
+                  ctaLabel="Book this"
+                  ctaHref={routes.public.book}
+                />
+              ))}
+            </div>
+            <div className="mt-10 rounded-xl border border-border">
+              <Pagination
+                page={page}
+                pageSize={PAGE_SIZE}
+                totalItems={items.length}
+                onPageChange={setPage}
+                itemLabel="photos"
               />
-            ))}
-          </div>
+            </div>
+          </>
         )}
 
         <p className="mt-10 text-center text-sm text-muted-foreground">

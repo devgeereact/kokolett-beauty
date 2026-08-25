@@ -6,6 +6,7 @@ import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { toWhatsAppLink } from '@/lib/whatsapp';
 import { submitContactMessage } from '@/services/contactService';
+import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export function ContactPage(): JSX.Element {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [errorText, setErrorText] = useState<string | null>(null);
   const [state, setState] = useState<FormState>('idle');
 
   const whatsappUrl = toWhatsAppLink(settings?.phone ?? null);
@@ -45,7 +47,12 @@ export function ContactPage(): JSX.Element {
     },
     whatsappUrl && { label: 'WhatsApp', value: 'Message us', href: whatsappUrl },
     { label: 'Email', value: SALON_EMAIL, href: `mailto:${SALON_EMAIL}` },
-    { label: 'Book online', value: 'See open times', href: routes.public.book, internal: true },
+    {
+      label: 'Book online',
+      value: 'See open times',
+      href: routes.public.book,
+      internal: true,
+    },
     settings?.instagram_url && {
       label: 'Instagram',
       value: 'Follow us',
@@ -53,10 +60,16 @@ export function ContactPage(): JSX.Element {
     },
     settings?.address_line &&
       mapUrl && { label: 'Visit', value: settings.address_line, href: mapUrl },
-  ].filter(Boolean) as { label: string; value: string; href: string; internal?: boolean }[];
+  ].filter(Boolean) as {
+    label: string;
+    value: string;
+    href: string;
+    internal?: boolean;
+  }[];
 
   const onSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
+    setErrorText(null);
     setState('sending');
     try {
       await submitContactMessage({ fullName, email, message });
@@ -64,7 +77,11 @@ export function ContactPage(): JSX.Element {
       setFullName('');
       setEmail('');
       setMessage('');
-    } catch {
+    } catch (err) {
+      // `errorMessage` turns the raw Postgres error into copy. It matters
+      // here for one case: a `TOO_MANY_MESSAGES` refusal must not be shown as
+      // "try again", because trying again is what is being refused.
+      setErrorText(errorMessage(err));
       setState('error');
     }
   };
@@ -98,7 +115,9 @@ export function ContactPage(): JSX.Element {
                 <span className="block text-sm font-semibold text-foreground">
                   {channel.label}
                 </span>
-                <span className="block text-sm text-muted-foreground">{channel.value}</span>
+                <span className="block text-sm text-muted-foreground">
+                  {channel.value}
+                </span>
               </span>
             );
             const className =
@@ -191,8 +210,9 @@ export function ContactPage(): JSX.Element {
                 </div>
 
                 {state === 'error' && (
-                  <p className="text-sm text-destructive">
-                    That did not send. Please try again, or call or WhatsApp us directly.
+                  <p role="alert" className="text-sm text-destructive">
+                    {errorText ??
+                      'That did not send. Please try again, or call or WhatsApp us directly.'}
                   </p>
                 )}
 
@@ -217,7 +237,10 @@ export function ContactPage(): JSX.Element {
             </p>
             <p>
               Looking for a time instead?{' '}
-              <Link to={routes.public.book} className="font-medium text-primary hover:underline">
+              <Link
+                to={routes.public.book}
+                className="font-medium text-primary hover:underline"
+              >
                 Book online
               </Link>{' '}
               or{' '}
@@ -238,7 +261,14 @@ export function ContactPage(): JSX.Element {
 
 function PhoneIcon(): JSX.Element {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -258,7 +288,14 @@ function WhatsAppIcon(): JSX.Element {
 
 function EmailIcon(): JSX.Element {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M22 6l-10 7L2 6" />
       <rect x="2" y="4" width="20" height="16" rx="2" />
     </svg>
@@ -267,7 +304,14 @@ function EmailIcon(): JSX.Element {
 
 function CalendarIcon(): JSX.Element {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <path strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18" />
     </svg>
@@ -276,7 +320,14 @@ function CalendarIcon(): JSX.Element {
 
 function InstagramIcon(): JSX.Element {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
       <rect x="2" y="2" width="20" height="20" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
@@ -286,8 +337,19 @@ function InstagramIcon(): JSX.Element {
 
 function PinIcon(): JSX.Element {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 0 1 18 0z" />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 10c0 6-9 12-9 12S3 16 3 10a9 9 0 0 1 18 0z"
+      />
       <circle cx="12" cy="10" r="3" />
     </svg>
   );

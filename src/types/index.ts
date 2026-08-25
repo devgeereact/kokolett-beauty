@@ -187,4 +187,5 @@ export type BookingErrorCode =
   | 'ALREADY_PASSED'
   | 'SAME_TIME'
   | 'INVALID_AMOUNT'
-  | 'HAS_PAYMENT';
+  | 'HAS_PAYMENT'
+  | 'TOO_MANY_MESSAGES';

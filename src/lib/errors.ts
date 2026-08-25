@@ -33,6 +33,11 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   INVALID_AMOUNT: 'Enter an amount greater than £0.',
   HAS_PAYMENT:
     'This has a logged payment, so it can’t be deleted — that would erase a financial record.',
+  // The contact form's rate limit (migration 0049). "Try again" is the one
+  // thing this caller must not be told, because trying again is what is
+  // blocked — so it names the channels that still work.
+  TOO_MANY_MESSAGES:
+    'You have sent us a few messages already. Please give us a little time to reply, or call or WhatsApp us if it is urgent.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

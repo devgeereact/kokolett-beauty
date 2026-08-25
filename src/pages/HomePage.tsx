@@ -1,6 +1,7 @@
 import { type JSX, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
+import { HeroCarousel } from '@/components/public/HeroCarousel';
 import { Reviews } from '@/components/public/Reviews';
 import { Card } from '@/components/ui/Card';
 import { PhotoCard } from '@/components/ui/PhotoCard';
@@ -137,21 +138,12 @@ export function HomePage(): JSX.Element {
   return (
     <SiteShell>
       {/* ---- Hero ------------------------------------------------------
-          Full-bleed, warm colour-wash rather than a dark scrim (keeps skin
-          tones warm), trust pill above the headline, and one gradient word
-          inside it — see docs/DESIGN.md §4 for the `text-5xl`/`text-6xl`
-          steps this needs and `.text-hero-accent` in src/index.css. */}
-      <section
-        className="relative flex flex-col justify-end overflow-hidden text-hero-fg"
-        style={{
-          minHeight: '80vh',
-          background:
-            'radial-gradient(130% 95% at 12% -6%, rgba(240,163,120,.38), transparent 55%), ' +
-            'linear-gradient(195deg, rgba(84,46,32,.18) 0%, rgba(58,32,24,.5) 55%, rgba(40,24,20,.86) 100%), ' +
-            'linear-gradient(125deg, #c07a4e 0%, #a2593b 24%, #6b3d34 55%, #3a2a2c 82%, #2a2124 100%)',
-        }}
-      >
-        <div className="bg-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay" aria-hidden="true" />
+          Cross-fading photo carousel (`HeroCarousel`), warm colour-wash
+          rather than a dark scrim (keeps skin tones warm), trust pill above
+          the headline, and one gradient word inside it — see
+          docs/DESIGN.md §4 for the `text-5xl`/`text-6xl` steps this needs
+          and `.text-hero-accent` in src/index.css. */}
+      <HeroCarousel>
         <div className="relative mx-auto max-w-3xl px-4 py-16 text-center md:px-6 md:py-20">
           <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-hero-fg/25 bg-hero-fg/10 px-3.5 py-1.5 text-xs font-semibold backdrop-blur">
             <span aria-hidden="true" className="text-brand-soft">
@@ -191,7 +183,31 @@ export function HomePage(): JSX.Element {
             .
           </p>
         </div>
-      </section>
+      </HeroCarousel>
+
+      {/* ---- Stats bar --------------------------------------------------
+          Slim on purpose: availability below still has to be the loudest
+          thing on the page. Every figure is a real, honest claim — no
+          invented headcounts or location counts for a single-owner salon. */}
+      <div className="bg-primary py-4">
+        <dl className="mx-auto grid max-w-5xl grid-cols-2 gap-4 px-4 text-center md:grid-cols-4 md:px-6">
+          {[
+            { value: '15+', label: 'Years experience' },
+            { value: '1:1', label: 'Personalised, every visit' },
+            { value: '★', label: 'Google rated' },
+            { value: '0', label: 'Accounts or passwords needed' },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <dd className="font-serif text-xl font-semibold text-primary-foreground">
+                {stat.value}
+              </dd>
+              <dt className="text-xs uppercase tracking-wide text-primary-foreground/80">
+                {stat.label}
+              </dt>
+            </div>
+          ))}
+        </dl>
+      </div>
 
       {/* ---- Next available -------------------------------------------
           Directly under the hero fold, not several scrolls down: this is

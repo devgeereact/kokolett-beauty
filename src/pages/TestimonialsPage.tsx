@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Stars } from '@/components/public/Reviews';
-import { Card } from '@/components/ui/Card';
+import { TestimonialsCarousel } from '@/components/public/TestimonialsCarousel';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { fetchReviews, type ReviewsSnapshot } from '@/services/reviewService';
@@ -98,50 +98,7 @@ export function TestimonialsPage(): JSX.Element {
           </p>
         )}
 
-        {reviews.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((review) => (
-              <Card
-                key={`${review.author_name}-${review.published_at}`}
-                className="flex flex-col p-5"
-              >
-                <Stars rating={review.rating} className="mb-3" />
-                <blockquote className="flex-1 text-sm leading-relaxed text-foreground">
-                  {review.body}
-                </blockquote>
-                <footer className="mt-4 flex items-center gap-3 border-t border-border pt-3">
-                  {review.profile_photo_url ? (
-                    <img
-                      src={review.profile_photo_url}
-                      alt=""
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span
-                      className="grid h-8 w-8 place-items-center rounded-full bg-muted text-xs font-semibold text-muted-foreground"
-                      aria-hidden="true"
-                    >
-                      {review.author_name.slice(0, 1)}
-                    </span>
-                  )}
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      {review.author_name}
-                    </span>
-                    {review.relative_time && (
-                      <span className="block text-xs text-muted-foreground">
-                        {review.relative_time}
-                      </span>
-                    )}
-                  </span>
-                </footer>
-              </Card>
-            ))}
-          </div>
-        )}
+        {reviews.length > 0 && <TestimonialsCarousel reviews={reviews} />}
 
         {settings?.google_review_url && (
           <p className="mt-10 text-center">

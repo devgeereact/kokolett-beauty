@@ -196,8 +196,8 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
       </main>
 
       <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-5xl px-4 py-14 md:px-6">
-          <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr] lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <div className="mx-auto max-w-5xl px-4 py-16 md:px-6">
+          <div className="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr] lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
             {/* Who we are, and how to reach us. */}
             <div>
               <p className="font-serif text-lg font-semibold text-foreground">
@@ -208,14 +208,14 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 natural hair and colour.
               </p>
 
-              <address className="mt-5 space-y-2 text-sm not-italic">
+              <address className="mt-6 space-y-2.5 text-sm not-italic">
                 {settings?.address_line && mapUrl && (
                   <p>
                     <a
                       href={mapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       {settings.address_line}
                     </a>
@@ -225,7 +225,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                   <p>
                     <a
                       href={`tel:${settings.phone.replace(/\s/g, '')}`}
-                      className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       {settings.phone}
                     </a>
@@ -234,21 +234,21 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 <p>
                   <a
                     href={`mailto:${SALON_EMAIL}`}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     {SALON_EMAIL}
                   </a>
                 </p>
               </address>
 
-              <div className="mt-5 flex items-center gap-2">
+              <div className="mt-6 flex items-center gap-4">
                 {whatsappUrl && (
                   <a
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Message Kokolett Beauty on WhatsApp"
-                    className="grid h-11 w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
                       <path d="M12 2.2c-5.4 0-9.8 4.4-9.8 9.8 0 1.7.5 3.4 1.3 4.8l-1.4 5 5.2-1.4c1.4.8 3 1.2 4.7 1.2 5.4 0 9.8-4.4 9.8-9.8s-4.4-9.6-9.8-9.6zm5.6 13.9c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-3.2-.7-2.7-1-4.4-3.8-4.6-4-.1-.2-1-1.4-1-2.6 0-1.2.6-1.8.9-2.1.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.4.7-.8.9-1.1 1.3-.1.2-.3.3-.1.6.7 1.2 1.4 1.9 2.5 2.6.4.2.6.2.8-.1.2-.3.7-.9.9-1.2.2-.3.4-.2.6-.1.6.3 1.9.9 2.2 1.1.3.1.5.2.6.3.1.2.1.9-.1 1.5z" />
@@ -261,7 +261,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Kokolett Beauty on Instagram"
-                    className="grid h-11 w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -278,7 +278,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Kokolett Beauty reviews on Google"
-                    className="grid h-11 w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -295,8 +295,10 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             {/* Opening hours, from the weekly pattern the owner publishes. */}
             {hours.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Opening hours</h3>
-                <dl className="mt-4 space-y-2 text-sm">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Opening hours
+                </h3>
+                <dl className="mt-5 space-y-2.5 text-sm">
                   {hours.map((line) => (
                     <div key={line.days} className="flex justify-between gap-4">
                       <dt className="text-muted-foreground">{line.days}</dt>
@@ -313,10 +315,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 </dl>
                 <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                   Some days differ.{' '}
-                  <Link
-                    to={routes.public.book}
-                    className="underline underline-offset-4 hover:text-foreground"
-                  >
+                  <Link to={routes.public.book} className="text-foreground hover:underline">
                     See what is open
                   </Link>
                   .
@@ -326,53 +325,40 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
             {/* The rest of the site. */}
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Salon</h3>
-              <ul className="mt-4 space-y-2 text-sm">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Salon
+              </h3>
+              <ul className="mt-5 space-y-2.5 text-sm">
                 <li>
-                  <Link
-                    to={routes.public.about}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
-                  >
+                  <Link to={routes.public.about} className="text-muted-foreground hover:text-foreground">
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to={routes.public.gallery}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
-                  >
+                  <Link to={routes.public.gallery} className="text-muted-foreground hover:text-foreground">
                     Gallery
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to={routes.public.services}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
-                  >
+                  <Link to={routes.public.services} className="text-muted-foreground hover:text-foreground">
                     Services
                   </Link>
                 </li>
                 <li>
                   <Link
                     to={routes.public.testimonials}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     Testimonials
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to={routes.public.faqs}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
-                  >
+                  <Link to={routes.public.faqs} className="text-muted-foreground hover:text-foreground">
                     FAQs
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to={routes.public.contact}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
-                  >
+                  <Link to={routes.public.contact} className="text-muted-foreground hover:text-foreground">
                     Contact
                   </Link>
                 </li>
@@ -381,20 +367,19 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
             {/* Where visitors actually want to go next. */}
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Bookings</h3>
-              <ul className="mt-4 space-y-2 text-sm">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Bookings
+              </h3>
+              <ul className="mt-5 space-y-2.5 text-sm">
                 <li>
-                  <Link
-                    to={routes.public.book}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
-                  >
+                  <Link to={routes.public.book} className="text-muted-foreground hover:text-foreground">
                     Book an appointment
                   </Link>
                 </li>
                 <li>
                   <Link
                     to={routes.customer.home}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     Change or cancel
                   </Link>
@@ -402,7 +387,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 <li>
                   <Link
                     to={routes.public.requestAvailability}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     Ask for a time
                   </Link>
@@ -410,7 +395,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 <li>
                   <Link
                     to={routes.public.bookingPolicy}
-                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     Booking policy
                   </Link>
@@ -419,12 +404,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <div className="mt-14 flex flex-col gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
             <p>&copy; {year} Kokolett Beauty UK. All rights reserved.</p>
-            <nav
-              aria-label="Legal"
-              className="flex flex-wrap items-center gap-x-5 gap-y-2"
-            >
+            <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <Link to={routes.public.privacy} className="hover:text-foreground">
                 Privacy
               </Link>

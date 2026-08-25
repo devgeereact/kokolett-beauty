@@ -209,7 +209,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-5xl px-4 py-16 md:px-6">
-          <div className="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr] lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+          <div className="grid gap-x-8 gap-y-12 md:grid-cols-[1.2fr_1fr_1fr] lg:grid-cols-[1.2fr_1.15fr_.85fr_.85fr]">
             {/* Who we are, and how to reach us. */}
             <div>
               <p className="font-serif text-lg font-semibold text-foreground">
@@ -321,17 +321,15 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
             {/* Opening hours, from the weekly pattern the owner publishes. */}
             {hours.length > 0 && (
-              <div className="rounded-xl border border-border/70 bg-muted/40 p-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Opening hours
-                </h3>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Opening hours</h3>
                 <dl className="mt-5 space-y-3 text-sm">
                   {hours.map((line) => (
-                    <div key={line.days} className="flex justify-between gap-4">
-                      <dt className="text-muted-foreground">{line.days}</dt>
+                    <div key={line.days} className="flex items-baseline gap-6">
+                      <dt className="whitespace-nowrap text-muted-foreground">{line.days}</dt>
                       <dd
                         className={cn(
-                          'text-right',
+                          'whitespace-nowrap',
                           line.hours ? 'text-foreground' : 'text-muted-foreground',
                         )}
                       >
@@ -351,11 +349,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             )}
 
             {/* The rest of the site. */}
-            <div className="rounded-xl border border-border/70 bg-muted/40 p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Salon
-              </h3>
-              <ul className="mt-5 space-y-3 text-sm">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Salon</h3>
+              <ul className="mt-5 space-y-2.5 text-sm">
                 <li>
                   <Link to={routes.public.about} className="text-muted-foreground hover:text-foreground">
                     About
@@ -394,9 +390,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
             {/* Where visitors actually want to go next. */}
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Bookings
-              </h3>
+              <h3 className="text-sm font-semibold text-foreground">Bookings</h3>
               <ul className="mt-5 space-y-2.5 text-sm">
                 <li>
                   <Link to={routes.public.book} className="text-muted-foreground hover:text-foreground">

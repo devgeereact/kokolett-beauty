@@ -7,6 +7,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { toWhatsAppLink } from '@/lib/whatsapp';
 import { submitContactMessage } from '@/services/contactService';
 import { errorMessage } from '@/lib/errors';
+import { photoPlaceholderBackground } from '@/lib/photoPlaceholder';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
@@ -230,28 +231,46 @@ export function ContactPage(): JSX.Element {
             )}
           </Card>
 
-          <div className="flex flex-col justify-center gap-4 text-sm leading-relaxed text-muted-foreground">
-            <p>
-              Prefer to talk it through? Call or WhatsApp and we will get back to you the
-              same day the salon is open.
-            </p>
-            <p>
-              Looking for a time instead?{' '}
-              <Link
-                to={routes.public.book}
-                className="font-medium text-primary hover:underline"
-              >
-                Book online
-              </Link>{' '}
-              or{' '}
-              <Link
-                to={routes.public.requestAvailability}
-                className="font-medium text-primary hover:underline"
-              >
-                ask for a time
-              </Link>{' '}
-              if nothing is currently open.
-            </p>
+          <div className="flex flex-col gap-6">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border shadow-card">
+              <div
+                className="absolute inset-0"
+                style={{ background: photoPlaceholderBackground(2) }}
+                aria-hidden="true"
+              />
+              <div
+                className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay"
+                aria-hidden="true"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <p className="absolute bottom-4 left-4 right-4 font-serif text-lg font-semibold text-hero-fg">
+                Kokolett Beauty, Woolwich
+              </p>
+            </div>
+
+            <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+              <p>
+                Prefer to talk it through? Call or WhatsApp and we will get back to you the
+                same day the salon is open.
+              </p>
+              <p>
+                Looking for a time instead?{' '}
+                <Link
+                  to={routes.public.book}
+                  className="font-medium text-primary hover:underline"
+                >
+                  Book online
+                </Link>{' '}
+                or{' '}
+                <Link
+                  to={routes.public.requestAvailability}
+                  className="font-medium text-primary hover:underline"
+                >
+                  ask for a time
+                </Link>{' '}
+                if nothing is currently open.
+              </p>
+            </div>
           </div>
         </div>
       </section>

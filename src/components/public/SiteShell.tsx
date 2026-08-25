@@ -5,19 +5,22 @@ import { cn } from '@/lib/utils';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useUsualHours } from '@/hooks/useUsualHours';
 import { toWhatsAppLink } from '@/lib/whatsapp';
+import { splitAddressLines } from '@/lib/format';
 
 const SALON_EMAIL = 'booking@kokolettbeauty.com';
 
 /** The site's real pages, in nav order — reinstated 2026-08-25 (marketing
     rebrand). `My bookings` stays separate: it's a customer utility, not a
-    marketing page, so it doesn't belong in the same list. */
+    marketing page, so it doesn't belong in the same list.
+    FAQs is deliberately not in this list (2026-08-25): it stays reachable
+    from the footer and directly at `/faqs`, just not in the header/mobile
+    nav, which the owner wanted kept to the pages people look for first. */
 const PAGES = [
   { to: routes.public.home, label: 'Home' },
   { to: routes.public.about, label: 'About' },
   { to: routes.public.gallery, label: 'Gallery' },
   { to: routes.public.services, label: 'Services' },
   { to: routes.public.testimonials, label: 'Testimonials' },
-  { to: routes.public.faqs, label: 'FAQs' },
   { to: routes.public.contact, label: 'Contact' },
 ];
 
@@ -46,6 +49,15 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
       )}`
     : null;
   const whatsappUrl = toWhatsAppLink(settings?.phone ?? null);
+
+  /* Street / city / postcode, one per line, with "United Kingdom" appended
+     to the city line — the country never changes, so it is added here
+     rather than asking the owner to type it into `address_line` herself. */
+  const addressLines = settings?.address_line ? splitAddressLines(settings.address_line) : [];
+  const cityLineIndex = addressLines.length - 2;
+  const displayAddressLines = addressLines.map((line, i) =>
+    i === cityLineIndex ? `${line} United Kingdom` : line,
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -208,33 +220,37 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 natural hair and colour.
               </p>
 
-              <address className="mt-6 space-y-2.5 text-sm not-italic">
-                {settings?.address_line && mapUrl && (
-                  <p>
-                    <a
-                      href={mapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      {settings.address_line}
-                    </a>
-                  </p>
+              <address className="mt-6 space-y-4 text-sm not-italic">
+                {displayAddressLines.length > 0 && mapUrl && (
+                  <a
+                    href={mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-muted-foreground hover:text-foreground"
+                  >
+                    {displayAddressLines.map((line, i) => (
+                      <span key={i} className="block">
+                        {line}
+                      </span>
+                    ))}
+                  </a>
                 )}
                 {settings?.phone && (
                   <p>
+                    <span className="text-muted-foreground">Mobile: </span>
                     <a
                       href={`tel:${settings.phone.replace(/\s/g, '')}`}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-foreground hover:text-primary"
                     >
                       {settings.phone}
                     </a>
                   </p>
                 )}
                 <p>
+                  <span className="text-muted-foreground">Email: </span>
                   <a
                     href={`mailto:${SALON_EMAIL}`}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-foreground hover:text-primary"
                   >
                     {SALON_EMAIL}
                   </a>
@@ -278,14 +294,25 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Kokolett Beauty reviews on Google"
-                    className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="grid h-9 w-9 place-items-center rounded-full opacity-80 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4 fill-current"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                      <path
+                        fill="#4285F4"
+                        d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29A11.94 11.94 0 000 12c0 1.94.46 3.77 1.29 5.38l3.98-3.09z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"
+                      />
                     </svg>
                   </a>
                 )}
@@ -294,11 +321,11 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
             {/* Opening hours, from the weekly pattern the owner publishes. */}
             {hours.length > 0 && (
-              <div>
+              <div className="rounded-xl border border-border/70 bg-muted/40 p-5">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Opening hours
                 </h3>
-                <dl className="mt-5 space-y-2.5 text-sm">
+                <dl className="mt-5 space-y-3 text-sm">
                   {hours.map((line) => (
                     <div key={line.days} className="flex justify-between gap-4">
                       <dt className="text-muted-foreground">{line.days}</dt>
@@ -313,7 +340,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     </div>
                   ))}
                 </dl>
-                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
                   Some days differ.{' '}
                   <Link to={routes.public.book} className="text-foreground hover:underline">
                     See what is open
@@ -324,11 +351,11 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             )}
 
             {/* The rest of the site. */}
-            <div>
+            <div className="rounded-xl border border-border/70 bg-muted/40 p-5">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Salon
               </h3>
-              <ul className="mt-5 space-y-2.5 text-sm">
+              <ul className="mt-5 space-y-3 text-sm">
                 <li>
                   <Link to={routes.public.about} className="text-muted-foreground hover:text-foreground">
                     About

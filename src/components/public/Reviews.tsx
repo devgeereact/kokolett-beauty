@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
  * heading over an empty box, or over invented testimonials, is worse than no
  * section — the whole value of this block is that a stranger believes it.
  */
-function Stars({
+export function Stars({
   rating,
   className,
 }: {

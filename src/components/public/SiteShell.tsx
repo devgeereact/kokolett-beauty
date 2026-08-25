@@ -1,19 +1,34 @@
-import type { JSX, ReactNode } from 'react';
+import { useState, type JSX, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useUsualHours } from '@/hooks/useUsualHours';
+import { toWhatsAppLink } from '@/lib/whatsapp';
 
 const SALON_EMAIL = 'booking@kokolettbeauty.com';
+
+/** The site's real pages, in nav order — reinstated 2026-08-25 (marketing
+    rebrand). `My bookings` stays separate: it's a customer utility, not a
+    marketing page, so it doesn't belong in the same list. */
+const PAGES = [
+  { to: routes.public.home, label: 'Home' },
+  { to: routes.public.about, label: 'About' },
+  { to: routes.public.gallery, label: 'Gallery' },
+  { to: routes.public.services, label: 'Services' },
+  { to: routes.public.testimonials, label: 'Testimonials' },
+  { to: routes.public.faqs, label: 'FAQs' },
+  { to: routes.public.contact, label: 'Contact' },
+];
 
 /**
  * The public site chrome.
  *
- * The nav carries two text links and one button. Booking used to appear twice,
- * once as a link and again as a button beside it, which reads as a mistake
- * rather than emphasis. It is now the button only, and the button is the single
- * strongest thing in the header.
+ * A real multi-page nav now that the marketing site is one (2026-08-25) —
+ * the desktop bar shows every page, a mobile hamburger opens the same list
+ * full-screen. Booking is still the one button in the header; it doesn't
+ * also appear as a text link beside it, which would read as a mistake
+ * rather than emphasis.
  *
  * Footer details come from settings, so an address or a phone number changes
  * without a deploy. Anything the owner has not filled in is left out entirely
@@ -23,19 +38,14 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   const { settings } = useBusinessSettings();
   const { lines: hours } = useUsualHours();
   const year = new Date().getFullYear();
-
-  // On a phone the wordmark is the way home, so the Home link is hidden there
-  // rather than left to wrap the header onto two lines.
-  const links = [
-    { to: routes.public.home, label: 'Home', phone: false },
-    { to: routes.customer.home, label: 'My bookings', phone: true },
-  ];
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const mapUrl = settings?.address_line
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
         `Kokolett Beauty UK, ${settings.address_line}`,
       )}`
     : null;
+  const whatsappUrl = toWhatsAppLink(settings?.phone ?? null);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -69,17 +79,16 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             </span>
           </Link>
 
-          <nav aria-label="Main" className="flex items-center gap-0.5 md:gap-2">
-            {links.map((link) => (
+          <nav aria-label="Main" className="hidden items-center gap-0.5 lg:flex">
+            {PAGES.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end={link.to === routes.public.home}
                 className={({ isActive }) =>
                   cn(
-                    'min-h-touch items-center whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium md:px-3',
+                    'inline-flex min-h-touch items-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    link.phone ? 'inline-flex' : 'hidden md:inline-flex',
                     isActive
                       ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground',
@@ -89,15 +98,98 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 {link.label}
               </NavLink>
             ))}
+          </nav>
+
+          <div className="flex items-center gap-0.5 md:gap-2">
+            <NavLink
+              to={routes.customer.home}
+              className={({ isActive }) =>
+                cn(
+                  'hidden min-h-touch items-center whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium md:inline-flex md:px-3',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+                )
+              }
+            >
+              My bookings
+            </NavLink>
             <Link
               to={routes.public.book}
               className="ml-1 inline-flex min-h-touch items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Book
             </Link>
-          </nav>
+            <button
+              type="button"
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(true)}
+              className="ml-1 grid h-11 w-11 place-items-center rounded-full border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" d="M3 6h18M3 12h18M3 18h18" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-drawer flex flex-col bg-background p-5 lg:hidden">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+              className="grid h-11 w-11 place-items-center rounded-full border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <nav aria-label="Main" className="mt-6 flex flex-col gap-1">
+            {PAGES.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMenuOpen(false)}
+                className="border-b border-border py-3.5 font-serif text-2xl font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              to={routes.customer.home}
+              onClick={() => setMenuOpen(false)}
+              className="py-3.5 text-sm font-medium text-muted-foreground"
+            >
+              My bookings
+            </Link>
+          </nav>
+          <Link
+            to={routes.public.book}
+            onClick={() => setMenuOpen(false)}
+            className="mt-6 inline-flex h-12 items-center justify-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground"
+          >
+            Book an appointment
+          </Link>
+        </div>
+      )}
 
       <main id="main-content" className="flex-1">
         {children}
@@ -105,7 +197,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-5xl px-4 py-14 md:px-6">
-          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
+          <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr] lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
             {/* Who we are, and how to reach us. */}
             <div>
               <p className="font-serif text-lg font-semibold text-foreground">
@@ -150,6 +242,19 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
               </address>
 
               <div className="mt-5 flex items-center gap-2">
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Message Kokolett Beauty on WhatsApp"
+                    className="grid h-11 w-11 place-items-center rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                      <path d="M12 2.2c-5.4 0-9.8 4.4-9.8 9.8 0 1.7.5 3.4 1.3 4.8l-1.4 5 5.2-1.4c1.4.8 3 1.2 4.7 1.2 5.4 0 9.8-4.4 9.8-9.8s-4.4-9.6-9.8-9.6zm5.6 13.9c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-3.2-.7-2.7-1-4.4-3.8-4.6-4-.1-.2-1-1.4-1-2.6 0-1.2.6-1.8.9-2.1.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.4.7-.8.9-1.1 1.3-.1.2-.3.3-.1.6.7 1.2 1.4 1.9 2.5 2.6.4.2.6.2.8-.1.2-.3.7-.9.9-1.2.2-.3.4-.2.6-.1.6.3 1.9.9 2.2 1.1.3.1.5.2.6.3.1.2.1.9-.1 1.5z" />
+                    </svg>
+                  </a>
+                )}
                 {settings?.instagram_url && (
                   <a
                     href={settings.instagram_url}
@@ -218,6 +323,61 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 </p>
               </div>
             )}
+
+            {/* The rest of the site. */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Salon</h3>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li>
+                  <Link
+                    to={routes.public.about}
+                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                  >
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={routes.public.gallery}
+                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                  >
+                    Gallery
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={routes.public.services}
+                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                  >
+                    Services
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={routes.public.testimonials}
+                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                  >
+                    Testimonials
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={routes.public.faqs}
+                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                  >
+                    FAQs
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={routes.public.contact}
+                    className="text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4"
+                  >
+                    Contact
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
             {/* Where visitors actually want to go next. */}
             <div>

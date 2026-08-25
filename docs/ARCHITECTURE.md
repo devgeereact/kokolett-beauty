@@ -91,15 +91,21 @@ every path is declared once in `src/lib/routes.ts` — two exceptions, `/login` 
 
 | Route                                 | Purpose                                                                                                                |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `/`                                   | Marketing home — one scrolling page (hero, next-available, services, how-it-works, closing CTA), not a multi-page site |
+| `/`                                   | Marketing home — hero, next-available, services teaser, closing CTA                                                    |
+| `/about`                              | The owner's story                                                                                                      |
+| `/gallery`                            | Photo grid, filterable by service                                                                                      |
+| `/services`                           | Full live service menu (duration/price from `services`)                                                                |
+| `/testimonials`                       | Full Google-reviews list + `AggregateRating`                                                                           |
+| `/faqs`                               | Accordion, feeds `FAQPage` schema                                                                                      |
+| `/contact`                            | Every contact channel plus the message form                                                                            |
 | `/book`                               | The booking flow — no per-service step; one appointment type                                                           |
 | `/request-availability`               | Enquiry when nothing's open                                                                                            |
 | `/subscribe`                          | Mailing-list opt-in — not linked in-app; meant to be pasted externally (e.g. an Instagram bio)                         |
 | `/privacy` `/booking-policy` `/terms` | Policies                                                                                                               |
 
-`routes.public` also declares `about`, `gallery`, `testimonials`, `faqs` and `contact`
-— none are mounted in `App.tsx`. They're unused constants, not pages; don't build
-against them without checking `App.tsx` first.
+`routes.public.about`/`gallery`/`services`/`testimonials`/`faqs`/`contact` were
+reinstated 2026-08-25 (marketing rebrand), reversing the single-page simplification
+this section used to describe.
 
 **Customer (magic-link session)**
 

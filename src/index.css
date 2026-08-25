@@ -43,8 +43,20 @@
        --primary is interactive: any fill that carries a text label.
        They differ because #e05d38 cannot hold white label text at AA. */
     --brand: 224 93 56; /* #e05d38 */
+    /* Marketing-only, decorative: the hero headline's gradient accent word
+       (2026-08 rebrand). Never used as text or a fill on its own — only as
+       one stop of the two-colour gradient in `.text-hero-accent` below. */
+    --brand-soft: 246 200 152; /* #f6c898 */
     --primary: 194 77 44; /* #c24d2c — 4.78:1 with white */
     --primary-foreground: 255 255 255;
+
+    /* Text/border/fill over a full-bleed photo (hero, PhotoCard) — always
+       white regardless of site theme, since it sits on a photo's own dark
+       scrim, not a themed surface. There is no `white` in the closed
+       palette on purpose (DESIGN.md §2.2: "no --grey-100"); this is the one
+       named exception, scoped to photo overlays only. Not redefined in
+       `.dark` — the photo scrim doesn't change with the site's theme. */
+    --hero-fg: 255 255 255;
 
     /* --- Accent (selection, menu hover) -------------------------------------
        Warm, not blue: blue is reserved for status-confirmed on the calendar. */
@@ -136,6 +148,7 @@
        A terracotta dark enough to hold white text at 4.5:1 would fall below
        3:1 against the card it sits on. See DESIGN.md §3.4. */
     --brand: 224 93 56; /* #e05d38 */
+    --brand-soft: 246 200 152; /* #f6c898 */
     --primary: 240 128 94; /* #f0805e */
     --primary-foreground: 26 31 43; /* #1a1f2b — 6.46:1 */
 
@@ -346,5 +359,25 @@
     .scroll-bottom-gap {
       padding-bottom: 2rem;
     }
+  }
+
+  /* ---- Marketing-only (2026-08 rebrand) --------------------------------
+     Confined to `src/pages/HomePage.tsx` and the marketing pages under
+     `src/pages/public/` — never the dashboard. */
+
+  /** The hero headline's one accent word — docs/DESIGN.md §4. */
+  .text-hero-accent {
+    background: linear-gradient(100deg, rgb(var(--brand-soft)), rgb(var(--brand)) 75%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /** Fractal-noise grain, low-opacity overlay — a stand-in filmic texture
+      for the hero and photo cards until real photography replaces the
+      placeholder gradients (see `src/lib/photoPlaceholder.ts`). */
+  .bg-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
   }
 }

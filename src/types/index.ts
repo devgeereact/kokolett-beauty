@@ -143,10 +143,17 @@ export type ServiceMenuItem = Tables['service_menu']['Row'];
 export type EmailTemplateRow = Tables['email_templates']['Row'];
 export type EmailTemplateUpdate = Tables['email_templates']['Update'];
 
-/** One group as `public_service_menu()` returns it. */
+/** One group as `public_service_menu()` returns it. `duration_min` and
+    `image_path` were added to the public shape in migration `0048` — before
+    that the RPC returned only `name`/`note`. */
 export interface ServiceMenuGroup {
   group_name: string;
-  items: { name: string; note: string | null }[];
+  items: {
+    name: string;
+    note: string | null;
+    duration_min: number;
+    image_path: string | null;
+  }[];
 }
 
 export type Subscriber = Tables['subscribers']['Row'];

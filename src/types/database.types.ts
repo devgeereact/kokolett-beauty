@@ -1470,6 +1470,10 @@ export type Database = {
         Args: { p_day_of_week: number; p_times: string[] }
         Returns: number
       }
+      submit_contact_message: {
+        Args: { p_email: string; p_full_name: string; p_message: string }
+        Returns: undefined
+      }
       subscribe_to_updates: {
         Args: { p_email: string; p_full_name?: string; p_source?: string }
         Returns: undefined

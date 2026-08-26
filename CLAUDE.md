@@ -24,6 +24,20 @@ response.
 DB password: macOS Keychain, `security find-generic-password -a $USER -s supabase-kokolett-db -w`.
 Never in a file.
 
+## Commands
+- `npm run dev` — Vite dev server, `http://localhost:5082` (`strictPort`)
+- `npm run build` — `tsc --noEmit` then `vite build` → `dist/`; this is also the CI type-check gate
+- `npm run typecheck` — `tsc --noEmit` only
+- `npm run lint` / `npm run lint:fix` — ESLint, zero-warning policy (`--max-warnings 0`)
+- `npm run format` / `npm run format:check` — Prettier (`format:check` is a CI gate; run `format` before committing if CI flags drift)
+- `npm test` — Vitest, single run · `npm run test:watch` — watch mode · `npm run test:coverage` — V8 coverage
+- Single test file: `npx vitest run path/to/file.test.ts` (tests are colocated with their source, e.g. `src/hooks/useAvailability.test.ts`)
+- `npm run preview` — serve the production `dist/` build locally
+
+Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build —
+`npm run typecheck`/`npm test` never touch them; CI checks them separately with
+`deno check`.
+
 ## Load these first
 | Need                         | File                    |
 | ---------------------------- | ----------------------- |
@@ -58,6 +72,27 @@ Never in a file.
   treatments. Not a general beauty salon — no nails, brows, lashes or aesthetics —
   and not unisex, and not barbering. The word "Beauty" in the name is branding, not
   scope. Structured data uses `HairSalon`.
+
+## Architecture at a glance
+- **Dependency direction:** `pages → services → lib`. Components consume `hooks`/
+  `context`. `lib` never imports from `pages`/`components` — no cycles.
+- **One appointment type, no service-selection step.** `/book` goes straight from
+  date to time; there is no per-service picker, and no price is quoted anywhere.
+- **Two things are called "assistant" — do not conflate them** (full detail:
+  `docs/ARCHITECTURE.md` §6b). The advisory insights module (`src/lib/insights.ts`)
+  is deterministic client-side TypeScript computed from data the page already
+  fetched — it never talks to Supabase. The chat assistant is a real LLM
+  (`supabase/functions/ai-assistant-chat`) that runs under the caller's own
+  Authorization header, so a non-owner gets a working chat that can read nothing.
+- **Nothing dispatches through Inngest**, despite an earlier design assuming it
+  would. The shipped mechanism is a Postgres trigger writing to `email_messages`
+  plus a `pg_cron` job draining that queue every five minutes to the `send-emails`
+  Edge Function.
+- **CodeRabbit does not auto-review this repo** (fewer than 10 GitHub stars) — it
+  posts "Review skipped: manual review required for this OSS repository" and still
+  shows the check green. A passing CodeRabbit check is not evidence anything was
+  reviewed; trigger one explicitly with a `@coderabbitai review` PR comment when a
+  review actually matters (`docs/RULES.md` §7).
 
 ## Working style
 - Prefer editing an existing file over creating a new one.

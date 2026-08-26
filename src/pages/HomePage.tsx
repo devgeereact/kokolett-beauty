@@ -1,7 +1,7 @@
 import { type JSX, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
-import { HeroCarousel } from '@/components/public/HeroCarousel';
+import { HeroCarousel, type HeroSlide } from '@/components/public/HeroCarousel';
 import { Reviews } from '@/components/public/Reviews';
 import { Card } from '@/components/ui/Card';
 import { PhotoCard } from '@/components/ui/PhotoCard';
@@ -25,6 +25,22 @@ import { routes } from '@/lib/routes';
  * twenty minute trim are not the same appointment, and printing one number for
  * both would be a promise the salon cannot keep.
  */
+
+/**
+ * Sorted for narrative flow, not upload order: joyful opener, editorial
+ * trust shot, glam close-up, then real-salon candids and craft detail.
+ * `objectPosition` is tuned per photo — the hero renders wider than any
+ * source photo, so the full width always shows and only vertical crop
+ * (and, on narrow mobile viewports, horizontal crop) is at stake.
+ */
+const HERO_SLIDES: HeroSlide[] = [
+  { photoPath: '/kokolett/marketing/hero-hair-flip-side-profile.jpg', objectPosition: '35% 25%' },
+  { photoPath: '/kokolett/marketing/hero-editorial-trio.jpg', objectPosition: '50% 30%' },
+  { photoPath: '/kokolett/marketing/hero-golden-braids-portrait.jpg', objectPosition: '40% 30%' },
+  { photoPath: '/kokolett/marketing/hero-braiding-event-candid.jpg', objectPosition: '45% 35%' },
+  { photoPath: '/kokolett/marketing/hero-cornrow-detail.jpg', objectPosition: '65% 35%' },
+  { photoPath: '/kokolett/marketing/hero-braiding-process-hands.jpg', objectPosition: '50% 30%' },
+];
 
 const HOW_IT_WORKS = [
   {
@@ -138,12 +154,13 @@ export function HomePage(): JSX.Element {
   return (
     <SiteShell>
       {/* ---- Hero ------------------------------------------------------
-          Cross-fading photo carousel (`HeroCarousel`), warm colour-wash
-          rather than a dark scrim (keeps skin tones warm), trust pill above
-          the headline, and one gradient word inside it — see
-          docs/DESIGN.md §4 for the `text-5xl`/`text-6xl` steps this needs
-          and `.text-hero-accent` in src/index.css. */}
-      <HeroCarousel photoPath="/kokolett/marketing/hero-braids-portrait.jpg">
+          Cross-fading photo carousel (`HeroCarousel`) over the salon's own
+          photography, a uniform dark scrim tuned to hold white text legible
+          against any of them, trust pill above the headline, and one
+          gradient word inside it — see docs/DESIGN.md §4 for the
+          `text-5xl`/`text-6xl` steps this needs and `.text-hero-accent` in
+          src/index.css. */}
+      <HeroCarousel slides={HERO_SLIDES}>
         <div className="relative mx-auto max-w-3xl px-4 py-16 text-center md:px-6 md:py-20">
           <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-hero-fg/25 bg-hero-fg/10 px-3.5 py-1.5 text-xs font-semibold backdrop-blur">
             <span aria-hidden="true" className="text-brand-soft">

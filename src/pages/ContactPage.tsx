@@ -7,7 +7,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { toWhatsAppLink } from '@/lib/whatsapp';
 import { submitContactMessage } from '@/services/contactService';
 import { errorMessage } from '@/lib/errors';
-import { photoPlaceholderBackground } from '@/lib/photoPlaceholder';
+import { buildImageKitUrl } from '@/lib/imagekit';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
@@ -236,10 +236,14 @@ export function ContactPage(): JSX.Element {
 
           <div className="flex flex-col gap-6">
             <div className="relative min-h-64 flex-1 overflow-hidden rounded-xl border border-border shadow-card">
-              <div
-                className="absolute inset-0"
-                style={{ background: photoPlaceholderBackground(2) }}
-                aria-hidden="true"
+              <img
+                src={buildImageKitUrl('/kokolett/marketing/hero-golden-braids-portrait.jpg', {
+                  width: 900,
+                  quality: 85,
+                })}
+                alt="A finished braided style at Kokolett Beauty"
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ objectPosition: '50% 25%' }}
               />
               <div
                 className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay"

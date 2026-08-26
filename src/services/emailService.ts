@@ -29,6 +29,18 @@ export async function sendCustomEmailAsOwner(
   return data;
 }
 
+/**
+ * Deletes one outbox row outright. RLS (`email_messages_owner_all`) is the
+ * only guard — same direct-delete shape as `serviceMenuService.deleteMenuItem`,
+ * no RPC needed because this is an owner-session write, not a public one.
+ * No undo: the row is gone from the database, so it is gone everywhere this
+ * app reads it from, including the dashboard list it disappears from.
+ */
+export async function deleteEmailMessage(id: string): Promise<void> {
+  const { error } = await supabase.from('email_messages').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export async function listEmailsForCustomer(customerId: string): Promise<EmailMessage[]> {
   const { data, error } = await supabase
     .from('email_messages')

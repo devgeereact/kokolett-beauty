@@ -143,7 +143,7 @@ export function HomePage(): JSX.Element {
           the headline, and one gradient word inside it — see
           docs/DESIGN.md §4 for the `text-5xl`/`text-6xl` steps this needs
           and `.text-hero-accent` in src/index.css. */}
-      <HeroCarousel>
+      <HeroCarousel photoPath="/kokolett/marketing/hero-braids-portrait.jpg">
         <div className="relative mx-auto max-w-3xl px-4 py-16 text-center md:px-6 md:py-20">
           <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-hero-fg/25 bg-hero-fg/10 px-3.5 py-1.5 text-xs font-semibold backdrop-blur">
             <span aria-hidden="true" className="text-brand-soft">

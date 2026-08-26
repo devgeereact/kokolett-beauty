@@ -1,47 +1,75 @@
 import { type JSX, type ReactNode, useEffect, useState } from 'react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { buildImageKitUrl } from '@/lib/imagekit';
 import { cn } from '@/lib/utils';
 
 /**
- * Three warm-wash tones, cross-fading behind the hero copy — a stand-in for
- * a real photo rotation once photography exists (`docs` — 2026-08 rebrand).
- * Each is the same colour-wash treatment as the static hero it replaced,
- * just angled and weighted differently so the cross-fade reads as motion,
- * not a flicker.
+ * Warm-wash slides, cross-fading behind the hero copy. Slide 1 carries a
+ * real photo (`photoPath`) once one exists — its wash renders as a
+ * translucent overlay on top of the `<img>` rather than an opaque
+ * background, so the warm colour-grade stays consistent whether a slide is
+ * a real photo or still a placeholder tone.
  */
-const TONES = [
-  'radial-gradient(130% 95% at 12% -6%, rgba(240,163,120,.38), transparent 55%), ' +
-    'linear-gradient(195deg, rgba(84,46,32,.18) 0%, rgba(58,32,24,.5) 55%, rgba(40,24,20,.86) 100%), ' +
-    'linear-gradient(125deg, #c07a4e 0%, #a2593b 24%, #6b3d34 55%, #3a2a2c 82%, #2a2124 100%)',
-  'radial-gradient(130% 95% at 82% -6%, rgba(214,150,140,.32), transparent 55%), ' +
-    'linear-gradient(195deg, rgba(60,40,42,.2) 0%, rgba(45,30,34,.55) 55%, rgba(30,20,24,.88) 100%), ' +
-    'linear-gradient(125deg, #8a5a4a 0%, #6b3d3a 30%, #4a2e30 60%, #2a1f24 100%)',
-  'radial-gradient(130% 95% at 50% 100%, rgba(230,180,120,.3), transparent 55%), ' +
-    'linear-gradient(195deg, rgba(70,42,30,.18) 0%, rgba(50,30,24,.55) 55%, rgba(32,20,18,.88) 100%), ' +
-    'linear-gradient(125deg, #b5754a 0%, #8a4a34 30%, #52302a 60%, #291d1f 100%)',
+const SLIDES = [
+  {
+    overlay:
+      'radial-gradient(130% 95% at 12% -6%, rgba(240,163,120,.30), transparent 55%), ' +
+      'linear-gradient(195deg, rgba(84,46,32,.15) 0%, rgba(58,32,24,.4) 55%, rgba(40,24,20,.78) 100%)',
+    solid:
+      'radial-gradient(130% 95% at 12% -6%, rgba(240,163,120,.38), transparent 55%), ' +
+      'linear-gradient(195deg, rgba(84,46,32,.18) 0%, rgba(58,32,24,.5) 55%, rgba(40,24,20,.86) 100%), ' +
+      'linear-gradient(125deg, #c07a4e 0%, #a2593b 24%, #6b3d34 55%, #3a2a2c 82%, #2a2124 100%)',
+  },
+  {
+    overlay:
+      'radial-gradient(130% 95% at 82% -6%, rgba(214,150,140,.24), transparent 55%), ' +
+      'linear-gradient(195deg, rgba(60,40,42,.16) 0%, rgba(45,30,34,.45) 55%, rgba(30,20,24,.8) 100%)',
+    solid:
+      'radial-gradient(130% 95% at 82% -6%, rgba(214,150,140,.32), transparent 55%), ' +
+      'linear-gradient(195deg, rgba(60,40,42,.2) 0%, rgba(45,30,34,.55) 55%, rgba(30,20,24,.88) 100%), ' +
+      'linear-gradient(125deg, #8a5a4a 0%, #6b3d3a 30%, #4a2e30 60%, #2a1f24 100%)',
+  },
+  {
+    overlay:
+      'radial-gradient(130% 95% at 50% 100%, rgba(230,180,120,.22), transparent 55%), ' +
+      'linear-gradient(195deg, rgba(70,42,30,.15) 0%, rgba(50,30,24,.45) 55%, rgba(32,20,18,.8) 100%)',
+    solid:
+      'radial-gradient(130% 95% at 50% 100%, rgba(230,180,120,.3), transparent 55%), ' +
+      'linear-gradient(195deg, rgba(70,42,30,.18) 0%, rgba(50,30,24,.55) 55%, rgba(32,20,18,.86) 100%), ' +
+      'linear-gradient(125deg, #b5754a 0%, #8a4a34 30%, #52302a 60%, #291d1f 100%)',
+  },
 ] as const;
 
 const SLIDE_MS = 5500;
 
 /**
- * The hero's background: cross-fading tones with dot/arrow navigation.
+ * The hero's background: cross-fading slides with dot/arrow navigation.
  * Auto-advances unless `prefers-reduced-motion` is set — manual controls
  * still work either way. `children` renders on top, unchanged.
+ *
+ * `photoPath` is an ImageKit path for the first slide's real photo — the
+ * other two stay placeholder tones until more photography exists.
  */
-export function HeroCarousel({ children }: { children: ReactNode }): JSX.Element {
+export function HeroCarousel({
+  children,
+  photoPath,
+}: {
+  children: ReactNode;
+  photoPath?: string | null;
+}): JSX.Element {
   const [index, setIndex] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     if (reducedMotion) return;
     const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % TONES.length);
+      setIndex((i) => (i + 1) % SLIDES.length);
     }, SLIDE_MS);
     return () => window.clearInterval(id);
   }, [reducedMotion]);
 
   const go = (delta: number): void => {
-    setIndex((i) => (i + delta + TONES.length) % TONES.length);
+    setIndex((i) => (i + delta + SLIDES.length) % SLIDES.length);
   };
 
   return (
@@ -49,13 +77,26 @@ export function HeroCarousel({ children }: { children: ReactNode }): JSX.Element
       className="relative flex flex-col justify-end overflow-hidden text-hero-fg"
       style={{ minHeight: '80vh' }}
     >
-      {TONES.map((tone, i) => (
+      {SLIDES.map((slide, i) => (
         <div
           key={i}
           className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
-          style={{ background: tone, opacity: i === index ? 1 : 0 }}
+          style={{ opacity: i === index ? 1 : 0 }}
           aria-hidden="true"
-        />
+        >
+          {i === 0 && photoPath ? (
+            <>
+              <img
+                src={buildImageKitUrl(photoPath, { width: 1600, quality: 85 })}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0" style={{ background: slide.overlay }} />
+            </>
+          ) : (
+            <div className="absolute inset-0" style={{ background: slide.solid }} />
+          )}
+        </div>
       ))}
       <div
         className="bg-grain pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay"
@@ -70,7 +111,7 @@ export function HeroCarousel({ children }: { children: ReactNode }): JSX.Element
         role="tablist"
         aria-label="Hero photo"
       >
-        {TONES.map((_, i) => (
+        {SLIDES.map((_, i) => (
           <button
             key={i}
             type="button"

@@ -2,7 +2,7 @@ import { type JSX } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
-import { photoPlaceholderBackground } from '@/lib/photoPlaceholder';
+import { buildImageKitUrl } from '@/lib/imagekit';
 import { routes } from '@/lib/routes';
 
 /**
@@ -21,12 +21,14 @@ export function AboutPage(): JSX.Element {
       <section className="mx-auto max-w-5xl px-4 py-16 md:px-6">
         <div className="grid gap-10 md:grid-cols-[minmax(0,340px)_1fr] md:items-start md:gap-14">
           <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-xl border border-border shadow-card md:mx-0">
-            <div
-              className="absolute inset-0"
-              style={{ background: photoPlaceholderBackground(4) }}
-              aria-hidden="true"
+            <img
+              src={buildImageKitUrl('/kokolett/marketing/about-christy-portrait.jpg', {
+                width: 680,
+                quality: 85,
+              })}
+              alt="A portrait representing the warmth of a Kokolett Beauty appointment"
+              className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay" aria-hidden="true" />
             <p className="absolute bottom-4 left-4 rounded-lg bg-card px-3.5 py-2.5 text-sm text-foreground shadow-popover">
               <strong className="block font-serif text-base">15+ years</strong>
               doing hair in Woolwich

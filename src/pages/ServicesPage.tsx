@@ -54,7 +54,10 @@ export function ServicesPage(): JSX.Element {
               </h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {group.items.map((item) => (
-                  <Card key={item.name} className="flex items-start justify-between gap-4 p-4">
+                  <Card
+                    key={item.name}
+                    className="flex items-start justify-between gap-4 p-4"
+                  >
                     <div>
                       <p className="font-medium text-foreground">{item.name}</p>
                       {item.note && (

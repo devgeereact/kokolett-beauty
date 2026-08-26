@@ -65,7 +65,9 @@ export function AboutPage(): JSX.Element {
               </p>
               <p>
                 Fifteen years in, her philosophy has not changed:{' '}
-                <strong className="text-foreground">when you look good, you feel good.</strong>{' '}
+                <strong className="text-foreground">
+                  when you look good, you feel good.
+                </strong>{' '}
                 That is the whole point of coming in.
               </p>
               <p>

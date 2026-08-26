@@ -237,10 +237,13 @@ export function ContactPage(): JSX.Element {
           <div className="flex flex-col gap-6">
             <div className="relative min-h-64 flex-1 overflow-hidden rounded-xl border border-border shadow-card">
               <img
-                src={buildImageKitUrl('/kokolett/marketing/hero-golden-braids-portrait.jpg', {
-                  width: 900,
-                  quality: 85,
-                })}
+                src={buildImageKitUrl(
+                  '/kokolett/marketing/hero-golden-braids-portrait.jpg',
+                  {
+                    width: 900,
+                    quality: 85,
+                  },
+                )}
                 alt="A finished braided style at Kokolett Beauty"
                 className="absolute inset-0 h-full w-full object-cover"
                 style={{ objectPosition: '50% 25%' }}
@@ -257,8 +260,8 @@ export function ContactPage(): JSX.Element {
 
             <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
-                Prefer to talk it through? Call or WhatsApp and we will get back to you the
-                same day the salon is open.
+                Prefer to talk it through? Call or WhatsApp and we will get back to you
+                the same day the salon is open.
               </p>
               <p>
                 Looking for a time instead?{' '}

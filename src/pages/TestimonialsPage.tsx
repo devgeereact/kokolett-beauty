@@ -80,9 +80,12 @@ export function TestimonialsPage(): JSX.Element {
           {hasRating && (
             <p className="mt-4 flex flex-wrap items-center justify-center gap-2 text-muted-foreground">
               <Stars rating={data?.rating ?? 5} />
-              <span className="font-medium text-foreground">{data?.rating?.toFixed(1)}</span>
+              <span className="font-medium text-foreground">
+                {data?.rating?.toFixed(1)}
+              </span>
               <span>
-                from {data?.rating_count} Google review{data?.rating_count === 1 ? '' : 's'}
+                from {data?.rating_count} Google review
+                {data?.rating_count === 1 ? '' : 's'}
               </span>
             </p>
           )}

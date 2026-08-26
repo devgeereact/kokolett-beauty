@@ -2,7 +2,11 @@ import { useEffect } from 'react';
 
 const DEFAULT_TITLE = 'Kokolett Beauty UK';
 
-function setMeta(name: string, content: string, attr: 'name' | 'property' = 'name'): void {
+function setMeta(
+  name: string,
+  content: string,
+  attr: 'name' | 'property' = 'name',
+): void {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${name}"]`);
   if (!el) {
     el = document.createElement('meta');

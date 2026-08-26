@@ -8,7 +8,11 @@ import type { PublicReview } from '@/services/reviewService';
  * controls — native scroll-snap, no carousel library. Swipeable on touch;
  * the arrows just step the scroll position by one card's width.
  */
-export function TestimonialsCarousel({ reviews }: { reviews: PublicReview[] }): JSX.Element {
+export function TestimonialsCarousel({
+  reviews,
+}: {
+  reviews: PublicReview[];
+}): JSX.Element {
   const trackRef = useRef<HTMLDivElement>(null);
 
   const step = (direction: 1 | -1): void => {
@@ -75,7 +79,14 @@ export function TestimonialsCarousel({ reviews }: { reviews: PublicReview[] }): 
           onClick={() => step(-1)}
           className="grid h-9 w-9 place-items-center rounded-full border border-border text-foreground hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
           </svg>
         </button>
@@ -85,7 +96,14 @@ export function TestimonialsCarousel({ reviews }: { reviews: PublicReview[] }): 
           onClick={() => step(1)}
           className="grid h-9 w-9 place-items-center rounded-full border border-border text-foreground hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
           </svg>
         </button>

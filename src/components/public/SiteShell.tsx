@@ -53,7 +53,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   /* Street / city / postcode, one per line, with "United Kingdom" appended
      to the city line — the country never changes, so it is added here
      rather than asking the owner to type it into `address_line` herself. */
-  const addressLines = settings?.address_line ? splitAddressLines(settings.address_line) : [];
+  const addressLines = settings?.address_line
+    ? splitAddressLines(settings.address_line)
+    : [];
   const cityLineIndex = addressLines.length - 2;
   const displayAddressLines = addressLines.map((line, i) =>
     i === cityLineIndex ? `${line} United Kingdom` : line,
@@ -119,7 +121,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 cn(
                   'hidden min-h-touch items-center whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium md:inline-flex md:px-3',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground',
                 )
               }
             >
@@ -266,7 +270,11 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     aria-label="Message Kokolett Beauty on WhatsApp"
                     className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4 fill-current"
+                      aria-hidden="true"
+                    >
                       <path d="M12 2.2c-5.4 0-9.8 4.4-9.8 9.8 0 1.7.5 3.4 1.3 4.8l-1.4 5 5.2-1.4c1.4.8 3 1.2 4.7 1.2 5.4 0 9.8-4.4 9.8-9.8s-4.4-9.6-9.8-9.6zm5.6 13.9c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-3.2-.7-2.7-1-4.4-3.8-4.6-4-.1-.2-1-1.4-1-2.6 0-1.2.6-1.8.9-2.1.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.4.7-.8.9-1.1 1.3-.1.2-.3.3-.1.6.7 1.2 1.4 1.9 2.5 2.6.4.2.6.2.8-.1.2-.3.7-.9.9-1.2.2-.3.4-.2.6-.1.6.3 1.9.9 2.2 1.1.3.1.5.2.6.3.1.2.1.9-.1 1.5z" />
                     </svg>
                   </a>
@@ -326,7 +334,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 <dl className="mt-5 space-y-3 text-sm">
                   {hours.map((line) => (
                     <div key={line.days} className="flex items-baseline gap-6">
-                      <dt className="whitespace-nowrap text-muted-foreground">{line.days}</dt>
+                      <dt className="whitespace-nowrap text-muted-foreground">
+                        {line.days}
+                      </dt>
                       <dd
                         className={cn(
                           'whitespace-nowrap',
@@ -340,7 +350,10 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 </dl>
                 <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
                   Some days differ.{' '}
-                  <Link to={routes.public.book} className="text-foreground hover:underline">
+                  <Link
+                    to={routes.public.book}
+                    className="text-foreground hover:underline"
+                  >
                     See what is open
                   </Link>
                   .
@@ -353,17 +366,26 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
               <h3 className="text-sm font-semibold text-foreground">Salon</h3>
               <ul className="mt-5 space-y-2.5 text-sm">
                 <li>
-                  <Link to={routes.public.about} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={routes.public.about}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link to={routes.public.gallery} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={routes.public.gallery}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Gallery
                   </Link>
                 </li>
                 <li>
-                  <Link to={routes.public.services} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={routes.public.services}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Services
                   </Link>
                 </li>
@@ -376,12 +398,18 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                   </Link>
                 </li>
                 <li>
-                  <Link to={routes.public.faqs} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={routes.public.faqs}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     FAQs
                   </Link>
                 </li>
                 <li>
-                  <Link to={routes.public.contact} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={routes.public.contact}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Contact
                   </Link>
                 </li>
@@ -393,7 +421,10 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
               <h3 className="text-sm font-semibold text-foreground">Bookings</h3>
               <ul className="mt-5 space-y-2.5 text-sm">
                 <li>
-                  <Link to={routes.public.book} className="text-muted-foreground hover:text-foreground">
+                  <Link
+                    to={routes.public.book}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Book an appointment
                   </Link>
                 </li>
@@ -427,7 +458,10 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
           <div className="mt-14 flex flex-col gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
             <p>&copy; {year} Kokolett Beauty UK. All rights reserved.</p>
-            <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <nav
+              aria-label="Legal"
+              className="flex flex-wrap items-center gap-x-6 gap-y-2"
+            >
               <Link to={routes.public.privacy} className="hover:text-foreground">
                 Privacy
               </Link>

@@ -110,7 +110,10 @@ export function PhotoCard({
       onPointerLeave={onPointerLeave}
     >
       <div className="absolute inset-0" style={groundStyle} aria-hidden="true" />
-      <div className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay" aria-hidden="true" />
+      <div
+        className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay"
+        aria-hidden="true"
+      />
       <div
         className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent"
         aria-hidden="true"

@@ -30,7 +30,8 @@ export function GalleryPage(): JSX.Element {
   const [page, setPage] = useState(1);
 
   const visibleGroups = useMemo(
-    () => (activeGroup === ALL ? groups : groups.filter((g) => g.group_name === activeGroup)),
+    () =>
+      activeGroup === ALL ? groups : groups.filter((g) => g.group_name === activeGroup),
     [groups, activeGroup],
   );
 

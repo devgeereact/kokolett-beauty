@@ -34,12 +34,24 @@ import { routes } from '@/lib/routes';
  * (and, on narrow mobile viewports, horizontal crop) is at stake.
  */
 const HERO_SLIDES: HeroSlide[] = [
-  { photoPath: '/kokolett/marketing/hero-hair-flip-side-profile.jpg', objectPosition: '35% 25%' },
+  {
+    photoPath: '/kokolett/marketing/hero-hair-flip-side-profile.jpg',
+    objectPosition: '35% 25%',
+  },
   { photoPath: '/kokolett/marketing/hero-editorial-trio.jpg', objectPosition: '50% 30%' },
-  { photoPath: '/kokolett/marketing/hero-golden-braids-portrait.jpg', objectPosition: '40% 30%' },
-  { photoPath: '/kokolett/marketing/hero-braiding-event-candid.jpg', objectPosition: '45% 35%' },
+  {
+    photoPath: '/kokolett/marketing/hero-golden-braids-portrait.jpg',
+    objectPosition: '40% 30%',
+  },
+  {
+    photoPath: '/kokolett/marketing/hero-braiding-event-candid.jpg',
+    objectPosition: '45% 35%',
+  },
   { photoPath: '/kokolett/marketing/hero-cornrow-detail.jpg', objectPosition: '65% 35%' },
-  { photoPath: '/kokolett/marketing/hero-braiding-process-hands.jpg', objectPosition: '50% 30%' },
+  {
+    photoPath: '/kokolett/marketing/hero-braiding-process-hands.jpg',
+    objectPosition: '50% 30%',
+  },
 ];
 
 const HOW_IT_WORKS = [
@@ -175,8 +187,8 @@ export function HomePage(): JSX.Element {
             Hair that <span className="text-hero-accent">holds</span> its shape.
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-hero-fg/85">
-            Braids, locs, weaves, natural hair and colour, done with time and care.
-            Choose a time that suits you and we will do the rest.
+            Braids, locs, weaves, natural hair and colour, done with time and care. Choose
+            a time that suits you and we will do the rest.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link

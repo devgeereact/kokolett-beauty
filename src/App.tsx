@@ -9,6 +9,12 @@ import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { LoadingState } from '@/components/ui/States';
 import { HomePage } from '@/pages/HomePage';
+import { AboutPage } from '@/pages/AboutPage';
+import { GalleryPage } from '@/pages/GalleryPage';
+import { ServicesPage } from '@/pages/ServicesPage';
+import { TestimonialsPage } from '@/pages/TestimonialsPage';
+import { FAQsPage } from '@/pages/FAQsPage';
+import { ContactPage } from '@/pages/ContactPage';
 import { BookPage } from '@/pages/BookPage';
 import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
 import { SubscribePage } from '@/pages/SubscribePage';
@@ -105,6 +111,12 @@ export function App(): JSX.Element {
             <AuthLinkHandler />
             <Routes>
               <Route path={routes.public.home} element={<HomePage />} />
+              <Route path={routes.public.about} element={<AboutPage />} />
+              <Route path={routes.public.gallery} element={<GalleryPage />} />
+              <Route path={routes.public.services} element={<ServicesPage />} />
+              <Route path={routes.public.testimonials} element={<TestimonialsPage />} />
+              <Route path={routes.public.faqs} element={<FAQsPage />} />
+              <Route path={routes.public.contact} element={<ContactPage />} />
               <Route path={routes.public.book} element={<BookPage />} />
               <Route
                 path={routes.public.requestAvailability}

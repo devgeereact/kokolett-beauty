@@ -53,6 +53,9 @@ const config: Config = {
 
       /* Identity. Display type ≥24px, marketing, focus ring. Never a label fill. */
       brand: rgb('--brand'),
+      /* Hero headline gradient accent + warm-on-photo text (eyebrow, star).
+         Decorative only — never body text, never a fill. */
+      'brand-soft': rgb('--brand-soft'),
       /* Interactive. Any fill that carries a text label. */
       primary: {
         DEFAULT: rgb('--primary'),
@@ -78,6 +81,10 @@ const config: Config = {
       border: rgb('--border'),
       input: rgb('--input'),
       ring: rgb('--ring'),
+
+      /* Photo-overlay text only (hero, PhotoCard) — see src/index.css. The
+         one deliberate exception to "no white in the palette". */
+      'hero-fg': rgb('--hero-fg'),
 
       chart: {
         1: rgb('--chart-1'),
@@ -164,6 +171,13 @@ const config: Config = {
       '2xl': ['1.5rem', { lineHeight: '1.2' }],
       '3xl': ['1.875rem', { lineHeight: '1.2' }],
       '4xl': ['2.25rem', { lineHeight: '1.2' }],
+      /**
+       * Marketing hero headlines only (docs/DESIGN.md §4) — the 2026-08
+       * marketing rebrand's one controlled extension to the closed scale.
+       * Never a customer-facing booking-flow size.
+       */
+      '5xl': ['3rem', { lineHeight: '1.05' }],
+      '6xl': ['4.5rem', { lineHeight: '1' }],
     },
 
     /* ---- Shape ---------------------------------------------------------

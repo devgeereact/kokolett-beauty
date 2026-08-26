@@ -847,6 +847,25 @@ export function render(template: string, p: TemplatePayload, override?: Template
         text: `${p.full_name} could not find a slot and has asked for a time.\n${p.email}${p.mobile ? ` · ${p.mobile}` : ''}\nPrefers: ${(p.preferred_dates ?? []).join(', ') || 'no date given'} · ${p.flexibility ?? 'any'}\n\n${SITE}/dashboard/inbox?tab=requests`,
       };
 
+    // The Contact page's message form (2026-08 marketing rebrand) — not a
+    // booking or availability enquiry, so it has no queue of its own; the
+    // owner just gets an email, same as any other notification.
+    case 'contact_message_received':
+      return {
+        html: layout(
+          'New message',
+          `${p.full_name ?? ''} sent a message`,
+          line(
+            `<strong style="color:${INK}">${esc(p.full_name)}</strong> sent a message from the website.`,
+          ) +
+            line(esc(p.email)) +
+            (p.notes ? aside(esc(p.notes)) : ''),
+          p,
+          'You are receiving this as the owner of Kokolett Beauty UK.',
+        ),
+        text: `${p.full_name} sent a message from the website.\n${p.email}\n\n${p.notes ?? ''}`,
+      };
+
     // The owner's own freeform note, drafted (in the dashboard or via the
     // AI assistant) and sent only after she reviews and confirms it — this
     // renderer just carries her words, it doesn't add sales copy of its own.

@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(45);
+select plan(49);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -420,6 +420,37 @@ select is((select rows_affected from write_probe where op = 'delete'),
 select is((select count(*) from public.appointments
             where reference = 'KB-RLST01'),
           1::bigint, 'and that appointment is still there');
+
+-- --------------------------------------------------------------------------
+-- The contact form's rate limit (0049).
+--
+-- `submit_contact_message()` is granted to anon, so an unguarded version lets
+-- anyone make the salon's own SMTP identity mail the owner in a loop — the
+-- hole 0021 closed for `availability_requests`. These assertions run as anon,
+-- because that is who calls it, and they pin both caps: the per-address one a
+-- script beats by rotating addresses, and the global one that makes rotating
+-- pointless.
+-- --------------------------------------------------------------------------
+set local role anon;
+
+select lives_ok(
+  $$select public.submit_contact_message('Contact Probe', 'contact@rls.test', 'first')$$,
+  'anon may send a contact message');
+
+select lives_ok(
+  $$select public.submit_contact_message('Contact Probe', 'contact@rls.test', 'second')$$,
+  'and a second from the same address');
+
+select lives_ok(
+  $$select public.submit_contact_message('Contact Probe', 'contact@rls.test', 'third')$$,
+  'and a third, which is the limit rather than one past it');
+
+select throws_ok(
+  $$select public.submit_contact_message('Contact Probe', 'contact@rls.test', 'fourth')$$,
+  'P0001', 'TOO_MANY_MESSAGES',
+  'but a fourth inside 24 hours is refused');
+
+reset role;
 
 select * from finish();
 

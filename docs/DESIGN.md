@@ -212,9 +212,12 @@ than remembered:
 | `text-2xl`  | 24px | 1.2         |
 | `text-3xl`  | 30px | 1.2         |
 | `text-4xl`  | 36px | 1.2         |
+| `text-5xl`  | 48px | 1.05        |
+| `text-6xl`  | 72px | 1           |
 
 **RULE** — Nothing a customer must read to complete a booking may be below 14px.
-`text-xs` is for dashboard metadata only. There is no step above `text-4xl`.
+`text-xs` is for dashboard metadata only. `text-5xl`/`text-6xl` (added 2026-08) are
+for marketing hero headlines only — never the booking flow, never dashboard chrome.
 
 `font-display` is removed — it was an alias for `font-serif`. Use `font-serif`.
 

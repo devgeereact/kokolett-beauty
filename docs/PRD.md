@@ -105,10 +105,11 @@ account that can mutate salon data.
 
 ## 7. MVP feature set
 
-**Marketing site** — a single scrolling home page (hero, next-available, services,
-how-it-works, closing CTA), a Google-reviews block standing in for testimonials, plus
-standalone Privacy, Booking Policy and Terms pages. There is no separate About,
-Gallery, FAQs or Contact page — an earlier multi-page plan was simplified to this.
+**Marketing site** — reinstated as a real multi-page site 2026-08-25 (Home, About,
+Gallery, Services, Testimonials, FAQs, Contact), reversing the single-page
+simplification this section used to describe. Home carries the hero, next-available,
+a services teaser and the closing CTA; the Google-reviews block also anchors the
+Testimonials page. Privacy, Booking Policy and Terms remain standalone.
 
 **No fixed price.** The salon has one appointment type; what it costs is agreed in
 the chair, not quoted online. The owner logs what was actually charged after the

@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0046`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0047`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -25,6 +25,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0044_finish_the_erasures_already_requested.sql`  | Re-ran the full erasure over every customer already carrying a `deleted_at` from the weaker `0035` path.                                                                                         |
 | `0045_availability_reaches_the_whole_horizon.sql` | `available_slots` scanned a hard-coded 62 days while `max_horizon_days` is 90. The cap is now the setting.                                                                                       |
 | `0046_personal_data_stops_accumulating.sql`       | Put a retention end date on `email_messages` and `availability_requests`, which held personal data indefinitely.                                                                                 |
+| `0047_contact_message.sql`                        | Added `submit_contact_message()` for the marketing Contact page's message form. No new table — it queues into `email_messages` like every other notification.                                   |
 
 ### Every table, and where it is documented
 
@@ -271,6 +272,7 @@ because dropping a table costs a migration for no gain; see `docs/ARCHITECTURE.m
 | `generate_booking_reference()` | —               | Collision-checked `KB-XXXXXX`                  |
 | `book_appointment(...)`        | **definer**     | The single public write path                   |
 | `expire_pending_approvals()`   | definer         | Releases stale holds; run hourly via `pg_cron` |
+| `submit_contact_message(p_full_name, p_email, p_message)` | **definer** | Contact page message form (`0047`) — validates, then `queue_email('contact_message_received', ...)` to the owner. No new table. |
 
 ### `book_appointment(p_service_id, p_starts_at, p_full_name, p_email, p_mobile, p_note, p_consent)`
 

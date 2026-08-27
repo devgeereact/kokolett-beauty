@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Stars } from '@/components/public/Reviews';
-import { TestimonialsCarousel } from '@/components/public/TestimonialsCarousel';
+import { TestimonialsGrid } from '@/components/public/TestimonialsGrid';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { fetchReviews, type ReviewsSnapshot } from '@/services/reviewService';
@@ -101,19 +101,8 @@ export function TestimonialsPage(): JSX.Element {
           </p>
         )}
 
-        {reviews.length > 0 && <TestimonialsCarousel reviews={reviews} />}
-
-        {settings?.google_review_url && (
-          <p className="mt-10 text-center">
-            <a
-              href={settings.google_review_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              Read and leave a review on Google
-            </a>
-          </p>
+        {reviews.length > 0 && (
+          <TestimonialsGrid reviews={reviews} reviewUrl={settings?.google_review_url} />
         )}
       </section>
     </SiteShell>

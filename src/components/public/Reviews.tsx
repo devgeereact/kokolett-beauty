@@ -1,7 +1,21 @@
 import { type JSX, useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
-import { fetchReviews, type ReviewsSnapshot } from '@/services/reviewService';
+import {
+  fetchReviews,
+  type PublicReview,
+  type ReviewsSnapshot,
+} from '@/services/reviewService';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { cn } from '@/lib/utils';
+
+const VISIBLE_CARDS = 3;
+const ROTATE_MS = 5000;
+const WORD_LIMIT = 20;
+
+function truncateWords(text: string, limit: number): string {
+  const words = text.trim().split(/\s+/);
+  return words.length <= limit ? text.trim() : `${words.slice(0, limit).join(' ')}…`;
+}
 
 /**
  * What people are saying, from Google.
@@ -38,8 +52,42 @@ export function Stars({
   );
 }
 
+/** Google's photo URLs occasionally 403 or expire; fall back to the same
+ * initial-letter badge used when there is no photo at all, rather than
+ * showing a broken-image icon. */
+function ReviewerAvatar({
+  authorName,
+  photoUrl,
+}: {
+  authorName: string;
+  photoUrl: string | null;
+}): JSX.Element {
+  const [broken, setBroken] = useState(false);
+
+  return photoUrl && !broken ? (
+    <img
+      src={photoUrl}
+      alt=""
+      width={32}
+      height={32}
+      loading="lazy"
+      className="h-8 w-8 rounded-full object-cover"
+      onError={() => setBroken(true)}
+    />
+  ) : (
+    <span
+      className="grid h-8 w-8 place-items-center rounded-full bg-muted text-xs font-semibold text-muted-foreground"
+      aria-hidden="true"
+    >
+      {authorName.slice(0, 1)}
+    </span>
+  );
+}
+
 export function Reviews({ reviewUrl }: { reviewUrl: string | null }): JSX.Element | null {
   const [data, setData] = useState<ReviewsSnapshot | null>(null);
+  const [start, setStart] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     let active = true;
@@ -60,7 +108,23 @@ export function Reviews({ reviewUrl }: { reviewUrl: string | null }): JSX.Elemen
   const reviews = data?.reviews ?? [];
   const hasRating = typeof data?.rating === 'number' && (data?.rating_count ?? 0) > 0;
 
+  // Only three cards show at once; anything beyond that rotates through
+  // rather than growing the grid, so the homepage teaser never gets taller
+  // than three cards regardless of how many reviews are cached.
+  useEffect(() => {
+    if (reducedMotion || reviews.length <= VISIBLE_CARDS) return;
+    const id = window.setInterval(() => {
+      setStart((i) => (i + 1) % reviews.length);
+    }, ROTATE_MS);
+    return () => window.clearInterval(id);
+  }, [reducedMotion, reviews.length]);
+
   if (reviews.length === 0 && !hasRating) return null;
+
+  const visible = Array.from(
+    { length: Math.min(VISIBLE_CARDS, reviews.length) },
+    (_, i) => reviews[(start + i) % reviews.length],
+  ).filter((r): r is PublicReview => r !== undefined);
 
   return (
     <section className="border-t border-border bg-card">
@@ -84,48 +148,50 @@ export function Reviews({ reviewUrl }: { reviewUrl: string | null }): JSX.Elemen
           )}
         </div>
 
-        {reviews.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((review) => (
-              <Card
-                key={`${review.author_name}-${review.published_at}`}
-                className="flex flex-col p-5"
-              >
-                <Stars rating={review.rating} className="mb-3" />
-                <blockquote className="flex-1 text-sm leading-relaxed text-foreground">
-                  {review.body}
-                </blockquote>
-                <footer className="mt-4 flex items-center gap-3 border-t border-border pt-3">
-                  {review.profile_photo_url ? (
-                    <img
-                      src={review.profile_photo_url}
-                      alt=""
-                      width={32}
-                      height={32}
-                      loading="lazy"
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span
-                      className="grid h-8 w-8 place-items-center rounded-full bg-muted text-xs font-semibold text-muted-foreground"
-                      aria-hidden="true"
-                    >
-                      {review.author_name.slice(0, 1)}
-                    </span>
+        {visible.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map((review) => {
+              const card = (
+                <Card className="flex h-full flex-col p-4 transition-colors hover:border-brand">
+                  <Stars rating={review.rating} className="mb-2" />
+                  {review.body && (
+                    <blockquote className="flex-1 text-sm leading-snug text-foreground">
+                      {truncateWords(review.body, WORD_LIMIT)}
+                    </blockquote>
                   )}
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-foreground">
-                      {review.author_name}
-                    </span>
-                    {review.relative_time && (
-                      <span className="block text-xs text-muted-foreground">
-                        {review.relative_time}
+                  <footer className="mt-3 flex items-center gap-2 border-t border-border pt-3">
+                    <ReviewerAvatar
+                      authorName={review.author_name}
+                      photoUrl={review.profile_photo_url}
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-foreground">
+                        {review.author_name}
                       </span>
-                    )}
-                  </span>
-                </footer>
-              </Card>
-            ))}
+                      {review.relative_time && (
+                        <span className="block text-xs text-muted-foreground">
+                          {review.relative_time}
+                        </span>
+                      )}
+                    </span>
+                  </footer>
+                </Card>
+              );
+
+              return reviewUrl ? (
+                <a
+                  key={`${review.author_name}-${review.published_at}`}
+                  href={reviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {card}
+                </a>
+              ) : (
+                <div key={`${review.author_name}-${review.published_at}`}>{card}</div>
+              );
+            })}
           </div>
         )}
 

@@ -468,9 +468,6 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
               <Link to={routes.public.terms} className="hover:text-foreground">
                 Terms
               </Link>
-              <Link to="/login" className="hover:text-foreground">
-                Salon sign in
-              </Link>
             </nav>
           </div>
         </div>

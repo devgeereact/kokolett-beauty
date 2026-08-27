@@ -188,4 +188,6 @@ export type BookingErrorCode =
   | 'SAME_TIME'
   | 'INVALID_AMOUNT'
   | 'HAS_PAYMENT'
-  | 'TOO_MANY_MESSAGES';
+  | 'TOO_MANY_MESSAGES'
+  | 'SLUG_INVALID'
+  | 'SLUG_RESERVED';

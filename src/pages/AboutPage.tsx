@@ -2,19 +2,25 @@ import { type JSX } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { buildImageKitUrl } from '@/lib/imagekit';
 import { routes } from '@/lib/routes';
 
+/** Shown until the owner uploads her own photo from Settings. */
+const FALLBACK_PHOTO_PATH = '/kokolett/marketing/about-christy-portrait.jpg';
+
 /**
- * Christy's story — sourced from the owner directly, kept in code rather
- * than a CMS field since it changes rarely and belongs under version
- * control like the rest of the site's copy (2026-08-25 rebrand).
+ * Christy's story — the copy is sourced from the owner directly and kept in
+ * code since it changes rarely and belongs under version control like the
+ * rest of the site's copy (2026-08-25 rebrand). The portrait itself is
+ * owner-editable (`booking_settings.about_photo_path`, Settings → About photo).
  */
 export function AboutPage(): JSX.Element {
   useDocumentMeta(
     'About',
     'Meet Christy, the stylist behind Kokolett Beauty: 15+ years doing hair in Woolwich, South East London.',
   );
+  const { settings } = useBusinessSettings();
 
   return (
     <SiteShell>
@@ -22,7 +28,7 @@ export function AboutPage(): JSX.Element {
         <div className="grid gap-10 md:grid-cols-[minmax(0,340px)_1fr] md:items-start md:gap-14">
           <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-xl border border-border shadow-card md:mx-0">
             <img
-              src={buildImageKitUrl('/kokolett/marketing/about-christy-portrait.jpg', {
+              src={buildImageKitUrl(settings?.about_photo_path ?? FALLBACK_PHOTO_PATH, {
                 width: 680,
                 quality: 85,
               })}

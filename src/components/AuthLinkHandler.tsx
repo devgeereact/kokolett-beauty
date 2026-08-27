@@ -91,10 +91,13 @@ export function AuthLinkHandler(): JSX.Element | null {
       } catch (e) {
         reportError(e, { where: 'AuthLinkHandler' });
         if (!active) return;
-        // Send them somewhere that can explain itself rather than leaving a
-        // dead token in the URL of whatever page they happened to land on.
+        // Send them somewhere real rather than leaving a dead token in the
+        // URL of whatever page they happened to land on. There is no public
+        // login-shaped path to fall back to any more (the sign-in form lives
+        // behind the owner's own secret, changeable URL), so anything other
+        // than the reset-password page's own error state goes home.
         void navigate(
-          destination === routes.auth.resetPassword ? destination : '/login',
+          destination === routes.auth.resetPassword ? destination : routes.public.home,
           {
             replace: true,
           },

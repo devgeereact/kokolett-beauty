@@ -163,10 +163,11 @@ export function ResetPasswordPage(): JSX.Element {
           <>
             <p className="mb-6 text-sm text-muted-foreground">
               This link is no longer valid. Recovery links work once and expire after an
-              hour, so this one has probably already been used.
+              hour, so this one has probably already been used. Use your saved sign-in
+              link to try again.
             </p>
-            <Button size="lg" onClick={() => void navigate(routes.auth.login)}>
-              Back to sign in
+            <Button size="lg" onClick={() => void navigate(routes.public.home)}>
+              Back to the homepage
             </Button>
           </>
         )}

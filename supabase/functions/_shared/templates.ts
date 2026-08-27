@@ -56,6 +56,8 @@ export interface TemplatePayload {
   reset_url?: string;
   /** How long the recovery link stays valid, for the copy. */
   reset_ttl_minutes?: number;
+  /** Failed guesses against the secret sign-in link in the last hour, for `secret_login_under_attack`. */
+  recent_attempts?: number;
 }
 
 const SALON = 'Kokolett Beauty UK';
@@ -845,6 +847,26 @@ export function render(template: string, p: TemplatePayload, override?: Template
           'You are receiving this as the owner of Kokolett Beauty UK.',
         ),
         text: `${p.full_name} could not find a slot and has asked for a time.\n${p.email}${p.mobile ? ` · ${p.mobile}` : ''}\nPrefers: ${(p.preferred_dates ?? []).join(', ') || 'no date given'} · ${p.flexibility ?? 'any'}\n\n${SITE}/dashboard/inbox?tab=requests`,
+      };
+
+    // Fired by record_secret_login_attempt() (0051) once failed guesses
+    // against the secret sign-in link cross a generous hourly threshold —
+    // the distributed-attacker backstop the per-IP lockout alone can't catch.
+    case 'secret_login_under_attack':
+      return {
+        html: layout(
+          'Sign-in link',
+          'Unusual activity on your sign-in link',
+          line(
+            `Someone has made ${esc(String(p.recent_attempts ?? 'several'))} failed attempts to guess your salon sign-in link in the last hour.`,
+          ) +
+            line(
+              'Your real link still works and nothing has been accessed. If you would feel safer, you can change it any time from Settings → Security.',
+            ),
+          p,
+          'You are receiving this as the owner of Kokolett Beauty UK.',
+        ),
+        text: `Someone has made ${p.recent_attempts ?? 'several'} failed attempts to guess your salon sign-in link in the last hour. Your real link still works and nothing has been accessed. Change it any time from Settings → Security if you would feel safer.`,
       };
 
     // The Contact page's message form (2026-08 marketing rebrand) — not a

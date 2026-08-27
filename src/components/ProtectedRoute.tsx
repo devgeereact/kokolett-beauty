@@ -1,9 +1,10 @@
 import type { JSX, ReactNode } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useIsOwner } from '@/hooks/useIsOwner';
 import { Spinner } from '@/components/ui/States';
 import { Button } from '@/components/ui/Button';
+import { NotFoundPage } from '@/pages/NotFoundPage';
 
 /**
  * Gate a route on an authenticated *staff* session.
@@ -14,6 +15,14 @@ import { Button } from '@/components/ui/Button';
  *
  * This is presentation only — the real boundary is RLS plus the `is_owner()`
  * guard inside each owner RPC.
+ *
+ * An unauthenticated hit renders the same generic 404 a stranger gets
+ * anywhere else, not a redirect to a login-shaped path — the sign-in form
+ * only exists behind the owner's own secret, changeable URL
+ * (`SecretGate.tsx`), and this route must not hint at its existence.
+ * Deliberate trade-off: the owner cannot deep-link back into the dashboard
+ * from a bookmark once her session expires — she always re-enters through
+ * her own saved secret link.
  *
  * Mounted once as a pathless layout route wrapping every dashboard route (see
  * `App.tsx`), not per-page — mounting it individually per route meant React
@@ -26,7 +35,6 @@ import { Button } from '@/components/ui/Button';
 export function ProtectedRoute({ children }: { children?: ReactNode }): JSX.Element {
   const { user, loading, signOut } = useSupabaseAuth();
   const { isOwner, loading: ownerLoading, failed, retry } = useIsOwner();
-  const location = useLocation();
 
   if (loading || (user && ownerLoading)) {
     return (
@@ -37,13 +45,7 @@ export function ProtectedRoute({ children }: { children?: ReactNode }): JSX.Elem
   }
 
   if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location.pathname + location.search }}
-      />
-    );
+    return <NotFoundPage />;
   }
 
   // Could not reach the database to ask. That is not a "no", and answering it

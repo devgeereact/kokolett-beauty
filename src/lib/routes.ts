@@ -68,7 +68,6 @@ export const routes = {
     profile: '/dashboard/profile',
   },
   auth: {
-    login: '/login',
     /**
      * Where a recovery email lands. Outside `owner` on purpose: it must be
      * reachable *without* a session, since being unable to sign in is the whole
@@ -80,3 +79,40 @@ export const routes = {
 
 export type PublicRoute = typeof routes.public;
 export type OwnerRoute = typeof routes.owner;
+
+/**
+ * Every real top-level path segment, plus a handful of predictable words an
+ * attacker would try first regardless of what's actually routed. The owner
+ * cannot set her secret sign-in slug (`staff.login_slug`, migration 0051) to
+ * any of these — `set_owner_login_slug()` keeps its own copy of this list in
+ * Postgres, since client-side validation alone is not a security boundary
+ * and there is no shared source of truth across the TS/SQL boundary. Keep
+ * the two in sync by hand whenever a new top-level route is added here.
+ */
+export const RESERVED_SLUGS = [
+  'about',
+  'gallery',
+  'services',
+  'testimonials',
+  'faqs',
+  'contact',
+  'book',
+  'request-availability',
+  'subscribe',
+  'privacy',
+  'booking-policy',
+  'terms',
+  'my',
+  'access',
+  'dashboard',
+  'login',
+  'reset-password',
+  'admin',
+  'owner',
+  'staff',
+  'signin',
+  'signup',
+  'logout',
+  'api',
+  'app',
+] as const;

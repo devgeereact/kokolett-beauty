@@ -38,6 +38,10 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   // blocked — so it names the channels that still work.
   TOO_MANY_MESSAGES:
     'You have sent us a few messages already. Please give us a little time to reply, or call or WhatsApp us if it is urgent.',
+  SLUG_INVALID:
+    'That link must be 4-40 characters, using only lowercase letters, numbers and hyphens.',
+  SLUG_RESERVED:
+    'That link is already used elsewhere on the site — please choose another.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

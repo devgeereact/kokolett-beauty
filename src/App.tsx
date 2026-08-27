@@ -20,7 +20,7 @@ import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
 import { SubscribePage } from '@/pages/SubscribePage';
 import { MyBookingsPage } from '@/pages/MyBookingsPage';
 import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
-import { LoginPage } from '@/pages/LoginPage';
+import { SecretGate } from '@/pages/SecretGate';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { AuthLinkHandler } from '@/components/AuthLinkHandler';
@@ -134,7 +134,6 @@ export function App(): JSX.Element {
               <Route path={routes.public.bookingPolicy} element={<BookingPolicyPage />} />
               <Route path={routes.public.terms} element={<TermsPage />} />
 
-              <Route path="/login" element={<LoginPage />} />
               <Route path={routes.auth.resetPassword} element={<ResetPasswordPage />} />
 
               {/*
@@ -206,6 +205,14 @@ export function App(): JSX.Element {
                 />
                 <Route path={routes.owner.profile} element={<ProfilePage />} />
               </Route>
+
+              {/* Every single-segment path that isn't one of the real routes
+                  above falls through here — including the guessed slugs an
+                  attacker tries. Real routes always win: React Router v6
+                  ranks a static segment above a dynamic one regardless of
+                  declaration order, so this can never shadow `/about`,
+                  `/gallery`, etc. */}
+              <Route path="/:maybeSecretSlug" element={<SecretGate />} />
 
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

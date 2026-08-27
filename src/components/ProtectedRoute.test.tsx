@@ -1,8 +1,7 @@
-import type { JSX } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Link, MemoryRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, MemoryRouter, Outlet, Route, Routes } from 'react-router-dom';
 
 const mockAuth = vi.hoisted(() => ({
   user: null as { id: string } | null,
@@ -21,25 +20,10 @@ vi.mock('@/hooks/useIsOwner', () => ({ useIsOwner: () => mockOwner }));
 
 const { ProtectedRoute } = await import('@/components/ProtectedRoute');
 
-/** Surfaces the redirect state's `from` so tests can assert what survived
- * the round trip, without disturbing the plain "Login page" text the other
- * tests already look for. */
-function LoginPageStub(): JSX.Element {
-  const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '';
-  return (
-    <div>
-      <p>Login page</p>
-      <p data-testid="redirect-from">{from}</p>
-    </div>
-  );
-}
-
 function renderAt(path: string): void {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/login" element={<LoginPageStub />} />
         <Route
           path="/dashboard"
           element={
@@ -67,32 +51,29 @@ function renderAt(path: string): void {
  * the request never reaches the server — so a dropped request used to render
  * "you are not salon staff", a screen whose only control is Sign out.
  *
- * Also the router smoke test: these exercise real `MemoryRouter` navigation and
- * `<Navigate>` redirects, which is the coverage the v6 to v7 upgrade needed.
+ * There is no more login-shaped redirect to test: an unauthenticated hit
+ * renders the same generic 404 a stranger gets anywhere else on the site —
+ * the sign-in form only exists behind the owner's own secret, changeable URL
+ * (`SecretGate.tsx`), and this gate must not hint at its existence, including
+ * to her own expired session.
  */
 describe('ProtectedRoute', () => {
-  it('sends a signed-out visitor to the login page', () => {
+  it('shows the generic 404 to a signed-out visitor, not a login page', () => {
     Object.assign(mockAuth, { user: null, loading: false });
     Object.assign(mockOwner, { isOwner: false, loading: false, failed: false });
 
     renderAt('/dashboard');
-    expect(screen.getByText('Login page')).toBeInTheDocument();
+    expect(screen.getByText("This page doesn't exist.")).toBeInTheDocument();
   });
 
-  it('preserves the query string through the login redirect (Fix E)', () => {
-    Object.assign(mockAuth, { user: null, loading: false });
-    Object.assign(mockOwner, { isOwner: false, loading: false, failed: false });
-
-    // A bookmarked deep link — e.g. a specific Inbox tab — must round-trip
-    // through login intact. Capturing only `location.pathname` used to drop
-    // everything after the `?`, landing the owner back on whatever the
-    // default tab resolves to instead of the one she bookmarked.
+  it('shows the same generic 404 regardless of the deep link a signed-out visitor hit', () => {
+    // A bookmarked deep link — e.g. a specific Inbox tab — used to round-trip
+    // through a login redirect with the path preserved. That redirect no
+    // longer exists: an expired session lands on the same 404 everywhere,
+    // by design, since there is nowhere login-shaped left to send her.
     renderAt('/dashboard/inbox?tab=requests');
 
-    expect(screen.getByText('Login page')).toBeInTheDocument();
-    expect(screen.getByTestId('redirect-from')).toHaveTextContent(
-      '/dashboard/inbox?tab=requests',
-    );
+    expect(screen.getByText("This page doesn't exist.")).toBeInTheDocument();
   });
 
   it('lets salon staff through', () => {
@@ -146,7 +127,6 @@ describe('ProtectedRoute', () => {
       render(
         <MemoryRouter initialEntries={[initialPath]}>
           <Routes>
-            <Route path="/login" element={<LoginPageStub />} />
             <Route
               element={
                 <ProtectedRoute>
@@ -175,7 +155,7 @@ describe('ProtectedRoute', () => {
       Object.assign(mockOwner, { isOwner: false, loading: false, failed: false });
 
       renderLayout('/dashboard/inbox');
-      expect(screen.getByText('Login page')).toBeInTheDocument();
+      expect(screen.getByText("This page doesn't exist.")).toBeInTheDocument();
     });
 
     it('lets an owner navigate between sibling child routes without hitting the gate again', async () => {
@@ -188,7 +168,7 @@ describe('ProtectedRoute', () => {
       await userEvent.click(screen.getByRole('link', { name: 'Go to inbox' }));
 
       expect(screen.getByText('Inbox')).toBeInTheDocument();
-      expect(screen.queryByText('Login page')).not.toBeInTheDocument();
+      expect(screen.queryByText("This page doesn't exist.")).not.toBeInTheDocument();
       expect(screen.queryByText('No access')).not.toBeInTheDocument();
       expect(
         screen.queryByText('Cannot reach the salon right now'),

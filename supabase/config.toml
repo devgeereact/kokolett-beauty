@@ -475,3 +475,16 @@ verify_jwt = false
 # the feed URL, checked against a stored hash by calendar_feed_events().
 [functions.calendar-feed]
 verify_jwt = false
+
+# Owner-only. Mints a short-lived ImageKit signed upload token for the
+# dashboard's "About photo" uploader; checks is_owner() internally on top of
+# the JWT gate below, same as ai-assistant-chat.
+[functions.owner-photo-upload]
+verify_jwt = true
+
+# Public, by necessity: this is what a stranger's browser hits before any
+# session exists, to check a guessed path against the owner's real sign-in
+# slug. Constrained by a neutral response, a per-IP lockout, and a global
+# backstop — see owner-secret-login/index.ts.
+[functions.owner-secret-login]
+verify_jwt = false

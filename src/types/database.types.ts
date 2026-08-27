@@ -10,32 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -359,6 +334,7 @@ export type Database = {
       }
       booking_settings: {
         Row: {
+          about_photo_path: string | null
           address_line: string | null
           approval_window_h: number
           approve_first_time: boolean
@@ -381,6 +357,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          about_photo_path?: string | null
           address_line?: string | null
           approval_window_h?: number
           approve_first_time?: boolean
@@ -403,6 +380,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          about_photo_path?: string | null
           address_line?: string | null
           approval_window_h?: number
           approve_first_time?: boolean
@@ -1251,14 +1229,15 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: undefined
       }
+      drain_email_queue: { Args: never; Returns: number }
       erase_customer_as_owner: {
         Args: { p_customer_id: string }
         Returns: string
       }
-      drain_email_queue: { Args: never; Returns: number }
       expire_pending_approvals: { Args: never; Returns: number }
       extend_weekly_template: { Args: never; Returns: number }
       generate_booking_reference: { Args: never; Returns: string }
+      get_own_login_slug: { Args: never; Returns: string }
       hair_appointment: {
         Args: never
         Returns: {
@@ -1347,6 +1326,7 @@ export type Database = {
       public_reviews: { Args: { p_limit?: number }; Returns: Json }
       public_service_menu: { Args: never; Returns: Json }
       purge_expired_access_tokens: { Args: never; Returns: number }
+      purge_expired_personal_data: { Args: never; Returns: Json }
       queue_email: {
         Args: {
           p_appointment_id?: string
@@ -1462,6 +1442,7 @@ export type Database = {
         Args: { p_date: string; p_times: string[] }
         Returns: number
       }
+      set_owner_login_slug: { Args: { p_slug: string }; Returns: undefined }
       set_request_owner_note: {
         Args: { p_note: string; p_request_id: string }
         Returns: undefined
@@ -1499,7 +1480,13 @@ export type Database = {
         | "converted"
         | "declined"
         | "expired"
-      email_status: "queued" | "sending" | "sent" | "cancelled" | "failed" | "bounced"
+      email_status:
+        | "queued"
+        | "sending"
+        | "sent"
+        | "cancelled"
+        | "failed"
+        | "bounced"
       exception_kind: "closure" | "extra_hours" | "break"
       recommendation_status: "pending" | "accepted" | "dismissed" | "expired"
     }
@@ -1627,9 +1614,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       appointment_status: [
@@ -1651,7 +1635,14 @@ export const Constants = {
         "declined",
         "expired",
       ],
-      email_status: ["queued", "sending", "sent", "cancelled", "failed", "bounced"],
+      email_status: [
+        "queued",
+        "sending",
+        "sent",
+        "cancelled",
+        "failed",
+        "bounced",
+      ],
       exception_kind: ["closure", "extra_hours", "break"],
       recommendation_status: ["pending", "accepted", "dismissed", "expired"],
     },

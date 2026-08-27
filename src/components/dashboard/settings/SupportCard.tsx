@@ -8,9 +8,9 @@ const SUPPORT_EMAIL = 'booking@kokolettbeauty.com';
 /** Real destinations only — a mailto to the salon's own inbox and the booking policy page. No fabricated help centre content. */
 export function SupportCard(): JSX.Element {
   return (
-    <Card className="p-5">
+    <Card className="flex h-full flex-col justify-center p-5">
       <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Support</h2>
-      <p className="mb-3 text-sm text-muted-foreground">Get help and share feedback.</p>
+      <p className="mb-3 text-sm text-muted-foreground">Get help or share feedback.</p>
       <div className="divide-y divide-border">
         <a
           href={routes.public.bookingPolicy}
@@ -49,7 +49,7 @@ export function SupportCard(): JSX.Element {
               Contact support
             </span>
             <span className="block text-xs text-muted-foreground">
-              Get in touch with our team
+              Get in touch with the support team
             </span>
           </span>
           <ChevronRight
@@ -72,7 +72,7 @@ export function SupportCard(): JSX.Element {
               Send feedback
             </span>
             <span className="block text-xs text-muted-foreground">
-              Help us improve Kokolett
+              Help improve Kokolett
             </span>
           </span>
           <ChevronRight

@@ -1,4 +1,5 @@
 import { type JSX, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
 
@@ -12,10 +13,12 @@ import { useToast } from '@/context/ToastContext';
  * origin or an older mobile browser.
  */
 export function ShareLink({
+  icon: Icon,
   label,
   hint,
   url,
 }: {
+  icon?: LucideIcon;
   label: string;
   hint: string;
   url: string;
@@ -39,24 +42,36 @@ export function ShareLink({
   };
 
   return (
-    <div className="mb-4">
-      <p className="text-sm font-medium text-foreground">{label}</p>
-      <p className="mb-2 text-xs text-muted-foreground">{hint}</p>
-      <div className="flex flex-wrap items-center gap-2">
-        <code className="min-w-0 flex-1 truncate rounded-md border border-border bg-input px-3 py-2 font-mono text-sm text-foreground">
-          {url}
-        </code>
-        <Button size="sm" variant="ghost" onClick={() => void copy()}>
-          {copied ? 'Copied' : 'Copy'}
-        </Button>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Open
-        </a>
+    <div className="mb-4 flex gap-3">
+      {Icon && (
+        <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
+          <Icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="mb-1.5 text-xs text-muted-foreground">{hint}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-w-0 flex-1 truncate text-sm text-primary hover:underline"
+          >
+            {url}
+          </a>
+          <Button size="sm" variant="ghost" onClick={() => void copy()}>
+            {copied ? 'Copied' : 'Copy'}
+          </Button>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-control-sm items-center justify-center rounded-sm bg-primary px-3 text-sm font-semibold text-primary-foreground hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            Open
+          </a>
+        </div>
       </div>
     </div>
   );

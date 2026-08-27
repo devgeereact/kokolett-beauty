@@ -1,57 +1,43 @@
-import type { JSX, ReactNode } from 'react';
+import type { JSX } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AccountSummaryCard } from '@/components/dashboard/settings/AccountSummaryCard';
+import { AboutPhotoCard } from '@/components/dashboard/settings/AboutPhotoCard';
 import { BillingCard } from '@/components/dashboard/settings/BillingCard';
+import { BookingRulesCard } from '@/components/dashboard/settings/BookingRulesCard';
+import { BusinessAndOwnerCard } from '@/components/dashboard/settings/BusinessAndOwnerCard';
 import { BusinessSettingsNavCard } from '@/components/dashboard/settings/BusinessSettingsNavCard';
-import { BusinessTabContent } from '@/components/dashboard/settings/BusinessTabContent';
-import { OrganisationDetailsCard } from '@/components/dashboard/settings/OrganisationDetailsCard';
+import { GoogleReviewsCard } from '@/components/dashboard/settings/GoogleReviewsCard';
+import { LinksToShareCard } from '@/components/dashboard/settings/LinksToShareCard';
+import { MailingListCard } from '@/components/dashboard/settings/MailingListCard';
 import { PreferencesCard } from '@/components/dashboard/settings/PreferencesCard';
-import { SecurityCard } from '@/components/dashboard/settings/SecurityCard';
+import { SalonDetailsCard } from '@/components/dashboard/settings/SalonDetailsCard';
 import { SupportCard } from '@/components/dashboard/settings/SupportCard';
+import { YourCalendarCard } from '@/components/dashboard/settings/YourCalendarCard';
 
 /**
- * A named group within the single Settings scroll — an uppercase eyebrow
- * plus a hairline rule, the same "structure encodes something true about
- * the content" device used for the calendar legend and the reports filter
- * row. Without it, seven visually-identical cards in a row read as one
- * undifferentiated pile rather than four distinct concerns.
- */
-function SettingsSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}): JSX.Element {
-  return (
-    <section>
-      <h2 className="mb-3 border-b border-border pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-/**
- * One continuous Settings screen — no sub-tabs. Previously six tabs
- * (Organisation / Account / Business / Preferences / Security / Billing),
- * with "Organisation" acting as a hub that already rendered every other
- * card in miniature. Tab switching was local `useState`, never part of the
- * URL, so collapsing it into a single scroll changes nothing anyone could
- * have deep-linked to.
+ * One continuous Settings screen, laid out as independent row wrappers
+ * rather than a handful of merged cards under generic eyebrow labels — each
+ * `<div className="grid ...">` row is its own responsive grid, so a row can
+ * be reordered or resized later without touching a global span table. Grid's
+ * default `align-items: stretch` makes every card in a row match its
+ * neighbour's height, so a row never reads as misaligned; the lighter cards
+ * center their own content vertically so the extra height doesn't show up as
+ * dead space at the bottom.
  *
- * Every card shares one heading treatment — plain serif `h2` + muted
- * description, no per-card icon tile — matching how `BusinessTabContent`'s
- * own cards (Salon details, Booking rules, Links to share, …) already look.
- * Grouping under `SettingsSection` labels replaces the icon tiles as the
- * thing that gives the page visual landmarks.
+ * Rows 1–2 use a 3-column track with the primary card spanning two of them,
+ * so the "wide card + narrow card" pairing is just `md:col-span-2` on a
+ * 3-column grid rather than a one-off fractional template. Row 2's wide
+ * column stacks Business Settings and Your Calendar on top of each other
+ * (`space-y-6`) so their combined height matches Preferences alongside them,
+ * without Preferences itself growing to fill anything. Row 1's Business &
+ * Owner card carries its own Account & Security section at its foot (see
+ * `BusinessAndOwnerCard.tsx`) instead of a separate top-level card, so its
+ * height naturally matches About Photo beside it. Row 3 is two equal
+ * columns; row 4 is three; the last row is two.
  *
- * Order: who you are (salon identity, owner account) → where to configure
- * the business (quick links + preferences) → the full business form
- * (salon details, booking rules, reviews, calendar, share links, mailing
- * list — `BusinessTabContent` already folds those together) → account
- * safety and help → billing, last because there is nothing to manage there.
+ * DOM order equals mobile order, so the single-column collapse needs no
+ * `order-*` classes: Business & Owner (+ Account & Security), About Photo,
+ * Business Settings, Your Calendar, Preferences, Salon Details, Booking
+ * Rules, Links to Share, Mailing List, Google Reviews, Support, Billing.
  */
 export function SettingsPage(): JSX.Element {
   return (
@@ -59,34 +45,37 @@ export function SettingsPage(): JSX.Element {
       title="Settings"
       subtitle="Manage your account, business and app preferences."
     >
-      <div className="space-y-8">
-        <SettingsSection label="Business">
-          <div className="grid items-stretch gap-6 lg:grid-cols-2">
-            <OrganisationDetailsCard />
-            <AccountSummaryCard />
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <BusinessAndOwnerCard />
           </div>
-        </SettingsSection>
+          <AboutPhotoCard />
+        </div>
 
-        <SettingsSection label="Configuration">
-          <div className="space-y-6">
-            <div className="grid items-stretch gap-6 lg:grid-cols-2">
-              <BusinessSettingsNavCard />
-              <PreferencesCard />
-            </div>
-            <BusinessTabContent />
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="space-y-6 md:col-span-2">
+            <BusinessSettingsNavCard />
+            <YourCalendarCard />
           </div>
-        </SettingsSection>
+          <PreferencesCard />
+        </div>
 
-        <SettingsSection label="Account & security">
-          <div className="grid items-stretch gap-6 lg:grid-cols-2">
-            <SecurityCard />
-            <SupportCard />
-          </div>
-        </SettingsSection>
+        <div className="grid gap-6 md:grid-cols-2">
+          <SalonDetailsCard />
+          <BookingRulesCard />
+        </div>
 
-        <SettingsSection label="Billing">
+        <div className="grid gap-6 md:grid-cols-3">
+          <LinksToShareCard />
+          <MailingListCard />
+          <GoogleReviewsCard />
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <SupportCard />
           <BillingCard />
-        </SettingsSection>
+        </div>
       </div>
     </DashboardLayout>
   );

@@ -32,3 +32,17 @@ export async function listSubscribers(): Promise<Subscriber[]> {
   if (error) throw error;
   return data ?? [];
 }
+
+/**
+ * Soft-unsubscribe — sets `unsubscribed_at` rather than deleting the row, so
+ * `listSubscribers()`'s existing filter is all that's needed for them to stop
+ * appearing. Owner-only via the `subscribers_owner_all` RLS policy (0018).
+ */
+export async function unsubscribeSubscriber(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('subscribers')
+    .update({ unsubscribed_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
+}

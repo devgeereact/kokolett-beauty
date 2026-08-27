@@ -301,7 +301,24 @@ _Naming note:_ the stacking token is `z-layer-popover`, not `z-popover`, because
 Two different concepts should not share a name.
 
 All overlay backdrops use `.overlay-backdrop`, driven by `--overlay` and `--overlay-alpha`,
-rather than each surface picking its own darkness.
+rather than each surface picking its own darkness. This is unrelated to the photo scrims
+below — backdrops sit behind modals/drawers/dropdowns, not behind text on a photo.
+
+### 6.4 Photo scrims
+
+Text over a full-bleed photo always uses `text-hero-fg` (and its opacity variants) — the
+only sanctioned white-on-photo color, since it sits on the photo's own scrim rather than a
+themed surface (`src/index.css`). Two scrim shapes, chosen by how much of the photo the
+text can land on:
+
+- **Full-bleed wash** (`HeroCarousel`'s `SCRIM`) — a diagonal gradient darkening the whole
+  image, never fully transparent anywhere. Used where text can roam across a tall hero.
+- **Bottom-anchored gradient** (`PhotoCard`'s `PHOTO_SCRIM`) — darkens only the bottom band
+  under the text, staying light over the rest of the card so the photography still reads
+  full-bleed. Also never fades to fully transparent — a `to-transparent` gradient looks fine
+  over a dark photo but leaves text unreadable over a bright one.
+
+Either way: never let a scrim's stop reach 0% opacity anywhere text can land.
 
 ---
 

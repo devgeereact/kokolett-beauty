@@ -26,6 +26,16 @@ interface PhotoCardProps {
 const MAX_TILT_DEG = 7;
 
 /**
+ * Bottom-anchored scrim for the text band, tuned so it never fades to fully
+ * transparent — unlike a plain `to-t ... to-transparent` gradient, which
+ * leaves the topmost text line (the `tag`) unreadable over a bright photo.
+ * Unlike HeroCarousel's full-bleed `SCRIM`, this stays light over most of
+ * the card so the photography itself still reads full-bleed above the text.
+ */
+const PHOTO_SCRIM =
+  'linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.62) 35%, rgba(0,0,0,.4) 55%, rgba(0,0,0,.14) 100%)';
+
+/**
  * A full-bleed image card with a bottom scrim, used for the services and
  * gallery grids (docs — 2026-08 marketing rebrand). Cursor-tracked 3D tilt
  * plus a glare that follows the pointer; both are skipped under
@@ -115,7 +125,8 @@ export function PhotoCard({
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent"
+        className="absolute inset-0"
+        style={{ background: PHOTO_SCRIM }}
         aria-hidden="true"
       />
       <div

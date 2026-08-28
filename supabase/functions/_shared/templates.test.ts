@@ -27,14 +27,17 @@ const base: TemplatePayload = {
   cancellation_window_h: 24,
 };
 
-Deno.test('booking_confirmed renders the designed copy when no override is enabled', () => {
-  const out = render('booking_confirmed', base);
+Deno.test(
+  'booking_confirmed renders the designed copy when no override is enabled',
+  () => {
+    const out = render('booking_confirmed', base);
 
-  assertStringIncludes(out.html, 'Booking reference');
-  assertStringIncludes(out.html, '/access/deadbeef');
-  assertStringIncludes(out.html, 'looking forward to seeing you');
-  assertStringIncludes(out.html, 'Redbourne Dr');
-});
+    assertStringIncludes(out.html, 'Booking reference');
+    assertStringIncludes(out.html, '/access/deadbeef');
+    assertStringIncludes(out.html, 'looking forward to seeing you');
+    assertStringIncludes(out.html, 'Redbourne Dr');
+  },
+);
 
 Deno.test('the plain-text part carries when, what and the reference', () => {
   // Losing these was the regression: an owner-edited template used to drop the
@@ -85,12 +88,55 @@ Deno.test('a customer name cannot break out of a single-quoted attribute', () =>
 
 Deno.test('nested tags cannot smuggle markup into the plain-text part', () => {
   // A single strip pass turns `<scr<script>ipt>` into a working `<script>`.
-  const out = render(
-    'booking_confirmed',
-    base,
-    { subject: 'Hello', html_body: '<p>Hi</p><scr<script>ipt>alert(1)</scr</script>ipt>' },
-  );
+  const out = render('booking_confirmed', base, {
+    subject: 'Hello',
+    html_body: '<p>Hi</p><scr<script>ipt>alert(1)</scr</script>ipt>',
+  });
 
   assert(!/<script/i.test(out.text), 'no tag should survive the strip');
   assert(!out.text.includes('<'), 'no angle bracket should survive at all');
 });
+
+Deno.test(
+  'the footer links WhatsApp, Instagram and Google reviews when set, in both parts',
+  () => {
+    const out = render('booking_confirmed', {
+      ...base,
+      instagram_url: 'https://instagram.com/kokolettbeauty',
+      google_review_url: 'https://g.page/r/example/review',
+    });
+
+    // salon_phone in `base` is '07707 906408' — a UK local number, so the
+    // wa.me link drops the trunk zero and prefixes the country code.
+    assertStringIncludes(out.html, 'href="https://wa.me/447707906408"');
+    assertStringIncludes(out.html, '>WhatsApp<');
+    assertStringIncludes(out.html, 'href="https://instagram.com/kokolettbeauty"');
+    assertStringIncludes(out.html, 'href="https://g.page/r/example/review"');
+
+    assertStringIncludes(out.text, 'WhatsApp: https://wa.me/447707906408');
+    assertStringIncludes(out.text, 'Instagram: https://instagram.com/kokolettbeauty');
+    assertStringIncludes(out.text, 'Reviews: https://g.page/r/example/review');
+  },
+);
+
+Deno.test('no salon_phone means no WhatsApp link, without breaking the footer', () => {
+  const out = render('booking_confirmed', { ...base, salon_phone: null });
+
+  assert(!out.html.includes('wa.me'), 'no phone means no WhatsApp link can be built');
+  assert(!out.text.includes('WhatsApp:'));
+});
+
+Deno.test(
+  'the 2-hour reminder says 2 hours, not "an hour" copied from the 1-hour reminder',
+  () => {
+    const twoHour = render('reminder_2h', base);
+    const oneHour = render('reminder_1h', base);
+
+    assertStringIncludes(twoHour.html, 'in about 2 hours');
+    assertStringIncludes(twoHour.text, 'in about 2 hours');
+    assert(!twoHour.html.includes('in about an hour'));
+
+    assertStringIncludes(oneHour.html, 'in about an hour');
+    assertStringIncludes(oneHour.text, 'in about an hour');
+  },
+);

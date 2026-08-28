@@ -121,6 +121,19 @@ function esc(value: unknown): string {
     .replace(/`/g, '&#96;');
 }
 
+/**
+ * A `wa.me` contact link built from the salon's published phone number.
+ * Mirrors `src/lib/whatsapp.ts` — duplicated because this Deno function
+ * cannot import from the Vite app's `src/`.
+ */
+function toWhatsAppLink(phone?: string | null): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return null;
+  const international = digits.startsWith('0') ? `44${digits.slice(1)}` : digits;
+  return `https://wa.me/${international}`;
+}
+
 /** An owner-edited row from `email_templates`, used in place of the hard-coded copy below. */
 export interface TemplateOverride {
   subject: string;
@@ -141,7 +154,9 @@ function buildTokens(p: TemplatePayload): Record<string, string> {
     appointment_time: clock(p.starts_at, tz),
     appointment_end_time: p.ends_at ? clock(p.ends_at, tz) : '',
     previous_appointment_date: p.previous_starts_at ? when(p.previous_starts_at, tz) : '',
-    previous_appointment_time: p.previous_starts_at ? clock(p.previous_starts_at, tz) : '',
+    previous_appointment_time: p.previous_starts_at
+      ? clock(p.previous_starts_at, tz)
+      : '',
     service_name: p.service_name ?? '',
     reference: p.reference ?? '',
     location: p.salon_address ?? SALON,
@@ -205,7 +220,8 @@ const TEMPLATE_REASON: Record<string, string> = {
     'You are receiving this because you asked Kokolett Beauty UK for an appointment time using this email address.',
   access_link:
     'You are receiving this because somebody asked to see the bookings held against this email address at Kokolett Beauty UK.',
-  owner_password_reset: 'You are receiving this because a password reset was requested for the salon dashboard.',
+  owner_password_reset:
+    'You are receiving this because a password reset was requested for the salon dashboard.',
   owner_approval_needed: 'You are receiving this as the owner of Kokolett Beauty UK.',
   owner_booking_moved: 'You are receiving this as the owner of Kokolett Beauty UK.',
   owner_cancelled: 'You are receiving this as the owner of Kokolett Beauty UK.',
@@ -255,7 +271,11 @@ function toPlainText(html: string): string {
  * the owner's copy mentions them, so an edited template can never silently
  * drop the one link the message exists to deliver.
  */
-function renderOverride(template: string, override: TemplateOverride, p: TemplatePayload): RenderedEmail {
+function renderOverride(
+  template: string,
+  override: TemplateOverride,
+  p: TemplatePayload,
+): RenderedEmail {
   const tokens = buildTokens(p);
   const subject = applyTokensPlain(override.subject, tokens);
   let bodyHtml = applyTokens(override.html_body, tokens);
@@ -263,7 +283,8 @@ function renderOverride(template: string, override: TemplateOverride, p: Templat
   if (p.reset_url) bodyHtml += button(p.reset_url, 'Choose a new password');
 
   const reason =
-    TEMPLATE_REASON[template] ?? 'You are receiving this because you have booked with Kokolett Beauty UK.';
+    TEMPLATE_REASON[template] ??
+    'You are receiving this because you have booked with Kokolett Beauty UK.';
 
   const plainBody = applyTokensPlain(toPlainText(override.html_body), tokens).trim();
 
@@ -314,8 +335,13 @@ function layout(
     .filter(Boolean)
     .join(' &nbsp;·&nbsp; ');
 
+  const whatsappUrl = toWhatsAppLink(p.salon_phone);
+
   const social = [
     `<a href="${SITE}" style="color:${MUTED};text-decoration:underline">Website</a>`,
+    whatsappUrl
+      ? `<a href="${esc(whatsappUrl)}" style="color:${MUTED};text-decoration:underline">WhatsApp</a>`
+      : null,
     p.instagram_url
       ? `<a href="${esc(p.instagram_url)}" style="color:${MUTED};text-decoration:underline">Instagram</a>`
       : null,
@@ -443,7 +469,12 @@ export interface RenderedEmail {
  * already said the same thing in its own words, so the block would only
  * repeat it.
  */
-function plainShell(body: string, p: TemplatePayload, reason: string, skipBlock = false): string {
+function plainShell(
+  body: string,
+  p: TemplatePayload,
+  reason: string,
+  skipBlock = false,
+): string {
   const tz = p.timezone ?? 'Europe/London';
   const block = skipBlock
     ? ''
@@ -457,6 +488,15 @@ function plainShell(body: string, p: TemplatePayload, reason: string, skipBlock 
 
   const contact = [p.salon_address, p.salon_phone].filter(Boolean).join(' · ');
 
+  const whatsappUrl = toWhatsAppLink(p.salon_phone);
+  const social = [
+    whatsappUrl ? `WhatsApp: ${whatsappUrl}` : '',
+    p.instagram_url ? `Instagram: ${p.instagram_url}` : '',
+    p.google_review_url ? `Reviews: ${p.google_review_url}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
   return [
     body,
     block,
@@ -466,13 +506,18 @@ function plainShell(body: string, p: TemplatePayload, reason: string, skipBlock 
     SALON,
     contact,
     `${EMAIL} · ${SITE}`,
+    social,
     reason,
   ]
     .filter(Boolean)
     .join('\n\n');
 }
 
-export function render(template: string, p: TemplatePayload, override?: TemplateOverride): RenderedEmail {
+export function render(
+  template: string,
+  p: TemplatePayload,
+  override?: TemplateOverride,
+): RenderedEmail {
   if (override) return renderOverride(template, override, p);
 
   const tz = p.timezone ?? 'Europe/London';
@@ -491,7 +536,9 @@ export function render(template: string, p: TemplatePayload, override?: Template
         html: layout(
           'You are booked in',
           `${when(p.starts_at, tz)} at ${clock(p.starts_at, tz)}, reference ${p.reference ?? ''}`,
-          line(`Hello ${name}, that is all confirmed. We are looking forward to seeing you.`) +
+          line(
+            `Hello ${name}, that is all confirmed. We are looking forward to seeing you.`,
+          ) +
             details(p) +
             manage +
             aside(
@@ -531,9 +578,7 @@ export function render(template: string, p: TemplatePayload, override?: Template
         ),
         text: plainShell(
           `Hello ${p.customer_name}, your appointment has been moved.${
-            p.previous_starts_at
-              ? ` It was ${full(p.previous_starts_at, tz)}.`
-              : ''
+            p.previous_starts_at ? ` It was ${full(p.previous_starts_at, tz)}.` : ''
           }`,
           p,
           BOOKING_REASON,
@@ -627,8 +672,30 @@ export function render(template: string, p: TemplatePayload, override?: Template
         ),
       };
 
-    case 'reminder_1h':
     case 'reminder_2h':
+      return {
+        html: layout(
+          'See you soon',
+          `Today at ${clock(p.starts_at, tz)}`,
+          line(`Hello ${name}, your appointment is in about 2 hours.`) +
+            details(p) +
+            (p.salon_address
+              ? aside(
+                  `We are at <strong style="color:${INK}">${esc(p.salon_address)}</strong>.${p.salon_phone ? ` If you cannot find us, call ${esc(p.salon_phone)}.` : ''}`,
+                )
+              : '') +
+            small('Running late? A quick call is all we need.'),
+          p,
+          BOOKING_REASON,
+        ),
+        text: plainShell(
+          `Hello ${p.customer_name}, your appointment is in about 2 hours.`,
+          p,
+          BOOKING_REASON,
+        ),
+      };
+
+    case 'reminder_1h':
       return {
         html: layout(
           'See you in an hour',
@@ -796,7 +863,9 @@ export function render(template: string, p: TemplatePayload, override?: Template
         html: layout(
           'New booking',
           `${p.customer_name ?? ''}, ${when(p.starts_at, tz)}`,
-          line(`<strong style="color:${INK}">${esc(p.customer_name)}</strong> has booked in.`) +
+          line(
+            `<strong style="color:${INK}">${esc(p.customer_name)}</strong> has booked in.`,
+          ) +
             details(p, 'Booked') +
             line(
               `${esc(p.customer_email)}${p.customer_mobile ? ` &nbsp;·&nbsp; ${esc(p.customer_mobile)}` : ''}`,

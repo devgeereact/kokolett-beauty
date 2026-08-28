@@ -8,6 +8,7 @@ import {
   PenSquare,
   Search,
   Send,
+  Trash2,
   XCircle,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -16,17 +17,21 @@ import { EmailStatusBadge } from '@/components/dashboard/email/EmailStatusBadge'
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import {
+  deleteEmailMessage,
   listEmailMessages,
   previewEmailMessage,
   type EmailPreview,
 } from '@/services/emailService';
 import { downloadCsv } from '@/lib/csv';
+import { errorMessage } from '@/lib/errors';
 import { formatDateTime } from '@/lib/format';
 import { templateLabel } from '@/lib/templateCatalog';
 import { routes } from '@/lib/routes';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useToast } from '@/context/ToastContext';
 import { cn } from '@/lib/utils';
 import type { EmailMessage } from '@/types';
 
@@ -50,6 +55,7 @@ const LANES: { key: Lane; label: string; icon: typeof Inbox }[] = [
  */
 export function EmailPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
+  const { showToast } = useToast();
   const [messages, setMessages] = useState<EmailMessage[] | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [lane, setLane] = useState<Lane>('all');
@@ -59,6 +65,8 @@ export function EmailPage(): JSX.Element {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<EmailMessage | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback((): void => {
     setError(null);
@@ -128,6 +136,21 @@ export function EmailPage(): JSX.Element {
     // Re-fetch only when the selected message changes, not on every re-render `selected` is recomputed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id]);
+
+  const confirmDelete = (): void => {
+    if (!pendingDelete) return;
+    const target = pendingDelete;
+    setDeleting(true);
+    deleteEmailMessage(target.id)
+      .then(() => {
+        setMessages((prev) => (prev ?? []).filter((m) => m.id !== target.id));
+        setSelectedId((prev) => (prev === target.id ? null : prev));
+        setPendingDelete(null);
+        showToast({ message: 'Email deleted.' });
+      })
+      .catch((e: unknown) => showToast({ message: errorMessage(e) }))
+      .finally(() => setDeleting(false));
+  };
 
   const exportCsv = (): void => {
     const header = [
@@ -293,6 +316,15 @@ export function EmailPage(): JSX.Element {
                     </Link>
                   )}
                   <EmailStatusBadge status={selected.status} />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPendingDelete(selected)}
+                    aria-label="Delete this email"
+                  >
+                    <Trash2 aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+                    Delete
+                  </Button>
                 </div>
               </div>
 
@@ -367,6 +399,20 @@ export function EmailPage(): JSX.Element {
         open={composeOpen}
         onClose={() => setComposeOpen(false)}
         onSent={load}
+      />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete this email?"
+        message={
+          pendingDelete
+            ? `This removes the record of "${pendingDelete.subject}" to ${pendingDelete.to_email} from the outbox. It does not unsend a message that already reached them — this only deletes the log entry. There is no undo.`
+            : ''
+        }
+        tone="destructive"
+        confirmLabel={deleting ? 'Deleting…' : 'Delete'}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
       />
     </DashboardLayout>
   );

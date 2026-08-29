@@ -74,7 +74,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Reports (revenue/trends, CSV export) | Real charts + export | ✅ | `ReportsPage.tsx` (409 lines) | — | — |
 | Google reviews | Cached sync, cron-triggered | ✅ | `google_reviews`/`google_place_snapshot`, `sync-reviews` Edge Function | — | — |
 | Payment logging | Append-only `logPayment()` → `log_payment` RPC | ✅ | `paymentService.ts:10-22`, `0027_payment_log.sql` | — | — |
-| Payment reconciliation (missing-payment detection) | — | 🔴 | No "completed appointment, no payment row" view anywhere | Owner has no automatic prompt when a completed appointment has no logged payment | Direct risk of lost income | P1 |
+| Payment reconciliation (missing-payment detection) | `PaymentReconciliationCard` on Today, listing completed appointments (30-day window) with `paid_pence` of 0 — reuses `appointments_detailed.paid_pence`, no new query/table needed | ✅ | `src/components/dashboard/today/PaymentReconciliationCard.tsx`, `listUnpaidCompletedAppointments`/`filterUnpaidCompleted` in `src/services/appointmentService.ts`, tested in `appointmentService.test.ts` | Links out to the Appointments list rather than a one-click "record payment" inline on the card itself | Low — the record-payment flow already exists on that page | — |
 | Payment corrections | "Correction" = insert another payment row; no void/negative/linkage semantics | 🟡 | `payments` table, append-only, `amount_pence > 0` check | No way to mark one row as correcting another | P2 |
 | Daily close / end-of-day workflow | — | 🔴 | No "close till"/"z-report" concept anywhere | No clean daily reconciliation record | P2 |
 
@@ -161,7 +161,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 **P1**
 - [x] Stand up an E2E test framework — done: `@playwright/test`, `playwright.config.ts`, `npm run test:e2e` / `test:e2e:ui`.
 - [x] Write the automated two-customer booking-race test — done: `e2e/booking-race.spec.ts`. Run live 2026-08-29 against the real Supabase project (`KOKO_OWNER_EMAIL`/`KOKO_DEV_PASSWORD` set): passed — one customer's `book_appointment()` call won, the other failed with `SLOT_TAKEN`, owner-session cleanup (cancel + hard delete) ran cleanly.
-- [ ] Payment reconciliation view — flag completed appointments with no logged payment.
+- [x] Payment reconciliation view — done: `PaymentReconciliationCard` on Today, flags completed appointments (last 30 days) with no logged payment.
 
 **P2**
 - [ ] Audit trail (`audit_events` table + UI) for staff actions — low urgency at staff=1, but a real gap if a second staff account is ever added.

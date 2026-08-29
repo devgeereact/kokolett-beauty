@@ -10,6 +10,7 @@ import { ApprovalsQueueCard } from '@/components/dashboard/today/ApprovalsQueueC
 import { TodayDateTimeCard } from '@/components/dashboard/today/TodayDateTimeCard';
 import { BookingsOverviewChart } from '@/components/dashboard/today/BookingsOverviewChart';
 import { AvailabilityRequestsCard } from '@/components/dashboard/today/AvailabilityRequestsCard';
+import { PaymentReconciliationCard } from '@/components/dashboard/today/PaymentReconciliationCard';
 import { AssistantInsightsRow } from '@/components/dashboard/today/AssistantInsightsRow';
 import { ReschedulePicker } from '@/components/public/ReschedulePicker';
 import {
@@ -417,6 +418,7 @@ export function TodayPage(): JSX.Element {
 
         <BookingsOverviewChart className="lg:col-span-6" timezone={timezone} />
         <AvailabilityRequestsCard className="lg:col-span-3" />
+        <PaymentReconciliationCard className="lg:col-span-3" />
 
         {/* Full-width row inside the same grid — not a bolted-on section
             below it — so it shares the grid's own gap-4 rhythm and its

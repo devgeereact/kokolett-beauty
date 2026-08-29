@@ -121,6 +121,27 @@ export async function listForDay(
   });
 }
 
+/**
+ * `appointments_detailed.paid_pence` sums `payments` for the row (migration
+ * 0027), so "completed with nothing logged" is just a filter over data
+ * already being fetched elsewhere — no new query or view needed.
+ */
+export function filterUnpaidCompleted(
+  rows: AppointmentDetailed[],
+): AppointmentDetailed[] {
+  return rows.filter((r) => !r.paid_pence);
+}
+
+/** Completed appointments in the last `windowDays` with no payment logged against them. */
+export async function listUnpaidCompletedAppointments(
+  windowDays = 30,
+): Promise<AppointmentDetailed[]> {
+  const to = new Date();
+  const from = new Date(to.getTime() - windowDays * 24 * 60 * 60 * 1000);
+  const rows = await listAppointments({ from, to, statuses: ['completed'] });
+  return filterUnpaidCompleted(rows);
+}
+
 export async function listForCustomer(
   customerId: string,
 ): Promise<AppointmentDetailed[]> {

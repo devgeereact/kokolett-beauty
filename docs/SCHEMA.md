@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0047`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0051`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -26,13 +26,17 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0045_availability_reaches_the_whole_horizon.sql` | `available_slots` scanned a hard-coded 62 days while `max_horizon_days` is 90. The cap is now the setting.                                                                                       |
 | `0046_personal_data_stops_accumulating.sql`       | Put a retention end date on `email_messages` and `availability_requests`, which held personal data indefinitely.                                                                                 |
 | `0047_contact_message.sql`                        | Added `submit_contact_message()` for the marketing Contact page's message form. No new table — it queues into `email_messages` like every other notification.                                   |
+| `0048_public_menu_shows_duration_and_image.sql`   | Public `service_menu` reads now include `duration_min` and `image_path` so the marketing site can show them.                                                                                     |
+| `0049_contact_messages_are_rate_limited.sql`       | Per-address rate limit on `submit_contact_message()`, matching the booking path's abuse protection.                                                                                              |
+| `0050_about_photo_path.sql`                        | Added the owner's About-page photo path to `booking_settings`.                                                                                                                                    |
+| `0051_secret_owner_login.sql`                      | Added `staff.login_slug`/`login_slug_updated_at` and the `secret_login_attempts` lockout table for the secret owner sign-in link.                                                                |
 
 ### Every table, and where it is documented
 
-**Twenty-two tables are live.** Twenty-four were created; `0011` dropped
+**Twenty-three tables are live.** Twenty-five were created; `0011` dropped
 `availability_rules` and `availability_exceptions`, and the two §3 sections still
-carrying their names are marked as history rather than schema. Of the twenty-two, §3
-details the ten surviving from `0001`/`0002`; the twelve added later are summarised
+carrying their names are marked as history rather than schema. Of the twenty-three, §3
+details the ten surviving from `0001`/`0002`; the thirteen added later are summarised
 here, with the migration that created them as the authoritative source.
 
 | Table                   | Created by | What it holds                                                                                                                    |
@@ -49,6 +53,7 @@ here, with the migration that created them as the authoritative source.
 | `google_place_snapshot` | `0017`     | single-row (`id boolean primary key`) aggregate: `rating`, `rating_count`, `last_error`. `0038` removed its public read          |
 | `calendar_feeds`        | `0019`     | ICS feed tokens: `token_hash`, `label`, `fetch_count`, `revoked_at`. The raw token exists only in the URL                        |
 | `subscribers`           | `0017`     | mailing list: `email` (citext, unique), `source`, `confirmed`, `unsubscribed_at`                                                 |
+| `secret_login_attempts` | `0051`     | hashed-IP lockout counter for the secret owner login (`ip_hash`, `attempted_at`); no anon/authenticated policies, service-role only |
 
 Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
 `google_place_id`, `address_line`, `phone` (`0017`) and `business_name`,
@@ -122,10 +127,12 @@ ai_recommendations       (dead — see the note above §1)
 Who counts as the owner. One row in V1; the table exists so multi-stylist in V2 is an
 insert rather than a migration of the permission model.
 
-| Column | Type                    | Notes                |
-| ------ | ----------------------- | -------------------- |
-| `id`   | uuid PK → `profiles.id` |                      |
-| `role` | text                    | `'owner'` only in V1 |
+| Column                    | Type                    | Notes                                                    |
+| ------------------------- | ----------------------- | --------------------------------------------------------- |
+| `id`                      | uuid PK → `profiles.id` |                                                            |
+| `role`                    | text                    | `'owner'` only in V1                                       |
+| `login_slug`              | text, unique            | `0051`. The single path segment that resolves to the owner login form; changeable by the owner |
+| `login_slug_updated_at`   | timestamptz             | `0051`. Set whenever `login_slug` changes                  |
 
 ### `service_categories`
 
@@ -323,7 +330,7 @@ select id, 'owner' from public.profiles where email = 'owner@example.com';
 
 ## 7. Scheduled jobs (`pg_cron`)
 
-Six jobs, created by the migrations. Verify with
+Seven jobs, created by the migrations. Verify with
 `select jobname, schedule, active from cron.job order by jobname;`.
 
 | Job                           | Schedule      | What it does                                                                        |
@@ -334,6 +341,7 @@ Six jobs, created by the migrations. Verify with
 | `extend-weekly-template`      | `13 2 * * *`  | rolls `weekly_template` forward into `availability_slots`                           |
 | `purge-access-tokens`         | `23 4 * * *`  | deletes spent/expired `customer_access_tokens`                                      |
 | `purge-expired-personal-data` | `31 3 * * 0`  | `0046`'s two-year retention sweep over `email_messages` and `availability_requests` |
+| `purge-secret-login-attempts` | `17 3 * * *`  | `0051`'s nightly sweep of `secret_login_attempts` older than 24h, via `purge_login_attempts()` |
 
 There is **no AI job.** An earlier design had a daily `ai/daily-insights` run; the
 shipped assistant computes client-side in `src/lib/insights.ts` instead.

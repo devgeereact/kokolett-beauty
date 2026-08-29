@@ -17,7 +17,7 @@
 └─────┬──────┘  └────────────┘  └────────────┘
       │
       ▼
- PostgreSQL  ·  7 Deno Edge Functions  ·  pg_cron + pg_net
+ PostgreSQL  ·  9 Deno Edge Functions  ·  pg_cron + pg_net
  (row-level security)
 ```
 

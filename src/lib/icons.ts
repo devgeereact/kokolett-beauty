@@ -19,6 +19,7 @@ import {
   Settings,
   History,
   Activity,
+  ListChecks,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,7 +39,8 @@ export type NavIconLabel =
   | 'Templates'
   | 'Settings'
   | 'Audit'
-  | 'System Health';
+  | 'System Health'
+  | 'Daily Close';
 
 export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Dashboard: LayoutDashboard,
@@ -57,4 +59,5 @@ export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Settings,
   Audit: History,
   'System Health': Activity,
+  'Daily Close': ListChecks,
 };

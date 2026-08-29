@@ -1,6 +1,6 @@
 # KOKO_GAP — Gap Analysis vs. the Transformation Brief
 
-**Date:** 2026-08-29
+**Date:** 2026-08-29, updated through 2026-08-30 as P1/P2 items shipped (see §5's checked items for exact dates).
 **Scope:** Verified against the actual codebase (frontend, Supabase schema, Edge Functions, cron, tests), not against what docs or the brief *claim* exists.
 
 ## 0. Framing
@@ -76,7 +76,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Payment logging | Append-only `logPayment()` → `log_payment` RPC | ✅ | `paymentService.ts:10-22`, `0027_payment_log.sql` | — | — |
 | Payment reconciliation (missing-payment detection) | `PaymentReconciliationCard` on Today, listing completed appointments (30-day window) with `paid_pence` of 0 — reuses `appointments_detailed.paid_pence`, no new query/table needed | ✅ | `src/components/dashboard/today/PaymentReconciliationCard.tsx`, `listUnpaidCompletedAppointments`/`filterUnpaidCompleted` in `src/services/appointmentService.ts`, tested in `appointmentService.test.ts` | Links out to the Appointments list rather than a one-click "record payment" inline on the card itself | Low — the record-payment flow already exists on that page | — |
 | Payment corrections | "Correction" = insert another payment row; no void/negative/linkage semantics | 🟡 | `payments` table, append-only, `amount_pence > 0` check | No way to mark one row as correcting another | P2 |
-| Daily close / end-of-day workflow | — | 🔴 | No "close till"/"z-report" concept anywhere | No clean daily reconciliation record | P2 |
+| Daily close / end-of-day workflow | `/dashboard/daily-close` — live preview of today's numbers (scheduled/completed/cancelled, collected, unpaid completed, pending requests, failed emails) via read-only `daily_close_summary()`; a "Close day" button calls `close_day()`, which recomputes fresh and logs a `day.closed` audit row. Reuses `audit_events` — no new table. Re-closable, not blocked. | ✅ | `supabase/migrations/0054_daily_close.sql`, `0055_daily_close_split_preview.sql`, `src/pages/dashboard/DailyClosePage.tsx` — verified live 2026-08-30 against production (preview logs nothing, close logs exactly one row, non-owner denied) | Scoped to today only — no historical date picker, no "reopen a closed day" | — | — |
 
 ### Email subsystem
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
@@ -108,14 +108,14 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 |---|---|---|---|---|---|
 | Offline-safe booking blocking | Not separately checked in this pass | 🔍 | `OfflineBanner.tsx` exists; whether write actions specifically are blocked offline wasn't verified line-by-line | — | — |
 | Update UX, install prompt | Real | ✅ | See §2 | — | — |
-| App version visibility | — | 🔴 | See Today section above | — | P2 |
+| App version visibility | Git short SHA + build timestamp, shown on the System Health page | ✅ | See Today/Owner dashboard section above (`0053_system_health.sql`) | — | — |
 
 ### Testing
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
-| Unit tests | 20 Vitest files, concentrated in pure logic/hooks | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
+| Unit tests | 21 Vitest files, concentrated in pure logic/hooks | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
 | RLS/security tests | Thorough, CI-run | ✅ | See §2 | — | — |
-| E2E tests | — | 🔴 | See Calendar/Bookings section | Booking race, customer journey, owner journey | P1 |
+| E2E tests | Playwright framework + a real booking-race test | ✅ | See Calendar/Bookings section (`e2e/marketing-site.spec.ts`, `e2e/booking-race.spec.ts`) | Customer-journey and full owner-journey E2E tests still don't exist — only the race scenario and marketing-site smoke tests | P2 |
 
 ### Docs governance
 See §4 below for the specific file-level fixes.
@@ -167,7 +167,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [x] Audit trail (`audit_events` table + UI) — done: `supabase/migrations/0052_audit_trail.sql`, `/dashboard/audit`. Scoped to the highest-risk actions (appointment lifecycle, customer erasure, payment logging, login-slug change); verified live against production. Follow-up: the ~15 direct client-side `.update()` mutations with no single server-side hook point are not covered.
 - [x] System health / diagnostics page + scheduled-job run monitoring — done: `supabase/migrations/0053_system_health.sql`, `/dashboard/system-health`. No new table — reads pg_cron's own `cron.job_run_details`, already populated. Verified live against production.
 - [x] Application version display in the UI — done: git short SHA + build timestamp, injected at build time, shown on the System Health page.
-- [ ] Daily close / end-of-day workflow.
+- [x] Daily close / end-of-day workflow — done: `supabase/migrations/0054_daily_close.sql`/`0055_daily_close_split_preview.sql`, `/dashboard/daily-close`. Reuses `audit_events` (a new `day.closed` action) rather than a new table. Verified live against production.
 - [ ] GDPR customer data export (per-customer subject-access package; erasure already exists).
 - [ ] Email template version history (diff/revert).
 - [ ] Payment correction linkage (mark one row as correcting another).

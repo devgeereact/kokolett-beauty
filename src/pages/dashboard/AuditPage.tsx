@@ -22,6 +22,7 @@ const LANES: { key: Lane; label: string }[] = [
   { key: 'customer.erased', label: 'Customer erased' },
   { key: 'payment.recorded', label: 'Payment recorded' },
   { key: 'settings.login_slug_changed', label: 'Sign-in link changed' },
+  { key: 'day.closed', label: 'Day closed' },
 ];
 
 /**
@@ -58,6 +59,7 @@ export function AuditPage(): JSX.Element {
       'customer.erased': 0,
       'payment.recorded': 0,
       'settings.login_slug_changed': 0,
+      'day.closed': 0,
     };
     for (const e of events ?? []) {
       c.all += 1;

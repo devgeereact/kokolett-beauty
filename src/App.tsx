@@ -92,6 +92,11 @@ const SystemHealthPage = lazy(() =>
     default: m.SystemHealthPage,
   })),
 );
+const DailyClosePage = lazy(() =>
+  import('@/pages/dashboard/DailyClosePage').then((m) => ({
+    default: m.DailyClosePage,
+  })),
+);
 const TemplatesPage = lazy(() =>
   import('@/pages/dashboard/TemplatesPage').then((m) => ({ default: m.TemplatesPage })),
 );
@@ -208,6 +213,7 @@ export function App(): JSX.Element {
                 <Route path={routes.owner.email} element={<EmailPage />} />
                 <Route path={routes.owner.audit} element={<AuditPage />} />
                 <Route path={routes.owner.systemHealth} element={<SystemHealthPage />} />
+                <Route path={routes.owner.dailyClose} element={<DailyClosePage />} />
                 <Route path={routes.owner.templates} element={<TemplatesPage />} />
                 <Route
                   path="/dashboard/templates/:key/edit"

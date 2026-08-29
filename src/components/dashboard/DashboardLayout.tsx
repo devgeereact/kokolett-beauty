@@ -130,6 +130,11 @@ export function DashboardLayout({
           label: 'Appointments',
           icon: NAV_ICONS.Appointments,
         },
+        {
+          to: routes.owner.dailyClose,
+          label: 'Daily Close',
+          icon: NAV_ICONS['Daily Close'],
+        },
       ],
     },
     {

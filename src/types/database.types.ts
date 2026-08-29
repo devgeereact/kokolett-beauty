@@ -229,6 +229,7 @@ export type Database = {
             | "customer.erased"
             | "payment.recorded"
             | "settings.login_slug_changed"
+            | "day.closed"
           actor: "owner" | "system"
           created_at: string
           entity_id: string | null
@@ -247,6 +248,7 @@ export type Database = {
             | "customer.erased"
             | "payment.recorded"
             | "settings.login_slug_changed"
+            | "day.closed"
           actor?: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -265,6 +267,7 @@ export type Database = {
             | "customer.erased"
             | "payment.recorded"
             | "settings.login_slug_changed"
+            | "day.closed"
           actor?: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -1234,6 +1237,7 @@ export type Database = {
         }[]
       }
       clear_day_slots: { Args: { p_date: string }; Returns: number }
+      close_day: { Args: never; Returns: Json }
       copy_day_slots: {
         Args: { p_from: string; p_to: string }
         Returns: number
@@ -1298,6 +1302,7 @@ export type Database = {
           reference: string
         }[]
       }
+      daily_close_summary: { Args: never; Returns: Json }
       decline_request: {
         Args: { p_reason?: string; p_request_id: string }
         Returns: undefined

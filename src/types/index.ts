@@ -147,6 +147,18 @@ export interface SystemHealth {
   };
 }
 
+/** Shape returned by `public.close_day()`, and stored verbatim as `audit_events.new_value` for a `day.closed` row. */
+export interface DailyCloseSummary {
+  date: string;
+  scheduled_count: number;
+  completed_count: number;
+  cancelled_count: number;
+  collected_pence: number;
+  unpaid_completed_count: number;
+  pending_requests_count: number;
+  failed_email_count: number;
+}
+
 /** A bookable slot produced by the availability engine. */
 export interface TimeSlot {
   /** UTC ISO 8601 start. */

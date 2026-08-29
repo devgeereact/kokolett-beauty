@@ -70,6 +70,8 @@ export const routes = {
     audit: '/dashboard/audit',
     /** pg_cron job status, email/reviews health, and the running build version (migration 0053). */
     systemHealth: '/dashboard/system-health',
+    /** End-of-day reconciliation, today only (migration 0054/0055). */
+    dailyClose: '/dashboard/daily-close',
   },
   auth: {
     /**

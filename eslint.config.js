@@ -101,4 +101,25 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
     },
   },
+
+  /**
+   * Playwright E2E — real TypeScript, so kept type-checked (unlike the plain
+   * `scripts/*.mjs` above), but `tsconfig.json`'s own `include` deliberately
+   * excludes it (it's Node-side test code, not app code the production build
+   * should sweep). `allowDefaultProject` gives the project service a
+   * single-file program for each instead of requiring a dedicated tsconfig.
+   */
+  {
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: {
+        projectService: { allowDefaultProject: ['e2e/*.ts', 'playwright.config.ts'] },
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
 );

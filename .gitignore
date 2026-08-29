@@ -81,3 +81,9 @@ docs/design/**
 
 # `git log` rendered to markdown. Regenerable by definition.
 docs/COMMIT_MESSAGE.md
+
+# Playwright E2E output
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

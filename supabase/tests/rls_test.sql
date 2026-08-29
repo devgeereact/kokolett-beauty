@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(49);
+select plan(53);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -120,6 +120,13 @@ values ('review-under-test', 'Reviewer Under Test', 5);
 
 insert into public.calendar_feeds (token_hash) values ('not-a-real-feed-hash');
 
+-- Inserted directly (as the migration-applying role, same as every fixture
+-- above), since audit_events has no client insert path at all — not even
+-- for the owner — see §6b below.
+insert into public.audit_events (actor, action, entity_type, entity_id, summary)
+values ('owner', 'payment.recorded', 'payment',
+        '44444444-4444-4444-4444-444444444444', 'Fixture audit row under test');
+
 -- Published availability. Unlike the catalogue tables, nothing in the
 -- migrations seeds these two, so on a fresh database they are empty and §5's
 -- "anon can read them" assertions have nothing to find — which is exactly how
@@ -174,7 +181,8 @@ begin
       'payments','subscribers','ai_recommendations','calendar_feeds','email_templates',
       'google_place_snapshot','day_decided','profiles','app_settings',
       'availability_requests','services','service_categories','service_menu',
-      'booking_settings','availability_slots','weekly_template','google_reviews'
+      'booking_settings','availability_slots','weekly_template','google_reviews',
+      'audit_events'
     ] loop
       begin
         if r.subject_id is null then
@@ -207,7 +215,8 @@ $probe$;
 do $guard$
 begin
   if (select count(*) from public.appointments) = 0
-     or (select count(*) from public.payments) = 0 then
+     or (select count(*) from public.payments) = 0
+     or (select count(*) from public.audit_events) = 0 then
     raise exception 'fixtures did not seed — the denial assertions would be vacuous';
   end if;
 end
@@ -262,6 +271,8 @@ select is((select visible from rls_probe where tbl='google_place_snapshot' and a
           0::bigint, 'anon cannot read google_place_snapshot — public read revoked in 0038');
 select is((select visible from rls_probe where tbl='email_templates' and as_role='anon'),
           0::bigint, 'anon cannot read email_templates even when granted — RLS denies it');
+select is((select visible from rls_probe where tbl='audit_events' and as_role='anon'),
+          0::bigint, 'anon cannot read audit_events');
 
 -- --------------------------------------------------------------------------
 -- 3. A signed-in user who is not the owner is no better off.
@@ -291,6 +302,8 @@ select is((select visible from rls_probe where tbl='ai_recommendations' and as_r
           0::bigint, 'a signed-in non-owner cannot read ai_recommendations');
 select is((select visible from rls_probe where tbl='availability_requests' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read availability_requests');
+select is((select visible from rls_probe where tbl='audit_events' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read audit_events');
 
 -- --------------------------------------------------------------------------
 -- 4. The owner can. Without this the suite would pass just as happily if RLS
@@ -313,6 +326,8 @@ select cmp_ok((select visible from rls_probe where tbl='calendar_feeds' and as_r
               '>', 0::bigint, 'the owner can read calendar_feeds');
 select cmp_ok((select visible from rls_probe where tbl='availability_requests' and as_role='owner'),
               '>', 0::bigint, 'the owner can read availability_requests');
+select cmp_ok((select visible from rls_probe where tbl='audit_events' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read audit_events');
 
 -- --------------------------------------------------------------------------
 -- 5. The public surface stays public.
@@ -420,6 +435,42 @@ select is((select rows_affected from write_probe where op = 'delete'),
 select is((select count(*) from public.appointments
             where reference = 'KB-RLST01'),
           1::bigint, 'and that appointment is still there');
+
+-- --------------------------------------------------------------------------
+-- 6b. audit_events is immutable even for the owner (0052) — the log has no
+--     client write path at all. If a future migration ever adds an owner
+--     write policy here by mistake, this is what would catch it.
+-- --------------------------------------------------------------------------
+
+create temp table audit_write_probe (
+  op           text not null primary key,
+  sqlstate_out text
+) on commit drop;
+
+do $audit_write$
+declare st text;
+begin
+  begin
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+                       json_build_object('sub', '11111111-1111-1111-1111-111111111111',
+                                         'role', 'authenticated')::text,
+                       true);
+    insert into public.audit_events (actor, action, entity_type, summary)
+    values ('owner', 'payment.recorded', 'payment', 'attempted client insert');
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into audit_write_probe values ('insert', st);
+end
+$audit_write$;
+
+select is((select sqlstate_out from audit_write_probe where op = 'insert'),
+          '42501',
+          'even the owner cannot insert into audit_events directly — log_audit_event() is the only path');
 
 -- --------------------------------------------------------------------------
 -- The contact form's rate limit (0049).

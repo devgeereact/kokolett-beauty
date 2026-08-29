@@ -66,6 +66,8 @@ export const routes = {
     templates: '/dashboard/templates',
     templateEditor: (key: string) => `/dashboard/templates/${key}/edit`,
     profile: '/dashboard/profile',
+    /** Read-only log of the highest-risk owner actions (docs/SCHEMA.md, migration 0052). */
+    audit: '/dashboard/audit',
   },
   auth: {
     /**

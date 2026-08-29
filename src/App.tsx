@@ -84,6 +84,9 @@ const NotificationsPage = lazy(() =>
 const EmailPage = lazy(() =>
   import('@/pages/dashboard/EmailPage').then((m) => ({ default: m.EmailPage })),
 );
+const AuditPage = lazy(() =>
+  import('@/pages/dashboard/AuditPage').then((m) => ({ default: m.AuditPage })),
+);
 const TemplatesPage = lazy(() =>
   import('@/pages/dashboard/TemplatesPage').then((m) => ({ default: m.TemplatesPage })),
 );
@@ -198,6 +201,7 @@ export function App(): JSX.Element {
                   element={<NotificationsPage />}
                 />
                 <Route path={routes.owner.email} element={<EmailPage />} />
+                <Route path={routes.owner.audit} element={<AuditPage />} />
                 <Route path={routes.owner.templates} element={<TemplatesPage />} />
                 <Route
                   path="/dashboard/templates/:key/edit"

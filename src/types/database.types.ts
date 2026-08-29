@@ -219,6 +219,63 @@ export type Database = {
           },
         ]
       }
+      audit_events: {
+        Row: {
+          action:
+            | "appointment.created"
+            | "appointment.status_changed"
+            | "appointment.rescheduled"
+            | "appointment.deleted"
+            | "customer.erased"
+            | "payment.recorded"
+            | "settings.login_slug_changed"
+          actor: "owner" | "system"
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          summary: string
+        }
+        Insert: {
+          action:
+            | "appointment.created"
+            | "appointment.status_changed"
+            | "appointment.rescheduled"
+            | "appointment.deleted"
+            | "customer.erased"
+            | "payment.recorded"
+            | "settings.login_slug_changed"
+          actor?: "owner" | "system"
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          summary: string
+        }
+        Update: {
+          action?:
+            | "appointment.created"
+            | "appointment.status_changed"
+            | "appointment.rescheduled"
+            | "appointment.deleted"
+            | "customer.erased"
+            | "payment.recorded"
+            | "settings.login_slug_changed"
+          actor?: "owner" | "system"
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          summary?: string
+        }
+        Relationships: []
+      }
       availability_requests: {
         Row: {
           converted_appointment_id: string | null
@@ -780,6 +837,24 @@ export type Database = {
         }
         Relationships: []
       }
+      secret_login_attempts: {
+        Row: {
+          attempted_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: number
+          ip_hash: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: number
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       service_categories: {
         Row: {
           created_at: string
@@ -912,16 +987,22 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          login_slug: string | null
+          login_slug_updated_at: string
           role: string
         }
         Insert: {
           created_at?: string
           id: string
+          login_slug?: string | null
+          login_slug_updated_at?: string
           role?: string
         }
         Update: {
           created_at?: string
           id?: string
+          login_slug?: string | null
+          login_slug_updated_at?: string
           role?: string
         }
         Relationships: [
@@ -1264,6 +1345,18 @@ export type Database = {
         }
       }
       is_owner: { Args: never; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_actor?: string
+          p_entity_id: string | null
+          p_entity_type: string
+          p_new_value?: Json | null
+          p_old_value?: Json | null
+          p_summary: string
+        }
+        Returns: string
+      }
       log_payment: {
         Args: {
           p_amount_pence: number
@@ -1326,6 +1419,7 @@ export type Database = {
       public_reviews: { Args: { p_limit?: number }; Returns: Json }
       public_service_menu: { Args: never; Returns: Json }
       purge_expired_access_tokens: { Args: never; Returns: number }
+      purge_expired_audit_events: { Args: never; Returns: Json }
       purge_expired_personal_data: { Args: never; Returns: Json }
       queue_email: {
         Args: {

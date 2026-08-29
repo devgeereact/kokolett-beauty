@@ -17,6 +17,7 @@ import {
   Mail,
   FileText,
   Settings,
+  History,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -34,7 +35,8 @@ export type NavIconLabel =
   | 'Notifications'
   | 'Email'
   | 'Templates'
-  | 'Settings';
+  | 'Settings'
+  | 'Audit';
 
 export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Dashboard: LayoutDashboard,
@@ -51,4 +53,5 @@ export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Email: Mail,
   Templates: FileText,
   Settings,
+  Audit: History,
 };

@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0051`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0052`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -30,13 +30,14 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0049_contact_messages_are_rate_limited.sql`       | Per-address rate limit on `submit_contact_message()`, matching the booking path's abuse protection.                                                                                              |
 | `0050_about_photo_path.sql`                        | Added the owner's About-page photo path to `booking_settings`.                                                                                                                                    |
 | `0051_secret_owner_login.sql`                      | Added `staff.login_slug`/`login_slug_updated_at` and the `secret_login_attempts` lockout table for the secret owner sign-in link.                                                                |
+| `0052_audit_trail.sql`                              | Added `audit_events` (SELECT-only, owner-read, no write policy for anyone) and `log_audit_event()`, called from the appointment lifecycle RPCs, `erase_customer_as_owner`, `log_payment` and `set_owner_login_slug`. Scoped to the highest-risk actions only — see `docs/KOKO_GAP.md` for what's deliberately out of scope. |
 
 ### Every table, and where it is documented
 
-**Twenty-three tables are live.** Twenty-five were created; `0011` dropped
+**Twenty-four tables are live.** Twenty-six were created; `0011` dropped
 `availability_rules` and `availability_exceptions`, and the two §3 sections still
-carrying their names are marked as history rather than schema. Of the twenty-three, §3
-details the ten surviving from `0001`/`0002`; the thirteen added later are summarised
+carrying their names are marked as history rather than schema. Of the twenty-four, §3
+details the ten surviving from `0001`/`0002`; the fourteen added later are summarised
 here, with the migration that created them as the authoritative source.
 
 | Table                   | Created by | What it holds                                                                                                                    |
@@ -54,6 +55,7 @@ here, with the migration that created them as the authoritative source.
 | `calendar_feeds`        | `0019`     | ICS feed tokens: `token_hash`, `label`, `fetch_count`, `revoked_at`. The raw token exists only in the URL                        |
 | `subscribers`           | `0017`     | mailing list: `email` (citext, unique), `source`, `confirmed`, `unsubscribed_at`                                                 |
 | `secret_login_attempts` | `0051`     | hashed-IP lockout counter for the secret owner login (`ip_hash`, `attempted_at`); no anon/authenticated policies, service-role only |
+| `audit_events`          | `0052`     | immutable log of the highest-risk owner actions: `actor`, `action`, `entity_type`, `entity_id`, `summary`, `old_value`/`new_value` jsonb. SELECT-only for the owner; no insert/update/delete policy for any role, including the owner |
 
 Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
 `google_place_id`, `address_line`, `phone` (`0017`) and `business_name`,
@@ -313,6 +315,7 @@ function is the boundary that actually matters.
 | `customers`                                                               | none                    | own row, server-resolved  | ALL   |
 | `availability_requests`                                                   | INSERT (`status='new'`) | —                         | ALL   |
 | `customer_access_tokens`, `email_messages`, `ai_recommendations`, `staff` | none                    | —                         | ALL   |
+| `audit_events`                                                            | none                    | —                         | SELECT only (no write policy for any role, including the owner) |
 
 ## 6. Seeding
 
@@ -330,7 +333,7 @@ select id, 'owner' from public.profiles where email = 'owner@example.com';
 
 ## 7. Scheduled jobs (`pg_cron`)
 
-Seven jobs, created by the migrations. Verify with
+Eight jobs, created by the migrations. Verify with
 `select jobname, schedule, active from cron.job order by jobname;`.
 
 | Job                           | Schedule      | What it does                                                                        |
@@ -342,6 +345,7 @@ Seven jobs, created by the migrations. Verify with
 | `purge-access-tokens`         | `23 4 * * *`  | deletes spent/expired `customer_access_tokens`                                      |
 | `purge-expired-personal-data` | `31 3 * * 0`  | `0046`'s two-year retention sweep over `email_messages` and `availability_requests` |
 | `purge-secret-login-attempts` | `17 3 * * *`  | `0051`'s nightly sweep of `secret_login_attempts` older than 24h, via `purge_login_attempts()` |
+| `purge-audit-events`          | `43 3 * * 0`  | `0052`'s two-year retention sweep over `audit_events`, via `purge_expired_audit_events()` |
 
 There is **no AI job.** An earlier design had a daily `ai/daily-insights` run; the
 shipped assistant computes client-side in `src/lib/insights.ts` instead.

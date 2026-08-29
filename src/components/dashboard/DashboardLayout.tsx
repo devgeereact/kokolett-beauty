@@ -193,7 +193,10 @@ export function DashboardLayout({
     },
     {
       label: 'Account',
-      items: [{ to: routes.owner.settings, label: 'Settings', icon: NAV_ICONS.Settings }],
+      items: [
+        { to: routes.owner.settings, label: 'Settings', icon: NAV_ICONS.Settings },
+        { to: routes.owner.audit, label: 'Audit Log', icon: NAV_ICONS.Audit },
+      ],
     },
   ];
 

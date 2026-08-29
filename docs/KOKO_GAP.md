@@ -94,7 +94,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | MFA/TOTP, password change, secret-login slug | Real | ✅ | `AccountSecurityCard.tsx`, `0051` | — | — |
 | Secret owner login hardening | Rate-limited (5/15min), IP-hashed, audited to `secret_login_attempts`, nightly purge | ✅ | `0051_secret_owner_login.sql` | — | — |
 | Active session list / per-session revoke | Only shows `last_sign_in_at` | 🟡 | `AccountSecurityCard.tsx:19-21` (comment: needs Supabase admin API, not client-exposable) | Full session list/revoke | External constraint (Supabase admin API), not neglect | P2 |
-| General audit trail (staff actions: booking edits, cancellations, settings changes, exports) | — | 🔴 | No `audit_events` table anywhere; grep for `audit_event`/`audit_log` returns nothing | No "who changed what, when" record beyond the narrow `secret_login_attempts` lockout log | Low today (staff=1), grows in value if a second staff account is ever added | P2 |
+| Audit trail (appointment lifecycle, customer erasure, payment logging, login-slug change) | `audit_events` table (SELECT-only, no write policy for anyone including the owner), `log_audit_event()` called from `set_appointment_status`/`approve_appointment`/`reject_appointment`/`create_appointment_as_owner`/`reschedule_appointment_as_owner`/`delete_appointment_as_owner`/`erase_customer_as_owner`/`log_payment`/`set_owner_login_slug`, read-only `/dashboard/audit` page | ✅ | `supabase/migrations/0052_audit_trail.sql`, `src/pages/dashboard/AuditPage.tsx` — verified live 2026-08-29 against production (all 9 target actions logged correctly, non-owner denied, direct insert denied even for owner) | The ~15 direct client-side `.update()` mutations (owner notes, customer detail edits, settings/template edits, service-menu edits, subscribers, profile) are **not** covered — no single server-side hook point exists for them, deliberately left out of this MVP | Follow-up, not urgent at staff=1 | P3 (follow-up) |
 | General security-events feed (RLS denials, auth failures) | Only the narrow secret-login lockout log exists | 🔴 | Same as above | No broad security-event visibility | P2 |
 | Magic-link security (rate limit, single-use, expiry, revocation) | Real | ✅ | `customer_access_tokens` (`0002`), `customer-access` Edge Function | Bulk "revoke all sessions for this customer" | P3 |
 
@@ -164,7 +164,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [x] Payment reconciliation view — done: `PaymentReconciliationCard` on Today, flags completed appointments (last 30 days) with no logged payment.
 
 **P2**
-- [ ] Audit trail (`audit_events` table + UI) for staff actions — low urgency at staff=1, but a real gap if a second staff account is ever added.
+- [x] Audit trail (`audit_events` table + UI) — done: `supabase/migrations/0052_audit_trail.sql`, `/dashboard/audit`. Scoped to the highest-risk actions (appointment lifecycle, customer erasure, payment logging, login-slug change); verified live against production. Follow-up: the ~15 direct client-side `.update()` mutations with no single server-side hook point are not covered.
 - [ ] System health / diagnostics page + scheduled-job run monitoring.
 - [ ] Application version display in the UI (SW is already version-aware; just needs surfacing).
 - [ ] Daily close / end-of-day workflow.

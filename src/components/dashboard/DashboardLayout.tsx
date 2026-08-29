@@ -196,6 +196,11 @@ export function DashboardLayout({
       items: [
         { to: routes.owner.settings, label: 'Settings', icon: NAV_ICONS.Settings },
         { to: routes.owner.audit, label: 'Audit Log', icon: NAV_ICONS.Audit },
+        {
+          to: routes.owner.systemHealth,
+          label: 'System Health',
+          icon: NAV_ICONS['System Health'],
+        },
       ],
     },
   ];

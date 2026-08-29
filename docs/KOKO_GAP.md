@@ -44,9 +44,9 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Today command centre | Glance grid, payment log, approvals/availability cards, schedule timeline, assistant insights | ✅ | `TodayPage.tsx` (480 lines) | — | — | — | — |
 | Owner Action Queue | Combined Approvals+Requests queue, stats, detail panel | ✅ | `InboxPage.tsx` (403 lines) | — | — | — | — |
 | Command palette (⌘K) | Search/jump launcher, tested | ✅ | `QuickActionLauncher.tsx:208-213,353` | — | — | — | — |
-| System health / diagnostics page | — | 🔴 | grep for `SystemHealth`/`Diagnostics`: none | No owner-visible service-status view (DB/auth/email/jobs) | Owner has no single place to check "is anything broken" | Medium — indirect signals exist (failed_email_count) but scattered | P2 |
-| Application version display | SW is version-aware (`registerSW`, autoUpdate) but nothing shown in UI | 🔴 | No `APP_VERSION`/`__APP_VERSION__` anywhere; not in `SettingsPage` or footer | No way to confirm which build is running | Low-medium — makes stale-cache bugs harder to diagnose (has bitten this project before per memory) | P2 |
-| Scheduled-job run monitoring | 7 pg_cron jobs run; only indirect signal is `owner_dashboard_summary().failed_email_count` | 🟡 | No `system_jobs`/`system_job_runs` table; nothing queries `cron.job_run_details` | A silently-failing `sync-google-reviews` or `extend-weekly-template` job has no owner-visible trace | Medium | P2 |
+| System health / diagnostics page | `/dashboard/system-health` — pg_cron job status (via `cron.job_run_details`, already populated, no new logging needed), email queued/failed counts, Google reviews sync staleness, build version | ✅ | `supabase/migrations/0053_system_health.sql`, `src/pages/dashboard/SystemHealthPage.tsx` — verified live 2026-08-30 against production (real job history, non-owner correctly denied) | — | — | — | — |
+| Application version display | Build-time git short SHA + timestamp, injected via Vite `define`, shown at the top of the System Health page | ✅ | `vite.config.ts`, `src/vite-env.d.ts` | — | — | — | — |
+| Scheduled-job run monitoring | `system_health_summary()` reads `cron.job` + latest `cron.job_run_details` row per job — no new table | ✅ | Same migration as above | — | — | — | — |
 
 ### Calendar / Availability / Bookings
 | Feature | Current implementation | Status | Evidence | What's missing | Risk | Priority |
@@ -165,8 +165,8 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 
 **P2**
 - [x] Audit trail (`audit_events` table + UI) — done: `supabase/migrations/0052_audit_trail.sql`, `/dashboard/audit`. Scoped to the highest-risk actions (appointment lifecycle, customer erasure, payment logging, login-slug change); verified live against production. Follow-up: the ~15 direct client-side `.update()` mutations with no single server-side hook point are not covered.
-- [ ] System health / diagnostics page + scheduled-job run monitoring.
-- [ ] Application version display in the UI (SW is already version-aware; just needs surfacing).
+- [x] System health / diagnostics page + scheduled-job run monitoring — done: `supabase/migrations/0053_system_health.sql`, `/dashboard/system-health`. No new table — reads pg_cron's own `cron.job_run_details`, already populated. Verified live against production.
+- [x] Application version display in the UI — done: git short SHA + build timestamp, injected at build time, shown on the System Health page.
 - [ ] Daily close / end-of-day workflow.
 - [ ] GDPR customer data export (per-customer subject-access package; erasure already exists).
 - [ ] Email template version history (diff/revert).

@@ -87,6 +87,11 @@ const EmailPage = lazy(() =>
 const AuditPage = lazy(() =>
   import('@/pages/dashboard/AuditPage').then((m) => ({ default: m.AuditPage })),
 );
+const SystemHealthPage = lazy(() =>
+  import('@/pages/dashboard/SystemHealthPage').then((m) => ({
+    default: m.SystemHealthPage,
+  })),
+);
 const TemplatesPage = lazy(() =>
   import('@/pages/dashboard/TemplatesPage').then((m) => ({ default: m.TemplatesPage })),
 );
@@ -202,6 +207,7 @@ export function App(): JSX.Element {
                 />
                 <Route path={routes.owner.email} element={<EmailPage />} />
                 <Route path={routes.owner.audit} element={<AuditPage />} />
+                <Route path={routes.owner.systemHealth} element={<SystemHealthPage />} />
                 <Route path={routes.owner.templates} element={<TemplatesPage />} />
                 <Route
                   path="/dashboard/templates/:key/edit"

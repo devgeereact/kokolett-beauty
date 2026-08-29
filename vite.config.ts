@@ -3,9 +3,30 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
+
+/**
+ * Build-time version markers, surfaced on the System Health page
+ * (migration 0053) so a stale-cache bug is something to check for rather
+ * than guess at — this project has been bitten by exactly that before.
+ * Falls back to 'unknown' rather than failing the build if `git` is
+ * unavailable in whatever environment runs it.
+ */
+function gitShortSha(): string {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'unknown';
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(gitShortSha()),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
+
   /**
    * Absolute base. This is not a preference; a relative base is broken for
    * this app.

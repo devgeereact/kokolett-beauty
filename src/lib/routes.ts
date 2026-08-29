@@ -68,6 +68,8 @@ export const routes = {
     profile: '/dashboard/profile',
     /** Read-only log of the highest-risk owner actions (docs/SCHEMA.md, migration 0052). */
     audit: '/dashboard/audit',
+    /** pg_cron job status, email/reviews health, and the running build version (migration 0053). */
+    systemHealth: '/dashboard/system-health',
   },
   auth: {
     /**

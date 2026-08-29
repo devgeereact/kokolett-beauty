@@ -1554,6 +1554,7 @@ export type Database = {
         Returns: undefined
       }
       sync_google_reviews: { Args: never; Returns: number }
+      system_health_summary: { Args: never; Returns: Json }
       weekly_template_status: { Args: never; Returns: Json }
     }
     Enums: {

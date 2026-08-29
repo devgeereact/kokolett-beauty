@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0052`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0053`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -31,6 +31,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0050_about_photo_path.sql`                        | Added the owner's About-page photo path to `booking_settings`.                                                                                                                                    |
 | `0051_secret_owner_login.sql`                      | Added `staff.login_slug`/`login_slug_updated_at` and the `secret_login_attempts` lockout table for the secret owner sign-in link.                                                                |
 | `0052_audit_trail.sql`                              | Added `audit_events` (SELECT-only, owner-read, no write policy for anyone) and `log_audit_event()`, called from the appointment lifecycle RPCs, `erase_customer_as_owner`, `log_payment` and `set_owner_login_slug`. Scoped to the highest-risk actions only — see `docs/KOKO_GAP.md` for what's deliberately out of scope. |
+| `0053_system_health.sql`                            | Added `system_health_summary()` — no new table; reads pg_cron's own `cron.job`/`cron.job_run_details` plus existing email/reviews staleness signals. Powers `/dashboard/system-health`. |
 
 ### Every table, and where it is documented
 

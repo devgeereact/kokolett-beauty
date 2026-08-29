@@ -123,6 +123,30 @@ export interface OwnerSummary {
   failed_email_count: number;
 }
 
+/** One scheduled job's most recent run, from `public.system_health_summary()`. */
+export interface SystemHealthJob {
+  name: string;
+  active: boolean;
+  schedule: string;
+  last_status: string | null;
+  last_start: string | null;
+  last_end: string | null;
+  last_message: string | null;
+}
+
+/** Shape returned by `public.system_health_summary()`. */
+export interface SystemHealth {
+  jobs: SystemHealthJob[];
+  email: {
+    queued_count: number;
+    failed_count: number;
+  };
+  reviews: {
+    last_fetched_at: string | null;
+    last_error: string | null;
+  };
+}
+
 /** A bookable slot produced by the availability engine. */
 export interface TimeSlot {
   /** UTC ISO 8601 start. */

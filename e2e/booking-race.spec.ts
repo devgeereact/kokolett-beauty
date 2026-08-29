@@ -58,12 +58,14 @@ test('two customers racing the same slot: one wins, one gets SLOT_TAKEN', async 
   );
 
   const targetSlot = slots![0].slot_start;
+  const emailA = `e2e-race-a-${runId}@example.invalid`;
+  const emailB = `e2e-race-b-${runId}@example.invalid`;
 
   const [resultA, resultB] = await Promise.allSettled([
     anon.rpc('book_appointment', {
       p_starts_at: targetSlot,
       p_full_name: '[E2E TEST] Race Customer A',
-      p_email: `e2e-race-a-${runId}@example.invalid`,
+      p_email: emailA,
       p_mobile: '07000000001',
       p_note: 'Automated E2E race test (docs/KOKO_GAP.md) — safe to delete.',
       p_consent: false,
@@ -71,19 +73,21 @@ test('two customers racing the same slot: one wins, one gets SLOT_TAKEN', async 
     anon.rpc('book_appointment', {
       p_starts_at: targetSlot,
       p_full_name: '[E2E TEST] Race Customer B',
-      p_email: `e2e-race-b-${runId}@example.invalid`,
+      p_email: emailB,
       p_mobile: '07000000002',
       p_note: 'Automated E2E race test (docs/KOKO_GAP.md) — safe to delete.',
       p_consent: false,
     }),
   ]);
 
-  const outcomes = [resultA, resultB].map((r) => {
+  const outcomes = [resultA, resultB].map((r, i) => {
+    const email = i === 0 ? emailA : emailB;
     if (r.status !== 'fulfilled')
-      return { ok: false, message: String(r.reason), id: null };
-    if (r.value.error) return { ok: false, message: r.value.error.message, id: null };
+      return { ok: false, message: String(r.reason), id: null, email };
+    if (r.value.error)
+      return { ok: false, message: r.value.error.message, id: null, email };
     const row = Array.isArray(r.value.data) ? r.value.data[0] : r.value.data;
-    return { ok: true, message: null, id: row?.appointment_id ?? null };
+    return { ok: true, message: null, id: row?.appointment_id ?? null, email };
   });
 
   const winners = outcomes.filter((o) => o.ok);
@@ -115,6 +119,26 @@ test('two customers racing the same slot: one wins, one gets SLOT_TAKEN', async 
           p_reason: 'E2E race test cleanup',
         });
         await owner.rpc('delete_appointment_as_owner', { p_appointment_id: winnerId });
+
+        // book_appointment() only persists the winner's customer upsert —
+        // Postgres rolls back the whole function call (including the
+        // customer row) for the loser, since it ultimately raises
+        // SLOT_TAKEN. Confirmed by a real leftover row from an earlier run
+        // of this test: erase_customer_as_owner is the same tool the app
+        // itself uses for this, so reuse it rather than a raw delete.
+        const winnerEmail = winners[0]?.email;
+        if (winnerEmail) {
+          const { data: customerRow } = await owner
+            .from('customers')
+            .select('id')
+            .eq('email', winnerEmail)
+            .maybeSingle();
+          if (customerRow) {
+            await owner.rpc('erase_customer_as_owner', {
+              p_customer_id: customerRow.id,
+            });
+          }
+        }
       }
     }
   }

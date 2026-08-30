@@ -23,6 +23,7 @@ import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
 import { SecretGate } from '@/pages/SecretGate';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { UnsubscribePage } from '@/pages/UnsubscribePage';
 import { AuthLinkHandler } from '@/components/AuthLinkHandler';
 import { routes } from '@/lib/routes';
 
@@ -138,6 +139,10 @@ export function App(): JSX.Element {
               {/* Customer identity is passwordless: /access/:token redeems a
                   single-use link, /my uses the session it produced. */}
               <Route path={routes.public.subscribe} element={<SubscribePage />} />
+              <Route
+                path="/unsubscribe/:subscriberId"
+                element={<UnsubscribePage />}
+              />
 
               <Route path="/access/:token" element={<MyBookingsPage />} />
               <Route path={routes.customer.home} element={<MyBookingsPage />} />

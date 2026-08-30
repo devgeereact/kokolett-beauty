@@ -22,6 +22,8 @@ export const routes = {
     privacy: '/privacy',
     bookingPolicy: '/booking-policy',
     terms: '/terms',
+    /** Public, no session — redeems the link in a broadcast email's footer (migration 0058). */
+    unsubscribe: (subscriberId: string) => `/unsubscribe/${subscriberId}`,
   },
   customer: {
     /** Magic-link landing. Exchanges the token for a customer session. */
@@ -121,4 +123,5 @@ export const RESERVED_SLUGS = [
   'logout',
   'api',
   'app',
+  'unsubscribe',
 ] as const;

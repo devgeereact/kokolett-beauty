@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { listCustomers } from '@/services/customerService';
+import { draftCopy } from '@/services/draftCopyService';
 import { errorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/types';
@@ -52,6 +53,8 @@ export function ComposeContentStep({
   const [results, setResults] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [polishing, setPolishing] = useState(false);
+  const [polishError, setPolishError] = useState<string | null>(null);
   const searchIdRef = useRef(0);
 
   const search = useCallback(async (): Promise<void> => {
@@ -69,6 +72,23 @@ export function ComposeContentStep({
       if (requestId === searchIdRef.current) setSearching(false);
     }
   }, [query]);
+
+  const polish = (): void => {
+    if (!body.trim()) return;
+    setPolishing(true);
+    setPolishError(null);
+    draftCopy({
+      kind: 'compose',
+      roughIdea: body,
+      customerName: recipient?.full_name,
+    })
+      .then((result) => {
+        if (result.subject) onSubjectChange(result.subject);
+        onBodyChange(result.body);
+      })
+      .catch((e: unknown) => setPolishError(errorMessage(e)))
+      .finally(() => setPolishing(false));
+  };
 
   useEffect(() => {
     if (recipient) return undefined;
@@ -190,6 +210,21 @@ export function ComposeContentStep({
               />
             )}
           </Field>
+          <div className="mb-2 flex items-center justify-between">
+            <span />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={polish}
+              disabled={polishing || !body.trim()}
+            >
+              {polishing ? 'Polishing…' : '✨ Polish with AI'}
+            </Button>
+          </div>
+          {polishError && (
+            <p className="mb-2 text-sm text-status-no-show">{polishError}</p>
+          )}
           <Field label="Body">
             {({ id }) => (
               <Textarea

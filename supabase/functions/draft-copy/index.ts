@@ -19,7 +19,7 @@ function env(name: string): string {
 function corsHeaders(): HeadersInit {
   return {
     'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
-    'Access-Control-Allow-Headers': 'authorization, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 }
@@ -80,7 +80,15 @@ function buildUserPrompt(req: DraftRequest): string {
 function parseCompletion(text: string): { subject?: string; body: string } {
   const subjectMatch = /^SUBJECT:\s*(.*)$/m.exec(text);
   const bodyMatch = /^BODY:\s*([\s\S]*)$/m.exec(text);
-  const body = (bodyMatch?.[1] ?? text).trim();
+  // The prompt asks the model for paragraph breaks as a literal `\n` inside
+  // its one-line "BODY: " response (the whole reply is parsed line-by-line,
+  // so a real newline there would break the regex above). Modern instruction
+  // models comply literally — the completion contains the two characters
+  // backslash+n, not an actual line break — so it has to be unescaped here,
+  // once, before this reaches any consumer (the compose/broadcast/reply
+  // textareas, and the `owner_broadcast`/`owner_custom_message` templates,
+  // which split on a real newline to lay out paragraphs).
+  const body = (bodyMatch?.[1] ?? text).trim().replace(/\\n/g, '\n');
   const subject = subjectMatch?.[1]?.trim();
   return subject ? { subject, body } : { body };
 }

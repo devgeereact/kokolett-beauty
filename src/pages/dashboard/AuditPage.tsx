@@ -62,6 +62,7 @@ export function AuditPage(): JSX.Element {
       'settings.login_slug_changed': 0,
       'day.closed': 0,
       'customer.data_exported': 0,
+      'broadcast.sent': 0,
     };
     for (const e of events ?? []) {
       c.all += 1;

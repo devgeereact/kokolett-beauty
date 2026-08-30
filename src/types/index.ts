@@ -157,6 +157,25 @@ export interface DailyCloseSummary {
   failed_email_count: number;
 }
 
+export type DraftKind = 'broadcast' | 'compose' | 'reply';
+
+export interface DraftCopyInput {
+  kind: DraftKind;
+  roughIdea: string;
+  customerName?: string;
+  originalMessage?: string;
+}
+
+export interface DraftCopyResult {
+  subject?: string;
+  body: string;
+}
+
+/** Shape returned by `public.send_broadcast_as_owner()`. */
+export interface BroadcastResult {
+  recipient_count: number;
+}
+
 /** Shape returned by `public.export_customer_data()` — a GDPR subject-access package for one customer. */
 export interface CustomerDataExport {
   exported_at: string;

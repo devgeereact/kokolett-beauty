@@ -181,6 +181,7 @@ export type Database = {
             | "settings.login_slug_changed"
             | "day.closed"
             | "customer.data_exported"
+            | "broadcast.sent"
           actor: "owner" | "system"
           created_at: string
           entity_id: string | null
@@ -201,6 +202,7 @@ export type Database = {
             | "settings.login_slug_changed"
             | "day.closed"
             | "customer.data_exported"
+            | "broadcast.sent"
           actor?: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -221,6 +223,7 @@ export type Database = {
             | "settings.login_slug_changed"
             | "day.closed"
             | "customer.data_exported"
+            | "broadcast.sent"
           actor?: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -1442,6 +1445,7 @@ export type Database = {
       }
       retired_booking_templates: { Args: never; Returns: string[] }
       revoke_calendar_feed: { Args: { p_id: string }; Returns: undefined }
+      send_broadcast_as_owner: { Args: { p_body: string; p_subject: string }; Returns: Json }
       send_custom_email_as_owner: {
         Args: {
           p_body: string
@@ -1514,6 +1518,7 @@ export type Database = {
       }
       sync_google_reviews: { Args: never; Returns: number }
       system_health_summary: { Args: never; Returns: Json }
+      unsubscribe_via_link: { Args: { p_subscriber_id: string }; Returns: undefined }
       weekly_template_status: { Args: never; Returns: Json }
     }
     Enums: {

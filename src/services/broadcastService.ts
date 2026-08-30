@@ -8,7 +8,10 @@ import type { BroadcastResult } from '@/types';
  * shown before sending comes from `listSubscribers()` in
  * `subscriberService.ts`, filtered the same way the RPC filters server-side.
  */
-export async function sendBroadcast(subject: string, body: string): Promise<BroadcastResult> {
+export async function sendBroadcast(
+  subject: string,
+  body: string,
+): Promise<BroadcastResult> {
   const { data, error } = await supabase.rpc('send_broadcast_as_owner', {
     p_subject: subject,
     p_body: body,

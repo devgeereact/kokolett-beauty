@@ -58,7 +58,7 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
   and hooks.
 - **Styling:** Tailwind classes only, tokens from `tailwind.config.ts`. Not
   NativeWind — see `docs/DESIGN.md` §12.
-- **Offloaded systems:** Supabase (Auth/DB + RLS, nine Deno Edge Functions,
+- **Offloaded systems:** Supabase (Auth/DB + RLS, ten Deno Edge Functions,
   `pg_cron` jobs), ImageKit (transformed URLs for service images only), Sentry
   (monitoring). There is no Inngest — the email pipeline is a Postgres trigger plus
   a `pg_cron` drain job.
@@ -78,12 +78,16 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
   `context`. `lib` never imports from `pages`/`components` — no cycles.
 - **One appointment type, no service-selection step.** `/book` goes straight from
   date to time; there is no per-service picker, and no price is quoted anywhere.
-- **Two things are called "assistant" — do not conflate them** (full detail:
-  `docs/ARCHITECTURE.md` §6b). The advisory insights module (`src/lib/insights.ts`)
-  is deterministic client-side TypeScript computed from data the page already
-  fetched — it never talks to Supabase. The chat assistant is a real LLM
-  (`supabase/functions/ai-assistant-chat`) that runs under the caller's own
-  Authorization header, so a non-owner gets a working chat that can read nothing.
+- **Two AI assistants and a third drafting-only surface — do not conflate them**
+  (full detail: `docs/ARCHITECTURE.md` §6b). The advisory insights module
+  (`src/lib/insights.ts`) is deterministic client-side TypeScript computed from
+  data the page already fetched — it never talks to Supabase. The chat
+  assistant is a real LLM (`supabase/functions/ai-assistant-chat`) that runs
+  under the caller's own Authorization header, so a non-owner gets a working
+  chat that can read nothing. `draft-copy` is a third, simpler function — a
+  single-completion text generator behind `draftCopyService.ts`, gated by an
+  explicit `is_owner()` check — used for "Polish with AI" on the Compose
+  modal, the broadcast composer, and the customer reply panel.
 - **Nothing dispatches through Inngest**, despite an earlier design assuming it
   would. The shipped mechanism is a Postgres trigger writing to `email_messages`
   plus a `pg_cron` job draining that queue every five minutes to the `send-emails`

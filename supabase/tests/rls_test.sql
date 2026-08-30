@@ -3,8 +3,8 @@
 -- Row-level security IS the security model of this app: the browser holds an
 -- anon key and RLS is what stands between it and the salon's schedule, customer
 -- list, contact details and payment history. Until this file existed nothing
--- asserted any of it — `docs/GO-LIVE.md` §7 and `docs/plan.md` both carried
--- "no RLS tests" as the highest-value gap.
+-- asserted any of it — `docs/history/2026-08-19-go-live-checklist.md` §7 and
+-- `docs/plan.md` both carried "no RLS tests" as the highest-value gap.
 --
 -- Run with `supabase test db`: it starts a throwaway Postgres, applies every
 -- migration in order, installs pgTAP, and runs this file. CI does that on every

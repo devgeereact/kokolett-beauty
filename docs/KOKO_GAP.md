@@ -136,6 +136,26 @@ See §4 below for the specific file-level fixes.
 | `docs/SCHEMA.md` §3 `staff` | Added `login_slug`/`login_slug_updated_at` columns |
 | `docs/SCHEMA.md` §7 cron jobs | "Six jobs" → "Seven jobs"; added `purge-secret-login-attempts` row |
 
+### Second pass, 2026-08-30 (mechanical, already done)
+
+Drift accumulated from migrations `0052`–`0058` (audit trail, system health,
+daily close, GDPR export, `ai_recommendations` drop, broadcast messaging) and
+the new `draft-copy` Edge Function.
+
+| File | Fix |
+|---|---|
+| `CLAUDE.md:61` | "nine Deno Edge Functions" → "ten" |
+| `AGENTS.md:46` | "nine Deno Edge Functions" → "ten" |
+| `docs/ARCHITECTURE.md:20` | "9 Deno Edge Functions" → "10" |
+| `docs/ARCHITECTURE.md` §6b | Added a third paragraph for `draft-copy` (a third AI surface, not covered before); removed "drafted replies" from `insights.ts`'s description — that capability was never in `insights.ts` (no such export), it lived in the now-deleted `emailDrafts.ts` |
+| `CLAUDE.md`'s §6b pointer line | "Two things are called 'assistant'" → "Two AI assistants and a third drafting-only surface", with a `draft-copy` sentence added |
+| `docs/SCHEMA.md:3` | Migration range "0001 through 0057" → "0001 through 0058" (the per-migration table itself already had rows through 0058; only the header text was stale) |
+| `docs/SCHEMA.md` `audit_events` row | Action-vocabulary list "extended by `0054` and `0056`" → "extended by `0054`, `0056` and `0058`" |
+| `supabase/config.toml` | Added the missing `[functions.draft-copy]` block (`verify_jwt = true` + rationale comment) — every other function already documents its posture there; this one didn't |
+| `docs/KOKO_GAP.md` §5 P2 | Added the missing `[x]` line for AI-drafted broadcast messaging (every other shipped §3 row already had one) |
+| `docs/GO-LIVE.md` / `docs/history/` | Split (§4 item 3, resolved): dated 2026-08-19 snapshot moved verbatim to `docs/history/2026-08-19-go-live-checklist.md`; `docs/GO-LIVE.md` rewritten as a slim, undated "stand up a fresh environment" procedure |
+| `docs/plan.md` | §4 item 4, resolved: appended a note to the "docs drift fast" bullet recording this 2026-08-30 pass and a rough next-pass cadence |
+
 ### Open questions — recommended, not executed
 
 These are judgment calls, not factual corrections, so they weren't auto-applied:
@@ -147,11 +167,9 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
    - AI proposal/confirm boundary — CLAUDE.md:69 is one dense sentence; AGENTS.md:21-32 has the full mechanism (dispatcher-branch argument, untrusted-data fencing). Recommend CLAUDE.md's line become a one-sentence pointer to AGENTS.md's fuller version, so the two can't drift independently on a future edit. **This is a restructuring choice — present here, not executed.**
    - "No Inngest" — consistent in both, no drift, no action.
 
-3. **`docs/GO-LIVE.md`** self-describes as a dated 2026-08-19 snapshot ("done, verified 2026-08-19 21:45 UTC" style markers throughout) yet is still listed in `CLAUDE.md`'s "load these first" table as if it were live evergreen reference. Two options, neither picked:
-   - (a) Split: keep a slim, undated "how to redo go-live for a fresh environment" procedure live in `docs/GO-LIVE.md`, move the dated 2026-08-19 completion snapshot into `docs/history/`.
-   - (b) Leave as-is, add one header sentence marking it explicitly historical.
+3. ~~**`docs/GO-LIVE.md`** self-describes as a dated 2026-08-19 snapshot... two options, neither picked~~ **Resolved 2026-08-30 (option a): split.** The dated completion snapshot moved verbatim to `docs/history/2026-08-19-go-live-checklist.md`; `docs/GO-LIVE.md` is now a slim, undated "stand up a fresh environment" procedure (env template, Supabase project setup, dashboard data entry, verification checklist), pointing to `docs/DEPLOYMENT.md` for build/deploy mechanics rather than duplicating them.
 
-4. **`docs/plan.md`** — no conflict found with PRD.md or GPT.md (different altitude: live flat punch-list vs. product spec vs. hypothetical transformation prompt). Its own "docs drift fast" item (dated 2026-08-24) is effectively the ancestor of this exact exercise — the drift found this time (Edge Function count, job count, migration range, `secret_login_attempts`/`staff` columns) accumulated *since* that pass. Optionally add one bullet to `plan.md`'s open items noting "next docs-drift pass due" — the user's call, not applied here.
+4. ~~**`docs/plan.md`** — ... Optionally add one bullet... the user's call, not applied here~~ **Resolved 2026-08-30.** Appended a note to `plan.md`'s "docs drift fast" bullet recording this second pass and a rough cadence for the next one.
 
 5. **`docs/GPT.md`** — left as-is. It already defers to the docs when they disagree ("if a claim here and a claim in those files disagree, those files win"), so no correction is strictly needed. Optionally add one header line noting the multi-tenant direction was reviewed and declined in favour of this document's framing — optional, not applied.
 
@@ -175,6 +193,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [ ] Customer-facing self-service communication preferences.
 - [ ] Email suppressed/bounced lane (needs bounce-webhook ingestion, currently SMTP-only).
 - [x] `ai_recommendations` drop migration — done: `supabase/migrations/0057_drop_ai_recommendations.sql`, owner-approved 2026-08-30. See §4 item 1 for confirmation this doesn't touch AI message-drafting.
+- [x] AI-drafted broadcast messaging — done: `supabase/migrations/0058_broadcast_messaging.sql`, `/dashboard/broadcasts`. New `draft-copy` Edge Function drafts subject/body from a rough idea; owner reviews and sends to confirmed, not-unsubscribed mailing-list subscribers via the existing outbox. New unsubscribe link on every broadcast email (previously nonexistent anywhere in the app), click-to-confirm plus RFC 8058 `List-Unsubscribe` headers. Same drafting engine reused on the one-off Compose modal and the customer-profile reply panel (`emailDrafts.ts`'s deterministic templating deleted). Verified live against production; final whole-branch review caught and fixed 4 issues before shipping (unsubscribe-on-load, missing deliverability header, half-done audit tab, reply-panel error state). Standing item: no real broadcast has round-tripped end-to-end yet (production mailing list is empty) — recommend one real self-subscribe → one-recipient send → click the real unsubscribe link before pointing this at a real list.
 - [ ] Broaden unit-test coverage to service files and pages currently untested.
 
 **P3**

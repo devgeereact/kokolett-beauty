@@ -43,7 +43,7 @@ The build target is a **static** PWA on cPanel.
 - ❌ No SSR, no Next.js server components, no Node server — nothing that needs a
   runtime on the web host. The host has no Node at all, so the build runs locally.
 - ✅ Everything runs in the browser or is offloaded to Supabase. Server-side and
-  scheduled logic lives there: **nine Deno Edge Functions** under
+  scheduled logic lives there: **ten Deno Edge Functions** under
   `supabase/functions/`, Postgres triggers, `pg_cron` jobs, and RLS. Monitoring is
   Sentry. There is no Inngest: nothing in the app dispatches an event and it is not a
   dependency. ImageKit is used for one thing only, building transformed URLs for

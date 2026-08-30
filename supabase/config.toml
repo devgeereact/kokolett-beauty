@@ -488,3 +488,9 @@ verify_jwt = true
 # backstop — see owner-secret-login/index.ts.
 [functions.owner-secret-login]
 verify_jwt = false
+
+# Owner-only. Explicit is_owner() RPC check before any OpenRouter call, since
+# (unlike ai-assistant-chat's read tools) this function makes no other
+# database query for RLS to gate.
+[functions.draft-copy]
+verify_jwt = true

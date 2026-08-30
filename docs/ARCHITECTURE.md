@@ -17,7 +17,7 @@
 └─────┬──────┘  └────────────┘  └────────────┘
       │
       ▼
- PostgreSQL  ·  9 Deno Edge Functions  ·  pg_cron + pg_net
+ PostgreSQL  ·  10 Deno Edge Functions  ·  pg_cron + pg_net
  (row-level security)
 ```
 
@@ -242,20 +242,32 @@ first column are descriptions, not event topics on a bus.
 
 ## 6b. AI boundary
 
-Two separate things wear the word "assistant", and conflating them is how this
-section was wrong for a while.
+Two AI surfaces and a third, simpler drafting-only one wear the word
+"assistant" or "AI", and conflating them is how this section was wrong for a
+while.
 
 **The advisory modules** are a deterministic, statistical TypeScript module,
 `src/lib/insights.ts`, computed client-side on page load from data
-`assistantService.ts` already fetched (conflicts, reschedule opportunities, drafted
-replies, analytics, trends, repeat customers). Nothing in that module talks to
-Supabase or mutates data.
+`assistantService.ts` already fetched (conflicts, reschedule opportunities,
+analytics, trends, repeat customers). Nothing in that module talks to
+Supabase, mutates data, or calls an LLM.
 
 **The chat assistant** is a real LLM. `supabase/functions/ai-assistant-chat` calls
 OpenRouter (`openai/gpt-5-nano`) with tool calling, invoked from
 `src/services/aiChatService.ts`. It runs under the caller's own Authorization header
 and the anon key, so every read it makes is governed by that caller's RLS: a non-owner
 gets a working chat that can read nothing.
+
+**`draft-copy`** is a third, simpler surface: a single-completion text
+generator (no tool-calling loop, no business-data reads) behind
+`src/services/draftCopyService.ts`, used for "Polish with AI" on the Compose
+modal, the broadcast composer (`/dashboard/broadcasts`, migration `0058`), and
+the customer-profile reply panel (which replaced its old deterministic
+`suggestReply()` templating — `src/lib/emailDrafts.ts` — with this same real
+AI call). It explicitly checks `is_owner()` before any OpenRouter call, since
+unlike the chat assistant it has no other database read for RLS to gate. Like
+the chat assistant, it only ever returns text for the owner to review — the
+actual send is always a separate, explicit owner action.
 
 An earlier design called for a `pending`-status recommendation queue
 (`ai_recommendations`); the shipped mechanism never used one, and the table was

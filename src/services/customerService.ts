@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Customer } from '@/types';
+import type { Customer, CustomerDataExport } from '@/types';
 
 /**
  * Customers are not `auth.users` — they are identified by email and never hold
@@ -207,6 +207,21 @@ export async function eraseCustomer(id: string): Promise<ErasureOutcome> {
 
   if (error) throw error;
   return data === 'anonymised' ? 'anonymised' : 'deleted';
+}
+
+/**
+ * A GDPR subject-access package for one customer — everything
+ * `eraseCustomer` above knows to touch, read instead of deleted
+ * (migration 0056). Logged as `customer.data_exported`, but the audit
+ * row itself carries no personal data, only that an export happened.
+ */
+export async function exportCustomerData(id: string): Promise<CustomerDataExport> {
+  const { data, error } = await supabase.rpc('export_customer_data', {
+    p_customer_id: id,
+  });
+
+  if (error) throw error;
+  return data as unknown as CustomerDataExport;
 }
 
 /**

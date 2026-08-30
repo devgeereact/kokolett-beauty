@@ -23,6 +23,7 @@ const LANES: { key: Lane; label: string }[] = [
   { key: 'payment.recorded', label: 'Payment recorded' },
   { key: 'settings.login_slug_changed', label: 'Sign-in link changed' },
   { key: 'day.closed', label: 'Day closed' },
+  { key: 'customer.data_exported', label: 'Data exported' },
 ];
 
 /**
@@ -60,6 +61,7 @@ export function AuditPage(): JSX.Element {
       'payment.recorded': 0,
       'settings.login_slug_changed': 0,
       'day.closed': 0,
+      'customer.data_exported': 0,
     };
     for (const e of events ?? []) {
       c.all += 1;

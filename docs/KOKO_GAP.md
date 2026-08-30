@@ -65,7 +65,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Customer CRM (profile, history, notes, marketing consent, erasure) | `CustomersPage.tsx` + `CustomerDetailPanel.tsx` | ✅ | 436 lines | — | — |
 | Customer timeline | History shown as a flat list, not a timeline visualisation | 🟡 | No dedicated `Timeline` component; `ScheduleTimeline.tsx` is day-schedule-specific, not per-customer | Visual unified event history per customer | P3 |
 | Customer communication preferences | Owner-side marketing-consent toggle only | 🟡 | `customerService.ts:121-131`, `CustomerDetailPanel.tsx:91-116` | No customer-facing self-service preference centre | P2 |
-| GDPR data export (subject access) | Erasure exists; bulk CSV exports exist (Customers/Appointments/Email/Reports) | 🟡 | `eraseCustomer()` real; no per-customer data package | A single customer's own data export | P2 |
+| GDPR data export (subject access) | `export_customer_data()` — customer profile, appointments, payments, emails, availability requests, mailing-list status, as JSON download from the Customers page ("Export data" menu item). Same table list `eraseCustomer()` touches, read instead of deleted. | ✅ | `supabase/migrations/0056_customer_data_export.sql`, `src/pages/dashboard/CustomersPage.tsx` — verified live 2026-08-30 against production (full package returned, non-owner denied, audit row carries no personal data) | — | — | — |
 
 ### Business (Services, Payments, Reports, Reviews, Marketing)
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
@@ -168,7 +168,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [x] System health / diagnostics page + scheduled-job run monitoring — done: `supabase/migrations/0053_system_health.sql`, `/dashboard/system-health`. No new table — reads pg_cron's own `cron.job_run_details`, already populated. Verified live against production.
 - [x] Application version display in the UI — done: git short SHA + build timestamp, injected at build time, shown on the System Health page.
 - [x] Daily close / end-of-day workflow — done: `supabase/migrations/0054_daily_close.sql`/`0055_daily_close_split_preview.sql`, `/dashboard/daily-close`. Reuses `audit_events` (a new `day.closed` action) rather than a new table. Verified live against production.
-- [ ] GDPR customer data export (per-customer subject-access package; erasure already exists).
+- [x] GDPR customer data export — done: `supabase/migrations/0056_customer_data_export.sql`, "Export data" on the Customers page. Reuses `audit_events` (a new `customer.data_exported` action) rather than a new table. Verified live against production.
 - [ ] Email template version history (diff/revert).
 - [ ] Payment correction linkage (mark one row as correcting another).
 - [ ] Customer-facing self-service communication preferences.

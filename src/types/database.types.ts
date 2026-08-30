@@ -230,6 +230,7 @@ export type Database = {
             | "payment.recorded"
             | "settings.login_slug_changed"
             | "day.closed"
+            | "customer.data_exported"
           actor: "owner" | "system"
           created_at: string
           entity_id: string | null
@@ -249,6 +250,7 @@ export type Database = {
             | "payment.recorded"
             | "settings.login_slug_changed"
             | "day.closed"
+            | "customer.data_exported"
           actor?: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -268,6 +270,7 @@ export type Database = {
             | "payment.recorded"
             | "settings.login_slug_changed"
             | "day.closed"
+            | "customer.data_exported"
           actor?: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -1321,6 +1324,7 @@ export type Database = {
         Returns: string
       }
       expire_pending_approvals: { Args: never; Returns: number }
+      export_customer_data: { Args: { p_customer_id: string }; Returns: Json }
       extend_weekly_template: { Args: never; Returns: number }
       generate_booking_reference: { Args: never; Returns: string }
       get_own_login_slug: { Args: never; Returns: string }

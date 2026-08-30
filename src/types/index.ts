@@ -159,6 +159,60 @@ export interface DailyCloseSummary {
   failed_email_count: number;
 }
 
+/** Shape returned by `public.export_customer_data()` — a GDPR subject-access package for one customer. */
+export interface CustomerDataExport {
+  exported_at: string;
+  customer: {
+    full_name: string;
+    email: string;
+    mobile: string | null;
+    notes: string | null;
+    marketing_consent: boolean;
+    consent_updated_at: string | null;
+    first_seen_at: string | null;
+    last_seen_at: string | null;
+    created_at: string;
+  };
+  appointments: {
+    reference: string;
+    starts_at: string;
+    ends_at: string;
+    status: string;
+    customer_note: string | null;
+    owner_note: string | null;
+    cancellation_reason: string | null;
+    rejection_reason: string | null;
+    created_at: string;
+  }[];
+  payments: {
+    amount_pence: number;
+    note: string | null;
+    created_at: string;
+  }[];
+  emails: {
+    subject: string;
+    template: string;
+    status: string;
+    created_at: string;
+    sent_at: string | null;
+  }[];
+  availability_requests: {
+    preferred_dates: string[];
+    preferred_times: string | null;
+    flexibility: string;
+    notes: string | null;
+    status: string;
+    created_at: string;
+  }[];
+  mailing_list: {
+    email: string;
+    source: string;
+    confirmed: boolean;
+    unsubscribed_at: string | null;
+    created_at: string;
+  } | null;
+}
+
 /** A bookable slot produced by the availability engine. */
 export interface TimeSlot {
   /** UTC ISO 8601 start. */

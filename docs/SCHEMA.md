@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0055`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0056`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -34,6 +34,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0053_system_health.sql`                            | Added `system_health_summary()` — no new table; reads pg_cron's own `cron.job`/`cron.job_run_details` plus existing email/reviews staleness signals. Powers `/dashboard/system-health`. |
 | `0054_daily_close.sql`                               | Added `close_day()` and a new `day.closed` value in `audit_events.action`'s check constraint — no new table. Superseded by `0055`; left as originally applied rather than edited in place (same precedent as `0024`/`0025`→`0026`). |
 | `0055_daily_close_split_preview.sql`                 | Split `close_day()` into a read-only `daily_close_summary()` (the live preview) plus `close_day()` calling it and logging the result — calling the logging function just to preview would have spuriously written a `day.closed` row on every page visit. |
+| `0056_customer_data_export.sql`                     | Added `export_customer_data()` and a new `customer.data_exported` value in `audit_events.action`'s check constraint — no new table. The GDPR subject-access counterpart to `erase_customer_as_owner` (`0042`): same tables, read instead of deleted. |
 
 ### Every table, and where it is documented
 
@@ -58,7 +59,7 @@ here, with the migration that created them as the authoritative source.
 | `calendar_feeds`        | `0019`     | ICS feed tokens: `token_hash`, `label`, `fetch_count`, `revoked_at`. The raw token exists only in the URL                        |
 | `subscribers`           | `0017`     | mailing list: `email` (citext, unique), `source`, `confirmed`, `unsubscribed_at`                                                 |
 | `secret_login_attempts` | `0051`     | hashed-IP lockout counter for the secret owner login (`ip_hash`, `attempted_at`); no anon/authenticated policies, service-role only |
-| `audit_events`          | `0052`, action vocabulary extended by `0054` | immutable log of the highest-risk owner actions: `actor`, `action`, `entity_type`, `entity_id`, `summary`, `old_value`/`new_value` jsonb. SELECT-only for the owner; no insert/update/delete policy for any role, including the owner |
+| `audit_events`          | `0052`, action vocabulary extended by `0054` and `0056` | immutable log of the highest-risk owner actions: `actor`, `action`, `entity_type`, `entity_id`, `summary`, `old_value`/`new_value` jsonb. SELECT-only for the owner; no insert/update/delete policy for any role, including the owner |
 
 Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
 `google_place_id`, `address_line`, `phone` (`0017`) and `business_name`,

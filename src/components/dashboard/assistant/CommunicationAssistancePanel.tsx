@@ -3,9 +3,12 @@ import { Card } from '@/components/ui/Card';
 import { Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { getRecentMessages, type RecentMessage } from '@/services/assistantService';
-import { suggestReply, type ReplyTone } from '@/lib/emailDrafts';
+import { draftCopy } from '@/services/draftCopyService';
+import { errorMessage } from '@/lib/errors';
 import { formatRelative } from '@/lib/format';
 import { cn } from '@/lib/utils';
+
+export type ReplyTone = 'friendly' | 'formal' | 'brief';
 
 const TONES: ReplyTone[] = ['friendly', 'formal', 'brief'];
 const TONE_LABELS: Record<ReplyTone, string> = {
@@ -36,6 +39,8 @@ export function CommunicationAssistancePanel({
   const [tone, setTone] = useState<ReplyTone>('friendly');
   const [reply, setReply] = useState('');
   const [copied, setCopied] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   const load = (): void => {
     setError(null);
@@ -70,9 +75,20 @@ export function CommunicationAssistancePanel({
   useEffect(() => {
     if (!selected) {
       setReply('');
+      setDraftError(null);
       return;
     }
-    setReply(suggestReply(selected.text, tone, selected.customerName));
+    setDrafting(true);
+    setDraftError(null);
+    draftCopy({
+      kind: 'reply',
+      roughIdea: tone,
+      originalMessage: selected.text,
+      customerName: selected.customerName,
+    })
+      .then((result) => setReply(result.body))
+      .catch((e: unknown) => setDraftError(errorMessage(e)))
+      .finally(() => setDrafting(false));
     setCopied(false);
   }, [selected, tone]);
 
@@ -159,12 +175,18 @@ export function CommunicationAssistancePanel({
               </div>
             </fieldset>
 
-            <Textarea
-              aria-label="Suggested reply"
-              rows={5}
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-            />
+            {drafting ? (
+              <p className="mb-4 text-sm text-muted-foreground">Drafting a reply…</p>
+            ) : draftError ? (
+              <p className="mb-4 text-sm text-status-no-show">{draftError}</p>
+            ) : (
+              <Textarea
+                aria-label="Suggested reply"
+                rows={5}
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+              />
+            )}
 
             <div className="flex flex-wrap gap-2">
               <a

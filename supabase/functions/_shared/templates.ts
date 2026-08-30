@@ -63,7 +63,7 @@ export interface TemplatePayload {
 }
 
 const SALON = 'Kokolett Beauty UK';
-const SITE = 'https://www.kokolettbeauty.com';
+export const SITE = 'https://www.kokolettbeauty.com';
 const EMAIL = 'booking@kokolettbeauty.com';
 
 /* Palette lifted from docs/DESIGN.md. Hard-coded, because an email cannot read

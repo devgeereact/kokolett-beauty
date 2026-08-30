@@ -117,7 +117,7 @@ export function CommunicationAssistancePanel({
     );
   }
 
-  const actionsDisabled = drafting || draftError !== null;
+  const actionsDisabled = drafting;
   const mailHref =
     selected && !actionsDisabled
       ? `mailto:${selected.customerEmail}?subject=${encodeURIComponent('Re: your message')}&body=${encodeURIComponent(reply)}`
@@ -187,18 +187,18 @@ export function CommunicationAssistancePanel({
               </div>
             </fieldset>
 
-            {drafting ? (
-              <p className="mb-4 text-sm text-muted-foreground">Drafting a reply…</p>
-            ) : draftError ? (
-              <p className="mb-4 text-sm text-status-no-show">{draftError}</p>
-            ) : (
-              <Textarea
-                aria-label="Suggested reply"
-                rows={5}
-                value={reply}
-                onChange={(e) => setReply(e.target.value)}
-              />
+            {drafting && (
+              <p className="mb-2 text-sm text-muted-foreground">Drafting a reply…</p>
             )}
+            {draftError && (
+              <p className="mb-2 text-sm text-status-no-show">{draftError}</p>
+            )}
+            <Textarea
+              aria-label="Suggested reply"
+              rows={5}
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+            />
 
             <div className="flex flex-wrap gap-2">
               <a

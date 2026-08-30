@@ -24,6 +24,7 @@ const LANES: { key: Lane; label: string }[] = [
   { key: 'settings.login_slug_changed', label: 'Sign-in link changed' },
   { key: 'day.closed', label: 'Day closed' },
   { key: 'customer.data_exported', label: 'Data exported' },
+  { key: 'broadcast.sent', label: 'Broadcast sent' },
 ];
 
 /**

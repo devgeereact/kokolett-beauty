@@ -36,7 +36,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0055_daily_close_split_preview.sql`                 | Split `close_day()` into a read-only `daily_close_summary()` (the live preview) plus `close_day()` calling it and logging the result — calling the logging function just to preview would have spuriously written a `day.closed` row on every page visit. |
 | `0056_customer_data_export.sql`                     | Added `export_customer_data()` and a new `customer.data_exported` value in `audit_events.action`'s check constraint — no new table. The GDPR subject-access counterpart to `erase_customer_as_owner` (`0042`): same tables, read instead of deleted. |
 | `0057_drop_ai_recommendations.sql`                  | Dropped `ai_recommendations` and `recommendation_status` — confirmed dead across every audit this session, owner-approved for removal 2026-08-30. Does not affect the AI chat's ability to draft messages (`ai-assistant-chat`), which never used this table. |
-| `0058_broadcast_messaging.sql`                      | Added `send_broadcast_as_owner()` and `unsubscribe_via_link()`, and a new `broadcast.sent` value in `audit_events.action`'s check constraint — no new table. Broadcast messaging uses the existing email outbox queue. |
+| `0058_broadcast_messaging.sql`                      | Added `send_broadcast_as_owner()` and `unsubscribe_via_link()`, and a new `broadcast.sent` value in `audit_events.action`'s check constraint — no new table. Broadcast messaging uses the existing email outbox queue. `unsubscribe_via_link()` is anon-callable by design, since a visitor clicking the link has no session. |
 
 ### Every table, and where it is documented
 

@@ -140,3 +140,21 @@ Deno.test(
     assertStringIncludes(oneHour.text, 'in about an hour');
   },
 );
+
+Deno.test('owner_broadcast renders the body and an unsubscribe link', () => {
+  const out = render('owner_broadcast', {
+    full_name: 'Ada Lovelace',
+    custom_body: 'We have new availability this week!',
+    subscriber_id: 'deadbeef-0000-0000-0000-000000000000',
+  });
+
+  assertStringIncludes(out.html, 'Ada Lovelace');
+  assertStringIncludes(out.html, 'We have new availability this week!');
+  assertStringIncludes(out.html, '/unsubscribe/deadbeef-0000-0000-0000-000000000000');
+  assertStringIncludes(out.text, '/unsubscribe/deadbeef-0000-0000-0000-000000000000');
+});
+
+Deno.test('owner_broadcast omits the unsubscribe link if no subscriber_id is given', () => {
+  const out = render('owner_broadcast', { custom_body: 'Hello' });
+  assert(!out.html.includes('/unsubscribe/'));
+});

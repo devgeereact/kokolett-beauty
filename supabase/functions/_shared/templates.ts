@@ -50,6 +50,8 @@ export interface TemplatePayload {
   flexibility?: string;
   /** Freeform body for `owner_custom_message` — the owner's own words, sent as-is (escaped, newlines kept). */
   custom_body?: string;
+  /** The subscriber this broadcast is addressed to, for the unsubscribe link (`owner_broadcast` only). */
+  subscriber_id?: string;
   /** Injected by the sender, never stored. */
   manage_url?: string;
   /** Owner password-recovery link. Injected by the sender, never stored. */
@@ -956,6 +958,34 @@ export function render(
         ),
         text: `${p.full_name} sent a message from the website.\n${p.email}\n\n${p.notes ?? ''}`,
       };
+
+    // The owner's broadcast to the mailing list — same freeform-body shape
+    // as owner_custom_message, plus a required unsubscribe link since this
+    // is the one template that goes to more than one person at once.
+    case 'owner_broadcast': {
+      const bodyHtml = esc(p.custom_body ?? '')
+        .split('\n')
+        .map((paragraph) => line(paragraph))
+        .join('');
+      const unsubscribeUrl = p.subscriber_id ? `${SITE}/unsubscribe/${p.subscriber_id}` : null;
+      const unsubscribeHtml = unsubscribeUrl
+        ? small(
+            `<a href="${esc(unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline">Unsubscribe</a> from these emails.`,
+          )
+        : '';
+      return {
+        html: layout(
+          SALON,
+          `A message from ${SALON}`,
+          line(`Hello ${name},`) + bodyHtml + unsubscribeHtml,
+          p,
+          'You are receiving this because you subscribed to the Kokolett Beauty UK mailing list.',
+        ),
+        text:
+          `Hello ${p.full_name ?? 'there'},\n\n${p.custom_body ?? ''}` +
+          (unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ''),
+      };
+    }
 
     // The owner's own freeform note, drafted (in the dashboard or via the
     // AI assistant) and sent only after she reviews and confirms it — this

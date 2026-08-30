@@ -18,6 +18,17 @@ If you deploy through a personal wrapper or CI, that tooling still has to obey t
 safety rules below — they exist because breaking them has caused real outages and
 leaks.
 
+> ⚠️ **Merging or pushing to `main` deploys nothing.** There is no CI/CD auto-deploy
+> for this static site — `git push` only updates the repo. The live site only changes
+> when someone runs the deploy step below (`cpanel-deploy dist kokolettbeauty.com
+> --go`) by hand. This bit for real on 2026-08-30: the whole AI-broadcast-messaging
+> feature was built, reviewed, and pushed to `main` across many commits, but the
+> `dist/` build was never actually shipped to `~/kokolettbeauty.com/` — the new
+> `/unsubscribe/:id` route 404'd in production for hours until a manual click-test
+> caught it. **Finishing a branch (merge/push/PR) is not the same task as deploying
+> it** — after any user-facing change lands on `main`, deploy it explicitly, then
+> verify against the live site (§2) before considering the work actually shipped.
+
 ---
 
 ## 0. Before the first deploy

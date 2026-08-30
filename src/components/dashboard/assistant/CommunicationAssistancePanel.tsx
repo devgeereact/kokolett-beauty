@@ -78,6 +78,7 @@ export function CommunicationAssistancePanel({
       setDraftError(null);
       return;
     }
+    let cancelled = false;
     setDrafting(true);
     setDraftError(null);
     draftCopy({
@@ -86,10 +87,19 @@ export function CommunicationAssistancePanel({
       originalMessage: selected.text,
       customerName: selected.customerName,
     })
-      .then((result) => setReply(result.body))
-      .catch((e: unknown) => setDraftError(errorMessage(e)))
-      .finally(() => setDrafting(false));
+      .then((result) => {
+        if (!cancelled) setReply(result.body);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setDraftError(errorMessage(e));
+      })
+      .finally(() => {
+        if (!cancelled) setDrafting(false);
+      });
     setCopied(false);
+    return () => {
+      cancelled = true;
+    };
   }, [selected, tone]);
 
   if (error) return <ErrorState error={error} onRetry={load} />;
@@ -107,9 +117,11 @@ export function CommunicationAssistancePanel({
     );
   }
 
-  const mailHref = selected
-    ? `mailto:${selected.customerEmail}?subject=${encodeURIComponent('Re: your message')}&body=${encodeURIComponent(reply)}`
-    : undefined;
+  const actionsDisabled = drafting || draftError !== null;
+  const mailHref =
+    selected && !actionsDisabled
+      ? `mailto:${selected.customerEmail}?subject=${encodeURIComponent('Re: your message')}&body=${encodeURIComponent(reply)}`
+      : undefined;
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -191,17 +203,22 @@ export function CommunicationAssistancePanel({
             <div className="flex flex-wrap gap-2">
               <a
                 href={mailHref}
-                className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95"
+                aria-disabled={actionsDisabled}
+                className={cn(
+                  'inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95',
+                  actionsDisabled && 'pointer-events-none opacity-50',
+                )}
               >
                 Send reply
               </a>
               <button
                 type="button"
+                disabled={actionsDisabled}
                 onClick={() => {
                   void navigator.clipboard.writeText(reply);
                   setCopied(true);
                 }}
-                className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+                className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
               >
                 {copied ? 'Copied' : 'Copy'}
               </button>

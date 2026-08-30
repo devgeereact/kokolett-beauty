@@ -20,6 +20,7 @@ import {
   History,
   Activity,
   ListChecks,
+  Megaphone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -40,7 +41,8 @@ export type NavIconLabel =
   | 'Settings'
   | 'Audit'
   | 'System Health'
-  | 'Daily Close';
+  | 'Daily Close'
+  | 'Broadcasts';
 
 export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Dashboard: LayoutDashboard,
@@ -60,4 +62,5 @@ export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Audit: History,
   'System Health': Activity,
   'Daily Close': ListChecks,
+  Broadcasts: Megaphone,
 };

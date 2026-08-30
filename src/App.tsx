@@ -106,6 +106,9 @@ const TemplateEditorPage = lazy(() =>
     default: m.TemplateEditorPage,
   })),
 );
+const BroadcastsPage = lazy(() =>
+  import('@/pages/dashboard/BroadcastsPage').then((m) => ({ default: m.BroadcastsPage })),
+);
 const ProfilePage = lazy(() =>
   import('@/pages/dashboard/ProfilePage').then((m) => ({ default: m.ProfilePage })),
 );
@@ -139,10 +142,7 @@ export function App(): JSX.Element {
               {/* Customer identity is passwordless: /access/:token redeems a
                   single-use link, /my uses the session it produced. */}
               <Route path={routes.public.subscribe} element={<SubscribePage />} />
-              <Route
-                path="/unsubscribe/:subscriberId"
-                element={<UnsubscribePage />}
-              />
+              <Route path="/unsubscribe/:subscriberId" element={<UnsubscribePage />} />
 
               <Route path="/access/:token" element={<MyBookingsPage />} />
               <Route path={routes.customer.home} element={<MyBookingsPage />} />
@@ -224,6 +224,7 @@ export function App(): JSX.Element {
                   path="/dashboard/templates/:key/edit"
                   element={<TemplateEditorPage />}
                 />
+                <Route path={routes.owner.broadcasts} element={<BroadcastsPage />} />
                 <Route path={routes.owner.profile} element={<ProfilePage />} />
               </Route>
 

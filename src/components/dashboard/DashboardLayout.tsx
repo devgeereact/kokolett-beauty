@@ -194,6 +194,7 @@ export function DashboardLayout({
         },
         { to: routes.owner.email, label: 'Email', icon: NAV_ICONS.Email },
         { to: routes.owner.templates, label: 'Templates', icon: NAV_ICONS.Templates },
+        { to: routes.owner.broadcasts, label: 'Broadcasts', icon: NAV_ICONS.Broadcasts },
       ],
     },
     {

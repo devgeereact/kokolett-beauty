@@ -74,6 +74,8 @@ export const routes = {
     systemHealth: '/dashboard/system-health',
     /** End-of-day reconciliation, today only (migration 0054/0055). */
     dailyClose: '/dashboard/daily-close',
+    /** AI-drafted newsletter/ad to the mailing list (migration 0058). */
+    broadcasts: '/dashboard/broadcasts',
   },
   auth: {
     /**

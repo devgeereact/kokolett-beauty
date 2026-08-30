@@ -301,9 +301,11 @@ export function ReportsPage(): JSX.Element {
                 <div>
                   <p className="text-sm font-medium text-foreground">
                     Revenue{' '}
-                    {overview.totals.revenuePence >= overview.previous.revenuePence
-                      ? 'is up'
-                      : 'is down'}
+                    {overview.totals.revenuePence === overview.previous.revenuePence
+                      ? 'is unchanged'
+                      : overview.totals.revenuePence > overview.previous.revenuePence
+                        ? 'is up'
+                        : 'is down'}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     You earned {formatMoney(overview.totals.revenuePence)} this period,

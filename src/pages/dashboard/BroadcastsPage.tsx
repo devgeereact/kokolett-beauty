@@ -59,7 +59,8 @@ export function BroadcastsPage(): JSX.Element {
       .finally(() => setSending(false));
   };
 
-  const canSend = !sending && subject.trim() !== '' && body.trim() !== '';
+  const canSend =
+    !sending && recipientCount !== null && subject.trim() !== '' && body.trim() !== '';
 
   return (
     <DashboardLayout

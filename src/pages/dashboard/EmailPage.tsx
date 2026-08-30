@@ -2,6 +2,7 @@ import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
+  Clock,
   Download,
   Inbox,
   Mail,
@@ -35,14 +36,33 @@ import { useToast } from '@/context/ToastContext';
 import { cn } from '@/lib/utils';
 import type { EmailMessage } from '@/types';
 
-type Lane = 'all' | EmailMessage['status'];
+type Lane = 'inbox' | 'all' | EmailMessage['status'];
 
 const LANES: { key: Lane; label: string; icon: typeof Inbox }[] = [
+  { key: 'inbox', label: 'Inbox', icon: Inbox },
   { key: 'all', label: 'All mail', icon: Mail },
   { key: 'sent', label: 'Sent', icon: Send },
-  { key: 'queued', label: 'Queued', icon: Inbox },
+  { key: 'queued', label: 'Queued', icon: Clock },
   { key: 'failed', label: 'Failed', icon: XCircle },
 ];
+
+/**
+ * Templates that notify the owner herself, as opposed to going out to a
+ * customer or the mailing list — the closest thing this outbox log has to a
+ * real "Inbox". Not in `templateCatalog.ts`'s `TEMPLATE_CATALOG`: two of
+ * these (`contact_message_received`, `secret_login_under_attack`) have no
+ * matching `email_templates` row, and that catalog assumes every entry does
+ * (TemplatesPage links straight to an editor keyed on that assumption).
+ */
+const OWNER_FACING_TEMPLATES = new Set([
+  'owner_approval_needed',
+  'owner_cancelled',
+  'owner_booking_moved',
+  'owner_new_booking',
+  'owner_new_request',
+  'contact_message_received',
+  'secret_login_under_attack',
+]);
 
 /**
  * The real outbox (`docs/design/email.png`, restyled to what this system
@@ -58,7 +78,7 @@ export function EmailPage(): JSX.Element {
   const { showToast } = useToast();
   const [messages, setMessages] = useState<EmailMessage[] | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [lane, setLane] = useState<Lane>('all');
+  const [lane, setLane] = useState<Lane>('inbox');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [preview, setPreview] = useState<EmailPreview | null>(null);
@@ -82,6 +102,7 @@ export function EmailPage(): JSX.Element {
 
   const counts = useMemo(() => {
     const c: Record<Lane, number> = {
+      inbox: 0,
       all: 0,
       queued: 0,
       sending: 0,
@@ -93,6 +114,7 @@ export function EmailPage(): JSX.Element {
     for (const m of messages ?? []) {
       c.all += 1;
       c[m.status] += 1;
+      if (OWNER_FACING_TEMPLATES.has(m.template)) c.inbox += 1;
     }
     return c;
   }, [messages]);
@@ -100,7 +122,11 @@ export function EmailPage(): JSX.Element {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (messages ?? []).filter((m) => {
-      if (lane !== 'all' && m.status !== lane) return false;
+      if (lane === 'inbox') {
+        if (!OWNER_FACING_TEMPLATES.has(m.template)) return false;
+      } else if (lane !== 'all' && m.status !== lane) {
+        return false;
+      }
       if (!q) return true;
       return (
         m.subject.toLowerCase().includes(q) ||

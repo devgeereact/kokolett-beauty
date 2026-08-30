@@ -87,6 +87,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Template version history | Toggle opt-in/off only | 🟡 | No revision/diff/revert table or UI | Editing overwrites in place, no rollback to a prior version | P2 |
 | Suppressed / bounced lane | No async bounce/complaint ingestion (raw SMTP only) | 🟡 | `provider_id` column exists but unpopulated | No bounce-webhook feed since this is cPanel SMTP, not an API ESP | P2 |
 | Email diagnostics (SPF/DKIM/DMARC/SMTP status screen) | — | 🔴 | No such screen in-app (the actual DNS records are healthy per `~/.claude/CLAUDE.md`'s ops notes, just not surfaced in-app) | Owner can't self-diagnose a delivery problem from the dashboard | P3 |
+| AI-drafted broadcast messaging | Rough idea → AI draft (`draft-copy` Edge Function) → owner-reviewed subject/body → send to confirmed, not-unsubscribed mailing-list subscribers only, queued through the existing outbox. Unsubscribe link on every broadcast email (new, previously nonexistent anywhere in the app). Same drafting reused on the one-off Compose modal and the customer-profile reply panel (deterministic templating there is now gone — `emailDrafts.ts` deleted). | ✅ | `supabase/migrations/0058_broadcast_messaging.sql`, `supabase/functions/draft-copy/index.ts`, `src/pages/dashboard/BroadcastsPage.tsx`, `src/pages/UnsubscribePage.tsx` — spec: `docs/superpowers/specs/2026-08-30-ai-broadcast-messaging-design.md` | — | — | — |
 
 ### Security / Privacy
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |

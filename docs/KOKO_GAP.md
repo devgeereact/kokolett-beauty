@@ -139,7 +139,7 @@ See §4 below for the specific file-level fixes.
 
 These are judgment calls, not factual corrections, so they weren't auto-applied:
 
-1. **`ai_recommendations` table** — created by `0002`, RLS-policied, even seeded in the RLS test suite, but confirmed unused by any frontend/service code (`src/lib/insights.ts` + `ai-assistant-chat` are the real assistant; neither touches this table). Both `docs/SCHEMA.md` and this repo's other docs already correctly mark it dead. Dropping it requires a migration — **not authorised by this document**. Flagged as a P2/P3 code-change candidate only.
+1. **`ai_recommendations` table** — ~~created by `0002`, RLS-policied, even seeded in the RLS test suite, but confirmed unused by any frontend/service code~~ **dropped 2026-08-30 (`0057`), owner-approved.** Confirmed unused by any frontend/service code (`src/lib/insights.ts` + `ai-assistant-chat` are the real assistant; neither ever touched this table). Explicitly does not affect the AI chat's ability to draft messages — that capability (`ai-assistant-chat`, one-off per-customer emails via `propose_email`, always rendered in an editable field for the owner to approve — `docs/RULES.md` §9.6) is untouched, and there is no bulk newsletter/ad-to-all-customers feature in the codebase to affect either way (checked: no "bulk send" path exists anywhere — `sendCustomEmailAsOwner` is explicitly one-off).
 
 2. **CLAUDE.md / AGENTS.md overlap.** Not duplicates — different registers (CLAUDE.md = Claude Code session context + live coordinates + commands; AGENTS.md = generic cross-tool numbered directives). But three facts are restated in both with drifting detail:
    - Scope discipline ("women's hair only") — AGENTS.md's version is fuller (explains the `HairSalon` reasoning). No real disagreement, just verbosity difference — no action needed.
@@ -173,7 +173,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [ ] Payment correction linkage (mark one row as correcting another).
 - [ ] Customer-facing self-service communication preferences.
 - [ ] Email suppressed/bounced lane (needs bounce-webhook ingestion, currently SMTP-only).
-- [ ] `ai_recommendations` drop migration — **decision needed first, not authorised by this document.**
+- [x] `ai_recommendations` drop migration — done: `supabase/migrations/0057_drop_ai_recommendations.sql`, owner-approved 2026-08-30. See §4 item 1 for confirmation this doesn't touch AI message-drafting.
 - [ ] Broaden unit-test coverage to service files and pages currently untested.
 
 **P3**
@@ -188,4 +188,4 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 
 ## 6. Scope boundary
 
-This document, and the mechanical doc corrections applied in §4, do **not** authorise building anything listed 🔴/🟡 above. Each checklist item in §5 needs its own separate plan and explicit approval before any code or migration is written. The `ai_recommendations` drop is a schema migration and is likewise not authorised here.
+This document, and the mechanical doc corrections applied in §4, do **not** authorise building anything listed 🔴/🟡 above. Each checklist item in §5 needs its own separate plan and explicit approval before any code or migration is written.

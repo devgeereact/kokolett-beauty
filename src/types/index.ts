@@ -52,7 +52,6 @@ export interface ToastItem extends ToastOptions {
 export type AppointmentStatus = Enums['appointment_status'];
 export type AvailabilityRequestStatus = Enums['availability_request_status'];
 export type EmailStatus = Enums['email_status'];
-export type RecommendationStatus = Enums['recommendation_status'];
 export type Flexibility = 'any' | 'morning' | 'afternoon' | 'evening';
 
 /** The statuses that occupy the calendar — mirrors `appointments_no_overlap`. */
@@ -104,7 +103,6 @@ export type BookingSettingsUpdate = Tables['booking_settings']['Update'];
 
 export type AvailabilityRequest = Tables['availability_requests']['Row'];
 export type EmailMessage = Tables['email_messages']['Row'];
-export type AiRecommendation = Tables['ai_recommendations']['Row'];
 export type AuditEvent = Tables['audit_events']['Row'];
 
 /** Shape returned by `public.owner_dashboard_summary()`. */

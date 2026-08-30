@@ -14,56 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      ai_recommendations: {
-        Row: {
-          acted_at: string | null
-          acted_by: string | null
-          confidence: number | null
-          created_at: string
-          id: string
-          kind: string
-          payload: Json
-          rationale: string | null
-          status: Database["public"]["Enums"]["recommendation_status"]
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          acted_at?: string | null
-          acted_by?: string | null
-          confidence?: number | null
-          created_at?: string
-          id?: string
-          kind: string
-          payload?: Json
-          rationale?: string | null
-          status?: Database["public"]["Enums"]["recommendation_status"]
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          acted_at?: string | null
-          acted_by?: string | null
-          confidence?: number | null
-          created_at?: string
-          id?: string
-          kind?: string
-          payload?: Json
-          rationale?: string | null
-          status?: Database["public"]["Enums"]["recommendation_status"]
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_recommendations_acted_by_fkey"
-            columns: ["acted_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       app_settings: {
         Row: {
           created_at: string
@@ -1592,7 +1542,6 @@ export type Database = {
         | "failed"
         | "bounced"
       exception_kind: "closure" | "extra_hours" | "break"
-      recommendation_status: "pending" | "accepted" | "dismissed" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1748,7 +1697,6 @@ export const Constants = {
         "bounced",
       ],
       exception_kind: ["closure", "extra_hours", "break"],
-      recommendation_status: ["pending", "accepted", "dismissed", "expired"],
     },
   },
 } as const

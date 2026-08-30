@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(53);
+select plan(51);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -112,9 +112,6 @@ insert into public.subscribers (email) values ('subscriber@rls.test');
 insert into public.availability_requests (full_name, email)
 values ('Requester Under Test', 'requester@rls.test');
 
-insert into public.ai_recommendations (kind, title)
-values ('test', 'Recommendation under test');
-
 insert into public.google_reviews (id, author_name, rating)
 values ('review-under-test', 'Reviewer Under Test', 5);
 
@@ -178,7 +175,7 @@ begin
   loop
     foreach t in array array[
       'appointments','customers','email_messages','customer_access_tokens','staff',
-      'payments','subscribers','ai_recommendations','calendar_feeds','email_templates',
+      'payments','subscribers','calendar_feeds','email_templates',
       'google_place_snapshot','day_decided','profiles','app_settings',
       'availability_requests','services','service_categories','service_menu',
       'booking_settings','availability_slots','weekly_template','google_reviews',
@@ -255,8 +252,6 @@ select is((select visible from rls_probe where tbl='payments' and as_role='anon'
           0::bigint, 'anon cannot read payments');
 select is((select visible from rls_probe where tbl='subscribers' and as_role='anon'),
           0::bigint, 'anon cannot read subscribers');
-select is((select visible from rls_probe where tbl='ai_recommendations' and as_role='anon'),
-          0::bigint, 'anon cannot read ai_recommendations');
 select is((select visible from rls_probe where tbl='calendar_feeds' and as_role='anon'),
           0::bigint, 'anon cannot read calendar_feeds');
 select is((select visible from rls_probe where tbl='profiles' and as_role='anon'),
@@ -298,8 +293,6 @@ select is((select visible from rls_probe where tbl='staff' and as_role='authenti
           0::bigint, 'a signed-in non-owner cannot read staff');
 select is((select visible from rls_probe where tbl='calendar_feeds' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read calendar_feeds');
-select is((select visible from rls_probe where tbl='ai_recommendations' and as_role='authenticated'),
-          0::bigint, 'a signed-in non-owner cannot read ai_recommendations');
 select is((select visible from rls_probe where tbl='availability_requests' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read availability_requests');
 select is((select visible from rls_probe where tbl='audit_events' and as_role='authenticated'),

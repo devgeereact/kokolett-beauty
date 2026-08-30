@@ -157,8 +157,9 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
 - AI output is advisory. Two separate things wear the word "assistant" — the
   deterministic client-side insights module (`src/lib/insights.ts`) and the LLM chat
   (`supabase/functions/ai-assistant-chat`). Neither writes business data; see
-  `docs/ARCHITECTURE.md` §6b. The `ai_recommendations` table exists in the schema and
-  the generated types but nothing reads or writes it — do not build against it.
+  `docs/ARCHITECTURE.md` §6b. (The unused `ai_recommendations` table this note used
+  to warn against was dropped, `0057`, 2026-08-30 — nothing to avoid building
+  against any more.)
 - No AI code path may write to `appointments`, `customers`, or `availability_*`. The
   chat can _propose_ a booking or a one-off email; the write happens client-side under
   the owner's own session only when she clicks Confirm.

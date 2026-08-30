@@ -257,9 +257,11 @@ OpenRouter (`openai/gpt-5-nano`) with tool calling, invoked from
 and the anon key, so every read it makes is governed by that caller's RLS: a non-owner
 gets a working chat that can read nothing.
 
-The `ai_recommendations` table and a `pending`-status recommendation queue exist in
-the generated types but nothing reads or writes them — an earlier design called for a
-queue; the shipped mechanism does not use one.
+An earlier design called for a `pending`-status recommendation queue
+(`ai_recommendations`); the shipped mechanism never used one, and the table was
+dropped (`0057`, 2026-08-30) after confirming nothing read or wrote it. This is a
+functional description, not a governance change — the chat's own boundaries below
+were never affected by it either way.
 
 The safety property is unchanged: the assistant has **no write access to
 `appointments`, `customers`, or `availability_*`**, and acting on anything it

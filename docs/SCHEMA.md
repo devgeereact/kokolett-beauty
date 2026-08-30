@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0056`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0057`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -35,14 +35,16 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0054_daily_close.sql`                               | Added `close_day()` and a new `day.closed` value in `audit_events.action`'s check constraint — no new table. Superseded by `0055`; left as originally applied rather than edited in place (same precedent as `0024`/`0025`→`0026`). |
 | `0055_daily_close_split_preview.sql`                 | Split `close_day()` into a read-only `daily_close_summary()` (the live preview) plus `close_day()` calling it and logging the result — calling the logging function just to preview would have spuriously written a `day.closed` row on every page visit. |
 | `0056_customer_data_export.sql`                     | Added `export_customer_data()` and a new `customer.data_exported` value in `audit_events.action`'s check constraint — no new table. The GDPR subject-access counterpart to `erase_customer_as_owner` (`0042`): same tables, read instead of deleted. |
+| `0057_drop_ai_recommendations.sql`                  | Dropped `ai_recommendations` and `recommendation_status` — confirmed dead across every audit this session, owner-approved for removal 2026-08-30. Does not affect the AI chat's ability to draft messages (`ai-assistant-chat`), which never used this table. |
 
 ### Every table, and where it is documented
 
-**Twenty-four tables are live.** Twenty-six were created; `0011` dropped
-`availability_rules` and `availability_exceptions`, and the two §3 sections still
-carrying their names are marked as history rather than schema. Of the twenty-four, §3
-details the ten surviving from `0001`/`0002`; the fourteen added later are summarised
-here, with the migration that created them as the authoritative source.
+**Twenty-three tables are live.** Twenty-six were created; `0011` dropped
+`availability_rules` and `availability_exceptions`, and `0057` dropped
+`ai_recommendations` — all three §3 sections still carrying their names are marked
+as history rather than schema. Of the twenty-three, §3 details the nine surviving
+from `0001`/`0002`; the fourteen added later are summarised here, with the
+migration that created them as the authoritative source.
 
 | Table                   | Created by | What it holds                                                                                                                    |
 | ----------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,10 +68,10 @@ Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
 `business_category`, `country` (`0033`); `availability_requests` gained `owner_note`
 (`0030`); `email_messages` gained `payload jsonb` (`0005`).
 
-**`ai_recommendations` exists but is dead.** Created by `0002`, present in
-`src/types/database.types.ts`, read and written by nothing. The shipped assistant is
-`src/lib/insights.ts` (client-side) plus the `ai-assistant-chat` Edge Function; neither
-uses a queue. Do not build against it — see `docs/ARCHITECTURE.md` §6b.
+**`ai_recommendations` was dropped (`0057`, 2026-08-30).** Created by `0002`, never
+read or written by anything — the shipped assistant is `src/lib/insights.ts`
+(client-side) plus the `ai-assistant-chat` Edge Function; neither ever used a queue.
+See `docs/ARCHITECTURE.md` §6b.
 
 **§8 onwards is a migration-by-migration narrative that stops at `0027`.** For
 `0028`–`0046` the table above and `supabase/migrations/` are the record; the summary
@@ -123,7 +125,6 @@ availability_slots       (the availability model: one row = one bookable start)
 weekly_template          (the repeating week, a generator for the above)
 day_decided              (dates already ruled on, so the generator skips them)
 booking_settings         (single row)
-ai_recommendations       (dead — see the note above §1)
 ```
 
 ## 3. Tables
@@ -267,14 +268,14 @@ Delivery log and retry queue: `template`, `to_email`, `subject`, optional
 `bounced`), `attempts`, `last_error`, `provider_id`, `scheduled_for`, `sent_at`.
 Indexed on `(status, scheduled_for)` so the scheduled `drain_email_queue()` job (pg_cron + pg_net) can claim due rows cheaply.
 
-### `ai_recommendations` — **dead table, do not build against it**
+### `ai_recommendations` — **dropped, `0057` (2026-08-30)**
 
-Advisory queue as designed: `kind`, `title`, `rationale`, `payload jsonb`,
+Was an advisory queue as designed: `kind`, `title`, `rationale`, `payload jsonb`,
 `confidence` (0–1), `status` (`pending`/`accepted`/`dismissed`/`expired`), `acted_at`,
-`acted_by`. **Nothing in the shipped app reads or writes it.** The assistant that
+`acted_by`. Never read or written by anything the app shipped — the assistant that
 exists is `src/lib/insights.ts` computed client-side, plus the `ai-assistant-chat`
-Edge Function whose proposals are confirmed by the owner in the browser. Left in place
-because dropping a table costs a migration for no gain; see `docs/ARCHITECTURE.md` §6b.
+Edge Function whose proposals are confirmed by the owner in the browser. Confirmed
+dead across every audit before dropping; see `docs/ARCHITECTURE.md` §6b.
 
 ## 4. Functions
 
@@ -318,7 +319,7 @@ function is the boundary that actually matters.
 | `appointments`                                                            | none (RPC only)         | own rows, server-resolved | ALL   |
 | `customers`                                                               | none                    | own row, server-resolved  | ALL   |
 | `availability_requests`                                                   | INSERT (`status='new'`) | —                         | ALL   |
-| `customer_access_tokens`, `email_messages`, `ai_recommendations`, `staff` | none                    | —                         | ALL   |
+| `customer_access_tokens`, `email_messages`, `staff`                      | none                    | —                         | ALL   |
 | `audit_events`                                                            | none                    | —                         | SELECT only (no write policy for any role, including the owner) |
 
 ## 6. Seeding

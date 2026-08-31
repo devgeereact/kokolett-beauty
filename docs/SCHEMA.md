@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0069`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0070`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -46,6 +46,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0065_copy_dashes_and_owner_name.sql`               | Data-only. Removes four em dashes from the customer-facing `email_templates` bodies seeded by `0032`, and corrects the owner's name from "Koko"/"Koko Lett" to Christy in the confirmation sign-off and the password-reset greeting. |
 | `0066_retire_locs.sql`                              | Data-only. Deactivates the five loc styles seeded by `0018` and renames the `service_menu` group from "Twists and locs" to "Twists". The salon does not do locs. |
 | `0067_review_link_in_template_overlay.sql`          | Data-only. Appends a `{{google_review_url}}` link to the `review_request` and `appointment_completed` overlay bodies, which `0032` seeded without one. Conditional, so an owner-rewritten template is untouched. |
+| `0070_rls_initplan.sql` | Wraps `auth.uid()` in a scalar subquery in the four `profiles`/`app_settings` policies, so it is evaluated once per query rather than once per row. Semantically identical. |
 | `0069_trigger_functions_are_not_callable.sql` | Revokes EXECUTE on all eight trigger functions from `anon` and `authenticated`. `log_email_template_revision` was the only one with a client grant; `0061` had revoked it from `PUBLIC`, which does not touch their explicit grants. Also documents why `secret_login_attempts` has RLS with no policies. |
 | `0068_locs_safety_net.sql`                          | Data-only. Deactivates any `service_menu` row whose name matches the word "loc", and renames any such group to "Twists". `0066` matched five exact strings inside one group name, all owner-editable; this matches on the word instead. A no-op today. |
 
@@ -977,3 +978,29 @@ function outside a trigger context, so it was not directly exploitable, but it
 was the odd one out and the protection was Postgres refusing rather than
 anything this schema decided. `rls_test.sql` now asserts that no trigger
 function is executable by `anon` or `authenticated`.
+
+## 28. Performance advisor findings, and what is deliberately not being done
+
+66 performance lints as of 2026-08-31, none above WARN. Only one was acted on.
+The reasoning matters more than the list, because most of this advice is correct
+in general and wrong for a database this size.
+
+**Acted on: `auth_rls_initplan` (4).** `profiles` and `app_settings` had policies
+calling `auth.uid()` bare, which Postgres re-evaluates per row. `0070` wraps each
+in `(select auth.uid())` so it becomes an InitPlan. Both tables hold **one row**,
+for the single owner, so the measurable win today is nothing. It was done because
+it is mechanical, semantically identical and free, and because four standing
+warnings train people to skim the advisor rather than read it.
+
+**Not acted on, and these are decisions rather than an unread backlog:**
+
+| Lint | Count | Why not |
+| --- | --- | --- |
+| `multiple_permissive_policies` | 48 | Postgres evaluates every permissive policy on a table and ORs them, so consolidating would save real work on a large table. These are 8 tables in a single-salon database: `services`, `service_menu`, `booking_settings`, `weekly_template` and so on, none of which will ever hold more than a few hundred rows. Merging them means rewriting the policies that *are* the security model, at a real risk of widening one by accident, to save microseconds nobody can measure. The trade is bad. |
+| `unindexed_foreign_keys` | 11 | An index costs write time and storage on every insert. On tables this size the planner will sequential-scan regardless, because that is genuinely faster. Revisit if `appointments` or `email_messages` ever passes tens of thousands of rows, or if customer erasure becomes slow enough to notice. |
+| `unused_index` | 3 | `service_menu_order_idx`, `customers_mobile_idx`, `product_events_name_created_at_idx`. Unused so far, but "so far" is a few months on a young table, and each backs a query shape the app really does issue (menu ordering, customer lookup by mobile, funnel aggregation). Dropping them to satisfy a counter, then re-adding the first time a table grows, is churn. |
+
+The general point: this app serves one salon. Advisor output is written for
+databases at a scale this one is not at and may never reach. Acting on all of it
+would mean touching the security model for no gain. Re-read this section before
+re-triaging, rather than starting from the raw list again.

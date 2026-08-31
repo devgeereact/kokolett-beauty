@@ -10,9 +10,10 @@ Live at **https://www.kokolettbeauty.com**
 
 ### What it does
 
-- **Marketing site** — one page carrying the service menu, next available times,
-  Google reviews and how booking works, plus the three policy pages. There is
-  deliberately no separate About, Gallery, Testimonials, FAQs or Contact page.
+- **Marketing site** — a real multi-page site: Home, About, Gallery, Services,
+  Testimonials, FAQs and Contact, plus the three policy pages. The single-page
+  simplification this line used to describe was reversed in the 2026-08-25 rebrand
+  (`docs/PRD.md` §7, `docs/ARCHITECTURE.md` §3).
 - **Availability-first booking** — customers only ever see slots that are genuinely
   open, generated from the owner's hours, breaks, closures, buffers and booking rules.
 - **Availability is the gate** — anything inside the owner's published hours books
@@ -22,10 +23,13 @@ Live at **https://www.kokolettbeauty.com**
   request instead of hitting an empty calendar.
 - **Passwordless customers** — identity is an email address. Access to appointment
   history is via a single-use magic link. Nobody ever creates an account.
-- **Owner dashboard** — today's schedule, calendar with drag-to-reschedule, approvals
-  queue, availability requests, customers, services, availability rules, reports.
-- **Advisory AI assistant** — matches cancellations to waiting customers, flags
-  under-used days, drafts replies. Recommends only; the owner decides.
+- **Owner dashboard** — today's schedule, calendar with drag-to-reschedule, a combined
+  Inbox (approvals and availability requests as tabs), customers, services,
+  availability rules, reports, daily close, broadcasts, audit trail and system health.
+- **Advisory AI** — three separate surfaces, and they are not the same thing: a
+  deterministic insights module computed in the browser, an LLM chat assistant that can
+  propose but never execute a write, and a drafting-only "polish with AI" helper.
+  See `docs/ARCHITECTURE.md` §6b.
 - **Automated email** — branded confirmations with `.ics` invites, reminders,
   completion, and Google review requests, all logged and retried.
 - **Installable PWA** — the owner's dashboard stays readable offline.
@@ -41,7 +45,7 @@ Live at **https://www.kokolettbeauty.com**
 | Styling          | Tailwind CSS 4 (web only)       | Utility-first, closed token set                |
 | PWA              | `vite-plugin-pwa` (Workbox)     | Precached app shell + runtime caching          |
 | Auth + DB        | Supabase (PostgreSQL + RLS)     | Managed Postgres, row-level security           |
-| Server logic     | Supabase Edge Functions (Deno)  | Seven functions: email, reviews, AI, access    |
+| Server logic     | Supabase Edge Functions (Deno)  | Eleven functions: email, reviews, AI, access   |
 | Scheduling       | `pg_cron` + `pg_net`            | Drains the email outbox, refreshes reviews     |
 | Media            | ImageKit                        | Transformed URLs for service images            |
 | Monitoring       | Sentry                          | Error tracking, magic-link tokens redacted     |
@@ -76,7 +80,7 @@ Run the migrations **in order**, in the Supabase SQL editor or via
 ```
 supabase/migrations/0001_init.sql    # profiles, app_settings, auth triggers
 supabase/migrations/0002_salon.sql   # the salon domain schema
-...                                  # through 0046, applied in filename order
+...                                  # through 0067, applied in filename order
 ```
 
 `0002` requires the `btree_gist` extension (it creates it) for the exclusion
@@ -153,6 +157,9 @@ The server has **no Node** — build locally, ship only the artifacts.
 | `npm run test:watch`   | Vitest in watch mode                              |
 | `npm run test:coverage`| Vitest with V8 coverage                           |
 | `npm run test:hooks`   | Verifies the tracked hookify safety rules         |
+| `npm run lint:copy`    | No em or en dashes in copy (CI gate — fails the build) |
+| `npm run test:e2e`     | Playwright, against a real Supabase project      |
+| `npm run test:e2e:ui`  | Playwright in UI mode                            |
 
 ---
 
@@ -166,9 +173,8 @@ kokolett-beauty/
 ├── index.html            # app entry + font preconnect
 ├── vite.config.ts        # build + PWA/Workbox config
 ├── tailwind.config.ts    # design tokens (see docs/DESIGN.md)
-├── docs/                 # PRD, DESIGN, ARCHITECTURE, SCHEMA, RULES, HOOKS
-│   ├── planning/         # live/proposed engineering specs
-│   └── history/          # point-in-time audits & decisions (archival)
+├── docs/                 # PRD, DESIGN, ARCHITECTURE, SCHEMA, RULES, HOOKS,
+│                         # SOCIAL_PROFILE, DEPLOYMENT, GO-LIVE, KOKO_GAP, plan
 ├── public/               # manifest icons, offline.html, robots.txt
 ├── supabase/migrations/  # SQL schema + RLS policies
 └── src/
@@ -198,6 +204,8 @@ Full details live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - [`docs/plan.md`](docs/plan.md) — the living punch list of what's actually open
 - [`docs/GO-LIVE.md`](docs/GO-LIVE.md) — undated procedure for standing up a fresh environment: what has to be keyed in by hand and how to verify it landed
 - [`docs/SOCIAL_PROFILE.md`](docs/SOCIAL_PROFILE.md) — the master identity, the Google Business Profile and Instagram setup field by field, and the SEO review
+- [`docs/KOKO_GAP.md`](docs/KOKO_GAP.md) — the verified gap analysis and the live P1/P2/P3 backlog
+- [`docs/GPT.md`](docs/GPT.md) — the original multi-tenant transformation brief, kept as an input artifact and not as a plan
 
 ## License
 MIT — do whatever you want, no warranty.

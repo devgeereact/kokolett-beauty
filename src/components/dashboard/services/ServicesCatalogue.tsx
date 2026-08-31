@@ -31,6 +31,7 @@ import { errorMessage } from '@/lib/errors';
 import type { Tone } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import type { ServiceMenuItem } from '@/types';
+import { SERVICE_GROUPS } from '@/lib/business';
 
 type Lane = 'all' | 'active' | 'archived';
 
@@ -42,14 +43,6 @@ const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30];
 // per-category colour coding) instead of every card wearing the same tint.
 // Falls back to a stable hash for a category the owner types fresh, so a
 // 7th one never crashes or all lands on one colour.
-const CATEGORY_TONES: Record<string, Tone> = {
-  Braids: 'primary',
-  Twists: 'pending',
-  'Weaves, wigs and extensions': 'in_service',
-  'Natural hair and styling': 'confirmed',
-  Colour: 'urgent',
-  Treatments: 'completed',
-};
 const TONE_ROTATION: Tone[] = [
   'primary',
   'pending',
@@ -58,6 +51,14 @@ const TONE_ROTATION: Tone[] = [
   'urgent',
   'completed',
 ];
+
+/* Derived from SERVICE_GROUPS rather than re-listing the six names here. The
+   group names used to be written out twice, and when `0066` renamed "Twists and
+   locs" to "Twists" only one copy was a compile error; the other degraded
+   silently to a hashed colour. */
+const CATEGORY_TONES: Record<string, Tone> = Object.fromEntries(
+  SERVICE_GROUPS.map((group, i) => [group, TONE_ROTATION[i % TONE_ROTATION.length]!]),
+);
 
 function toneForCategory(name: string): Tone {
   const known = CATEGORY_TONES[name];

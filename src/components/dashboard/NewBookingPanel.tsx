@@ -194,7 +194,7 @@ export function NewBookingPanel({
               autoComplete="off"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Koko Beauty"
+              placeholder="Sarah Bennett"
             />
           )}
         </Field>

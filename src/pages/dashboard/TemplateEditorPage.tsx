@@ -33,6 +33,7 @@ import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { EmailTemplateRow } from '@/types';
+import { OWNER_NAME, SITE_ORIGIN } from '@/lib/business';
 
 const CATEGORIES = [
   'Booking',
@@ -57,7 +58,7 @@ const SAMPLE_VALUES: Record<string, string> = {
   previous_appointment_time: '14:00',
   service_name: 'Balayage',
   location: 'Kokolett Beauty UK',
-  staff_name: 'Koko Lett',
+  staff_name: OWNER_NAME,
   reference: 'KB-Y6ZXKH',
   approval_window_h: '12',
   reason: 'The stylist is no longer available at that time',
@@ -66,8 +67,8 @@ const SAMPLE_VALUES: Record<string, string> = {
   preferred_dates: 'Sat 24 May, Sun 25 May',
   flexibility: 'Any time that week',
   google_review_url: 'https://g.page/r/example/review',
-  manage_url: 'https://www.kokolettbeauty.com/access/8f3a1c9e4b2d',
-  reset_url: 'https://www.kokolettbeauty.com/reset-password',
+  manage_url: `${SITE_ORIGIN}/access/8f3a1c9e4b2d`,
+  reset_url: `${SITE_ORIGIN}/reset-password`,
   reset_ttl_minutes: '60',
 };
 

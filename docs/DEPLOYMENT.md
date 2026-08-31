@@ -99,6 +99,47 @@ recomputes the hash and fails when the two disagree, so this can only happen by
 deploying the two halves separately. If it does, rename the header to
 `Content-Security-Policy-Report-Only` to unbreak it immediately, then fix the hash.
 
+**`cpanel-deploy` excludes `.htaccess` unless you pass `--with-htaccess`.** The
+script's exclude list protects the server's hand-maintained file from being
+mirror-deleted, which is right for most sites but means a normal deploy silently
+ships none of your `.htaccess` changes. This bit on 2026-08-31: the apex-to-www 301
+was committed, built, deployed and appeared to succeed, and the apex still answered
+200. The command that actually ships it is:
+
+```bash
+cpanel-deploy dist kokolettbeauty.com --keep cgi-bin --keep .well-known \
+  --with-htaccess .htaccess --go
+```
+
+**Before passing `--with-htaccess`, diff the live file against the repo's.** The
+server's copy can carry blocks the repo does not, and overwriting them is silent.
+Exactly that had already happened here: the Cloudflare origin-lock block that every
+other domain on the account has carried since 2026-08-24 was absent from this
+docroot, and direct-to-origin was answering **200** with the real site, bypassing
+the WAF. It is now committed to the repo's `.htaccess`, which is what stops a future
+deploy dropping it again.
+
+```bash
+ssh cpanel 'cat ~/kokolettbeauty.com/.htaccess' > /tmp/live.htaccess
+diff /tmp/live.htaccess .htaccess          # expect only your own change
+ssh cpanel 'cp ~/kokolettbeauty.com/.htaccess ~/private_backups/configs/htaccess-kokolettbeauty-$(date +%Y%m%d-%H%M%S).bak'
+```
+
+**Verify the origin lock after any `.htaccess` deploy.** Through Cloudflare must stay
+200; straight to the origin IP must be 403; `/.well-known/` must stay reachable at the
+origin or certificate validation breaks:
+
+```bash
+curl -s  https://www.kokolettbeauty.com/ -o /dev/null -w '%{http_code}\n'                              # 200
+curl -sk --resolve www.kokolettbeauty.com:443:185.61.152.45 https://www.kokolettbeauty.com/ \
+     -o /dev/null -w '%{http_code}\n'                                                                  # 403
+curl -sk --resolve www.kokolettbeauty.com:443:185.61.152.45 \
+     https://www.kokolettbeauty.com/.well-known/pki-validation/ -o /dev/null -w '%{http_code}\n'        # 200
+```
+
+Testing the lock from the server itself does not work: a loopback request gets
+cPanel's default page before `.htaccess` runs and reads 200 even on a locked site.
+
 **If the dev server (`npm run dev`) renders with no brand colour — plain
 black/white, `bg-primary`/`bg-background` etc. present in the DOM but computed
 to transparent — this is a stale Vite/PostCSS cache on a long-running dev

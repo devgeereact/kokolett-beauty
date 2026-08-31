@@ -26,7 +26,7 @@ Every field below must read identically on the website, on Google, on Instagram 
 | Booking page | https://www.kokolettbeauty.com/book |
 | Instagram | https://www.instagram.com/kokolettbeautyuk/ |
 | Experience | Over 15 years |
-| Areas served | Thamesmead, Abbey Wood, Plumstead, Woolwich, Charlton, Greenwich, Eltham |
+| Areas served | Thamesmead, Abbey Wood, Belvedere, Plumstead, Erith, Woolwich, Charlton, Greenwich, Eltham |
 | Positioning line | Women's hair salon in Thamesmead, South East London |
 | Service groups | Braids · Twists · Weaves, wigs and extensions · Natural hair and styling · Colour · Treatments |
 | Not offered | Locs. Retired 2026-08-31, see §1.3. Also no nails, brows, lashes, aesthetics, barbering, or men's hair. |
@@ -40,7 +40,9 @@ The codebase has produced four spellings of the business name: `Kokolett Beauty 
 
 ### 1.2 Thamesmead, not Woolwich
 
-SE28 8RX is Thamesmead, in the Royal Borough of Greenwich. Woolwich is SE18, roughly two miles away.
+SE28 8RX is Thamesmead, in the **London Borough of Bexley**, ward Thamesmead East. Woolwich is SE18, roughly two miles west, in the Royal Borough of Greenwich.
+
+Thamesmead straddles both boroughs, which is why this is easy to get wrong. An earlier draft of this file said Greenwich; the postcode's own record (Office for National Statistics, via `api.postcodes.io`) says Bexley. Corrected 2026-08-31.
 
 The site previously described itself as a Woolwich salon while the verified Google profile carried an SE28 address. That is the site disagreeing with Google's own record of the same business, and Google ranks local results partly on distance from the searcher regardless of what a page claims about itself.
 
@@ -163,7 +165,7 @@ Services cover braids, twists, weaves, cutting, colouring, styling and hair trea
 
 Booking is online. Times shown in the diary are genuinely free and confirm straight away. If nothing suits, send a request and Christy will come back to you.
 
-Clients travel from Abbey Wood, Plumstead, Woolwich, Charlton and Greenwich.
+Clients travel from Abbey Wood, Belvedere, Plumstead, Erith and Woolwich.
 ```
 
 ### 3.4 Contact
@@ -199,12 +201,18 @@ Service areas, in this order:
 ```
 Thamesmead
 Abbey Wood
+Belvedere
 Plumstead
+Erith
 Woolwich
 Charlton
 Greenwich
 Eltham
 ```
+
+Belvedere and Erith were added on 2026-08-31. The salon sits on the Bexley side of
+Thamesmead, so both are nearer than Charlton, Greenwich and Eltham, which were on the
+list from the start. Reverse this if Christy does not actually see clients from them.
 
 Do not add all of London. An oversized service area weakens the local signal instead of widening reach.
 
@@ -615,7 +623,11 @@ Answers needed from Christy before the relevant fields are filled.
 
 - The accessibility, amenities, payments and crowd attributes in §3.9.
 - The six group descriptions in §3.8, written from the 44 style names live in the console, which she should correct where they misdescribe what she actually does.
-- The salon's latitude and longitude, taken from the pin on the Google profile. The structured data omits `geo` until then rather than carrying a guessed coordinate.
+- Whether the `geo` coordinate should be the exact shop pin rather than the postcode
+  centroid. The structured data now carries **51.512543, 0.126009**, the Office for
+  National Statistics centroid for SE28 8RX read from `api.postcodes.io`. That is real,
+  sourced data rather than a guess, and it is accurate to the postcode. If the pin on
+  the Google profile sits somewhere meaningfully different, use that instead.
 - Which of the two Instagram name fields in §4.2 to use. Only one fits in 30 characters.
 - Whether the street address stays public on Google and on Instagram, or whether the listing becomes a service-area business.
 

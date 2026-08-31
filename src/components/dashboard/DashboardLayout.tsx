@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { QuickActionLauncher } from '@/components/dashboard/QuickActionLauncher';
 import { NotificationBellPopover } from '@/components/dashboard/NotificationBellPopover';
 import { NAV_ICONS } from '@/lib/icons';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 const SIDEBAR_COLLAPSED_KEY = 'kokolett-sidebar-collapsed';
 
@@ -80,6 +81,16 @@ export function DashboardLayout({
   actions?: ReactNode;
   badges?: { approvals?: number; requests?: number; notifications?: number };
 }): JSX.Element {
+  /* Owner pages inherited index.html's marketing title, so every dashboard tab
+     and bookmark read "Kokolett Beauty UK is a women's hair salon in
+     Thamesmead...". `noindex` because robots.txt disallowing /dashboard stops
+     crawling but not a rendered preview, and no `path` because none of these
+     canonicalise anywhere. */
+  useDocumentMeta({
+    title: typeof title === 'string' ? title : 'Dashboard',
+    noindex: true,
+  });
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {

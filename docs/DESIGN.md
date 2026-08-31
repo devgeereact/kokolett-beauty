@@ -196,8 +196,17 @@ The owner dashboard shell has its own ramp so it reads as chrome rather than con
 | Display, marketing headings | Source Serif 4 | 400 / 600, optical sizing 8–60 |
 | Numerals, references, times | JetBrains Mono | 400                            |
 
-Loaded from Google Fonts via `@import` at the top of `src/index.css`, preconnected in
-`index.html`, cached by the service worker (StaleWhileRevalidate).
+Requested from `index.html`, **not** with an `@import` in `src/index.css`, and cached by
+the service worker (StaleWhileRevalidate). An `@import` cannot begin until the
+stylesheet containing it has itself downloaded and parsed, so the fonts sat at the end
+of a serial chain on every cold load. `index.html` carries the `preconnect`, a
+`preload` and the `<link rel="stylesheet">`, which start as soon as the HTML is parsed.
+`src/index.css` opens with a comment saying exactly this; the sentence here described
+the arrangement that replaced it.
+
+The two font origins also appear in **both** `font-src` and `connect-src` in the CSP,
+and both are load-bearing: the service worker runtime-caches Google Fonts, and a
+`fetch()` from a service worker is governed by `connect-src`, not `font-src`.
 
 Scale — line-height is baked into each step in `tailwind.config.ts`, so §4 is enforced rather
 than remembered:
@@ -659,8 +668,22 @@ full app-wide migration is separate, larger work (`docs/KOKO_GAP.md`'s P3 checkl
 ### 15.5 Marketing vs dashboard
 
 Marketing: Source Serif 4 headings, large photography, generous whitespace, `rounded-xl`
-(16px) cards, editorial composition. Dashboard: Inter throughout, dense information,
-`rounded-xl` (16px) cards, `--page-gutter` (24px), compact controls, clear hierarchy.
+(16px) cards, editorial composition.
+
+Dashboard: dense information, `rounded-xl` (16px) cards, `--page-gutter` (24px), compact
+controls, clear hierarchy. **RULE.** Source Serif 4 for headings and for display
+numerals; Inter for body text, labels, tables and every control.
+
+This section said "Dashboard: Inter throughout" until 2026-08-31, and it was never
+true. The page `<h1>` in `DashboardLayout`, all sixteen settings card headings and 55
+of the 62 card headings were already serif. The seven exceptions were all on the Today
+page, and one of them sat directly beside a serif-headed card in the same grid row.
+They were brought into line rather than the other 55 being changed, because the
+majority convention was also the one the page title already used.
+
+Display numerals stay serif too, and deliberately: `GlanceGrid`'s headline figures are
+sized to match the Bookings overview stats beside them, which is a cross-card
+relationship that only holds if both use the same face.
 
 Both share the same colours, borders, spacing scale, interaction states, accessibility
 rules, radius language and motion language — that is how two different experiences come from

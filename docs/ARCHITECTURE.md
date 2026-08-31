@@ -70,7 +70,16 @@ src/
 │   ├── profileService.ts            # owner account profile
 │   ├── reviewService.ts             # Google review sync
 │   ├── subscriberService.ts         # mailing-list subscribe
-│   └── notificationsService.ts      # owner notification feed
+│   ├── notificationsService.ts      # owner notification feed
+│   ├── auditService.ts              # audit_events reads (migration 0052)
+│   ├── broadcastService.ts          # mailing-list broadcasts (0058)
+│   ├── contactService.ts            # public contact form (0049)
+│   ├── dailyCloseService.ts         # end-of-day snapshot (0054/0055)
+│   ├── draftCopyService.ts          # calls the draft-copy Edge Function
+│   ├── ownerLoginService.ts         # secret-slug sign-in
+│   ├── ownerPhotoUploadService.ts   # About-page photo (0050)
+│   └── systemHealthService.ts       # cron + email diagnostics (0053)
+├── test/          # Vitest setup, wired in vite.config.ts
 ├── types/         # shared + generated DB types
 ├── App.tsx        # providers + router
 ├── main.tsx       # bootstrap: Sentry, SW registration, render
@@ -115,24 +124,36 @@ this section used to describe.
 | `/access/:token`           | Exchanges a single-use token for a 30-day session, then redirects |
 | `/my` · `/my/appointments` | Same component (`MyBookingsPage`) for both; no distinct behaviour |
 
-**Owner (Supabase session + `is_owner()`)** — grouped by sidebar nav entry
-(`DashboardLayout.tsx`'s `entries`/`secondaryEntries`):
+**Owner (Supabase session + `is_owner()`)** — grouped by sidebar nav group
+(`DashboardLayout.tsx`'s `navGroups`, each carrying `items`):
 
-| Route                      | Nav                      | Purpose                                                           |
-| -------------------------- | ------------------------ | ----------------------------------------------------------------- |
-| `/dashboard`               | Today                    | Today at a glance                                                 |
-| `/dashboard/inbox`         | Inbox                    | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
-| `/dashboard/calendar`      | Calendar & Capacity      | Day / week / month, drag-to-reschedule                            |
-| `/dashboard/appointment`   | Calendar & Capacity      | The single appointment type's length and price                    |
-| `/dashboard/weekly`        | Calendar & Capacity      | The repeating week that generates calendar days                   |
-| `/dashboard/appointments`  | Bookings                 | Searchable list                                                   |
-| `/dashboard/customers`     | Customers                | CRM                                                               |
-| `/dashboard/services`      | Growth                   | Service-menu content (descriptive, not priced/bookable)           |
-| `/dashboard/settings`      | Settings                 | Salon profile, email, policies                                    |
-| `/dashboard/reports`       | Reports (secondary)      | Revenue and utilisation                                           |
-| `/dashboard/assistant`     | AI Assistant (secondary) | Advisory insights queue                                           |
-| `/dashboard/notifications` | — (header bell)          | Not in sidebar                                                    |
-| `/dashboard/profile`       | — (account link)         | Not in sidebar                                                    |
+| Route                      | Nav group      | Purpose                                                           |
+| -------------------------- | -------------- | ----------------------------------------------------------------- |
+| `/dashboard`               | Workspace      | Today at a glance                                                 |
+| `/dashboard/calendar`      | Workspace      | Day / week / month, drag-to-reschedule                            |
+| `/dashboard/appointments`  | Workspace      | Searchable list                                                   |
+| `/dashboard/daily-close`   | Workspace      | End-of-day snapshot (`0054`/`0055`)                               |
+| `/dashboard/inbox`         | Bookings       | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
+| `/dashboard/customers`     | Customers      | CRM                                                               |
+| `/dashboard/services`      | Salon          | Service-menu content (descriptive, not priced or bookable)        |
+| `/dashboard/weekly`        | Salon          | The repeating week that generates calendar days                   |
+| `/dashboard/appointment`   | Salon          | The single appointment type's length and price                    |
+| `/dashboard/reports`       | Insights       | Revenue and utilisation                                           |
+| `/dashboard/assistant`     | Insights       | The LLM chat assistant (advisory, proposes but never executes)    |
+| `/dashboard/notifications` | Communications | Owner notification feed                                           |
+| `/dashboard/email`         | Communications | Outbox: every message the salon has sent                          |
+| `/dashboard/templates`     | Communications | Template list                                                     |
+| `/dashboard/templates/:key/edit` | Communications | Template editor, with revision history (`0061`)             |
+| `/dashboard/broadcasts`    | Communications | Mailing-list broadcasts (`0058`)                                  |
+| `/dashboard/settings`      | Account        | Salon profile, email, policies                                    |
+| `/dashboard/audit`         | Account        | Audit trail (`0052`)                                              |
+| `/dashboard/system-health` | Account        | `pg_cron` runs, email delivery, review sync (`0053`)              |
+| `/dashboard/profile`       | Account link   | Owner's own account, not a sidebar item                           |
+
+The nav has seven groups and no secondary tier. An earlier version of this table
+published a **Today / Inbox / Calendar & Capacity / Bookings / Growth** structure with
+Reports and AI Assistant demoted to a secondary tier. That nav was never built;
+`docs/plan.md` §"Explicitly not doing" says so, and the code above is what ships.
 
 `/dashboard/approvals` and `/dashboard/requests` render nothing themselves — both are kept
 mounted purely as redirects (`/dashboard/inbox?tab=approvals` / `?tab=requests`) so old
@@ -239,6 +260,8 @@ first column are descriptions, not event topics on a bus.
 | Review cache                      | `sync-google-reviews`, hourly           | Refreshes `google_reviews` / `google_place_snapshot`                                   |
 | Spent tokens                      | `purge-access-tokens`, nightly          | Deletes used and expired `customer_access_tokens`                                      |
 | Retention                         | `purge-expired-personal-data`, weekly   | `0046`'s two-year sweep of `email_messages` and `availability_requests`                |
+| Sign-in attempts                  | `purge-secret-login-attempts`, `0051`   | Prunes the rate-limit table behind the owner's secret sign-in slug                     |
+| Audit retention                   | `purge-audit-events`, `0052`            | Ages out audit rows past their retention window                                        |
 | _(none — see §6b)_                | —                                       | AI insights are computed on page load, not scheduled                                   |
 
 ## 6b. AI boundary
@@ -264,7 +287,7 @@ generator (no tool-calling loop, no business-data reads) behind
 `src/services/draftCopyService.ts`, used for "Polish with AI" on the Compose
 modal, the broadcast composer (`/dashboard/broadcasts`, migration `0058`), and
 the customer-profile reply panel (which replaced its old deterministic
-`suggestReply()` templating — `src/lib/emailDrafts.ts` — with this same real
+`suggestReply()` templating, since removed, with this same real
 AI call). It explicitly checks `is_owner()` before any OpenRouter call, since
 unlike the chat assistant it has no other database read for RLS to gate. Like
 the chat assistant, it only ever returns text for the owner to review — the
@@ -309,5 +332,20 @@ artifacts are shipped. Full playbook + safety rules: **`docs/DEPLOYMENT.md`**.
   30 minutes.
 - Personal data is UK-resident: Sentry is configured in the **EU region** with PII
   scrubbing enabled.
-- `.htaccess` adds HTTPS redirect + `X-Content-Type-Options`, `X-Frame-Options`,
-  `Referrer-Policy`.
+- **`ALLOWED_ORIGIN`** is read by 8 of the 11 Edge Functions (`ai-assistant-chat`,
+  `draft-copy`, `customer-access`, `owner-secret-login`, `owner-password-reset`,
+  `owner-photo-upload`, `email-diagnostics`, `render-email-preview`). It is what stops
+  another site calling them from a browser with a stolen anon key.
+- `.htaccess` carries, in order: the **Cloudflare origin lock**, the HTTPS redirect, the
+  apex-to-www 301, the SPA rewrite, MIME types, caching, HSTS, `Permissions-Policy`, an
+  enforcing CSP whose `script-src` pins `index.html`'s inline theme bootstrap by hash,
+  and `X-Content-Type-Options` / `X-Frame-Options` / `Referrer-Policy`.
+- **The origin lock is version-controlled deliberately.** It keys on Cloudflare's own
+  `CF-RAY` header, exempts `/.well-known/` so certificate validation still works, and
+  returns 403 to anything reaching the origin IP directly. It lived only on the server
+  until 2026-08-31, when direct-to-origin was found answering **200** with the real
+  site on this domain, bypassing the WAF: a deploy that shipped `.htaccess` had
+  overwritten it. Keeping it in the repo is what stops that recurring.
+  `CF-RAY` is forgeable, so this stops scanners rather than a targeted attacker; the
+  real boundary would be Authenticated Origin Pulls, which needs WHM access.
+  Runbook and the three verification `curl`s: `docs/DEPLOYMENT.md` §1.

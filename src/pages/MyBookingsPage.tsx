@@ -13,6 +13,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { errorMessage } from '@/lib/errors';
 import { formatDateLong, formatTime } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * The customer's own bookings, reached by magic link.
@@ -22,6 +23,12 @@ import { routes } from '@/lib/routes';
  * fresh link.
  */
 export function MyBookingsPage(): JSX.Element {
+  /* `noindex`, and no `path`: this is a customer's own booking history behind a
+     magic-link session. robots.txt already disallows it, but that only stops
+     crawling. Without this the page inherits index.html's canonical, so a
+     shared link previews as the home page and Search Console reports it as a
+     duplicate of `/`. */
+  useDocumentMeta({ title: 'My bookings', noindex: true });
   const { token } = useParams<{ token?: string }>();
   const navigate = useNavigate();
   const { settings, timezone } = useBusinessSettings();

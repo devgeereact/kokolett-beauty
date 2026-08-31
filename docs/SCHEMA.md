@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0064`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0068`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -45,6 +45,8 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0064_product_events.sql`                           | Added `product_events` (no personal data — event name from a fixed vocabulary, a random client-generated session id, timestamp), `track_product_event()` (anon-callable, rate-limited) and `product_event_funnel_summary()` (owner-only). First-party booking-funnel counts. |
 | `0065_copy_dashes_and_owner_name.sql`               | Data-only. Removes four em dashes from the customer-facing `email_templates` bodies seeded by `0032`, and corrects the owner's name from "Koko"/"Koko Lett" to Christy in the confirmation sign-off and the password-reset greeting. |
 | `0066_retire_locs.sql`                              | Data-only. Deactivates the five loc styles seeded by `0018` and renames the `service_menu` group from "Twists and locs" to "Twists". The salon does not do locs. |
+| `0067_review_link_in_template_overlay.sql`          | Data-only. Appends a `{{google_review_url}}` link to the `review_request` and `appointment_completed` overlay bodies, which `0032` seeded without one. Conditional, so an owner-rewritten template is untouched. |
+| `0068_locs_safety_net.sql`                          | Data-only. Deactivates any `service_menu` row whose name matches the word "loc", and renames any such group to "Twists". `0066` matched five exact strings inside one group name, all owner-editable; this matches on the word instead. A no-op today. |
 
 ### Every table, and where it is documented
 
@@ -923,3 +925,34 @@ history without changing the database. `0020_subject_lines_without_em_dashes.sql
 set the precedent: fix forward with a new migration, never rewrite an old one.
 `scripts/check-copy.py` enforces the dash rule only from `0065` onward for the
 same reason.
+
+## 26. Migrations `0067` and `0068` — the two nets under `0065` and `0066`
+
+Both are data-only, both are no-ops against the database as it stands, and both exist
+because the migrations they follow keyed on values the owner can change from the
+dashboard.
+
+**`0067`.** `0032` seeded `review_request` as "Would you leave us a Google review?" with
+no link, and `appointment_completed` with none either. That is harmless only while both
+rows have `include_in_automation = false`, because `send-emails` then falls back to the
+built-in copy in `_shared/templates.ts`, which does render a "Leave a review" button.
+The trap is that the fallback is invisible from the Template Editor: the owner sees two
+review templates, switches one into automation because that is the obvious thing to do,
+and every review request from then on asks for a review while giving no way to leave
+one. Nothing errors. `0067` appends the `{{google_review_url}}` token, which
+`buildTokens` already supports and `templateCatalog.ts` already declares for both keys.
+It is conditional on the row still carrying the seeded wording, so a template Christy
+has rewritten is left exactly as she wrote it.
+
+**`0068`.** `0066` deactivated five loc styles by exact name inside the group "Twists
+and locs", then renamed that group to "Twists" unconditionally. Both columns are
+owner-editable (`serviceMenuService.ts` writes them straight from the console), so the
+two statements could disagree: a row renamed at some point to "Soft locs (medium)"
+would not have matched the first statement, while the second still moved it into a
+group now called "Twists". The result would be an active loc service filed under a name
+that reads as safe, and `public_service_menu()` selects `where active`, so it would go
+straight back onto the marketing site. `0068` matches on the word rather than on five
+exact strings, so it also catches a spelling `0066` never knew about.
+
+Verified against production before applying: the query returned the same five rows,
+all already inactive.

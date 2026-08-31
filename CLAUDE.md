@@ -34,6 +34,9 @@ Never in a file.
 - `npm run lint` / `npm run lint:fix` — ESLint, zero-warning policy (`--max-warnings 0`)
 - `npm run format` / `npm run format:check` — Prettier (`format:check` is a CI gate; run `format` before committing if CI flags drift)
 - `npm test` — Vitest, single run · `npm run test:watch` — watch mode · `npm run test:coverage` — V8 coverage
+- `npm run lint:copy` — no em or en dashes in copy (`scripts/check-copy.py`); a CI gate
+- `npm run test:hooks` — verifies the tracked hookify safety rules; a CI gate
+- `npm run test:e2e` / `test:e2e:ui` — Playwright, against a real Supabase project
 - Single test file: `npx vitest run path/to/file.test.ts` (tests are colocated with their source, e.g. `src/hooks/useAvailability.test.ts`)
 - `npm run preview` — serve the production `dist/` build locally
 
@@ -71,8 +74,8 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
 - **Money is integer pence. Time is UTC in storage, `Europe/London` on screen.**
 - **The AI assistant can propose but never execute.** It can read business data and propose two writes — booking an appointment, sending a one-off customer email — but calling either only produces a card in the chat; the actual write (`createAppointmentAsOwner` / `sendCustomEmailAsOwner`) happens client-side, under the owner's own session, only when she clicks Confirm. The AI assistant edge function itself has no path to execute a write on its own.
 - Copy is British English.
-- **Women's hair only.** Cutting, colouring, styling, braids, twists, weaves and
-  treatments. Not a general beauty salon — no nails, brows, lashes or aesthetics —
+- **Women's hair only.** Six service groups, matching `service_menu`: Braids, Twists,
+  Weaves/wigs/extensions, Natural hair and styling, Colour, Treatments. Not a general beauty salon — no nails, brows, lashes or aesthetics —
   and not unisex, and not barbering. The word "Beauty" in the name is branding, not
   scope. Structured data uses `HairSalon`.
 - **No locs.** Retired 2026-08-31 (`0066_retire_locs.sql`): five loc styles had been

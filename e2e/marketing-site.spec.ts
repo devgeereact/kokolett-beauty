@@ -93,9 +93,33 @@ test('the salon is described as Thamesmead, and never advertises locs', async ({
   }
 });
 
-test('the 404 is kept out of the index', async ({ page }) => {
+test('the 404 is kept out of the index and canonicalises nowhere', async ({ page }) => {
   await page.goto('/this-route-does-not-exist', { waitUntil: 'networkidle' });
+
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+
+  // The SPA rewrite answers every unknown path with 200, so a mistyped or
+  // retired URL renders this page. Leaving index.html's canonical in place told
+  // Google the URL *was* the home page while also saying do not index it:
+  // contradictory signals on one URL, and the noindex can be attributed to the
+  // canonical target, which is the home page.
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+});
+
+test('a noindex page does not leave its robots value on the next page', async ({
+  page,
+}) => {
+  await page.goto('/this-route-does-not-exist', { waitUntil: 'networkidle' });
+  await page.goto('/services', { waitUntil: 'networkidle' });
+
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    'content',
+    'index, follow',
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://www.kokolettbeauty.com/services',
+  );
 });
 
 test('booking page renders the date/time picker', async ({ page }) => {

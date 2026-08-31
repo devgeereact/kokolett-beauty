@@ -385,7 +385,36 @@ did exactly that, and six of them set no head at all.
 Everything it writes is restored on unmount, including tags it created, so a page that
 unmounts before the next one mounts never leaves a stale head behind.
 
+**Unless a newer page has already claimed the head.** A module-level `headOwner`
+counter is incremented by each effect run, and cleanup early-returns without restoring
+anything when it no longer holds the claim. Without that guard, an older page's cleanup
+running after a newer page's effect puts the previous page's title, canonical and card
+back over the current one, which is the exact bug this hook exists to prevent. React can
+mount the next route before unmounting the previous one, and StrictMode double-invokes
+effects, so the ordering is not hypothetical. Covered by "leaves one page in charge when
+another unmounts after it mounted" in `useDocumentMeta.test.ts`.
+
 Undocumented here until 2026-08-31, which is part of how the gap above survived.
+
+---
+
+## 22. `usePrefersReducedMotion`
+
+`src/hooks/usePrefersReducedMotion.ts`
+Whether the viewer has asked the operating system to reduce motion. Consumed by
+`PhotoCard` to skip the cursor-tracked tilt and glare, and by `Reviews` for its
+carousel. Motion that ignores this is an accessibility failure, not a preference
+(`docs/DESIGN.md` §7).
+
+---
+
+## 23. `useRealtimeTable`
+
+`src/hooks/useRealtimeTable.ts`
+Subscribes to Postgres changes on a table and re-runs a callback. Used on the public
+side for `weekly_template` and `availability_slots`, so a customer looking at the
+booking page sees a slot disappear when someone else takes it rather than finding out
+at submit.
 
 ---
 

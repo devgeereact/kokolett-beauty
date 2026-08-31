@@ -1,3 +1,25 @@
+# === BEGIN Cloudflare-origin-lock (2026-08-24) ===
+# Cloudflare IP restoration is ON, so REMOTE_ADDR is the VISITOR's IP for proxied
+# traffic -- an IP allow-list would block real users. LiteSpeed also ignores
+# "Require ip" in .htaccess (verified). So we key on Cloudflare's own headers,
+# which are present on proxied requests and absent on direct-to-origin hits.
+# NOTE: a determined attacker can forge CF-RAY. This stops mass scanners, it is
+# not a cryptographic boundary -- that needs Authenticated Origin Pulls (mTLS).
+#
+# Added to this repo 2026-08-31. Every other domain on the account has carried
+# this since 2026-08-24; kokolettbeauty.com did not, and direct-to-origin was
+# answering 200 with the real site, bypassing the WAF entirely. It was missing
+# because the block lived only on the server and this docroot's .htaccess is
+# deployed from the repo, so any deploy that shipped the file overwrote it.
+# Keeping it in version control is what stops that happening again.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP:CF-RAY} ^$
+  RewriteCond %{REQUEST_URI} !^/\.well-known/
+  RewriteRule ^ - [F,L]
+</IfModule>
+# === END Cloudflare-origin-lock ===
+
 # =============================================================
 #  cPanel / Apache config for a static Vite SPA (PWA)
 #  Upload alongside the contents of /dist into public_html.

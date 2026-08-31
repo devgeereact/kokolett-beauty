@@ -310,13 +310,13 @@ export function BookPage(): JSX.Element {
             <Field
               label="Full name"
               required
-              hint="First name and surname, for example Koko Beauty."
+              hint="First name and surname, for example Sarah Bennett."
             >
               {({ controlProps }) => (
                 <Input
                   {...controlProps}
                   autoComplete="name"
-                  placeholder="Koko Beauty"
+                  placeholder="Sarah Bennett"
                   value={details.fullName}
                   onChange={(e) => setDetails({ ...details, fullName: e.target.value })}
                 />

@@ -96,8 +96,16 @@ information. Sign in as the owner and fill in, screen by screen:
   result, which is a person standing outside a closed door, not a ranking
   problem.
 
-  `geo` is deliberately absent. Add it only from the real coordinates on the
-  Google profile's own pin; a guessed lat/long is worse than none.
+  `geo` carries **51.512543, 0.126009**, the Office for National Statistics
+  centroid for SE28 8RX (`api.postcodes.io`). Sourced, not guessed, and accurate
+  to the postcode. Replace it only with the exact pin from the Google profile if
+  that sits somewhere meaningfully different.
+
+  Also hand-keyed in the same JSON-LD, and just as easy to forget: `sameAs`
+  (Instagram and the Google profile URL built from the Place ID), `founder`,
+  `areaServed`, and the `hasOfferCatalog` group names. The catalogue on
+  `/services` is generated from `service_menu` at runtime and cannot drift, but
+  this static copy can. `docs/SOCIAL_PROFILE.md` §2 is the full map.
 
 - **`src/lib/business.ts`** — locality, region, postcode, positioning line,
   areas served, service group names, Instagram URL, Google Place ID. Code, not

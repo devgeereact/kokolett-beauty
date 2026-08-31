@@ -50,8 +50,9 @@ export function PaymentReconciliationCard({
     id: string,
     amountPence: number,
     note: string,
+    correctsPaymentId?: string,
   ): Promise<void> => {
-    await logPayment(id, amountPence, note);
+    await logPayment(id, amountPence, note, correctsPaymentId);
     showToast({ message: 'Payment recorded.' });
     setSelected(null);
     load();

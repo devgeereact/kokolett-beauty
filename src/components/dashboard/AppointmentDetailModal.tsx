@@ -1,14 +1,22 @@
-import { type JSX, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { Calendar as CalendarIcon, Clock, Hash, Mail, Phone } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatusChip } from '@/components/ui/StatusChip';
-import { Input, Textarea } from '@/components/ui/Field';
+import { cn } from '@/lib/utils';
+import { Checkbox, Input, Select, Textarea } from '@/components/ui/Field';
 import { ACTION_LABELS, useAppointmentActions } from '@/hooks/useAppointmentActions';
-import { formatDateLong, formatDuration, formatMoney, formatTime } from '@/lib/format';
-import type { AppointmentDetailed, AppointmentStatus } from '@/types';
+import { listPayments } from '@/services/paymentService';
+import {
+  formatDateLong,
+  formatDateTime,
+  formatDuration,
+  formatMoney,
+  formatTime,
+} from '@/lib/format';
+import type { AppointmentDetailed, AppointmentStatus, Payment } from '@/types';
 
 /** Statuses that already mean "this is over" — deleting one of these is
  * pure housekeeping. Anything else is still deletable, just with a
@@ -37,18 +45,38 @@ export function AppointmentDetailModal({
   onClose: () => void;
   onStatusChange?: (id: string, status: AppointmentStatus) => Promise<void>;
   onNoteSave?: (id: string, note: string) => Promise<void>;
-  onLogPayment?: (id: string, amountPence: number, note: string) => Promise<void>;
+  onLogPayment?: (
+    id: string,
+    amountPence: number,
+    note: string,
+    correctsPaymentId?: string,
+  ) => Promise<void>;
   onBookFollowUp?: (appointment: AppointmentDetailed) => void;
   /** Opens the reschedule step in place. Omit to hide "Change time". */
   onMove?: (appointment: AppointmentDetailed) => void;
   /** Omit to hide "Delete appointment" entirely. */
   onDelete?: (id: string) => Promise<void>;
 }): JSX.Element {
+  const [payments, setPayments] = useState<Payment[] | null>(null);
+
+  const loadPayments = (): void => {
+    listPayments(appointment.id)
+      .then(setPayments)
+      .catch(() => setPayments([]));
+  };
+
+  useEffect(loadPayments, [appointment.id]);
+
   const a = useAppointmentActions({
     appointment,
     onStatusChange,
     onNoteSave,
-    onLogPayment,
+    onLogPayment: onLogPayment
+      ? async (id, amountPence, note, correctsPaymentId) => {
+          await onLogPayment(id, amountPence, note, correctsPaymentId);
+          loadPayments();
+        }
+      : undefined,
   });
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -239,8 +267,81 @@ export function AppointmentDetailModal({
           <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Payment
           </p>
+          {payments && payments.length > 0 && (
+            <ul className="mb-2 space-y-1">
+              {payments.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                >
+                  <span className="truncate">
+                    {p.corrects_payment_id ? 'Correction — ' : ''}
+                    {p.note || (p.corrects_payment_id ? 'no note' : 'payment')} ·{' '}
+                    {formatDateTime(p.created_at, timezone)}
+                  </span>
+                  <span
+                    className={cn(
+                      'shrink-0 font-medium tabular-nums',
+                      p.amount_pence < 0 ? 'text-destructive' : 'text-foreground',
+                    )}
+                  >
+                    {p.amount_pence < 0 ? '−' : ''}
+                    {formatMoney(Math.abs(p.amount_pence))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
           {a.paymentOpen ? (
             <>
+              {payments && payments.some((p) => p.amount_pence > 0) && (
+                <div className="mb-2">
+                  <Checkbox
+                    label="This corrects an earlier payment"
+                    checked={a.correctingPaymentId !== null}
+                    onChange={(e) => {
+                      const correctable = payments.filter((p) => p.amount_pence > 0);
+                      a.setCorrectingPaymentId(
+                        e.target.checked
+                          ? (correctable[correctable.length - 1]?.id ?? null)
+                          : null,
+                      );
+                    }}
+                    className="mb-0"
+                  />
+                  {a.correctingPaymentId !== null && (
+                    <div className="mt-2 flex gap-2">
+                      <Select
+                        aria-label="Payment being corrected"
+                        value={a.correctingPaymentId}
+                        onChange={(e) => a.setCorrectingPaymentId(e.target.value)}
+                        className="min-w-0 flex-1"
+                      >
+                        {payments
+                          .filter((p) => p.amount_pence > 0)
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {formatMoney(p.amount_pence)} ·{' '}
+                              {formatDateTime(p.created_at, timezone)}
+                            </option>
+                          ))}
+                      </Select>
+                      <div className="w-40 shrink-0">
+                        <Select
+                          aria-label="Correction direction"
+                          value={a.correctionDirection}
+                          onChange={(e) =>
+                            a.setCorrectionDirection(e.target.value as 'add' | 'deduct')
+                          }
+                        >
+                          <option value="deduct">Refund / deduct</option>
+                          <option value="add">Add more</option>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <Input
                 aria-label="Amount paid"
                 inputMode="decimal"

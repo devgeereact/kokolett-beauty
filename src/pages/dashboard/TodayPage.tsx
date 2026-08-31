@@ -182,9 +182,14 @@ export function TodayPage(): JSX.Element {
   );
 
   const logPaymentHandler = useCallback(
-    async (id: string, amountPence: number, note: string): Promise<void> => {
+    async (
+      id: string,
+      amountPence: number,
+      note: string,
+      correctsPaymentId?: string,
+    ): Promise<void> => {
       try {
-        await logPayment(id, amountPence, note);
+        await logPayment(id, amountPence, note, correctsPaymentId);
         await Promise.all([refresh(), refreshSummary()]);
       } catch (e) {
         showToast({ message: errorMessage(e) });

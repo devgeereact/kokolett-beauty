@@ -55,6 +55,12 @@ export interface UseAppointmentActions {
   paymentError: string | null;
   savePayment: () => Promise<void>;
   cancelPaymentEdit: () => void;
+  /** Which existing payment (if any) this entry corrects — null means a plain new payment. */
+  correctingPaymentId: string | null;
+  setCorrectingPaymentId: Dispatch<SetStateAction<string | null>>;
+  /** Only meaningful when `correctingPaymentId` is set: whether the correction adds to or deducts from that payment. */
+  correctionDirection: 'add' | 'deduct';
+  setCorrectionDirection: Dispatch<SetStateAction<'add' | 'deduct'>>;
 }
 
 /**
@@ -72,7 +78,12 @@ export function useAppointmentActions({
   appointment: AppointmentDetailed;
   onStatusChange?: (id: string, status: AppointmentStatus) => Promise<void>;
   onNoteSave?: (id: string, note: string) => Promise<void>;
-  onLogPayment?: (id: string, amountPence: number, note: string) => Promise<void>;
+  onLogPayment?: (
+    id: string,
+    amountPence: number,
+    note: string,
+    correctsPaymentId?: string,
+  ) => Promise<void>;
 }): UseAppointmentActions {
   const [busy, setBusy] = useState<AppointmentStatus | null>(null);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -84,6 +95,10 @@ export function useAppointmentActions({
   const [paymentNote, setPaymentNote] = useState('');
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [correctingPaymentId, setCorrectingPaymentId] = useState<string | null>(null);
+  const [correctionDirection, setCorrectionDirection] = useState<'add' | 'deduct'>(
+    'deduct',
+  );
   // Which destructive status change (if any) is awaiting confirmation. Only
   // 'no_show' and 'cancelled' ever populate this — the other statuses in
   // NEXT_ACTIONS run immediately, no confirmation needed.
@@ -151,12 +166,24 @@ export function useAppointmentActions({
       setPaymentError('Enter a valid amount, e.g. 45.00');
       return;
     }
+    // The amount is always typed as a positive figure; direction only
+    // matters when correcting an earlier payment (a plain payment is
+    // always an add, enforced server-side too).
+    const signedPence =
+      correctingPaymentId && correctionDirection === 'deduct' ? -pence : pence;
     setPaymentError(null);
     setSavingPayment(true);
     try {
-      await onLogPayment(appointment.id, pence, paymentNote);
+      await onLogPayment(
+        appointment.id,
+        signedPence,
+        paymentNote,
+        correctingPaymentId ?? undefined,
+      );
       setAmountInput('');
       setPaymentNote('');
+      setCorrectingPaymentId(null);
+      setCorrectionDirection('deduct');
       setPaymentOpen(false);
     } catch (e) {
       setPaymentError(errorMessage(e));
@@ -169,6 +196,8 @@ export function useAppointmentActions({
     setAmountInput('');
     setPaymentNote('');
     setPaymentError(null);
+    setCorrectingPaymentId(null);
+    setCorrectionDirection('deduct');
     setPaymentOpen(false);
   };
 
@@ -205,5 +234,9 @@ export function useAppointmentActions({
     paymentError,
     savePayment,
     cancelPaymentEdit,
+    correctingPaymentId,
+    setCorrectingPaymentId,
+    correctionDirection,
+    setCorrectionDirection,
   };
 }

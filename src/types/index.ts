@@ -104,6 +104,7 @@ export type BookingSettingsUpdate = Tables['booking_settings']['Update'];
 export type AvailabilityRequest = Tables['availability_requests']['Row'];
 export type EmailMessage = Tables['email_messages']['Row'];
 export type AuditEvent = Tables['audit_events']['Row'];
+export type Payment = Tables['payments']['Row'];
 
 /** Shape returned by `public.owner_dashboard_summary()`. */
 export interface OwnerSummary {

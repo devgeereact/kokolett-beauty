@@ -268,9 +268,10 @@ export function AppointmentsPage(): JSX.Element {
     id: string,
     amountPence: number,
     note: string,
+    correctsPaymentId?: string,
   ): Promise<void> => {
     try {
-      await logPayment(id, amountPence, note);
+      await logPayment(id, amountPence, note, correctsPaymentId);
       await refresh();
     } catch (e) {
       showToast({ message: errorMessage(e) });

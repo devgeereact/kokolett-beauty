@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -203,7 +203,7 @@ export type Database = {
             | "day.closed"
             | "customer.data_exported"
             | "broadcast.sent"
-          actor?: "owner" | "system"
+          actor: "owner" | "system"
           created_at?: string
           entity_id?: string | null
           entity_type: string
@@ -724,6 +724,7 @@ export type Database = {
         Row: {
           amount_pence: number
           appointment_id: string
+          corrects_payment_id: string | null
           created_at: string
           id: string
           note: string | null
@@ -732,6 +733,7 @@ export type Database = {
         Insert: {
           amount_pence: number
           appointment_id: string
+          corrects_payment_id?: string | null
           created_at?: string
           id?: string
           note?: string | null
@@ -740,6 +742,7 @@ export type Database = {
         Update: {
           amount_pence?: number
           appointment_id?: string
+          corrects_payment_id?: string | null
           created_at?: string
           id?: string
           note?: string | null
@@ -758,6 +761,13 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "appointments_detailed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_corrects_payment_id_fkey"
+            columns: ["corrects_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
           {
@@ -804,12 +814,12 @@ export type Database = {
         }
         Insert: {
           attempted_at?: string
-          id?: number
+          id?: never
           ip_hash: string
         }
         Update: {
           attempted_at?: string
-          id?: number
+          id?: never
           ip_hash?: string
         }
         Relationships: []
@@ -1192,6 +1202,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      check_login_lockout: { Args: { p_ip_hash: string }; Returns: boolean }
       clear_day_slots: { Args: { p_date: string }; Returns: number }
       close_day: { Args: never; Returns: Json }
       copy_day_slots: {
@@ -1311,10 +1322,10 @@ export type Database = {
         Args: {
           p_action: string
           p_actor?: string
-          p_entity_id: string | null
+          p_entity_id: string
           p_entity_type: string
-          p_new_value?: Json | null
-          p_old_value?: Json | null
+          p_new_value?: Json
+          p_old_value?: Json
           p_summary: string
         }
         Returns: string
@@ -1323,6 +1334,7 @@ export type Database = {
         Args: {
           p_amount_pence: number
           p_appointment_id: string
+          p_corrects_payment_id?: string
           p_note?: string
         }
         Returns: string
@@ -1383,6 +1395,7 @@ export type Database = {
       purge_expired_access_tokens: { Args: never; Returns: number }
       purge_expired_audit_events: { Args: never; Returns: Json }
       purge_expired_personal_data: { Args: never; Returns: Json }
+      purge_login_attempts: { Args: never; Returns: number }
       queue_email: {
         Args: {
           p_appointment_id?: string
@@ -1394,6 +1407,10 @@ export type Database = {
           p_to_email: string
         }
         Returns: string
+      }
+      record_secret_login_attempt: {
+        Args: { p_ip_hash: string }
+        Returns: undefined
       }
       redeem_access_token: { Args: { p_token: string }; Returns: Json }
       reject_appointment: {
@@ -1443,9 +1460,13 @@ export type Database = {
           reference: string
         }[]
       }
+      resolve_owner_slug: { Args: { p_slug: string }; Returns: boolean }
       retired_booking_templates: { Args: never; Returns: string[] }
       revoke_calendar_feed: { Args: { p_id: string }; Returns: undefined }
-      send_broadcast_as_owner: { Args: { p_body: string; p_subject: string }; Returns: Json }
+      send_broadcast_as_owner: {
+        Args: { p_body: string; p_subject: string }
+        Returns: Json
+      }
       send_custom_email_as_owner: {
         Args: {
           p_body: string
@@ -1518,7 +1539,10 @@ export type Database = {
       }
       sync_google_reviews: { Args: never; Returns: number }
       system_health_summary: { Args: never; Returns: Json }
-      unsubscribe_via_link: { Args: { p_subscriber_id: string }; Returns: undefined }
+      unsubscribe_via_link: {
+        Args: { p_subscriber_id: string }
+        Returns: undefined
+      }
       weekly_template_status: { Args: never; Returns: Json }
     }
     Enums: {

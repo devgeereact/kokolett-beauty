@@ -260,9 +260,14 @@ export function CalendarPage(): JSX.Element {
   );
 
   const logPaymentHandler = useCallback(
-    async (id: string, amountPence: number, note: string): Promise<void> => {
+    async (
+      id: string,
+      amountPence: number,
+      note: string,
+      correctsPaymentId?: string,
+    ): Promise<void> => {
       try {
-        await logPayment(id, amountPence, note);
+        await logPayment(id, amountPence, note, correctsPaymentId);
         await load();
       } catch (e) {
         showToast({ message: errorMessage(e) });

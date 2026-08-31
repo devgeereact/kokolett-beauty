@@ -563,7 +563,7 @@ three shared utility classes (`src/index.css` → `@layer components`):
 - `.koko-content` — `min-h-0 flex-1 overflow-hidden`, the column beside the sidebar: header,
   then the scroll region.
 - `.koko-scroll` — `h-full overflow-y-auto overscroll-contain`, applied to `<main>`. This is
-  the one scroll region for the whole page.
+  the one scroll region for the *page content*.
 
 The sidebar (`--sidebar-width` 240px, `--sidebar-collapsed-width` 72px) is a real flex
 sibling, not a `fixed`-positioned overlay. The header targets `--header-height` (64px) via
@@ -571,6 +571,21 @@ sibling, not a `fixed`-positioned overlay. The header targets `--header-height` 
 not nested inside it: `.koko-app` is `overflow-hidden`, which clips a `position: fixed`
 descendant in every major browser — the same reason `Modal`/`ConfirmDialog`/
 `QuickActionLauncher` portal to `document.body` instead of rendering in place.
+
+**The sidebar nav list gets its own scroll region too, deliberately (2026-08-31).** It was
+originally built to render statically — wordmark, every nav row, and the account footer
+fitting one viewport with no scroll of its own — but that assumption held only while the nav
+was short. By six section groups (Workspace/Bookings/Customers/Salon/Insights/Communications/
+Account) and ~20 items, the nav's own content (1074px measured) no longer fit a common
+~720px-tall laptop viewport (651px available once the wordmark and account footer are
+subtracted), and there was no scrollbar anywhere to reach the items pushed below the fold —
+System Health, Broadcasts and Audit Log were simply unreachable. `DashboardLayout`'s `<aside>`
+is now three flex children: the wordmark (`shrink-0`, pinned top), the nav list
+(`min-h-0 flex-1 overflow-y-auto`, the new second scroll region), and the account footer
+(`mt-auto shrink-0`, pinned bottom). This is scoped to the nav column only — it does not
+reintroduce the "drift, double-scroll, or pagination looking detached" failure mode `.koko-
+scroll` exists to prevent in the *content* area, since the two scroll regions are visually and
+functionally independent (a user scrolls one or the other, never both at once).
 
 ### 15.2 Sizing tokens
 

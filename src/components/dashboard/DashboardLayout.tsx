@@ -324,9 +324,8 @@ export function DashboardLayout({
     ) : (
       // Profile (avatar, name, business address/phone/email, theme) and the
       // public-site link all live one click away on Settings/Profile now —
-      // keeping them out of the sidebar footer is what lets the sidebar
-      // render statically, full height, every nav row visible with no
-      // internal scroll.
+      // this footer stays a single "Sign out" button, pinned below the
+      // scrollable nav list rather than growing with it.
       <Button variant="ghost" size="sm" className="w-full" onClick={doSignOut}>
         Sign out
       </Button>
@@ -394,11 +393,14 @@ export function DashboardLayout({
       <div className="koko-app bg-background">
         {/* Desktop/tablet sidebar — a real flex sibling now, not a `fixed`
             overlay, so it participates in `koko-app`'s row layout instead of
-            needing a matching `md:pl-*` offset on the content column. Static,
-            no internal scroll — nav + footer fit one viewport without their
-            own scroll region. Collapses to an icon-only rail (`collapsed`,
-            persisted in localStorage) for more content width on a small
-            laptop. */}
+            needing a matching `md:pl-*` offset on the content column.
+            Wordmark and account footer stay pinned; the nav list between
+            them scrolls on its own once it outgrows the viewport (2026-08-31
+            — six section groups no longer reliably fit a ~720px-tall laptop
+            screen; System Health/Broadcasts/Audit Log were simply
+            unreachable below the fold, with no scrollbar to find them).
+            Collapses to an icon-only rail (`collapsed`, persisted in
+            localStorage) for more content width on a small laptop. */}
         <aside
           className={cn(
             'z-sidebar hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-150 md:flex',
@@ -406,9 +408,27 @@ export function DashboardLayout({
           )}
         >
           <div
-            className={cn('relative', collapsed ? 'overflow-x-visible px-2 py-4' : 'p-4')}
+            className={cn(
+              'relative shrink-0',
+              collapsed ? 'overflow-x-visible px-2 pt-4' : 'px-4 pt-4',
+            )}
           >
             {buildWordmark(collapsed)}
+          </div>
+          {/*
+            The nav list is the one part of the sidebar that grows with the
+            product — six section groups and counting — so it's the one part
+            that scrolls internally rather than the whole shell gaining a
+            second scroll region (docs/DESIGN.md §15.1). The wordmark stays
+            pinned above it and the account footer (`mt-auto` on its own
+            sibling below) stays pinned below, so only the middle list moves.
+          */}
+          <div
+            className={cn(
+              'min-h-0 flex-1 overflow-y-auto',
+              collapsed ? 'overflow-x-visible px-2 pb-4' : 'px-4 pb-4',
+            )}
+          >
             {buildNav(collapsed)}
           </div>
           <div

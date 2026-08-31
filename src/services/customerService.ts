@@ -225,6 +225,21 @@ export async function exportCustomerData(id: string): Promise<CustomerDataExport
 }
 
 /**
+ * Signs a customer out everywhere, immediately (migration 0062) — marks
+ * every one of her live `/my` session tokens as used, which
+ * `customer_from_session()` already treats as invalid. Returns how many
+ * sessions were actually revoked, for the owner-facing confirmation.
+ */
+export async function revokeCustomerSessions(id: string): Promise<number> {
+  const { data, error } = await supabase.rpc('revoke_customer_sessions', {
+    p_customer_id: id,
+  });
+
+  if (error) throw error;
+  return data ?? 0;
+}
+
+/**
  * Whether an email already belongs to an existing customer — the "First
  * visit" / "Returning customer" signal on an availability request's detail
  * panel. `citext` makes the match case-insensitive without a `lower()` call.

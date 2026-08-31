@@ -79,7 +79,18 @@ export function useCustomerSession(): UseCustomerSession {
       setError(null);
     } catch (e) {
       // An expired or revoked session must not leave a half-signed-in screen.
-      const message = e instanceof Error ? e.message : String(e);
+      //
+      // `supabase.rpc()` never throws a real `Error` for an RPC-level failure
+      // (e.g. a raised Postgres exception) unless `.throwOnError()` is
+      // called, which this app doesn't — the `{ data, error }` result's
+      // `error` is a plain `{ message, code, ... }` object that the service
+      // layer re-throws as-is. `e instanceof Error` is therefore false here,
+      // and reading `.message` off any object with one (not just real
+      // `Error`s) is what actually detects INVALID_SESSION.
+      const message =
+        e && typeof e === 'object' && 'message' in e && typeof e.message === 'string'
+          ? e.message
+          : String(e);
       if (message.includes('INVALID_SESSION')) {
         storeSession(null);
         setSessionToken(null);

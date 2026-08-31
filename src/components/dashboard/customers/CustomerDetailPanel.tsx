@@ -61,6 +61,7 @@ export function CustomerDetailPanel({
   onClose,
   onBookFollowUp,
   onExport,
+  onRevokeSessions,
   onErase,
   onConsentChange,
 }: {
@@ -83,6 +84,8 @@ export function CustomerDetailPanel({
   onBookFollowUp: () => void;
   /** GDPR subject-access request — downloads everything held about this customer. */
   onExport: () => void;
+  /** Signs the customer out of every active `/my` session immediately. */
+  onRevokeSessions: () => void;
   /** UK GDPR erasure — anonymises in place, keeps appointment history. */
   /** Full erasure — the only deletion this app offers. */
   onErase: () => void;
@@ -249,6 +252,16 @@ export function CustomerDetailPanel({
                     className="block w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
                   >
                     Export data
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onRevokeSessions();
+                    }}
+                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+                  >
+                    Sign out everywhere
                   </button>
                   <button
                     type="button"

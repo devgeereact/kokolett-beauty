@@ -25,6 +25,7 @@ const LANES: { key: Lane; label: string }[] = [
   { key: 'day.closed', label: 'Day closed' },
   { key: 'customer.data_exported', label: 'Data exported' },
   { key: 'broadcast.sent', label: 'Broadcast sent' },
+  { key: 'customer.sessions_revoked', label: 'Sessions revoked' },
 ];
 
 /**
@@ -64,6 +65,7 @@ export function AuditPage(): JSX.Element {
       'day.closed': 0,
       'customer.data_exported': 0,
       'broadcast.sent': 0,
+      'customer.sessions_revoked': 0,
     };
     for (const e of events ?? []) {
       c.all += 1;

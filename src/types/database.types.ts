@@ -182,6 +182,7 @@ export type Database = {
             | "day.closed"
             | "customer.data_exported"
             | "broadcast.sent"
+            | "customer.sessions_revoked"
           actor: "owner" | "system"
           created_at: string
           entity_id: string | null
@@ -203,6 +204,7 @@ export type Database = {
             | "day.closed"
             | "customer.data_exported"
             | "broadcast.sent"
+            | "customer.sessions_revoked"
           actor: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -224,6 +226,7 @@ export type Database = {
             | "day.closed"
             | "customer.data_exported"
             | "broadcast.sent"
+            | "customer.sessions_revoked"
           actor?: "owner" | "system"
           created_at?: string
           entity_id?: string | null
@@ -1503,6 +1506,10 @@ export type Database = {
       resolve_owner_slug: { Args: { p_slug: string }; Returns: boolean }
       retired_booking_templates: { Args: never; Returns: string[] }
       revoke_calendar_feed: { Args: { p_id: string }; Returns: undefined }
+      revoke_customer_sessions: {
+        Args: { p_customer_id: string }
+        Returns: number
+      }
       send_broadcast_as_owner: {
         Args: { p_body: string; p_subject: string }
         Returns: Json

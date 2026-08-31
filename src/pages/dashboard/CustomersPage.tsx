@@ -17,6 +17,7 @@ import {
   exportCustomerData,
   getCustomer,
   listCustomersWithStats,
+  revokeCustomerSessions,
   setCustomerNote,
   updateCustomerDetails,
   type CustomerContactDraft,
@@ -236,6 +237,20 @@ export function CustomersPage(): JSX.Element {
     }
   };
 
+  const revokeSessions = async (customer: CustomerWithStats): Promise<void> => {
+    try {
+      const count = await revokeCustomerSessions(customer.id);
+      showToast({
+        message:
+          count > 0
+            ? `${customer.full_name} signed out of ${count} active session${count === 1 ? '' : 's'}.`
+            : `${customer.full_name} has no active sessions to sign out of.`,
+      });
+    } catch (e) {
+      showToast({ message: errorMessage(e) });
+    }
+  };
+
   const exportCsv = (): void => {
     const header = [
       'Name',
@@ -384,6 +399,7 @@ export function CustomersPage(): JSX.Element {
               setBooking(true);
             }}
             onExport={() => void exportData(selected)}
+            onRevokeSessions={() => void revokeSessions(selected)}
             onErase={() => setPendingErase(selected)}
             onConsentChange={(consent) =>
               setCustomers((prev) =>

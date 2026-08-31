@@ -63,8 +63,8 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
 | Customer CRM (profile, history, notes, marketing consent, erasure) | `CustomersPage.tsx` + `CustomerDetailPanel.tsx` | ✅ | 436 lines | — | — |
-| Customer timeline | History shown as a flat list, not a timeline visualisation | 🟡 | No dedicated `Timeline` component; `ScheduleTimeline.tsx` is day-schedule-specific, not per-customer | Visual unified event history per customer | P3 |
-| Customer communication preferences | Owner-side toggle plus a customer-facing one on `/my` (session-scoped RPCs, `customer_from_session()`-gated) | ✅ | `supabase/migrations/0060_customer_communication_preferences.sql`, `customerSessionService.ts`, `useCustomerSession.ts`, `MyBookingsPage.tsx` | — | — | — |
+| Customer timeline | A real connected-dot timeline, colour-coded by status, newest first, showing the cancellation/rejection reason where there is one | ✅ | `CustomerTimeline.tsx`, used by `CustomerDetailPanel.tsx`'s History tab | — | — |
+| Customer communication preferences | Owner-side toggle plus a customer-facing one on `/my` (session-scoped RPCs, `customer_from_session()`-gated) | ✅ | `supabase/migrations/0060_customer_communication_preferences.sql`, `customerSessionService.ts`, `useCustomerSession.ts`, `MyBookingsPage.tsx` | — | — |
 | GDPR data export (subject access) | `export_customer_data()` — customer profile, appointments, payments, emails, availability requests, mailing-list status, as JSON download from the Customers page ("Export data" menu item). Same table list `eraseCustomer()` touches, read instead of deleted. | ✅ | `supabase/migrations/0056_customer_data_export.sql`, `src/pages/dashboard/CustomersPage.tsx` — verified live 2026-08-30 against production (full package returned, non-owner denied, audit row carries no personal data) | — | — | — |
 
 ### Business (Services, Payments, Reports, Reviews, Marketing)
@@ -114,7 +114,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 ### Testing
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
-| Unit tests | 20 Vitest files, concentrated in pure logic/hooks | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
+| Unit tests | 25 Vitest files, concentrated in pure logic/hooks | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
 | RLS/security tests | Thorough, CI-run | ✅ | See §2 | — | — |
 | E2E tests | Playwright framework + a real booking-race test | ✅ | See Calendar/Bookings section (`e2e/marketing-site.spec.ts`, `e2e/booking-race.spec.ts`) | Customer-journey and full owner-journey E2E tests still don't exist — only the race scenario and marketing-site smoke tests | P2 |
 

@@ -5,10 +5,11 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CommunicationAssistancePanel } from '@/components/dashboard/assistant/CommunicationAssistancePanel';
+import { CustomerTimeline } from '@/components/dashboard/customers/CustomerTimeline';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Switch } from '@/components/ui/Switch';
-import { formatDateShort, formatDateTime, formatMoney } from '@/lib/format';
+import { formatDateShort, formatDateTime } from '@/lib/format';
 import {
   setCustomerMarketingConsent,
   type CustomerContactDraft,
@@ -407,30 +408,7 @@ export function CustomerDetailPanel({
           )}
 
           {tab === 'history' && (
-            <div>
-              {history.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No appointments yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {history.map((a) => (
-                    <li
-                      key={a.id}
-                      className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2 text-sm last:border-0"
-                    >
-                      <span className="text-foreground">
-                        {formatDateTime(a.starts_at, timezone)} · {a.service_name}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="text-muted-foreground">
-                          {formatMoney(a.price_pence)}
-                        </span>
-                        <StatusChip status={a.status} />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <CustomerTimeline history={history} timezone={timezone} />
           )}
 
           {tab === 'notes' && (

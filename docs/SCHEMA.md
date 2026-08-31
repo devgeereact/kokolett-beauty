@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0059`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0060`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -38,6 +38,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0057_drop_ai_recommendations.sql`                  | Dropped `ai_recommendations` and `recommendation_status` — confirmed dead across every audit this session, owner-approved for removal 2026-08-30. Does not affect the AI chat's ability to draft messages (`ai-assistant-chat`), which never used this table. |
 | `0058_broadcast_messaging.sql`                      | Added `send_broadcast_as_owner()` and `unsubscribe_via_link()`, and a new `broadcast.sent` value in `audit_events.action`'s check constraint — no new table. Broadcast messaging uses the existing email outbox queue. `unsubscribe_via_link()` is anon-callable by design, since a visitor clicking the link has no session. |
 | `0059_payment_corrections.sql`                      | Added `payments.corrects_payment_id` (nullable FK to `payments.id`) and loosened the `amount_pence` check to allow negative only when `corrects_payment_id` is set (a plain payment must still be positive). `log_payment()` gained an optional `p_corrects_payment_id` param and validates the linked payment is on the same appointment. |
+| `0060_customer_communication_preferences.sql`       | Added `customer_communication_preferences()` and `customer_set_marketing_consent()` — no new table, no new column. Session-scoped RPCs (via `customer_from_session()`, `0021`) so a customer on `/my` can read and change her own `customers.marketing_consent` without asking the owner. |
 
 ### Every table, and where it is documented
 

@@ -168,7 +168,7 @@ export function AssistantInsightsRow({
   return (
     <Card className={cn('flex h-full flex-col p-4', className)}>
       <div className="mb-3 flex items-center gap-2">
-        <h2 className="text-base font-semibold leading-tight text-foreground">
+        <h2 className="font-serif text-base font-semibold text-foreground">
           AI assistant
         </h2>
         <span className="rounded-full bg-tint-no-show px-2 py-0.5 text-xs font-medium text-status-no-show">

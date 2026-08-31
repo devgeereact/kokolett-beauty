@@ -3,9 +3,6 @@ import { BUSINESS_NAME, SITE_ORIGIN } from '@/lib/business';
 
 const DEFAULT_TITLE = BUSINESS_NAME;
 
-/** Square app icon, used only as the fallback when a page names no card. */
-const DEFAULT_IMAGE = `${SITE_ORIGIN}/icons/social-card.png`;
-
 type MetaSpec = { attr: 'name' | 'property'; key: string; value: string };
 
 function findMeta(attr: 'name' | 'property', key: string): HTMLMetaElement | null {
@@ -21,6 +18,21 @@ function setMeta(attr: 'name' | 'property', key: string, content: string): void 
   }
   el.setAttribute('content', content);
 }
+
+/**
+ * Which mounted instance currently owns the document head.
+ *
+ * Cleanup restores whatever was there before, which is right when a page is the
+ * last one to have written. It is wrong when a newer page has already taken
+ * over: React can mount the next route before unmounting the previous one, and
+ * StrictMode double-invokes effects, so the older cleanup would run last and
+ * put the previous page's title, canonical and card back over the current
+ * page's. The result is a page silently claiming to be its predecessor, which
+ * is the exact bug this hook exists to prevent.
+ *
+ * Each effect run claims the next number and only restores if it still holds it.
+ */
+let headOwner = 0;
 
 const BREADCRUMB_ID = 'breadcrumb-jsonld';
 
@@ -49,6 +61,10 @@ function setBreadcrumb(name: string, url: string): void {
 
 function clearBreadcrumb(): void {
   document.head.querySelector(`script#${BREADCRUMB_ID}`)?.remove();
+}
+
+function removeCanonical(): void {
+  document.head.querySelector('link[rel="canonical"]')?.remove();
 }
 
 function setCanonical(href: string): void {
@@ -105,9 +121,9 @@ export function useDocumentMeta(meta: string | DocumentMeta, description?: strin
   const desc = spec.description;
 
   useEffect(() => {
+    const myClaim = ++headOwner;
     const documentTitle = fullTitle ? title : `${title}: ${BUSINESS_NAME}`;
     const canonical = path ? `${SITE_ORIGIN}${path}` : null;
-    const card = image ?? DEFAULT_IMAGE;
 
     const previousTitle = document.title;
     const previousCanonical = document.head
@@ -137,20 +153,51 @@ export function useDocumentMeta(meta: string | DocumentMeta, description?: strin
     apply('property', 'og:title', documentTitle);
     apply('name', 'twitter:title', documentTitle);
     apply('name', 'twitter:card', 'summary_large_image');
-    apply('property', 'og:image', card);
-    apply('name', 'twitter:image', card);
+
+    /* Only override the card when a page brings its own. index.html ships the
+       site card together with its `og:image:width`, `og:image:height` and
+       `og:image:alt`; overriding just the URL would leave those three
+       describing a different image. A page that does pass one drops them,
+       because this hook cannot know the new file's dimensions. */
+    if (image) {
+      apply('property', 'og:image', image);
+      apply('name', 'twitter:image', image);
+      for (const key of ['og:image:width', 'og:image:height', 'og:image:alt']) {
+        findMeta('property', key)?.remove();
+      }
+    }
+
+    /* Every write below is unconditional, and that is deliberate. When a newer
+       page claims the head, the older page's cleanup is skipped entirely (see
+       `headOwner`), so anything the newer page merely *declines* to set would
+       survive from the older one: a `noindex` outliving the 404 that set it, or
+       `Home > Services` breadcrumbs on the home page. Writing the full set every
+       time makes the newer page's state complete. */
+    apply('name', 'robots', noindex ? 'noindex, follow' : 'index, follow');
 
     if (canonical) {
       apply('property', 'og:url', canonical);
       setCanonical(canonical);
-      if (path !== '/') setBreadcrumb(title, canonical);
     }
 
-    if (noindex) apply('name', 'robots', 'noindex, follow');
+    if (canonical && path !== '/') setBreadcrumb(title, canonical);
+    else clearBreadcrumb();
+
+    /* A `noindex` page must not canonicalise anywhere. index.html's canonical
+       points at the home page, so leaving it in place on the 404 tells Google
+       that a mistyped URL *is* the home page while also telling it not to index
+       that page: contradictory signals on the same URL, and the `noindex` can be
+       attributed to the canonical target. The SPA rewrite answers every unknown
+       path with 200, so this is reachable from any broken link. */
+    if (noindex && !canonical) removeCanonical();
 
     return () => {
+      // A newer page owns the head. Leave it alone.
+      if (headOwner !== myClaim) return;
+
       document.title = previousTitle || DEFAULT_TITLE;
-      if (canonical && previousCanonical) setCanonical(previousCanonical);
+      if (previousCanonical) setCanonical(previousCanonical);
+      else removeCanonical();
       clearBreadcrumb();
       for (const { attr, key } of applied) {
         const was = previous.get(`${attr}:${key}`);

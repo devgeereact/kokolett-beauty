@@ -1,7 +1,8 @@
 # Product Requirements — Kokolett Beauty UK
 
-Version 3.2 (2026-08-14: booking model, marketing IA and pricing sections brought in
-line with shipped behaviour) · MVP · single salon, single owner
+Version 3.3 (2026-08-31: positioning corrected to Thamesmead, locs retired from the
+service list, and the AI section rewritten to describe the three surfaces that actually
+ship) · MVP · single salon, single owner
 Production domain: `https://www.kokolettbeauty.com`
 
 ---
@@ -136,8 +137,10 @@ converted / declined states, filtering, priority indicators, one-click "offer th
 slot".
 
 **Owner dashboard** — today's schedule, calendar (day / week / month / agenda) with
-drag-to-reschedule and conflict detection, approvals queue, appointments, customers,
-services, availability rules, reports, AI assistant, settings.
+drag-to-reschedule and conflict detection, a combined Inbox (approvals and availability
+requests as tabs, not separate destinations), appointments, customers, services,
+availability rules, reports, the chat assistant, daily close, broadcasts, email outbox
+and templates, audit trail, system health, settings.
 
 **Customer management** — automatic creation, visit history, average spend, favourite
 services, private notes, marketing consent, email history.
@@ -150,12 +153,25 @@ managed separately, on their own settings page.
 **Reports** — revenue, bookings, returning-customer rate, cancellation rate, no-show
 rate, popular services, peak hours, review requests, trends.
 
-**AI assistant (advisory only)** — flags conflicts and reschedule opportunities,
-drafts customer email replies, and surfaces messages, analytics, trends and repeat
-customers. Computed live in the browser from data the dashboard already has
-(`src/lib/insights.ts`) — not a queued recommendation an Edge Function writes.
-Nothing it produces executes without an explicit owner action; see
-`docs/ARCHITECTURE.md` §6b for the mechanism.
+**AI, three separate surfaces** — they are easy to conflate and the distinction is a
+governance one, so it is stated here as well as in `docs/ARCHITECTURE.md` §6b.
+
+1. **Advisory insights** (`src/lib/insights.ts`) — flags conflicts and reschedule
+   opportunities, surfaces trends and repeat customers. Deterministic TypeScript
+   computed in the browser from data the page already fetched. No model, no network
+   call.
+2. **The chat assistant** (`supabase/functions/ai-assistant-chat`) — a real LLM. It
+   reads business data through `get_*` tools and can propose exactly two writes,
+   booking an appointment and sending a one-off email. Calling either only renders a
+   card; the write happens client-side under the owner's own session when she presses
+   Confirm. The function itself has no path to execute a write. It runs under the
+   caller's own Authorization header, so a non-owner gets a chat that can read nothing.
+3. **Drafting only** (`supabase/functions/draft-copy`, via `draftCopyService.ts`) — a
+   single-completion text generator behind an explicit `is_owner()` check, used for
+   "Polish with AI" on the compose modal, the broadcast composer and the customer
+   reply panel. Reply drafting used to be deterministic templating; it is not any more.
+
+Nothing any of the three produces reaches a customer without an explicit owner action.
 
 **Email automation** — booking held, booking confirmed, booking declined, reminder,
 rescheduled, cancelled, completed, review request, availability request received,

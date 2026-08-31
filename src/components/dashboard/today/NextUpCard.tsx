@@ -111,7 +111,7 @@ export function NextUpCard({
 }): JSX.Element {
   return (
     <Card className={cn('flex h-full flex-col p-4', className)}>
-      <h2 className="mb-2.5 text-base font-semibold leading-tight text-foreground">
+      <h2 className="mb-2.5 font-serif text-base font-semibold text-foreground">
         Next up
       </h2>
 

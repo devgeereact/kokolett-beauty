@@ -28,14 +28,19 @@ ROOT = Path(__file__).resolve().parent.parent
 TARGETS = [
     "src",
     "supabase/migrations",
-    "supabase/functions/_shared",
+    "supabase/functions",
     "public/offline.html",
     "index.html",
     "vite.config.ts",
     "package.json",
 ]
 
-SUFFIXES = {".ts", ".tsx", ".sql", ".html", ".json", ".css"}
+SUFFIXES = {".ts", ".tsx", ".sql", ".html", ".css"}
+
+# JSON cannot hold comments, so any dash in one is content. Only package.json has
+# content a person reads: its `description` is the source of the PWA manifest
+# string shown in the install prompt.
+JSON_ALLOWED = {"package.json"}
 
 SKIP_PARTS = {"node_modules", "dist", ".git", "coverage"}
 
@@ -58,9 +63,11 @@ DASHES = re.compile(r"[\u2014\u2013]")
 PLACEHOLDER = re.compile(r"""(['"`])\u2014\1""")
 
 # A file that has to quote a dash in order to remove one, such as a migration
-# whose whole job is a find-and-replace over live copy, opts out by carrying
-# this marker on a line of its own. Use it nowhere else.
-OPT_OUT = "copy-check: allow-dashes"
+# whose whole job is a find-and-replace over live copy, opts out by carrying this
+# marker as a comment on a line of its own. Anchored, because a plain substring
+# test exempted any file that merely mentioned the marker in prose, including
+# every future migration that copied 0065's header.
+OPT_OUT_RE = re.compile(r"^\s*(?:--|//|\*|#)\s*copy-check: allow-dashes\s*$", re.M)
 
 BLOCK_COMMENTS = {
     ".ts": [(r"/\*", r"\*/")],
@@ -85,18 +92,41 @@ def blank_comments(text: str, suffix: str) -> str:
     """
     for open_pat, close_pat in BLOCK_COMMENTS.get(suffix, []):
         pattern = re.compile(open_pat + r".*?" + close_pat, re.DOTALL)
-        text = pattern.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
+
+        def blank(match: re.Match[str]) -> str:
+            # A `/*` inside a string literal is not a comment opener. Without
+            # this, `const glob = '/*'` blanked every line down to the next
+            # `*/` and any dash in the copy between them went unreported.
+            line_start = text.rfind("\n", 0, match.start()) + 1
+            before = text[line_start : match.start()]
+            if before.count("'") % 2 or before.count('"') % 2 or before.count("`") % 2:
+                return match.group(0)
+            return re.sub(r"[^\n]", " ", match.group(0))
+
+        text = pattern.sub(blank, text)
 
     marker = LINE_COMMENTS.get(suffix)
     if marker:
         out = []
+        # Quote state carries across lines for SQL only. A copy migration
+        # routinely opens a string literal on one line and closes it three lines
+        # later, and a per-line count reported zero quotes before a `--` on the
+        # middle lines, so anything after it was discarded along with any dash in
+        # the copy. TypeScript must NOT carry: comments there are full of
+        # apostrophes ("doesn't", "owner's"), each of which would flip the state
+        # and then swallow every following comment as though it were a string.
+        carries = suffix == ".sql"
+        in_string = False
         for line in text.split("\n"):
-            hit = line.find(marker)
-            # A `--` inside a SQL string literal is not a comment, and neither
-            # is `//` inside a URL. Counting quotes ahead of the marker is
-            # crude, but it is right for every real case in this repo.
-            if hit >= 0 and line[:hit].count("'") % 2 == 0 and not line[:hit].endswith(":"):
+            hit = -1 if in_string else line.find(marker)
+            scan = line if hit < 0 else line[:hit]
+            if hit >= 0 and scan.endswith(":"):
+                hit = -1  # `//` in a URL, not a comment.
+                scan = line
+            if hit >= 0:
                 line = line[:hit]
+            if carries:
+                in_string = (in_string + scan.count("'")) % 2 == 1
             out.append(line)
         text = "\n".join(out)
 
@@ -106,7 +136,7 @@ def blank_comments(text: str, suffix: str) -> str:
 def offending_lines(path: Path) -> list[tuple[int, str]]:
     suffix = path.suffix
     text = path.read_text(encoding="utf-8")
-    if OPT_OUT in text:
+    if OPT_OUT_RE.search(text):
         return []
     stripped = blank_comments(text, suffix)
     originals = text.split("\n")
@@ -129,7 +159,12 @@ def files() -> list[Path]:
         if not base.is_dir():
             continue
         for path in sorted(base.rglob("*")):
-            if not path.is_file() or path.suffix not in SUFFIXES:
+            if not path.is_file():
+                continue
+            if path.suffix == ".json":
+                if path.name not in JSON_ALLOWED:
+                    continue
+            elif path.suffix not in SUFFIXES:
                 continue
             if SKIP_PARTS & set(path.parts) or SKIP_NAME_RE.search(path.name):
                 continue

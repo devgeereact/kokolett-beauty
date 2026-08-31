@@ -32,9 +32,13 @@ export const SITE_ORIGIN = 'https://www.kokolettbeauty.com';
 export const CONTACT_EMAIL = 'booking@kokolettbeauty.com';
 
 /**
- * Where the salon is. SE28 8RX is Thamesmead, in the Royal Borough of
- * Greenwich, which is what the verified Google profile shows. Woolwich is SE18
- * and roughly two miles away: it belongs in AREAS_SERVED, never here.
+ * Where the salon is. SE28 8RX is Thamesmead, in the London Borough of Bexley
+ * (ward Thamesmead East), which is what the verified Google profile shows.
+ * Woolwich is SE18, roughly two miles west and in Greenwich: it belongs in
+ * AREAS_SERVED, never here.
+ *
+ * Thamesmead straddles Bexley and Greenwich, so the borough is easy to get
+ * wrong. The postcode's own ONS record is the authority.
  */
 export const LOCALITY = 'Thamesmead';
 export const REGION = 'London';
@@ -49,12 +53,22 @@ export const POSITIONING = `Women's hair salon in ${LOCALITY}, South East London
 export const AREAS_SERVED = [
   'Thamesmead',
   'Abbey Wood',
+  'Belvedere',
   'Plumstead',
+  'Erith',
   'Woolwich',
   'Charlton',
   'Greenwich',
   'Eltham',
 ] as const;
+
+/**
+ * Postcode centroid for SE28 8RX, from the Office for National Statistics via
+ * api.postcodes.io. Sourced rather than guessed, and accurate to the postcode.
+ * Swap for the exact pin on the Google profile if that sits somewhere
+ * meaningfully different.
+ */
+export const GEO = { latitude: 51.512543, longitude: 0.126009 } as const;
 
 /**
  * The service groups, matching `service_menu.group_name` in the database

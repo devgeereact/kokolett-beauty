@@ -162,7 +162,7 @@ function buildTokens(p: TemplatePayload): Record<string, string> {
     service_name: p.service_name ?? '',
     reference: p.reference ?? '',
     location: p.salon_address ?? SALON,
-    staff_name: 'Koko Lett',
+    staff_name: 'Christy',
     approval_window_h: String(p.approval_window_h ?? 12),
     cancellation_window_h: String(p.cancellation_window_h ?? 24),
     reason: p.reason ?? '',

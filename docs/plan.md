@@ -42,7 +42,7 @@ that was never built; this list used to repeat it.
       headers are the record past that. A further pass ran 2026-08-30 (documented in
       `docs/KOKO_GAP.md` §4), fixing the migration range and Edge Function count again
       (7→9→10) plus an `ARCHITECTURE.md` §6b gap (a third AI surface, `draft-copy`,
-      wasn't described). A third pass ran 2026-08-31 (migrations now at `0064`,
+      wasn't described). A third pass ran 2026-08-31 (migrations now at `0068`,
       Edge Functions at 11): fixed the stale function count in `RULES.md` §1
       (was still "seven"), resolved the `google_place_id` item below, added two new
       shared interaction primitives to `DESIGN.md` §15.4b, extended `HOOKS.md` §8/§18

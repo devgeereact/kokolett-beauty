@@ -215,7 +215,11 @@ announces the dash as nothing at all and the range reads as two unconnected time
 Code comments are exempt. A comment is not copy.
 
 Enforced by `npm run lint:copy` (`scripts/check-copy.py`), which runs in CI and strips
-comments before checking. `.claude/hookify.em-dash-in-copy.local.md` warns earlier, in
+comments before checking. **It covers `supabase/functions/` in full**, not just
+`_shared/`: the AI prompts are the two places where a model literally writes the
+sentences, and both were carrying em dashes while instructing the model to use none. A
+model copies what it is shown before it follows what it is told, so the prompts are now
+dash-free themselves and say why. `.claude/hookify.em-dash-in-copy.local.md` warns earlier, in
 the editor, but it is advisory. A file that must quote a dash in order to remove one,
 such as a migration doing a find-and-replace over live copy, opts out with a
 `copy-check: allow-dashes` marker and nothing else does.

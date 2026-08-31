@@ -63,7 +63,7 @@ export function PaymentReconciliationCard({
   return (
     <Card className={cn('flex h-full flex-col p-4', className)}>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold leading-tight text-foreground">
+        <h2 className="font-serif text-base font-semibold text-foreground">
           Payments to record
         </h2>
         <Link

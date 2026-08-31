@@ -6,7 +6,12 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useUsualHours } from '@/hooks/useUsualHours';
 import { toWhatsAppLink } from '@/lib/whatsapp';
 import { splitAddressLines } from '@/lib/format';
-import { CONTACT_EMAIL, buildGoogleProfileUrl, buildMapUrl } from '@/lib/business';
+import {
+  CONTACT_EMAIL,
+  INSTAGRAM_URL,
+  buildGoogleProfileUrl,
+  buildMapUrl,
+} from '@/lib/business';
 
 /** The site's real pages, in nav order — reinstated 2026-08-25 (marketing
     rebrand). `My bookings` stays separate: it's a customer utility, not a
@@ -45,6 +50,11 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   const mapUrl = settings?.address_line ? buildMapUrl(settings.address_line) : null;
   /* The footer icon sits in the social row next to Instagram, so it has to go
      to the profile. `google_review_url` is the write-a-review dialog. */
+  /* Falls back to the constant the structured data's `sameAs` uses. Reading
+     only from settings meant clearing that field hid the footer icon while
+     index.html still asserted the profile, which is the identity split this
+     module exists to close. */
+  const instagramUrl = settings?.instagram_url ?? INSTAGRAM_URL;
   const googleProfileUrl =
     buildGoogleProfileUrl(settings?.google_place_id) ??
     settings?.google_review_url ??
@@ -280,9 +290,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     </svg>
                   </a>
                 )}
-                {settings?.instagram_url && (
+                {instagramUrl && (
                   <a
-                    href={settings.instagram_url}
+                    href={instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Kokolett Beauty on Instagram"

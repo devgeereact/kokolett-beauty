@@ -6,17 +6,21 @@ import { photoPlaceholderBackground } from '@/lib/photoPlaceholder';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { cn } from '@/lib/utils';
 
-interface PhotoCardProps {
-  /** ImageKit path, once real photography exists. Falls back to a warm
-      placeholder gradient when absent. */
-  imagePath?: string | null;
+/**
+ * A card either shows a photograph, in which case it must describe it, or it
+ * shows a placeholder gradient and takes no alt at all. Expressed as a union so
+ * the compiler enforces it: `alt?: string` let a caller omit the description and
+ * silently fall through to `alt=""`, which marks the photo decorative and drops
+ * it from image search, the exact thing rendering a real `<img>` was for.
+ */
+type PhotoSource =
+  | { imagePath: string | null | undefined; alt: string }
+  | { imagePath?: undefined; alt?: undefined };
+
+type PhotoCardProps = PhotoSource & {
   /** Selects which of the six placeholder gradients to use — pass the
       grid index so neighbouring cards don't repeat the same tone. */
   placeholderTone: number;
-  /** Describes the photograph. Required whenever `imagePath` is set: the
-      photo renders as a real `<img>`, so it needs alt text for screen
-      readers and is indexable by image search. */
-  alt?: string;
   tag?: string;
   title: string;
   description?: string;
@@ -25,7 +29,7 @@ interface PhotoCardProps {
       case this component has yet. */
   ctaHref?: string;
   className?: string;
-}
+};
 
 const MAX_TILT_DEG = 7;
 
@@ -82,8 +86,16 @@ export function PhotoCard({
 
   /* A real `<img>` rather than a CSS background. Visually identical under the
      scrim, but a background-image carries no alt text and image search cannot
-     index it — which, for a salon whose work is the product, was throwing away
-     the whole of Google Images. */
+     index it, which for a salon whose work is the product was throwing away the
+     whole of Google Images.
+
+     `rounded-[inherit]` is load-bearing, not decoration. A background-image is
+     painted by the element itself and is always clipped to its own
+     border-radius. A child `<img>` relies on the parent's `overflow-hidden`,
+     and WebKit does not reliably apply that clip once the parent carries a 3D
+     transform, which this card does unconditionally via `perspective()`. Without
+     it the photograph renders with square corners overflowing the rounded card
+     on Safari and iOS, while the scrim and grain stay rounded. */
   const placeholderStyle: CSSProperties = {
     background: photoPlaceholderBackground(placeholderTone),
   };
@@ -127,10 +139,10 @@ export function PhotoCard({
       {imagePath ? (
         <img
           src={buildImageKitUrl(imagePath, { width: 640, height: 800 })}
-          alt={alt ?? ''}
+          alt={alt}
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full rounded-[inherit] object-cover"
         />
       ) : (
         <div className="absolute inset-0" style={placeholderStyle} aria-hidden="true" />

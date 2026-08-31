@@ -114,7 +114,7 @@ export function MarkCompletedStep({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Koko, KB-XXXX…"
+            placeholder="Sarah, KB-XXXX…"
           />
         )}
       </Field>

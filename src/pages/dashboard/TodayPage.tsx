@@ -421,15 +421,21 @@ export function TodayPage(): JSX.Element {
           </div>
         </div>
 
-        <BookingsOverviewChart className="lg:col-span-6" timezone={timezone} />
-        <AvailabilityRequestsCard className="lg:col-span-6" />
+        {/* Row 2 is 9 wide, not 12: the schedule card above is `lg:row-span-2`
+            and still holds columns 1 to 3 here. A span-6 chart left columns 10
+            to 12 empty and pushed the next card onto its own row, so the page
+            carried a hole in the middle and a half-width card alone at the
+            bottom. */}
+        <BookingsOverviewChart className="lg:col-span-9" timezone={timezone} />
 
-        {/* A matched pair, both lg:col-span-6, sharing one row. The grid's
-            `lg:items-stretch` sizes the taller of the two and both cards carry
-            `flex h-full flex-col`, so their top and bottom edges line up
-            whatever each one happens to contain that day. */}
+        {/* A matched pair, both lg:col-span-6, sharing a full row of their own.
+            The grid's `lg:items-stretch` sizes the taller of the two and both
+            cards carry `flex h-full flex-col`, so their top and bottom edges
+            line up whatever each one happens to contain that day. */}
         <PaymentReconciliationCard className="lg:col-span-6" />
         <AssistantInsightsRow className="lg:col-span-6" timezone={timezone} />
+
+        <AvailabilityRequestsCard className="lg:col-span-12" />
       </div>
 
       <Modal

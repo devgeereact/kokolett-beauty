@@ -107,7 +107,7 @@ export function GlanceGrid({
 
   return (
     <Card className={cn('flex h-full flex-col p-4', className)}>
-      <h2 className="mb-3 text-base font-semibold leading-tight text-foreground">
+      <h2 className="mb-3 font-serif text-base font-semibold text-foreground">
         Today at a glance
       </h2>
       {/* Vertically centred in the leftover height (this card matches "Next

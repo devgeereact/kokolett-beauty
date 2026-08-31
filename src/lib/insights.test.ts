@@ -29,7 +29,7 @@ function appt(overrides: Partial<AppointmentDetailed>): AppointmentDetailed {
 function customer(overrides: Partial<Customer>): Customer {
   return {
     id: 'c1',
-    full_name: 'Koko Beauty',
+    full_name: 'Sarah Bennett',
     email: 'koko@example.com',
     mobile: null,
     ...overrides,

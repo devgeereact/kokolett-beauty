@@ -115,8 +115,10 @@
       the template changes. docs/GO-LIVE.md §3 carries the step, and
       docs/SOCIAL_PROFILE.md §2 is the full source-of-truth map.
 
-      `geo` is deliberately absent until the real coordinates are read off the
-      Google profile's own pin. A guessed lat/long is worse than none.
+      `geo` is the Office for National Statistics centroid for SE28 8RX, read
+      from api.postcodes.io on 2026-08-31. Sourced, not guessed, and accurate to
+      the postcode. Replace it with the exact pin from the Google profile if that
+      sits somewhere meaningfully different.
     -->
     <script type="application/ld+json">
       {
@@ -145,6 +147,11 @@
               "addressCountry": "GB"
             },
             "telephone": "+44 7707 906408",
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 51.512543,
+              "longitude": 0.126009
+            },
             "openingHoursSpecification": [
               { "@type": "OpeningHoursSpecification", "dayOfWeek": "Monday", "opens": "09:00", "closes": "18:45" },
               { "@type": "OpeningHoursSpecification", "dayOfWeek": "Tuesday", "opens": "09:00", "closes": "16:45" },
@@ -155,27 +162,18 @@
                 "closes": "17:45"
               }
             ],
+            "_comment_catalogue": "The service catalogue is deliberately NOT declared here. /services emits it on this same @id, generated from the service_menu table, so it lists all 44 individual style names and cannot drift from what the owner maintains in the console. Declaring a second, hand-keyed catalogue here would give one entity two competing catalogues, and the hand-keyed one would be the stale half. The description above still names all six groups in prose, which is what a crawler sees on any page.",
             "areaServed": [
               { "@type": "Place", "name": "Thamesmead" },
               { "@type": "Place", "name": "Abbey Wood" },
+              { "@type": "Place", "name": "Belvedere" },
               { "@type": "Place", "name": "Plumstead" },
+              { "@type": "Place", "name": "Erith" },
               { "@type": "Place", "name": "Woolwich" },
               { "@type": "Place", "name": "Charlton" },
               { "@type": "Place", "name": "Greenwich" },
               { "@type": "Place", "name": "Eltham" }
             ],
-            "hasOfferCatalog": {
-              "@type": "OfferCatalog",
-              "name": "Women's hair services",
-              "itemListElement": [
-                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Braids", "description": "Knotless, box, cornrow, feed-in, Ghana, Fulani, lemonade, stitch, tribal and micro braids, plus braids for children." } },
-                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Twists", "description": "Senegalese, passion, spring, Marley and two strand twists, sized and parted to suit your hair." } },
-                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Weaves, wigs and extensions", "description": "Sew-in weaves, closure and frontal installs, quick weaves, crochet braids, wig installs, tape-in and micro-link extensions." } },
-                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Natural hair and styling", "description": "Wash and go, silk press, blow dry, twist-outs, cutting and shaping, transitioning support, bridal and occasion styling." } },
-                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Colour", "description": "Full colour, root touch-ups, highlights and lowlights, bleaching and lifting, toning and glossing." } },
-                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Treatments", "description": "Deep conditioning, protein and bond repair, scalp and steam treatments, hot oil, and split-end care." } }
-              ]
-            },
             "currenciesAccepted": "GBP",
             "potentialAction": {
               "@type": "ReserveAction",

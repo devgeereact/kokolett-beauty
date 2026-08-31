@@ -5,8 +5,8 @@ single-owner UK **women's hair salon**. It is edited by humans **and** AI agents
 (Claude Code, CodeRabbit, Cursor, etc.). These rules are binding for any automated
 contribution.
 
-**Scope is women's hair only.** Cutting, colouring, styling, braids, twists, weaves and
-treatments. Not nails, brows, lashes or aesthetics; not unisex; not barbering. The word
+**Scope is women's hair only.** Six service groups, matching `service_menu`: Braids,
+Twists, Weaves/wigs/extensions, Natural hair and styling, Colour, Treatments. Not nails, brows, lashes or aesthetics; not unisex; not barbering. The word
 "Beauty" in the name is branding, not scope, and structured data uses `HairSalon`
 rather than `BeautySalon` for exactly that reason. Never write copy, a service name, a
 meta tag or a model prompt that implies anything wider: it invites enquiries the salon

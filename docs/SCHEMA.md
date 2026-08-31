@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0062`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0063`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -41,6 +41,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0060_customer_communication_preferences.sql`       | Added `customer_communication_preferences()` and `customer_set_marketing_consent()` — no new table, no new column. Session-scoped RPCs (via `customer_from_session()`, `0021`) so a customer on `/my` can read and change her own `customers.marketing_consent` without asking the owner. |
 | `0061_email_template_history.sql`                   | Added `email_template_revisions` (append-only) and a `before update` trigger on `email_templates` that logs the old subject/html_body whenever either actually changes. No revert RPC — a revert is just a normal update with an earlier revision's content, which the same trigger logs again. |
 | `0062_customer_session_revocation.sql`              | Added `revoke_customer_sessions()` and a new `customer.sessions_revoked` value in `audit_events.action`'s check constraint — no new table. Marks a customer's live `customer_access_tokens` (`purpose = 'session'`) as used, which `customer_from_session()` (`0021`) already treats as invalid. |
+| `0063_undo_cancellation.sql`                        | `set_appointment_status()` now allows `cancelled` → confirmed/checked_in/in_service (previously nothing), clearing `cancelled_at`/`cancellation_reason` on the way back. `notify_appointment_status_changed()` gained a matching branch: fails the queued cancellation-notice emails and re-queues the reminders the cancellation retired. |
 
 ### Every table, and where it is documented
 

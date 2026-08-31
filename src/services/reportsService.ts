@@ -1,6 +1,7 @@
 import { listAppointments } from '@/services/appointmentService';
 import { listCustomers } from '@/services/customerService';
 import { listWeeklyTemplate } from '@/services/availabilityService';
+import { supabase } from '@/lib/supabase';
 import { addDays, salonDayRange, toSalonDate } from '@/lib/format';
 import {
   analyzeDayOfWeekTrend,
@@ -168,4 +169,25 @@ export async function getReportsData(timezone: string): Promise<ReportsData> {
     hourOfDay: analyzeHourOfDayTrend(counted, timezone),
     topCustomers: rankRepeatCustomers(customers, completed).slice(0, TOP_CUSTOMERS_LIMIT),
   };
+}
+
+export interface BookingFunnel {
+  days: number;
+  book_page_viewed: number;
+  slot_selected: number;
+  booking_submitted: number;
+  booking_confirmed: number;
+}
+
+/**
+ * KOKO_GAP.md P3: first-party, self-hosted funnel counts (migration
+ * 0064) — no third-party vendor, no personal data. `product_events` holds
+ * nothing but an event name, a random per-tab session id, and a timestamp.
+ */
+export async function getBookingFunnel(days = 30): Promise<BookingFunnel> {
+  const { data, error } = await supabase.rpc('product_event_funnel_summary', {
+    p_days: days,
+  });
+  if (error) throw error;
+  return data as unknown as BookingFunnel;
 }

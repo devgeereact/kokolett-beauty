@@ -1,4 +1,4 @@
-import { type JSX, useMemo, useState } from 'react';
+import { type JSX, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
@@ -6,6 +6,7 @@ import { Calendar } from '@/components/ui/Calendar';
 import { Card } from '@/components/ui/Card';
 import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import { trackEvent } from '@/lib/analytics';
 import { formatLocalDate, parseLocalDate } from '@/lib/localDate';
 import { useServices } from '@/hooks/useServices';
 import { useAvailability } from '@/hooks/useAvailability';
@@ -70,6 +71,10 @@ export function BookPage(): JSX.Element {
   const activeDate = openDate ?? openDates[0] ?? null;
   const openDateSet = useMemo(() => new Set(openDates), [openDates]);
 
+  useEffect(() => {
+    trackEvent('book_page_viewed');
+  }, []);
+
   const book = async (): Promise<void> => {
     if (!slot) return;
     // A first name alone cannot tell two customers apart in a diary, so the
@@ -90,8 +95,11 @@ export function BookPage(): JSX.Element {
 
     setSubmitting(true);
     setError(null);
+    trackEvent('booking_submitted');
     try {
-      setResult(await submitBooking({ startsAt: slot.startsAt, ...details }));
+      const booked = await submitBooking({ startsAt: slot.startsAt, ...details });
+      setResult(booked);
+      trackEvent('booking_confirmed');
     } catch (e) {
       const appError = toAppError(e);
       setError(appError.message);
@@ -257,6 +265,7 @@ export function BookPage(): JSX.Element {
                           onClick={() => {
                             setSlot(s);
                             setError(null);
+                            trackEvent('slot_selected');
                           }}
                           className="min-h-12 rounded-lg border border-border bg-card font-mono text-base text-foreground hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >

@@ -9,6 +9,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { BookingFunnelCard } from '@/components/dashboard/reports/BookingFunnelCard';
 import { DayOfWeekChart } from '@/components/dashboard/insights/DayOfWeekChart';
 import { HourOfDayChart } from '@/components/dashboard/insights/HourOfDayChart';
 import { StatTrendTile } from '@/components/dashboard/reports/StatTrendTile';
@@ -365,6 +366,8 @@ export function ReportsPage(): JSX.Element {
               </Card>
             </div>
           )}
+
+          <BookingFunnelCard />
 
           <Card className="p-5">
             <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">

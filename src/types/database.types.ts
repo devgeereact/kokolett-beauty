@@ -814,6 +814,30 @@ export type Database = {
           },
         ]
       }
+      product_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          metadata: Json | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1433,6 +1457,7 @@ export type Database = {
           starts_at: string
         }[]
       }
+      product_event_funnel_summary: { Args: { p_days?: number }; Returns: Json }
       public_reviews: { Args: { p_limit?: number }; Returns: Json }
       public_service_menu: { Args: never; Returns: Json }
       purge_expired_access_tokens: { Args: never; Returns: number }
@@ -1586,6 +1611,10 @@ export type Database = {
       }
       sync_google_reviews: { Args: never; Returns: number }
       system_health_summary: { Args: never; Returns: Json }
+      track_product_event: {
+        Args: { p_event_name: string; p_metadata?: Json; p_session_id: string }
+        Returns: undefined
+      }
       unsubscribe_via_link: {
         Args: { p_subscriber_id: string }
         Returns: undefined

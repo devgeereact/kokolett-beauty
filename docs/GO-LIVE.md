@@ -112,6 +112,27 @@ information. Sign in as the owner and fill in, screen by screen:
   dashboard: these change with a deploy, not with a login. `docs/SOCIAL_PROFILE.md`
   §2 maps which fact lives where.
 
+### 3.1 If the site loads blank
+
+It is almost certainly a missing environment variable, and since 2026-08-31 it
+will tell you which one.
+
+`createClient` throws `supabaseUrl is required.` when either Supabase variable is
+empty, and it does so at module scope, before React mounts. `ErrorBoundary`
+cannot catch that, because there is no tree to catch it in. The result used to be
+a completely blank page: correct HTML, correct title, empty body, and one console
+line nobody was looking at. `.env` is not committed, so this is the first thing a
+fresh environment hits and it is also what one typo'd variable looks like.
+
+`src/main.tsx` now checks the required variables before importing anything that
+builds a client, and paints a plain message naming the missing ones. The import
+of `App` is dynamic for that reason: a static import is hoisted and evaluated
+before any statement in the file, so the guard would sit uselessly beneath the
+crash it was written to prevent.
+
+It names the variables, never their values. A value in a screenshot is a leaked
+credential.
+
 ## 4. Verification — a 200 proves nothing here
 
 The SPA rewrite answers every path with `index.html`, including a missing

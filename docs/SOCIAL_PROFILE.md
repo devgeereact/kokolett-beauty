@@ -24,7 +24,7 @@ Every field below must read identically on the website, on Google, on Instagram 
 | Email | booking@kokolettbeauty.com |
 | Website | https://www.kokolettbeauty.com |
 | Booking page | https://www.kokolettbeauty.com/book |
-| Instagram | https://www.instagram.com/kokolettbeautyuk |
+| Instagram | https://www.instagram.com/kokolettbeautyuk/ |
 | Experience | Over 15 years |
 | Areas served | Thamesmead, Abbey Wood, Plumstead, Woolwich, Charlton, Greenwich, Eltham |
 | Positioning line | Women's hair salon in Thamesmead, South East London |

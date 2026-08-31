@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0063`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0064`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -42,6 +42,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0061_email_template_history.sql`                   | Added `email_template_revisions` (append-only) and a `before update` trigger on `email_templates` that logs the old subject/html_body whenever either actually changes. No revert RPC — a revert is just a normal update with an earlier revision's content, which the same trigger logs again. |
 | `0062_customer_session_revocation.sql`              | Added `revoke_customer_sessions()` and a new `customer.sessions_revoked` value in `audit_events.action`'s check constraint — no new table. Marks a customer's live `customer_access_tokens` (`purpose = 'session'`) as used, which `customer_from_session()` (`0021`) already treats as invalid. |
 | `0063_undo_cancellation.sql`                        | `set_appointment_status()` now allows `cancelled` → confirmed/checked_in/in_service (previously nothing), clearing `cancelled_at`/`cancellation_reason` on the way back. `notify_appointment_status_changed()` gained a matching branch: fails the queued cancellation-notice emails and re-queues the reminders the cancellation retired. |
+| `0064_product_events.sql`                           | Added `product_events` (no personal data — event name from a fixed vocabulary, a random client-generated session id, timestamp), `track_product_event()` (anon-callable, rate-limited) and `product_event_funnel_summary()` (owner-only). First-party booking-funnel counts. |
 
 ### Every table, and where it is documented
 
@@ -69,6 +70,7 @@ migration that created them as the authoritative source.
 | `subscribers`           | `0017`     | mailing list: `email` (citext, unique), `source`, `confirmed`, `unsubscribed_at`                                                 |
 | `secret_login_attempts` | `0051`     | hashed-IP lockout counter for the secret owner login (`ip_hash`, `attempted_at`); no anon/authenticated policies, service-role only |
 | `audit_events`          | `0052`, action vocabulary extended by `0054`, `0056`, `0058` and `0062` | immutable log of the highest-risk owner actions: `actor`, `action`, `entity_type`, `entity_id`, `summary`, `old_value`/`new_value` jsonb. SELECT-only for the owner; no insert/update/delete policy for any role, including the owner |
+| `product_events`        | `0064`     | first-party booking-funnel counts, no personal data: `event_name` (fixed vocabulary), `session_id` (random, client-generated), `metadata` jsonb, `created_at`. Written only by `track_product_event()`, rate-limited; SELECT-only for the owner |
 
 Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
 `google_place_id`, `address_line`, `phone` (`0017`) and `business_name`,

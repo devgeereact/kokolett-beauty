@@ -26,7 +26,7 @@ Columns: **Feature | Current implementation | Status | Evidence | What's missing
 
 The brief assumed several things were missing that are, in fact, built. Listed first so they aren't mistaken for surprises buried in the matrix below.
 
-- **RLS test suite** — `supabase/tests/rls_test.sql` (457 lines, 49 assertions, anon/non-owner/owner × 22 tables, run in CI). Seeds every sensitive table before probing (a 2026-08-20 fix — a naive "anon sees 0 rows" test would pass vacuously on an empty table).
+- **RLS test suite** — `supabase/tests/rls_test.sql` (572 lines, 59 assertions, anon/non-owner/owner × 24 tables, run in CI). Seeds every sensitive table before probing (a 2026-08-20 fix — a naive "anon sees 0 rows" test would pass vacuously on an empty table).
 - **AI governance** (propose-only, owner-confirms, no autonomous writes) — `supabase/functions/ai-assistant-chat/index.ts`. `propose_booking`/`propose_email` end the model's turn and hand a proposal object to the client; no dispatcher branch executes either as a write. Runs under the caller's own JWT (not service role), so a non-owner gets a working chat that reads nothing. Tool results are fenced (`<<<RECORDS ... RECORDS>>>`) against prompt injection.
 - **Approvals + Requests → Inbox merge** — `src/pages/dashboard/InboxPage.tsx`, tabbed. `/dashboard/approvals` and `/dashboard/requests` are intentional `<Navigate>` redirects (`src/lib/routes.ts:40-51`, `@deprecated` on the old constants) preserving old bookmarks.
 - **`/subscribe`** — real feature (mailing-list opt-in, deliberately unlinked from nav for pasting into an Instagram bio), not a dead route.
@@ -87,7 +87,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Template version history | Append-only revision log, auto-logged by a trigger on real content changes; a "History" panel on the editor with Compare and Revert | ✅ | `supabase/migrations/0061_email_template_history.sql`, `TemplateHistoryPanel.tsx` | — | — | — |
 | Suppressed / bounced lane | No async bounce/complaint ingestion (raw SMTP only) | 🟡 | `provider_id` column exists but unpopulated | No bounce-webhook feed since this is cPanel SMTP, not an API ESP. **Ruled infrastructure-blocked 2026-08-31 — see §5** — the only real option (IMAP-poll the mailbox and parse NDRs) is a project of its own, not a gap-fill. | P2 |
 | Email diagnostics (SPF/DKIM/DMARC/SMTP status screen) | Live SPF/DKIM/DMARC check via a new `email-diagnostics` Edge Function reading public DNS TXT records over DNS-over-HTTPS (no credentials); an "Email authentication" card on the existing System Health page, alongside the outbox queued/failed counts it already showed | ✅ | `supabase/functions/email-diagnostics/index.ts`, `src/pages/dashboard/SystemHealthPage.tsx` | — | — |
-| AI-drafted broadcast messaging | Rough idea → AI draft (`draft-copy` Edge Function) → owner-reviewed subject/body → send to confirmed, not-unsubscribed mailing-list subscribers only, queued through the existing outbox. Unsubscribe link on every broadcast email (new, previously nonexistent anywhere in the app). Same drafting reused on the one-off Compose modal and the customer-profile reply panel (deterministic templating there is now gone — `emailDrafts.ts` deleted). | ✅ | `supabase/migrations/0058_broadcast_messaging.sql`, `supabase/functions/draft-copy/index.ts`, `src/pages/dashboard/BroadcastsPage.tsx`, `src/pages/UnsubscribePage.tsx` — spec: `docs/history/2026-08-30-ai-broadcast-messaging-design.md` | — | — | — |
+| AI-drafted broadcast messaging | Rough idea → AI draft (`draft-copy` Edge Function) → owner-reviewed subject/body → send to confirmed, not-unsubscribed mailing-list subscribers only, queued through the existing outbox. Unsubscribe link on every broadcast email (new, previously nonexistent anywhere in the app). Same drafting reused on the one-off Compose modal and the customer-profile reply panel (deterministic templating there is now gone — `emailDrafts.ts` deleted). | ✅ | `supabase/migrations/0058_broadcast_messaging.sql`, `supabase/functions/draft-copy/index.ts`, `src/pages/dashboard/BroadcastsPage.tsx`, `src/pages/UnsubscribePage.tsx` | — | — | — |
 
 ### Security / Privacy
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
@@ -153,8 +153,29 @@ the new `draft-copy` Edge Function.
 | `docs/SCHEMA.md` `audit_events` row | Action-vocabulary list "extended by `0054` and `0056`" → "extended by `0054`, `0056` and `0058`" |
 | `supabase/config.toml` | Added the missing `[functions.draft-copy]` block (`verify_jwt = true` + rationale comment) — every other function already documents its posture there; this one didn't |
 | `docs/KOKO_GAP.md` §5 P2 | Added the missing `[x]` line for AI-drafted broadcast messaging (every other shipped §3 row already had one) |
-| `docs/GO-LIVE.md` / `docs/history/` | Split (§4 item 3, resolved): dated 2026-08-19 snapshot moved verbatim to `docs/history/2026-08-19-go-live-checklist.md`; `docs/GO-LIVE.md` rewritten as a slim, undated "stand up a fresh environment" procedure |
+| `docs/GO-LIVE.md` | Split (§4 item 3, resolved): dated 2026-08-19 snapshot moved out; `docs/GO-LIVE.md` rewritten as a slim, undated "stand up a fresh environment" procedure |
 | `docs/plan.md` | §4 item 4, resolved: appended a note to the "docs drift fast" bullet recording this 2026-08-30 pass and a rough next-pass cadence |
+
+### Third pass, 2026-08-31 (mechanical, already done)
+
+Closed a real RLS test-coverage gap (two tables shipped without being added to
+the probe list — a violation of `docs/RULES.md` §1's own hard rule) and retired
+`docs/history/` (`docs/superpowers/` was already retired into it the previous
+pass, then went with it here): the project decided the archive-folder
+convention itself was no longer worth keeping, not just that individual files
+in it were stale, so every pointer into it across the repo needed fixing
+rather than the folder needing a refresh.
+
+| File | Fix |
+|---|---|
+| `supabase/tests/rls_test.sql` | Added fixtures, probe-list entries, anon/authenticated-denial, owner-read, and insert-blocked assertions for `email_template_revisions` (`0061`) and `product_events` (`0064`), neither of which had been added since shipping; `plan(51)` → `plan(59)` |
+| `docs/RULES.md` §1 | "There are seven functions" → "eleven" (was already stale at nine/ten before this pass) |
+| `CLAUDE.md:60` | "eleven Deno Edge Functions" — already correct, no change needed |
+| `AGENTS.md:46` | "ten Deno Edge Functions" → "eleven" |
+| `docs/ARCHITECTURE.md:20` | "10 Deno Edge Functions" → "11" |
+| `docs/KOKO_GAP.md` §2 | RLS test-suite stats "457 lines, 49 assertions... 22 tables" → "572 lines, 59 assertions... 24 tables" |
+| `docs/plan.md` | Resolved the stale "`google_place_id` is unset" item — reviews are live in production; appended this pass to the "docs drift fast" note |
+| `docs/history/` | Folder deleted outright (23 files). Every reference into it — `README.md`, `CLAUDE.md`, this file, `docs/GO-LIVE.md`, `docs/SCHEMA.md`, `docs/plan.md`, and a source comment in `src/components/dashboard/calendar/MonthView.tsx` — rewritten to state the fact inline instead of citing a file that no longer exists. `docs/GPT.md` was left untouched (frozen input artifact, not a live doc) even though it still names `docs/history/` in its own table |
 
 ### Open questions — recommended, not executed
 
@@ -167,7 +188,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
    - AI proposal/confirm boundary — CLAUDE.md:69 is one dense sentence; AGENTS.md:21-32 has the full mechanism (dispatcher-branch argument, untrusted-data fencing). Recommend CLAUDE.md's line become a one-sentence pointer to AGENTS.md's fuller version, so the two can't drift independently on a future edit. **This is a restructuring choice — present here, not executed.**
    - "No Inngest" — consistent in both, no drift, no action.
 
-3. ~~**`docs/GO-LIVE.md`** self-describes as a dated 2026-08-19 snapshot... two options, neither picked~~ **Resolved 2026-08-30 (option a): split.** The dated completion snapshot moved verbatim to `docs/history/2026-08-19-go-live-checklist.md`; `docs/GO-LIVE.md` is now a slim, undated "stand up a fresh environment" procedure (env template, Supabase project setup, dashboard data entry, verification checklist), pointing to `docs/DEPLOYMENT.md` for build/deploy mechanics rather than duplicating them.
+3. ~~**`docs/GO-LIVE.md`** self-describes as a dated 2026-08-19 snapshot... two options, neither picked~~ **Resolved 2026-08-30 (option a): split.** `docs/GO-LIVE.md` is now a slim, undated "stand up a fresh environment" procedure (env template, Supabase project setup, dashboard data entry, verification checklist), pointing to `docs/DEPLOYMENT.md` for build/deploy mechanics rather than duplicating them. The dated 2026-08-19 completion snapshot this replaced was archived separately and is no longer kept in the repo (2026-08-31).
 
 4. ~~**`docs/plan.md`** — ... Optionally add one bullet... the user's call, not applied here~~ **Resolved 2026-08-30.** Appended a note to `plan.md`'s "docs drift fast" bullet recording this second pass and a rough cadence for the next one.
 

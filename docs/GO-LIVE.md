@@ -3,10 +3,9 @@
 This is the durable, undated procedure for taking a fresh clone (or a new
 Supabase project) to a working, verified live site. It replaces an earlier
 version of this file that was a dated, one-time completion snapshot for the
-2026-08-19 go-live — that snapshot is preserved verbatim at
-`docs/history/2026-08-19-go-live-checklist.md` for its narrative (what broke,
-what was found, exact commands run) but its content is historical, not
-current state.
+2026-08-19 go-live (the archived snapshot itself has since been deleted —
+see `git log -- docs/GO-LIVE.md` for the 2026-08-19 revision if the original
+narrative is ever needed).
 
 For the mechanics of building and shipping a build once the environment
 below is already set up, see `docs/DEPLOYMENT.md` — this file does not

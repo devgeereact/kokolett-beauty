@@ -197,8 +197,6 @@ Full details live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deploy playbook & safety rules
 - [`docs/plan.md`](docs/plan.md) — the living punch list of what's actually open
 - [`docs/GO-LIVE.md`](docs/GO-LIVE.md) — undated procedure for standing up a fresh environment: what has to be keyed in by hand and how to verify it landed
-- [`docs/history/`](docs/history/) — shipped plans, audits, reviews and decisions. Archive, not
-  current state: read it for *why*, never for *what the code does now*
 
 ## License
 MIT — do whatever you want, no warranty.

@@ -1,8 +1,7 @@
 ## Punch list — Owner Console
 
 Replaces the previous 24-step phased plan (2026-08-13), which three independent
-reviews found mostly shipped or overtaken by decisions made along the way — see
-`docs/history/2026-08-13-plan-review-ceo.md` for the full analysis and reasoning.
+reviews found mostly shipped or overtaken by decisions made along the way.
 This is a flat, living list of what's actually open. When an item ships, delete it
 rather than marking it done — `git log` is the record of what happened.
 
@@ -24,8 +23,7 @@ that was never built; this list used to repeat it.
 - [ ] **Migration-immutability violation — `0024`/`0025` were edited in place** after
       being live, instead of only via a follow-up migration (`docs/SCHEMA.md:10`'s own
       rule). `0026` already redid the fix correctly; the violation itself needs no
-      further code change, but the next in-place edit should get caught in review. See
-      `docs/history/2026-08-13-pr-review-gstack-init.md` for the full finding.
+      further code change, but the next in-place edit should get caught in review.
 - [ ] **Growth-nav is under-built relative to the PRD's own money metrics** — booking
       conversion, returning-customer rate and request-conversion have no dedicated
       surface. **Hold until the owner confirms the real constraint is booking
@@ -59,9 +57,8 @@ that was never built; this list used to repeat it.
       last_error: null` (verified live via Supabase 2026-08-31). Everything else the
       owner had to key in is done: address, phone, Instagram, review link, 402
       published slots, 49 menu items, and the `HairSalon` structured data in
-      `index.html` (`docs/history/2026-08-19-go-live-checklist.md` §4.7 — `docs/GO-LIVE.md`
-      was rewritten 2026-08-30 as an undated setup procedure; the dated completion
-      record moved to `docs/history/`).
+      `index.html` (`docs/GO-LIVE.md` was rewritten 2026-08-30 as an undated setup
+      procedure; the dated 2026-08-19 completion record it replaced is no longer kept).
 
 ### Explicitly not doing
 

@@ -485,9 +485,8 @@ is right; pinning it too narrowly is the bug. They now use `public, extensions`.
 
 ## 11. Migration `0007` — availability is the gate
 
-A change of booking policy, decided by the owner on 2026-08-07. It replaces the
-hybrid trust gate described in `docs/history/2026-08-06-intake-decisions.md`
-(superseded; PRD.md §4 now matches this section).
+A change of booking policy, decided by the owner on 2026-08-07. It replaces an
+earlier hybrid trust gate (superseded; PRD.md §4 now matches this section).
 
 **Before:** availability was generous, trust was the gate. First-time customers
 were held for approval; returning ones confirmed instantly.

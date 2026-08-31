@@ -49,7 +49,6 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
 | Product scope & metrics      | `docs/PRD.md`           |
 | Deploy process & safety      | `docs/DEPLOYMENT.md`    |
 | Hand-keyed go-live steps     | `docs/GO-LIVE.md`       |
-| Shipped plans, audits, decisions | `docs/history/` — archive; why, not what |
 
 ## Hard constraints
 - **Static build only.** Output is `dist/`, deployed via Git/FTP to cPanel.

@@ -159,6 +159,12 @@ Reports and AI Assistant demoted to a secondary tier. That nav was never built;
 mounted purely as redirects (`/dashboard/inbox?tab=approvals` / `?tab=requests`) so old
 links and bookmarks still land somewhere real (see `src/App.tsx`).
 
+Every route that must not be indexed sets `noindex` **and no `path`**, so it neither
+enters the index nor inherits `index.html`'s canonical: the 404, `SecretGate`,
+`/my`, `/reset-password`, `/unsubscribe/:id` and the whole dashboard, which sets it
+once in `DashboardLayout`. robots.txt disallows the same set, and
+`src/lib/sitemap.test.ts` asserts the three lists agree.
+
 `ProtectedRoute` gates owner routes on Supabase session **and** `is_owner()`. A signed-in
 user who fails that check gets a client-side "no access" view, not the dashboard —
 not a literal HTTP 403.

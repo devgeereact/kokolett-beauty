@@ -9,5 +9,10 @@ Disallow: /dashboard
 Disallow: /my
 Disallow: /access
 Disallow: /login
+# Single-use links from an email. Neither is a page anyone should reach from a
+# search result, and an indexed /unsubscribe/<id> lets a stranger unsubscribe
+# someone else.
+Disallow: /reset-password
+Disallow: /unsubscribe
 
 Sitemap: https://www.kokolettbeauty.com/sitemap.xml

@@ -1,6 +1,7 @@
 import { type JSX, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * Public, no session, no `DashboardLayout`. Requires an explicit click before
@@ -12,6 +13,9 @@ import { supabase } from '@/lib/supabase';
  * magic-link system (migration 0058).
  */
 export function UnsubscribePage(): JSX.Element {
+  /* One-off link from an email footer, keyed to a subscriber id. Never a search
+     result, and it must not canonicalise to the home page. */
+  useDocumentMeta({ title: 'Unsubscribe', noindex: true });
   const { subscriberId } = useParams<{ subscriberId: string }>();
   const [done, setDone] = useState(false);
   const [confirming, setConfirming] = useState(false);

@@ -125,25 +125,39 @@ diff /tmp/live.htaccess .htaccess          # expect only your own change
 ssh cpanel 'cp ~/kokolettbeauty.com/.htaccess ~/private_backups/configs/htaccess-kokolettbeauty-$(date +%Y%m%d-%H%M%S).bak'
 ```
 
-**`robots.txt` and `sitemap.xml` are edge-cached, and Cloudflare rewrites the
-first one.** Two things to know before trusting what you fetch:
+**`robots.txt` is not served by this origin, and you cannot control its caching
+from here.** Cloudflare's "Managed Content" feature rewrites the file: it prepends
+its own block of AI-bot rules and replaces the cache header. Measured on
+2026-08-31, after `.htaccess` was given an explicit `max-age=300`:
 
-- Neither file matched a caching rule until 2026-08-31, so both fell through to
-  Cloudflare's default and were held at the edge for four hours. A deploy that
-  added two `Disallow` lines served the previous robots.txt for the rest of that
-  window (`cf-cache-status: HIT`, `age: 2809`). They now carry `max-age=300`.
-- **Cloudflare prepends its own "Managed Content" block of AI-bot rules**, so
-  what is served is not byte-for-byte what is deployed. Our directives are
-  appended after it and are honoured. A robots.txt that opens with rules nobody
-  in this repo wrote is normal, not a compromise.
+| File | `cache-control` served | `cf-cache-status` | Whose header wins |
+| --- | --- | --- | --- |
+| `sitemap.xml` | `max-age=300, public, must-revalidate` | `DYNAMIC` | ours |
+| `robots.txt` | `public, max-age=14400, must-revalidate` | `HIT` / `MISS` | Cloudflare's |
 
-After changing either file, check the served copy rather than the deployed one,
-and allow five minutes:
+Two consequences, both of which cost time before they were understood:
+
+- **What is served is not what is deployed.** Our directives survive and are
+  honoured, appended after Cloudflare's block. A `robots.txt` opening with rules
+  nobody in this repo wrote is normal, not a compromise.
+- **A robots.txt change can take up to four hours to appear**, and during that
+  window a fetch returns the previous file. That is indistinguishable from a
+  failed deploy unless you know to look. It is what happened on 2026-08-31:
+  two new `Disallow` lines shipped correctly and the live file did not show them
+  (`cf-cache-status: HIT`, `age: 2809`).
+
+To verify a robots.txt change immediately, bust the edge cache with a query
+string. Do not fetch the origin directly: the origin lock returns 403 to
+anything without a `CF-RAY` header, and only `/.well-known/` is exempt.
 
 ```bash
-curl -sI https://www.kokolettbeauty.com/robots.txt | grep -iE 'cf-cache-status|age'
-curl -s  https://www.kokolettbeauty.com/robots.txt | grep Disallow
+curl -s  "https://www.kokolettbeauty.com/robots.txt?cb=$RANDOM" | grep Disallow
+curl -sI "https://www.kokolettbeauty.com/robots.txt?cb=$RANDOM" | grep -i cf-cache-status
 ```
+
+The `max-age=300` rule in `.htaccess` is still worth having: it is what governs
+`sitemap.xml`, which Cloudflare does not rewrite, and it is the correct origin
+behaviour for both files regardless of what the edge does with one of them.
 
 **Verify the origin lock after any `.htaccess` deploy.** Through Cloudflare must stay
 200; straight to the origin IP must be 403; `/.well-known/` must stay reachable at the

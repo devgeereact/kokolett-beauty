@@ -262,7 +262,7 @@ export function AppointmentsPage(): JSX.Element {
       await refresh();
 
       showToast({
-        message: `Action applied — ${statusLabel(status)}.`,
+        message: `Action applied: ${statusLabel(status)}.`,
         action: {
           label: 'Undo',
           onClick: () => {

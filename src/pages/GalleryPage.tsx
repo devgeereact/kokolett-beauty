@@ -6,6 +6,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import { useServiceMenu } from '@/hooks/useServiceMenu';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { routes } from '@/lib/routes';
+import { BUSINESS_NAME, LOCALITY } from '@/lib/business';
+
+/* Subject, then business, then place — the same formula the Google profile
+   and Instagram use (docs/SOCIAL_PROFILE.md §5.3). Describes the photograph
+   rather than stacking keywords into it. */
+function photoAlt(styleName: string): string {
+  return `${styleName} at ${BUSINESS_NAME}, a women's hair salon in ${LOCALITY}, South East London`;
+}
 import { cn } from '@/lib/utils';
 
 const ALL = 'all';
@@ -21,10 +29,12 @@ const PAGE_SIZE = 12;
  * it on the public RPC); until then it falls back to a placeholder.
  */
 export function GalleryPage(): JSX.Element {
-  useDocumentMeta(
-    'Gallery',
-    'Braids, locs, weaves, natural hair and colour: a look at the work from Kokolett Beauty, a women’s hair salon in South East London.',
-  );
+  useDocumentMeta({
+    title: 'Gallery',
+    description:
+      'Braids, twists, weaves, natural hair, colour and treatments: a look at the work from Kokolett Beauty in Thamesmead, South East London.',
+    path: routes.public.gallery,
+  });
   const { groups, loading } = useServiceMenu();
   const [activeGroup, setActiveGroup] = useState<string>(ALL);
   const [page, setPage] = useState(1);
@@ -109,6 +119,7 @@ export function GalleryPage(): JSX.Element {
                 <PhotoCard
                   key={`${item.group_name}-${item.name}`}
                   imagePath={item.image_path}
+                  alt={photoAlt(item.name)}
                   placeholderTone={i}
                   tag={item.group_name}
                   title={item.name}

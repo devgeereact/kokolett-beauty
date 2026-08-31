@@ -111,6 +111,17 @@ simplification this section used to describe. Home carries the hero, next-availa
 a services teaser and the closing CTA; the Google-reviews block also anchors the
 Testimonials page. Privacy, Booking Policy and Terms remain standalone.
 
+**Positioning.** A women's hair salon in **Thamesmead**, South East London (SE28 8RX),
+matching the verified Google Business Profile. Woolwich is SE18 and is named only as an
+area clients travel from, never as the location. Copy said Woolwich until 2026-08-31,
+which put the site at odds with Google's own record of the same business.
+
+**Services** are six groups, held in `service_menu` and maintained by the owner:
+Braids, Twists, Weaves/wigs/extensions, Natural hair and styling, Colour, Treatments.
+The same six are what the Google profile and Instagram advertise
+(`docs/SOCIAL_PROFILE.md` §3.8). **Locs are not offered** and were retired from every
+surface on 2026-08-31 (`0066_retire_locs.sql`).
+
 **No fixed price.** The salon has one appointment type; what it costs is agreed in
 the chair, not quoted online. The owner logs what was actually charged after the
 appointment (`docs/SCHEMA.md` migration `0027`) and the Today page's "Collected

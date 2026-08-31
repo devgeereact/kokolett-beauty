@@ -47,6 +47,14 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      # Em dashes are the most reliable tell that a machine wrote a sentence,
+      # and they have been swept out of this codebase by hand twice. Once they
+      # reached the live database: 0020_subject_lines_without_em_dashes.sql
+      # exists only because 0018 was applied before its subject lines were
+      # fixed. The hookify rule below warns inside the editor; this is the gate.
+      - name: Copy check (no em or en dashes)
+        run: npm run lint:copy
+
       # Unit tests run under the pinned TZ=UTC above. That is the point: a
       # Europe/London runner would pass the BST cases for the wrong reason.
       - name: Unit tests

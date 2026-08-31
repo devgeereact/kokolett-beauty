@@ -31,10 +31,10 @@ import { cn } from '@/lib/utils';
 
 /** Common patterns, because typing eight times one by one is nobody's idea of a morning. */
 const QUICK_FILLS: { label: string; from: string; to: string; every: number }[] = [
-  { label: 'Morning · 09:00–13:00', from: '09:00', to: '13:00', every: 60 },
-  { label: 'Afternoon · 13:00–17:00', from: '13:00', to: '17:00', every: 60 },
-  { label: 'Full day · 09:00–17:00', from: '09:00', to: '17:00', every: 60 },
-  { label: 'Evening · 17:00–20:00', from: '17:00', to: '20:00', every: 60 },
+  { label: 'Morning · 09:00 to 13:00', from: '09:00', to: '13:00', every: 60 },
+  { label: 'Afternoon · 13:00 to 17:00', from: '13:00', to: '17:00', every: 60 },
+  { label: 'Full day · 09:00 to 17:00', from: '09:00', to: '17:00', every: 60 },
+  { label: 'Evening · 17:00 to 20:00', from: '17:00', to: '20:00', every: 60 },
 ];
 
 function buildTimes(from: string, to: string, everyMinutes: number): string[] {
@@ -175,7 +175,7 @@ export function DayPanel({
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
         {slots.length === 0
-          ? 'No times published — nothing can be booked.'
+          ? 'No times published, so nothing can be booked.'
           : `${slots.length} time${slots.length === 1 ? '' : 's'} · ${freeCount} still free`}
       </p>
 
@@ -189,7 +189,7 @@ export function DayPanel({
                 onClick={() => removeTime(slot)}
                 title={
                   slot.is_booked
-                    ? `Booked — ${slot.customer_name ?? ''} (${slot.reference ?? ''}). Cancel it from Appointments.`
+                    ? `Booked: ${slot.customer_name ?? ''} (${slot.reference ?? ''}). Cancel it from Appointments.`
                     : 'Click to remove this time'
                 }
                 className={cn(

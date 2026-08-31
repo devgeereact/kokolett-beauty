@@ -221,7 +221,7 @@ export function EmailPage(): JSX.Element {
   return (
     <DashboardLayout
       title="Email"
-      subtitle="Every message the salon's outbox has sent — confirmations, reminders and receipts."
+      subtitle="Every message the salon's outbox has sent: confirmations, reminders and receipts."
       actions={
         <>
           <Button variant="ghost" size="sm" onClick={exportCsv}>
@@ -437,7 +437,7 @@ export function EmailPage(): JSX.Element {
         title="Delete this email?"
         message={
           pendingDelete
-            ? `This removes the record of "${pendingDelete.subject}" to ${pendingDelete.to_email} from the outbox. It does not unsend a message that already reached them — this only deletes the log entry. There is no undo.`
+            ? `This removes the record of "${pendingDelete.subject}" to ${pendingDelete.to_email} from the outbox. It does not unsend a message that already reached them. This only deletes the log entry. There is no undo.`
             : ''
         }
         tone="destructive"

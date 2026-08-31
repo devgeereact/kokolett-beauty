@@ -7,6 +7,7 @@ import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { fetchReviews, type ReviewsSnapshot } from '@/services/reviewService';
 import { routes } from '@/lib/routes';
+import { SALON_SCHEMA_ID, buildGoogleProfileUrl } from '@/lib/business';
 
 /**
  * The full Google-reviews list — the homepage snippet's own page (2026-08-25
@@ -15,10 +16,12 @@ import { routes } from '@/lib/routes';
  * has real ones cached.
  */
 export function TestimonialsPage(): JSX.Element {
-  useDocumentMeta(
-    'Testimonials',
-    'What clients say about Kokolett Beauty, a women’s hair salon in South East London: real Google reviews.',
-  );
+  useDocumentMeta({
+    title: 'Testimonials',
+    description:
+      'What clients say about Kokolett Beauty, a women’s hair salon in Thamesmead, South East London: real Google reviews.',
+    path: routes.public.testimonials,
+  });
   const { settings } = useBusinessSettings();
   const [data, setData] = useState<ReviewsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +52,11 @@ export function TestimonialsPage(): JSX.Element {
           because it must reflect the real, live-synced rating — a number
           baked into the static shell would drift the moment a new review
           lands. See docs/ARCHITECTURE.md for why the core `HairSalon` entity
-          stays static; this is the one figure that has to stay live instead. */}
+          stays static; this is the one figure that has to stay live instead.
+
+          It carries the same `@id` as the static entity and nothing else. With
+          its own `name` and `url` instead, it read as a *second* salon and the
+          stars attached to that one rather than to the real listing. */}
       {hasRating && (
         <script
           type="application/ld+json"
@@ -57,8 +64,7 @@ export function TestimonialsPage(): JSX.Element {
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'HairSalon',
-              name: 'Kokolett Beauty UK',
-              url: 'https://www.kokolettbeauty.com/',
+              '@id': SALON_SCHEMA_ID,
               aggregateRating: {
                 '@type': 'AggregateRating',
                 ratingValue: data?.rating,
@@ -102,7 +108,11 @@ export function TestimonialsPage(): JSX.Element {
         )}
 
         {reviews.length > 0 && (
-          <TestimonialsGrid reviews={reviews} reviewUrl={settings?.google_review_url} />
+          <TestimonialsGrid
+            reviews={reviews}
+            reviewUrl={settings?.google_review_url}
+            profileUrl={buildGoogleProfileUrl(settings?.google_place_id)}
+          />
         )}
       </section>
     </SiteShell>

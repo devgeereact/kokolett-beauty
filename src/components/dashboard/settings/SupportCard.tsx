@@ -2,8 +2,7 @@ import type { JSX } from 'react';
 import { ChevronRight, HelpCircle, Mail, MessageSquareText } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
-
-const SUPPORT_EMAIL = 'booking@kokolettbeauty.com';
+import { CONTACT_EMAIL } from '@/lib/business';
 
 /** Real destinations only — a mailto to the salon's own inbox and the booking policy page. No fabricated help centre content. */
 export function SupportCard(): JSX.Element {
@@ -36,7 +35,7 @@ export function SupportCard(): JSX.Element {
           />
         </a>
         <a
-          href={`mailto:${SUPPORT_EMAIL}`}
+          href={`mailto:${CONTACT_EMAIL}`}
           className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-muted"
         >
           <Mail
@@ -59,7 +58,7 @@ export function SupportCard(): JSX.Element {
           />
         </a>
         <a
-          href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Kokolett dashboard feedback')}`}
+          href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Kokolett dashboard feedback')}`}
           className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-muted"
         >
           <MessageSquareText

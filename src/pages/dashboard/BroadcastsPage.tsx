@@ -65,7 +65,7 @@ export function BroadcastsPage(): JSX.Element {
   return (
     <DashboardLayout
       title="Broadcasts"
-      subtitle="A newsletter or ad to your mailing list — drafted with AI, reviewed by you, sent to no one else."
+      subtitle="A newsletter or ad to your mailing list, drafted with AI, reviewed by you, sent to no one else."
     >
       <div className="max-w-2xl space-y-6">
         <Card className="p-5">
@@ -76,7 +76,7 @@ export function BroadcastsPage(): JSX.Element {
                 rows={3}
                 value={roughIdea}
                 onChange={(e) => setRoughIdea(e.target.value)}
-                placeholder="e.g. we have new availability this week for braids and locs"
+                placeholder="e.g. we have new availability this week for braids and twists"
               />
             )}
           </Field>

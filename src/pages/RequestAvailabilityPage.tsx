@@ -9,6 +9,7 @@ import { submitAvailabilityRequest } from '@/services/bookingService';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import type { Flexibility } from '@/types';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * The no-availability path.
@@ -18,6 +19,12 @@ import type { Flexibility } from '@/types';
  * time: who, what, roughly when, and how flexible they are.
  */
 export function RequestAvailabilityPage(): JSX.Element {
+  useDocumentMeta({
+    title: 'Request a time',
+    description:
+      'Nothing in the diary suits? Tell Kokolett Beauty UK when you are free and Christy will come back to you.',
+    path: routes.public.requestAvailability,
+  });
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -135,7 +142,7 @@ export function RequestAvailabilityPage(): JSX.Element {
 
           <Field
             label="What are you after?"
-            hint="Braids, locs, a weave, colour, a trim. Whatever you have in mind."
+            hint="Braids, twists, a weave, colour, a trim. Whatever you have in mind."
           >
             {({ id, describedBy }) => (
               <Textarea

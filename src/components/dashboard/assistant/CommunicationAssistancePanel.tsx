@@ -110,7 +110,7 @@ export function CommunicationAssistancePanel({
         title="Nothing recent"
         description={
           customerEmail
-            ? 'Nothing from them yet — notes left when booking, or on a waitlist request, show up here.'
+            ? 'Nothing from them yet. Notes left when booking, or on a waitlist request, show up here.'
             : 'Notes customers leave when booking, or on a waitlist request, show up here.'
         }
       />

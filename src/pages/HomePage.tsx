@@ -11,6 +11,8 @@ import { useServices } from '@/hooks/useServices';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { formatDateLong } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import { BUSINESS_NAME, LOCALITY, buildGoogleProfileUrl } from '@/lib/business';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * The salon's front page.
@@ -73,6 +75,13 @@ const HOW_IT_WORKS = [
 ];
 
 export function HomePage(): JSX.Element {
+  useDocumentMeta({
+    title: "Kokolett Beauty UK: women's hair salon in Thamesmead, London",
+    description:
+      "Kokolett Beauty UK is a women's hair salon in Thamesmead, South East London. Braids, twists, weaves, natural hair and styling, colour and treatments. Book a real, free time online.",
+    fullTitle: true,
+    path: routes.public.home,
+  });
   const location = useLocation();
   const { services } = useServices();
   const { groups: menu } = useServiceMenu();
@@ -178,17 +187,18 @@ export function HomePage(): JSX.Element {
             <span aria-hidden="true" className="text-brand-soft">
               &#9733;
             </span>
-            15+ years &middot; South East London &middot; Google reviews
+            15+ years &middot; Thamesmead, SE London &middot; Google reviews
           </p>
           <p className="mb-4 font-serif text-base italic text-brand-soft">
-            Women&rsquo;s hair salon, South East London
+            Women&rsquo;s hair salon in Thamesmead, South East London
           </p>
           <h1 className="font-serif text-5xl font-semibold tracking-tight md:text-6xl">
             Hair that <span className="text-hero-accent">holds</span> its shape.
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-hero-fg/85">
-            Braids, locs, weaves, natural hair and colour, done with time and care. Choose
-            a time that suits you and we will do the rest.
+            Braids, twists, weaves, natural hair, colour and treatments. One client at a
+            time, so nothing gets rushed. Choose a time that suits you and we will do the
+            rest.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -304,6 +314,7 @@ export function HomePage(): JSX.Element {
               <PhotoCard
                 key={group.group_name}
                 imagePath={group.items[0]?.image_path}
+                alt={`${group.items[0]?.name ?? group.group_name} at ${BUSINESS_NAME}, a women's hair salon in ${LOCALITY}, South East London`}
                 placeholderTone={i}
                 title={group.group_name}
                 description={group.items[0]?.name}
@@ -351,7 +362,10 @@ export function HomePage(): JSX.Element {
       </section>
 
       {/* ---- Reviews (renders nothing until Google has some) ---------- */}
-      <Reviews reviewUrl={settings?.google_review_url ?? null} />
+      <Reviews
+        reviewUrl={settings?.google_review_url ?? null}
+        profileUrl={buildGoogleProfileUrl(settings?.google_place_id)}
+      />
 
       {/* ---- Closing ------------------------------------------------- */}
       <section className="mx-auto max-w-3xl px-4 py-20 text-center md:px-6">

@@ -126,7 +126,7 @@ export function ApprovalDetailPanel({
                   className="h-4 w-4 shrink-0 text-muted-foreground"
                   strokeWidth={2}
                 />
-                {formatTime(row.starts_at, timezone)} –{' '}
+                {formatTime(row.starts_at, timezone)} to{' '}
                 {formatTime(row.ends_at, timezone)}
               </p>
               <p className="flex items-center gap-2">

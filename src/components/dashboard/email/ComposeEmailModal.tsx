@@ -111,7 +111,7 @@ export function ComposeEmailModal({
         }
       } catch (e) {
         setContentError(
-          `Couldn't load a past example of this template — starting from its saved wording instead. ${errorMessage(e)}`,
+          `Couldn't load a past example of this template. Starting from its saved wording instead. ${errorMessage(e)}`,
         );
       }
     }

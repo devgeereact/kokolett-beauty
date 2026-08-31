@@ -1,7 +1,7 @@
 # Kokolett Beauty UK
 
 The booking and operations platform for **Kokolett Beauty UK**, a single-owner UK
-women's hair salon: cutting, colouring, styling, braids, locs, weaves and treatments.
+women's hair salon: cutting, colouring, styling, braids, twists, weaves and treatments.
 Not nails, brows, lashes or aesthetics, and not unisex. An offline-first Progressive
 Web App served as static files from cPanel, with all heavy lifting offloaded to
 Supabase.
@@ -197,6 +197,7 @@ Full details live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — deploy playbook & safety rules
 - [`docs/plan.md`](docs/plan.md) — the living punch list of what's actually open
 - [`docs/GO-LIVE.md`](docs/GO-LIVE.md) — undated procedure for standing up a fresh environment: what has to be keyed in by hand and how to verify it landed
+- [`docs/SOCIAL_PROFILE.md`](docs/SOCIAL_PROFILE.md) — the master identity, the Google Business Profile and Instagram setup field by field, and the SEO review
 
 ## License
 MIT — do whatever you want, no warranty.

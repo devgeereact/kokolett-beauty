@@ -7,6 +7,7 @@ import { Field, Input } from '@/components/ui/Field';
 import { subscribeToUpdates } from '@/services/subscriberService';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * The mailing list.
@@ -20,6 +21,12 @@ import { routes } from '@/lib/routes';
  * into a way of testing whether any given address is a customer here.
  */
 export function SubscribePage(): JSX.Element {
+  useDocumentMeta({
+    title: 'Keep in touch',
+    description:
+      'Hear from Kokolett Beauty UK when new times open up. Unsubscribe from any email in one click.',
+    path: routes.public.subscribe,
+  });
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [busy, setBusy] = useState(false);

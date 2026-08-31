@@ -106,7 +106,7 @@ export function AppointmentTypePage(): JSX.Element {
   return (
     <DashboardLayout
       title="Appointment type"
-      subtitle="One appointment type — every time you publish is one of these"
+      subtitle="One appointment type. Every time you publish is one of these"
     >
       <CalendarCapacityTabs />
 
@@ -145,7 +145,7 @@ export function AppointmentTypePage(): JSX.Element {
 
           <Field
             label="Price (£)"
-            hint="Leave blank if it depends on what the customer wants — most salons settle this in person."
+            hint="Leave blank if it depends on what the customer wants. Most salons settle this in person."
           >
             {({ id, describedBy }) => (
               <Input
@@ -190,7 +190,7 @@ export function AppointmentTypePage(): JSX.Element {
 
         <p className="mt-4 text-sm text-muted-foreground">
           Times can be published on any {granularity}-minute boundary. Customers say what
-          they are after in a note when they book, so you do not need a menu of services —
+          they are after in a note when they book, so you do not need a menu of services,
           just this one appointment and the times you are free.
         </p>
       </div>

@@ -79,9 +79,30 @@ information. Sign in as the owner and fill in, screen by screen:
 - **Services → the public menu** (`/dashboard/services`) — free-text only,
   no pricing. This is the one surface where scope discipline (women's hair
   only) has to be enforced by the person typing, not by the schema.
+- **Services → the public menu**, continued — the group names here are also the
+  services advertised on the Google Business Profile and in Instagram highlights.
+  Keep all three saying the same thing (`docs/SOCIAL_PROFILE.md` §3.8), and note
+  that locs are not offered (§1.3).
 - **`index.html`'s structured data** — address, phone, and
   `openingHoursSpecification` matching whatever the weekly template actually
   publishes (one `OpeningHoursSpecification` object per distinct day-range).
+
+  This is hand-keyed and no code can reach it. A crawler reads the served HTML
+  before any JavaScript runs, which is the whole reason the entity lives there,
+  and the cost is that it cannot track `booking_settings` or the weekly template.
+  **Re-derive the hours whenever the template changes**: the salon opens at the
+  first published start and closes at the last published start plus the
+  appointment length. Getting this wrong puts wrong opening hours in a Google
+  result, which is a person standing outside a closed door, not a ranking
+  problem.
+
+  `geo` is deliberately absent. Add it only from the real coordinates on the
+  Google profile's own pin; a guessed lat/long is worse than none.
+
+- **`src/lib/business.ts`** — locality, region, postcode, positioning line,
+  areas served, service group names, Instagram URL, Google Place ID. Code, not
+  dashboard: these change with a deploy, not with a login. `docs/SOCIAL_PROFILE.md`
+  §2 maps which fact lives where.
 
 ## 4. Verification — a 200 proves nothing here
 

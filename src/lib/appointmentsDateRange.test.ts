@@ -64,8 +64,8 @@ describe('dateRangeLabel', () => {
     expect(dateRangeLabel('today', '2026-06-15')).toBe('Monday, 15 June 2026');
   });
 
-  it('formats week as a short Mon–Sun range', () => {
-    expect(dateRangeLabel('week', '2026-06-17')).toBe('Mon 15 Jun – Sun 21 Jun');
+  it('formats week as a short Monday to Sunday range', () => {
+    expect(dateRangeLabel('week', '2026-06-17')).toBe('Mon 15 Jun to Sun 21 Jun');
   });
 
   it('formats month as month + year', () => {

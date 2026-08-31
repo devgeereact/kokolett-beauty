@@ -13,6 +13,10 @@ interface PhotoCardProps {
   /** Selects which of the six placeholder gradients to use — pass the
       grid index so neighbouring cards don't repeat the same tone. */
   placeholderTone: number;
+  /** Describes the photograph. Required whenever `imagePath` is set: the
+      photo renders as a real `<img>`, so it needs alt text for screen
+      readers and is indexable by image search. */
+  alt?: string;
   tag?: string;
   title: string;
   description?: string;
@@ -45,6 +49,7 @@ const PHOTO_SCRIM =
 export function PhotoCard({
   imagePath,
   placeholderTone,
+  alt,
   tag,
   title,
   description,
@@ -75,13 +80,13 @@ export function PhotoCard({
     el.style.setProperty('--ry', '0deg');
   };
 
-  const groundStyle: CSSProperties = imagePath
-    ? {
-        backgroundImage: `url(${buildImageKitUrl(imagePath, { width: 640, height: 800 })})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }
-    : { background: photoPlaceholderBackground(placeholderTone) };
+  /* A real `<img>` rather than a CSS background. Visually identical under the
+     scrim, but a background-image carries no alt text and image search cannot
+     index it — which, for a salon whose work is the product, was throwing away
+     the whole of Google Images. */
+  const placeholderStyle: CSSProperties = {
+    background: photoPlaceholderBackground(placeholderTone),
+  };
 
   const body = (
     <>
@@ -119,7 +124,17 @@ export function PhotoCard({
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
     >
-      <div className="absolute inset-0" style={groundStyle} aria-hidden="true" />
+      {imagePath ? (
+        <img
+          src={buildImageKitUrl(imagePath, { width: 640, height: 800 })}
+          alt={alt ?? ''}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0" style={placeholderStyle} aria-hidden="true" />
+      )}
       <div
         className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay"
         aria-hidden="true"

@@ -84,7 +84,7 @@ export function RequestRow({
                 {request.preferred_dates.length > 0
                   ? request.preferred_dates
                       .map((d) => formatDateShort(`${d}T00:00:00Z`))
-                      .join(' – ')
+                      .join(' to ')
                   : 'Any date'}
               </p>
               <p className="flex items-center gap-1.5 text-muted-foreground">

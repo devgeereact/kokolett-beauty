@@ -20,28 +20,28 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   BEYOND_BOOKING_HORIZON: 'That date is further ahead than bookings are open.',
   OUTSIDE_AVAILABILITY: 'The salon is not open at that time.',
   DAILY_CAPACITY_REACHED: 'That day is fully booked. Please try another date.',
-  SLOT_TAKEN: 'Sorry — that slot was taken while you were booking. Please pick another.',
+  SLOT_TAKEN: 'Sorry, that slot was taken while you were booking. Please pick another.',
   NOT_AUTHORISED: 'You do not have permission to do that.',
-  NOT_PENDING: 'That booking is no longer awaiting approval — it may already be decided.',
+  NOT_PENDING: 'That booking is no longer awaiting approval. It may already be decided.',
   NOT_FOUND: 'That booking could not be found.',
   ILLEGAL_TRANSITION: 'That status change is not allowed from where this booking is now.',
-  NAME_INCOMPLETE: 'Please give your full name — first name and surname.',
+  NAME_INCOMPLETE: 'Please give your full name, first name and surname.',
   MOBILE_REQUIRED: 'Please give a mobile number the salon can reach you on.',
   NOT_RESCHEDULABLE: 'That booking can no longer be moved.',
   ALREADY_PASSED: 'That appointment has already passed.',
   SAME_TIME: 'That is the time you are already booked in for.',
   INVALID_AMOUNT: 'Enter an amount greater than £0.',
   HAS_PAYMENT:
-    'This has a logged payment, so it can’t be deleted — that would erase a financial record.',
+    'This has a logged payment, so it cannot be deleted. That would erase a financial record.',
   // The contact form's rate limit (migration 0049). "Try again" is the one
   // thing this caller must not be told, because trying again is what is
-  // blocked — so it names the channels that still work.
+  // blocked, so it names the channels that still work.
   TOO_MANY_MESSAGES:
     'You have sent us a few messages already. Please give us a little time to reply, or call or WhatsApp us if it is urgent.',
   SLUG_INVALID:
     'That link must be 4-40 characters, using only lowercase letters, numbers and hyphens.',
   SLUG_RESERVED:
-    'That link is already used elsewhere on the site — please choose another.',
+    'That link is already used elsewhere on the site. Please choose another.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

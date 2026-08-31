@@ -42,7 +42,7 @@ interface DraftRequest {
 const SYSTEM_PROMPTS: Record<Kind, string> = {
   broadcast:
     'You draft a newsletter/ad email for Kokolett Beauty UK, a women\'s hair salon in ' +
-    'Woolwich, South East London (braids, locs, weaves, natural hair, colour — ' +
+    'Thamesmead, South East London (braids, twists, weaves, natural hair, colour, no locs; ' +
     'women\'s hair only, never nails/brows/lashes or unisex/barbering services). ' +
     'British English. Never mention or invent a price — pricing is agreed in the chair. ' +
     'Write a genuinely detailed, well-crafted message that reads as if the owner wrote ' +

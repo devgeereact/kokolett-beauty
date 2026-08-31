@@ -84,7 +84,20 @@ function ReviewerAvatar({
   );
 }
 
-export function Reviews({ reviewUrl }: { reviewUrl: string | null }): JSX.Element | null {
+/**
+ * `profileUrl` is where the reviews are read; `reviewUrl` is Google's
+ * `g.page/r/<id>/review` link, which opens the write-a-review dialog. Both used
+ * to come from one field, so "Read all reviews on Google" dropped the reader
+ * into a blank review form. See `buildGoogleProfileUrl` in `lib/business.ts`.
+ */
+export function Reviews({
+  reviewUrl,
+  profileUrl,
+}: {
+  reviewUrl: string | null;
+  profileUrl?: string | null;
+}): JSX.Element | null {
+  const readUrl = profileUrl ?? reviewUrl;
   const [data, setData] = useState<ReviewsSnapshot | null>(null);
   const [start, setStart] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
@@ -178,10 +191,10 @@ export function Reviews({ reviewUrl }: { reviewUrl: string | null }): JSX.Elemen
                 </Card>
               );
 
-              return reviewUrl ? (
+              return readUrl ? (
                 <a
                   key={`${review.author_name}-${review.published_at}`}
-                  href={reviewUrl}
+                  href={readUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -195,16 +208,28 @@ export function Reviews({ reviewUrl }: { reviewUrl: string | null }): JSX.Elemen
           </div>
         )}
 
-        {reviewUrl && (
-          <p className="mt-8 text-center">
-            <a
-              href={reviewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              Read all reviews on Google
-            </a>
+        {(readUrl || reviewUrl) && (
+          <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center">
+            {readUrl && (
+              <a
+                href={readUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                Read all reviews on Google
+              </a>
+            )}
+            {reviewUrl && (
+              <a
+                href={reviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary underline underline-offset-4 hover:brightness-110"
+              >
+                Leave a review
+              </a>
+            )}
           </p>
         )}
       </div>

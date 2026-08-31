@@ -2,7 +2,7 @@
   "name": "kokolett-beauty",
   "version": "1.0.0",
   "private": true,
-  "description": "Salon booking and operations for Kokolett Beauty UK — passwordless for customers, one dashboard for the owner.",
+  "description": "Salon booking and operations for Kokolett Beauty UK. Passwordless for customers, one dashboard for the owner.",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
@@ -20,6 +20,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:hooks": "python3 scripts/test-hookify-rules.py",
+    "lint:copy": "python3 scripts/check-copy.py",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

@@ -107,7 +107,7 @@ export function DailyClosePage(): JSX.Element {
   return (
     <DashboardLayout
       title="Daily Close"
-      subtitle={`${formatDateLong(new Date(), timezone)} — an end-of-day snapshot of today's bookings, payments and outstanding items.`}
+      subtitle={`${formatDateLong(new Date(), timezone)}: an end-of-day snapshot of today's bookings, payments and outstanding items.`}
     >
       {!summary ? (
         <LoadingState label="Loading…" />
@@ -121,7 +121,7 @@ export function DailyClosePage(): JSX.Element {
                 strokeWidth={2}
               />
               Last closed {formatDateTime(lastClose.createdAt, timezone)}. Closing again
-              records a fresh snapshot — nothing is overwritten.
+              records a fresh snapshot. Nothing is overwritten.
             </Card>
           )}
 

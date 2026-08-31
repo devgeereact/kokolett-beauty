@@ -11,7 +11,7 @@ export function HourOfDayChart({ trend }: { trend: HourOfDayTrend[] }): JSX.Elem
         <div
           key={t.hour}
           className="flex h-full flex-1 flex-col items-center justify-end gap-1"
-          title={`${String(t.hour).padStart(2, '0')}:00 — ${t.count} booking${t.count === 1 ? '' : 's'}`}
+          title={`${String(t.hour).padStart(2, '0')}:00, ${t.count} booking${t.count === 1 ? '' : 's'}`}
         >
           <div
             className="w-full rounded-t-sm bg-chart-1"

@@ -17,21 +17,16 @@ import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
 /**
- * Up to 5 cards can be built (gap/quiet-day/requested-window/opening-hours/
- * draft-reply), but any subset can be missing depending on what the salon's
- * data actually supports today — a fixed `lg:grid-cols-5` left a blank
- * column-width of empty space whenever fewer than 5 rendered. Literal class
- * strings, not a template (`lg:grid-cols-${n}`), because Tailwind's
- * extractor is static — see `TONE_CLASSES` in `lib/tone.ts` for the same
- * pattern.
+ * Up to 5 findings can be built (gap/quiet-day/requested-window/opening-hours/
+ * draft-reply), and any subset can be missing depending on what the salon's
+ * data supports today.
+ *
+ * They used to fan out to `lg:grid-cols-5` across the full width of the page.
+ * This card now sits at `lg:col-span-6`, beside Payments to record, so five
+ * columns would be about 110px each: a title, a sentence and a button, in a
+ * column narrower than the button. Two columns and wrap instead, which also
+ * keeps the card's height in the same range as the payments list beside it.
  */
-const LG_COLS_BY_COUNT: Record<number, string> = {
-  1: 'lg:grid-cols-1',
-  2: 'lg:grid-cols-2',
-  3: 'lg:grid-cols-3',
-  4: 'lg:grid-cols-4',
-  5: 'lg:grid-cols-5',
-};
 
 const FLEXIBILITY_LABELS: Record<string, string> = {
   any: 'flexible',
@@ -140,7 +135,7 @@ export function AssistantInsightsRow({
             icon: Lightbulb,
             iconTone: 'bg-tint-pending text-status-pending',
             title: 'Opening hours idea',
-            body: `Most clients book between ${String(start).padStart(2, '0')}:00–${String(end).padStart(2, '0')}:00.`,
+            body: `Most clients book between ${String(start).padStart(2, '0')}:00 to ${String(end).padStart(2, '0')}:00.`,
             linkLabel: 'View suggestion',
             to: routes.owner.weeklyDefault,
           });
@@ -171,9 +166,9 @@ export function AssistantInsightsRow({
   }, [timezone]);
 
   return (
-    <Card className={cn('p-4', className)}>
+    <Card className={cn('flex h-full flex-col p-4', className)}>
       <div className="mb-3 flex items-center gap-2">
-        <h2 className="font-serif text-base font-semibold text-foreground">
+        <h2 className="text-base font-semibold leading-tight text-foreground">
           AI assistant
         </h2>
         <span className="rounded-full bg-tint-no-show px-2 py-0.5 text-xs font-medium text-status-no-show">
@@ -189,17 +184,12 @@ export function AssistantInsightsRow({
 
       {cards && cards.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Nothing to flag right now — check back once there's more booking history.
+          Nothing to flag right now. Check back once there&rsquo;s more booking history.
         </p>
       )}
 
       {cards && cards.length > 0 && (
-        <div
-          className={cn(
-            'grid grid-cols-1 gap-4 min-[480px]:grid-cols-2',
-            LG_COLS_BY_COUNT[Math.min(cards.length, 5)],
-          )}
-        >
+        <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2">
           {cards.map((card) => {
             const Icon = card.icon;
             return (

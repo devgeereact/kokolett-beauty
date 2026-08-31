@@ -570,7 +570,7 @@ argue for changing the constraint and say what breaks.
 7. **The AI can propose, never execute.** Any write is a separate, explicit human action
    under that human's own session.
 8. **Copy is British English.**
-9. **Scope: women's hair only** — cutting, colouring, styling, braids, locs, weaves,
+9. **Scope: women's hair only** — cutting, colouring, styling, braids, twists, weaves,
    treatments. Not nails, brows, lashes or aesthetics. Not unisex. Not barbering.
    Structured data uses `HairSalon`. _(In a multi-tenant world this constraint becomes a
    per-tenant vertical configuration — call that out explicitly rather than silently

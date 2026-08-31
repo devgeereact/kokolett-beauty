@@ -98,7 +98,7 @@ export function ProfilePage(): JSX.Element {
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">{user.email}</p>
 
-          <Field label="Name" hint="Shown nowhere a customer sees — this is for you.">
+          <Field label="Name" hint="Shown nowhere a customer sees. This is for you.">
             {({ id }) => (
               <Input
                 id={id}
@@ -134,7 +134,7 @@ export function ProfilePage(): JSX.Element {
             Appearance
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            The dashboard follows your system by default — pick light or dark to override
+            The dashboard follows your system by default. Pick light or dark to override
             it on this device.
           </p>
           <ThemeToggle />

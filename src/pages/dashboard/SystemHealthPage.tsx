@@ -138,7 +138,7 @@ export function SystemHealthPage(): JSX.Element {
   return (
     <DashboardLayout
       title="System Health"
-      subtitle="Scheduled jobs, email delivery and the Google reviews sync — one place to check if anything's broken."
+      subtitle="Scheduled jobs, email delivery and the Google reviews sync. One place to check if anything's broken."
     >
       {!health ? (
         <LoadingState label="Checking…" />
@@ -219,7 +219,7 @@ export function SystemHealthPage(): JSX.Element {
                 )}
                 <p className="mt-3 text-xs text-muted-foreground">
                   {emailAuth
-                    ? `Checked ${formatDateTime(emailAuth.checkedAt, timezone)} — live DNS lookup, not stored.`
+                    ? `Checked ${formatDateTime(emailAuth.checkedAt, timezone)}. Live DNS lookup, not stored.`
                     : 'These three records tell a receiving mail server the email genuinely came from us.'}
                 </p>
               </Card>

@@ -43,6 +43,8 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0062_customer_session_revocation.sql`              | Added `revoke_customer_sessions()` and a new `customer.sessions_revoked` value in `audit_events.action`'s check constraint — no new table. Marks a customer's live `customer_access_tokens` (`purpose = 'session'`) as used, which `customer_from_session()` (`0021`) already treats as invalid. |
 | `0063_undo_cancellation.sql`                        | `set_appointment_status()` now allows `cancelled` → confirmed/checked_in/in_service (previously nothing), clearing `cancelled_at`/`cancellation_reason` on the way back. `notify_appointment_status_changed()` gained a matching branch: fails the queued cancellation-notice emails and re-queues the reminders the cancellation retired. |
 | `0064_product_events.sql`                           | Added `product_events` (no personal data — event name from a fixed vocabulary, a random client-generated session id, timestamp), `track_product_event()` (anon-callable, rate-limited) and `product_event_funnel_summary()` (owner-only). First-party booking-funnel counts. |
+| `0065_copy_dashes_and_owner_name.sql`               | Data-only. Removes four em dashes from the customer-facing `email_templates` bodies seeded by `0032`, and corrects the owner's name from "Koko"/"Koko Lett" to Christy in the confirmation sign-off and the password-reset greeting. |
+| `0066_retire_locs.sql`                              | Data-only. Deactivates the five loc styles seeded by `0018` and renames the `service_menu` group from "Twists and locs" to "Twists". The salon does not do locs. |
 
 ### Every table, and where it is documented
 
@@ -888,3 +890,36 @@ correction may be negative (a refund/deduction) or positive (an added top-up),
 but never zero. `log_payment()` takes an optional `p_corrects_payment_id` and
 raises `ILLEGAL_TRANSITION` if the linked payment belongs to a different
 appointment, `NOT_FOUND` if it doesn't exist.
+
+## 25. Migrations `0065` and `0066` — copy corrections, not schema
+
+Neither changes a table, a function or a policy. Both exist because seeded *data*
+was wrong in a way a customer could see, and the only way to fix seeded data is
+another migration.
+
+**`0065`** removes the four em dashes in `email_templates.html_body` that `0032`
+seeded, and corrects the owner's name. `0032` had signed the booking confirmation
+"Koko Lett" and greeted the password reset "Hi Koko," while the About page has
+always said Christy, so a customer could receive a confirmation signed by someone
+who does not work at the salon.
+
+**`0066`** deactivates `Faux locs`, `Butterfly locs`, `Soft locs`, `Starter locs`
+and `Loc retwist and styling`, then renames their group to `Twists`. The owner
+does not do locs and never has. They were seeded by `0018` and had been advertised
+on the marketing site, in the JSON-LD, in the meta descriptions and inside the AI
+assistant's grounding prompt ever since.
+
+Both are written as targeted `replace()` and `update ... where` statements rather
+than as row overwrites. Every one of these rows is owner-editable from the
+dashboard, and a blanket overwrite would silently discard whatever she had written
+since the seed ran. `0066` sets `active = false` rather than deleting: the flag is
+what the console and every public surface already read, it removes the styles
+everywhere in one step, it is reversible from the dashboard, and it keeps the
+`image_path` of real photographs.
+
+**Migrations `0005`, `0010`, `0015`, `0016` and `0018` still contain em dashes and
+loc rows, and are deliberately untouched.** Editing an applied migration changes
+history without changing the database. `0020_subject_lines_without_em_dashes.sql`
+set the precedent: fix forward with a new migration, never rewrite an old one.
+`scripts/check-copy.py` enforces the dash rule only from `0065` onward for the
+same reason.

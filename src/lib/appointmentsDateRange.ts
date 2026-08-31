@@ -89,7 +89,7 @@ export function dateRangeLabel(mode: DateMode, anchor: string): string {
       const week = weekDates(anchor);
       const monday = week[0] as string;
       const sunday = week[6] as string;
-      return `${formatDateShort(`${monday}T12:00:00Z`, 'UTC')} – ${formatDateShort(`${sunday}T12:00:00Z`, 'UTC')}`;
+      return `${formatDateShort(`${monday}T12:00:00Z`, 'UTC')} to ${formatDateShort(`${sunday}T12:00:00Z`, 'UTC')}`;
     }
     case 'month': {
       const d = parseDate(anchor);

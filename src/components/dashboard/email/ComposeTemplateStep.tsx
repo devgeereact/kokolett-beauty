@@ -88,7 +88,7 @@ export function ComposeTemplateStep({
 
       {usageError && (
         <p className="mb-3 text-sm text-status-no-show">
-          Couldn&rsquo;t load template usage — you can still pick one. {usageError}
+          Couldn&rsquo;t load template usage. You can still pick one. {usageError}
         </p>
       )}
 

@@ -108,7 +108,7 @@ export function AuditPage(): JSX.Element {
   return (
     <DashboardLayout
       title="Audit Log"
-      subtitle="The highest-risk actions on this account — bookings, erasures, payments and the sign-in link."
+      subtitle="The highest-risk actions on this account: bookings, erasures, payments and the sign-in link."
       actions={
         <Button variant="ghost" size="sm" onClick={exportCsv}>
           <Download aria-hidden="true" className="h-4 w-4" strokeWidth={2} />

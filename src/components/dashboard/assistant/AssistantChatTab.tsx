@@ -515,8 +515,8 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
             </form>
           </Card>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            Kokolett AI · Advisory only — nothing here books, cancels, or edits anything
-            on its own
+            Kokolett AI · Advisory only. Nothing here books, cancels, or edits anything on
+            its own
           </p>
         </div>
 
@@ -560,7 +560,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
             </h2>
             {conversations.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nothing yet — ask something to start one.
+                Nothing yet. Ask something to start one.
               </p>
             ) : (
               <ul className="space-y-1">

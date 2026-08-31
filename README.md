@@ -80,7 +80,7 @@ Run the migrations **in order**, in the Supabase SQL editor or via
 ```
 supabase/migrations/0001_init.sql    # profiles, app_settings, auth triggers
 supabase/migrations/0002_salon.sql   # the salon domain schema
-...                                  # through 0068, applied in filename order
+...                                  # through 0069, applied in filename order
 ```
 
 `0002` requires the `btree_gist` extension (it creates it) for the exclusion

@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0068`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0069`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -46,6 +46,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0065_copy_dashes_and_owner_name.sql`               | Data-only. Removes four em dashes from the customer-facing `email_templates` bodies seeded by `0032`, and corrects the owner's name from "Koko"/"Koko Lett" to Christy in the confirmation sign-off and the password-reset greeting. |
 | `0066_retire_locs.sql`                              | Data-only. Deactivates the five loc styles seeded by `0018` and renames the `service_menu` group from "Twists and locs" to "Twists". The salon does not do locs. |
 | `0067_review_link_in_template_overlay.sql`          | Data-only. Appends a `{{google_review_url}}` link to the `review_request` and `appointment_completed` overlay bodies, which `0032` seeded without one. Conditional, so an owner-rewritten template is untouched. |
+| `0069_trigger_functions_are_not_callable.sql` | Revokes EXECUTE on all eight trigger functions from `anon` and `authenticated`. `log_email_template_revision` was the only one with a client grant; `0061` had revoked it from `PUBLIC`, which does not touch their explicit grants. Also documents why `secret_login_attempts` has RLS with no policies. |
 | `0068_locs_safety_net.sql`                          | Data-only. Deactivates any `service_menu` row whose name matches the word "loc", and renames any such group to "Twists". `0066` matched five exact strings inside one group name, all owner-editable; this matches on the word instead. A no-op today. |
 
 ### Every table, and where it is documented
@@ -956,3 +957,23 @@ exact strings, so it also catches a spelling `0066` never knew about.
 
 Verified against production before applying: the query returned the same five rows,
 all already inactive.
+
+## 27. Supabase advisor findings, and which are false positives
+
+Run `get_advisors` after any DDL change. As of 2026-08-31: **75 lints, none at
+ERROR.** What they are, so nobody re-triages them from scratch:
+
+| Lint | Count | Verdict |
+| --- | --- | --- |
+| `authenticated_security_definer_function_executable` | 53 | Expected. Every owner RPC is security-definer and must be callable by the signed-in owner; `is_owner()` inside each one is the actual gate, not the grant. |
+| `anon_security_definer_function_executable` | 17 | Expected for 15 of them: the public booking path (`available_slots`, `book_appointment`), the magic-link customer surface (every `customer_*`, which takes a session token and validates it), and the public reads (`public_reviews`, `public_service_menu`). `is_owner()` is callable but returns false for anon, so it leaks nothing. `log_email_template_revision` was the real one and is fixed in `0069`. |
+| `extension_in_public` | 3 | `btree_gist`, `citext`, `pg_net`. Moving them means rewriting every column type and index that depends on them for no security gain; `btree_gist` in particular backs the booking exclusion constraint. Left alone deliberately. |
+| `rls_enabled_no_policy` | 1 | **False positive.** `secret_login_attempts` has RLS on with no policies, which is deny-all to every client role. It is written only by `owner-secret-login` under the service role, which bypasses RLS. Adding a policy to silence the advisor would open it. `0069` comments the table and `rls_test.sql` asserts the policy list stays empty. |
+| `auth_leaked_password_protection` | 1 | Paid feature; this project is on the Free plan. The substitute is documented in the project's memory notes. |
+
+The one genuine finding was `log_email_template_revision`: the only trigger
+function in the schema with a client grant. Postgres refuses to run a trigger
+function outside a trigger context, so it was not directly exploitable, but it
+was the odd one out and the protection was Postgres refusing rather than
+anything this schema decided. `rls_test.sql` now asserts that no trigger
+function is executable by `anon` or `authenticated`.

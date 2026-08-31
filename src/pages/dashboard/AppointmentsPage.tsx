@@ -27,6 +27,7 @@ import {
 import { logPayment } from '@/services/paymentService';
 import { listActiveServices } from '@/services/serviceCatalogService';
 import { errorMessage } from '@/lib/errors';
+import { statusLabel } from '@/lib/status';
 import { downloadCsv } from '@/lib/csv';
 import { formatMoney, formatTime, toSalonDate } from '@/lib/format';
 import { computeDateRange, type DateMode } from '@/lib/appointmentsDateRange';
@@ -246,10 +247,36 @@ export function AppointmentsPage(): JSX.Element {
           ? "Today's next appointment"
           : "Today's last appointment";
 
+  // A Toast with an Undo action — same pattern as TodayPage.changeStatus.
   const changeStatus = async (id: string, status: AppointmentStatus): Promise<void> => {
     try {
+      const app = appointments.find((a) => a.id === id);
+      if (!app) {
+        await setAppointmentStatus(id, status);
+        await refresh();
+        return;
+      }
+      const prevStatus = app.status;
+
       await setAppointmentStatus(id, status);
       await refresh();
+
+      showToast({
+        message: `Action applied — ${statusLabel(status)}.`,
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            void (async (): Promise<void> => {
+              try {
+                await setAppointmentStatus(id, prevStatus);
+                await refresh();
+              } catch (e) {
+                showToast({ message: errorMessage(e) });
+              }
+            })();
+          },
+        },
+      });
     } catch (e) {
       showToast({ message: errorMessage(e) });
     }

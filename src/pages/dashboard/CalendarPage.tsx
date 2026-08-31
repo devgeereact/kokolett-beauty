@@ -31,6 +31,7 @@ import {
 } from '@/services/appointmentService';
 import { logPayment } from '@/services/paymentService';
 import { errorMessage } from '@/lib/errors';
+import { statusLabel } from '@/lib/status';
 import {
   formatDateLong,
   formatDateShort,
@@ -236,16 +237,42 @@ export function CalendarPage(): JSX.Element {
         ? 'Next up'
         : undefined;
 
+  // A Toast with an Undo action — same pattern as TodayPage.changeStatus.
   const changeStatus = useCallback(
     async (id: string, status: AppointmentStatus): Promise<void> => {
       try {
+        const app = appointments.find((a) => a.id === id);
+        if (!app) {
+          await setAppointmentStatus(id, status);
+          await load();
+          return;
+        }
+        const prevStatus = app.status;
+
         await setAppointmentStatus(id, status);
         await load();
+
+        showToast({
+          message: `Action applied — ${statusLabel(status)}.`,
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              void (async (): Promise<void> => {
+                try {
+                  await setAppointmentStatus(id, prevStatus);
+                  await load();
+                } catch (e) {
+                  showToast({ message: errorMessage(e) });
+                }
+              })();
+            },
+          },
+        });
       } catch (e) {
         showToast({ message: errorMessage(e) });
       }
     },
-    [load, showToast],
+    [appointments, load, showToast],
   );
 
   const saveNote = useCallback(

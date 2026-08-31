@@ -79,10 +79,12 @@
   # HIT, age 2809). Five minutes is long enough to absorb crawler traffic and
   # short enough that a deploy takes effect while you are still looking at it.
   #
-  # Worth knowing: Cloudflare prepends its own "Managed Content" block of AI-bot
-  # rules to this file, so what is served is not byte-for-byte what is deployed.
-  # Our directives are appended after it and are honoured; do not be alarmed by
-  # a robots.txt that opens with rules nobody here wrote.
+  # This governs sitemap.xml. It does NOT govern robots.txt: Cloudflare's
+  # "Managed Content" feature rewrites that file, prepending its own AI-bot
+  # rules and replacing this header with max-age=14400. Our directives survive,
+  # appended after its block, and are honoured. Measured 2026-08-31; see
+  # docs/DEPLOYMENT.md §1 for how to verify a robots.txt change without waiting
+  # four hours for the edge cache.
   <FilesMatch "^(robots\.txt|sitemap\.xml)$">
     Header set Cache-Control "max-age=300, public, must-revalidate"
   </FilesMatch>

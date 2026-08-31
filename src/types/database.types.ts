@@ -1254,6 +1254,10 @@ export type Database = {
         }
         Returns: Database["public"]["Enums"]["appointment_status"]
       }
+      customer_communication_preferences: {
+        Args: { p_session_token: string }
+        Returns: boolean
+      }
       customer_from_session: {
         Args: { p_session_token: string }
         Returns: string
@@ -1268,6 +1272,10 @@ export type Database = {
           appointment_id: string
           reference: string
         }[]
+      }
+      customer_set_marketing_consent: {
+        Args: { p_consent: boolean; p_session_token: string }
+        Returns: undefined
       }
       daily_close_summary: { Args: never; Returns: Json }
       decline_request: {

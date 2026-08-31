@@ -4,7 +4,7 @@ import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Field, Input } from '@/components/ui/Field';
+import { Checkbox, Field, Input } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { ReschedulePicker } from '@/components/public/ReschedulePicker';
 import { EmptyState, LoadingState } from '@/components/ui/States';
@@ -35,6 +35,8 @@ export function MyBookingsPage(): JSX.Element {
     requestLink,
     cancel,
     reschedule,
+    marketingConsent,
+    setMarketingConsent,
     refresh,
     signOut,
   } = useCustomerSession();
@@ -50,6 +52,8 @@ export function MyBookingsPage(): JSX.Element {
   const [moveBusy, setMoveBusy] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [moved, setMoved] = useState<string | null>(null);
+  const [consentSaving, setConsentSaving] = useState(false);
+  const [consentError, setConsentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -183,6 +187,18 @@ export function MyBookingsPage(): JSX.Element {
    * destructive action a customer can take — ConfirmDialog exists precisely to
    * replace them and every owner-facing screen already uses it.
    */
+  const doToggleConsent = async (next: boolean): Promise<void> => {
+    setConsentError(null);
+    setConsentSaving(true);
+    try {
+      await setMarketingConsent(next);
+    } catch (e) {
+      setConsentError(errorMessage(e));
+    } finally {
+      setConsentSaving(false);
+    }
+  };
+
   const doCancel = async (id: string): Promise<void> => {
     setConfirmCancelId(null);
     setCancelError(null);
@@ -354,6 +370,31 @@ export function MyBookingsPage(): JSX.Element {
           <p role="alert" className="mt-6 text-center text-sm text-destructive">
             {cancelError}
           </p>
+        )}
+
+        {!loading && hasSession && marketingConsent !== null && (
+          <section className="mt-10">
+            <h2 className="mb-3 font-serif text-lg font-semibold text-foreground">
+              Communication preferences
+            </h2>
+            <Card className="p-4">
+              <Checkbox
+                label="Send me occasional offers and updates by email"
+                checked={marketingConsent}
+                disabled={consentSaving}
+                onChange={(e) => void doToggleConsent(e.target.checked)}
+              />
+              <p className="-mt-2 text-xs text-muted-foreground">
+                This doesn&rsquo;t affect booking confirmations, reminders, or replies to
+                anything you&rsquo;ve sent us &mdash; those always go through.
+              </p>
+              {consentError && (
+                <p role="alert" className="mt-2 text-sm text-destructive">
+                  {consentError}
+                </p>
+              )}
+            </Card>
+          </section>
         )}
 
         <p className="mt-8 text-center">

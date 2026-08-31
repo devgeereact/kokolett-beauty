@@ -142,6 +142,26 @@ export async function cancelOwnAppointment(
   if (error) throw error;
 }
 
+/** The customer's own marketing-consent flag — the checkbox ticked (or not) at booking time. */
+export async function fetchMarketingConsent(sessionToken: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('customer_communication_preferences', {
+    p_session_token: sessionToken,
+  });
+  if (error) throw error;
+  return data ?? false;
+}
+
+export async function setOwnMarketingConsent(
+  sessionToken: string,
+  consent: boolean,
+): Promise<void> {
+  const { error } = await supabase.rpc('customer_set_marketing_consent', {
+    p_session_token: sessionToken,
+    p_consent: consent,
+  });
+  if (error) throw error;
+}
+
 /**
  * Ask for a fresh link. Always resolves true — the endpoint deliberately does
  * not reveal whether an address is on file, and neither does this.

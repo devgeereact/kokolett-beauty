@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   cancelOwnAppointment,
   fetchCustomerAppointments,
+  fetchMarketingConsent,
   rescheduleOwnAppointment,
   readStoredSession,
   redeemToken,
   requestAccessLink,
+  setOwnMarketingConsent,
   storeSession,
   type CustomerAppointment,
   type CustomerIdentity,
@@ -31,6 +33,9 @@ interface UseCustomerSession {
   cancel: (appointmentId: string, reason?: string) => Promise<void>;
   /** Move a booking to another published time. Resolves to the new reference. */
   reschedule: (appointmentId: string, newStartsAt: string) => Promise<string>;
+  /** `null` until loaded — distinct from "no", which is `false`. */
+  marketingConsent: boolean | null;
+  setMarketingConsent: (consent: boolean) => Promise<void>;
   refresh: () => Promise<void>;
   signOut: () => void;
 }
@@ -49,6 +54,7 @@ export function useCustomerSession(): UseCustomerSession {
     stored?.customer ?? null,
   );
   const [appointments, setAppointments] = useState<CustomerAppointment[]>([]);
+  const [marketingConsent, setMarketingConsentState] = useState<boolean | null>(null);
   // Start loading when a session is being restored. Initialising to `false`
   // meant the first committed render of /my had no session data and was not
   // loading either, so the "email me a link" card painted for a frame before
@@ -59,11 +65,17 @@ export function useCustomerSession(): UseCustomerSession {
   const load = useCallback(async (): Promise<void> => {
     if (!sessionToken) {
       setAppointments([]);
+      setMarketingConsentState(null);
       return;
     }
     setLoading(true);
     try {
-      setAppointments(await fetchCustomerAppointments(sessionToken));
+      const [appts, consent] = await Promise.all([
+        fetchCustomerAppointments(sessionToken),
+        fetchMarketingConsent(sessionToken),
+      ]);
+      setAppointments(appts);
+      setMarketingConsentState(consent);
       setError(null);
     } catch (e) {
       // An expired or revoked session must not leave a half-signed-in screen.
@@ -123,11 +135,28 @@ export function useCustomerSession(): UseCustomerSession {
     [sessionToken, load],
   );
 
+  const setMarketingConsent = useCallback(
+    async (consent: boolean): Promise<void> => {
+      if (!sessionToken) return;
+      // Optimistic: a toggle should feel instant, and a failure below reverts it.
+      const previous = marketingConsent;
+      setMarketingConsentState(consent);
+      try {
+        await setOwnMarketingConsent(sessionToken, consent);
+      } catch (e) {
+        setMarketingConsentState(previous);
+        throw e;
+      }
+    },
+    [sessionToken, marketingConsent],
+  );
+
   const signOut = useCallback((): void => {
     storeSession(null);
     setSessionToken(null);
     setCustomer(null);
     setAppointments([]);
+    setMarketingConsentState(null);
   }, []);
 
   return {
@@ -140,6 +169,8 @@ export function useCustomerSession(): UseCustomerSession {
     requestLink: requestAccessLink,
     cancel,
     reschedule,
+    marketingConsent,
+    setMarketingConsent,
     refresh: load,
     signOut,
   };

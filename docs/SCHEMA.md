@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0061`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0062`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -40,6 +40,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0059_payment_corrections.sql`                      | Added `payments.corrects_payment_id` (nullable FK to `payments.id`) and loosened the `amount_pence` check to allow negative only when `corrects_payment_id` is set (a plain payment must still be positive). `log_payment()` gained an optional `p_corrects_payment_id` param and validates the linked payment is on the same appointment. |
 | `0060_customer_communication_preferences.sql`       | Added `customer_communication_preferences()` and `customer_set_marketing_consent()` — no new table, no new column. Session-scoped RPCs (via `customer_from_session()`, `0021`) so a customer on `/my` can read and change her own `customers.marketing_consent` without asking the owner. |
 | `0061_email_template_history.sql`                   | Added `email_template_revisions` (append-only) and a `before update` trigger on `email_templates` that logs the old subject/html_body whenever either actually changes. No revert RPC — a revert is just a normal update with an earlier revision's content, which the same trigger logs again. |
+| `0062_customer_session_revocation.sql`              | Added `revoke_customer_sessions()` and a new `customer.sessions_revoked` value in `audit_events.action`'s check constraint — no new table. Marks a customer's live `customer_access_tokens` (`purpose = 'session'`) as used, which `customer_from_session()` (`0021`) already treats as invalid. |
 
 ### Every table, and where it is documented
 
@@ -66,7 +67,7 @@ migration that created them as the authoritative source.
 | `calendar_feeds`        | `0019`     | ICS feed tokens: `token_hash`, `label`, `fetch_count`, `revoked_at`. The raw token exists only in the URL                        |
 | `subscribers`           | `0017`     | mailing list: `email` (citext, unique), `source`, `confirmed`, `unsubscribed_at`                                                 |
 | `secret_login_attempts` | `0051`     | hashed-IP lockout counter for the secret owner login (`ip_hash`, `attempted_at`); no anon/authenticated policies, service-role only |
-| `audit_events`          | `0052`, action vocabulary extended by `0054`, `0056` and `0058` | immutable log of the highest-risk owner actions: `actor`, `action`, `entity_type`, `entity_id`, `summary`, `old_value`/`new_value` jsonb. SELECT-only for the owner; no insert/update/delete policy for any role, including the owner |
+| `audit_events`          | `0052`, action vocabulary extended by `0054`, `0056`, `0058` and `0062` | immutable log of the highest-risk owner actions: `actor`, `action`, `entity_type`, `entity_id`, `summary`, `old_value`/`new_value` jsonb. SELECT-only for the owner; no insert/update/delete policy for any role, including the owner |
 
 Columns added to `0002` tables since: `booking_settings` gained `instagram_url`,
 `google_place_id`, `address_line`, `phone` (`0017`) and `business_name`,

@@ -97,7 +97,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 | Active session list / per-session revoke | Only shows `last_sign_in_at` | 🟡 | `AccountSecurityCard.tsx:19-21` (comment: needs Supabase admin API, not client-exposable) | Full session list/revoke | External constraint (Supabase admin API), not neglect | P2 |
 | Audit trail (appointment lifecycle, customer erasure, payment logging, login-slug change) | `audit_events` table (SELECT-only, no write policy for anyone including the owner), `log_audit_event()` called from `set_appointment_status`/`approve_appointment`/`reject_appointment`/`create_appointment_as_owner`/`reschedule_appointment_as_owner`/`delete_appointment_as_owner`/`erase_customer_as_owner`/`log_payment`/`set_owner_login_slug`, read-only `/dashboard/audit` page | ✅ | `supabase/migrations/0052_audit_trail.sql`, `src/pages/dashboard/AuditPage.tsx` — verified live 2026-08-29 against production (all 9 target actions logged correctly, non-owner denied, direct insert denied even for owner) | The ~15 direct client-side `.update()` mutations (owner notes, customer detail edits, settings/template edits, service-menu edits, subscribers, profile) are **not** covered — no single server-side hook point exists for them, deliberately left out of this MVP | Follow-up, not urgent at staff=1 | P3 (follow-up) |
 | General security-events feed (RLS denials, auth failures) | Only the narrow secret-login lockout log exists | 🔴 | Same as above | No broad security-event visibility | P2 |
-| Magic-link security (rate limit, single-use, expiry, revocation) | Real | ✅ | `customer_access_tokens` (`0002`), `customer-access` Edge Function | Bulk "revoke all sessions for this customer" | P3 |
+| Magic-link security (rate limit, single-use, expiry, revocation) | Real, including bulk "revoke all sessions for this customer" | ✅ | `customer_access_tokens` (`0002`), `customer-access` Edge Function, `revoke_customer_sessions()` (`0062`) | — | — |
 
 ### Analytics
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
@@ -201,7 +201,7 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [ ] Product-event/analytics instrumentation — deliberately low priority for a single-owner product.
 - [ ] Undo layer for cancellation/reschedule.
 - [ ] Email configuration diagnostic screen.
-- [ ] Bulk customer-session revocation.
+- [x] Bulk customer-session revocation — done: `supabase/migrations/0062_customer_session_revocation.sql`, `revoke_customer_sessions()`, "Sign out everywhere" in the Customers detail panel's More options menu. Verified live against production (rolled-back-transaction SQL validation, then a real two-tab browser round trip — caught and fixed a real pre-existing bug in `useCustomerSession.ts`'s INVALID_SESSION detection, which checked `e instanceof Error` when `supabase.rpc()` errors are plain objects, so a revoked customer never actually got signed out client-side). Test data cleaned up.
 
 **Judgment call, not a priority-ranked gap:**
 - Notifications persistence — currently a computed feed (no stored `notifications` table; `notificationsService.ts` says so directly) with `localStorage` read-state per device. This may be a legitimate simplicity tradeoff for a single-owner app rather than a gap to fix — a real table would only pay off if read-state needs to survive across devices/browsers, at the cost of a write path and a migration. Flagged for a decision, not assigned a P-number.

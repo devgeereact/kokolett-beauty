@@ -125,6 +125,26 @@ diff /tmp/live.htaccess .htaccess          # expect only your own change
 ssh cpanel 'cp ~/kokolettbeauty.com/.htaccess ~/private_backups/configs/htaccess-kokolettbeauty-$(date +%Y%m%d-%H%M%S).bak'
 ```
 
+**`robots.txt` and `sitemap.xml` are edge-cached, and Cloudflare rewrites the
+first one.** Two things to know before trusting what you fetch:
+
+- Neither file matched a caching rule until 2026-08-31, so both fell through to
+  Cloudflare's default and were held at the edge for four hours. A deploy that
+  added two `Disallow` lines served the previous robots.txt for the rest of that
+  window (`cf-cache-status: HIT`, `age: 2809`). They now carry `max-age=300`.
+- **Cloudflare prepends its own "Managed Content" block of AI-bot rules**, so
+  what is served is not byte-for-byte what is deployed. Our directives are
+  appended after it and are honoured. A robots.txt that opens with rules nobody
+  in this repo wrote is normal, not a compromise.
+
+After changing either file, check the served copy rather than the deployed one,
+and allow five minutes:
+
+```bash
+curl -sI https://www.kokolettbeauty.com/robots.txt | grep -iE 'cf-cache-status|age'
+curl -s  https://www.kokolettbeauty.com/robots.txt | grep Disallow
+```
+
 **Verify the origin lock after any `.htaccess` deploy.** Through Cloudflare must stay
 200; straight to the origin IP must be 403; `/.well-known/` must stay reachable at the
 origin or certificate validation breaks:

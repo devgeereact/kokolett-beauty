@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, HelpCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/Card';
-import { ErrorState, LoadingState } from '@/components/ui/States';
-import { getSystemHealth } from '@/services/systemHealthService';
+import { ErrorState, LoadingState, Spinner } from '@/components/ui/States';
+import {
+  getEmailDiagnostics,
+  getSystemHealth,
+  type EmailAuthCheck,
+  type EmailDiagnostics,
+} from '@/services/systemHealthService';
 import { formatDateTime } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -67,6 +72,35 @@ function JobRow({
   );
 }
 
+function AuthCheckRow({
+  label,
+  check,
+  detail,
+}: {
+  label: string;
+  check: EmailAuthCheck;
+  detail?: string;
+}): JSX.Element {
+  return (
+    <div className="flex items-center justify-between gap-2 py-1.5">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          'flex items-center gap-1.5 font-medium',
+          check.present ? 'text-status-confirmed' : 'text-status-no-show',
+        )}
+      >
+        {check.present ? (
+          <CheckCircle2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+        ) : (
+          <AlertCircle aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+        )}
+        {check.present ? (detail ?? 'Set up') : 'Missing'}
+      </span>
+    </div>
+  );
+}
+
 /**
  * Read-only: pg_cron's own run history (nothing new logged — cron already
  * records every run in `cron.job_run_details`, this just surfaces it), plus
@@ -77,12 +111,18 @@ export function SystemHealthPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [emailAuth, setEmailAuth] = useState<EmailDiagnostics | null>(null);
+  const [emailAuthError, setEmailAuthError] = useState(false);
 
   const load = useCallback((): void => {
     setError(null);
     getSystemHealth()
       .then(setHealth)
       .catch((e: unknown) => setError(e instanceof Error ? e : new Error(String(e))));
+    setEmailAuthError(false);
+    getEmailDiagnostics()
+      .then(setEmailAuth)
+      .catch(() => setEmailAuthError(true));
   }, []);
 
   useEffect(load, [load]);
@@ -144,6 +184,44 @@ export function SystemHealthPage(): JSX.Element {
                 >
                   View the outbox
                 </Link>
+              </Card>
+
+              <Card className="p-4">
+                <h2 className="mb-3 text-base font-semibold text-foreground">
+                  Email authentication
+                </h2>
+                {emailAuth ? (
+                  <div className="divide-y divide-border text-sm">
+                    <AuthCheckRow label="SPF" check={emailAuth.spf} />
+                    <AuthCheckRow
+                      label="DKIM"
+                      check={emailAuth.dkim}
+                      detail={`Selector "${emailAuth.dkim.selector}"`}
+                    />
+                    <AuthCheckRow
+                      label="DMARC"
+                      check={emailAuth.dmarc}
+                      detail={
+                        emailAuth.dmarc.policy
+                          ? `Policy: ${emailAuth.dmarc.policy}`
+                          : undefined
+                      }
+                    />
+                  </div>
+                ) : emailAuthError ? (
+                  <p className="text-xs text-muted-foreground">
+                    Couldn&rsquo;t check the domain&rsquo;s DNS records right now.
+                  </p>
+                ) : (
+                  <div className="flex justify-center py-4">
+                    <Spinner />
+                  </div>
+                )}
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {emailAuth
+                    ? `Checked ${formatDateTime(emailAuth.checkedAt, timezone)} — live DNS lookup, not stored.`
+                    : 'These three records tell a receiving mail server the email genuinely came from us.'}
+                </p>
               </Card>
 
               <Card className="p-4">

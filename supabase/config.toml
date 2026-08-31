@@ -494,3 +494,10 @@ verify_jwt = false
 # database query for RLS to gate.
 [functions.draft-copy]
 verify_jwt = true
+
+# Owner-only. Explicit is_owner() RPC check before doing anything, same as
+# draft-copy — this makes no database query of its own for RLS to gate. Only
+# reads public DNS TXT records (SPF/DMARC/DKIM) via Cloudflare's DoH
+# resolver; no credentials of any kind.
+[functions.email-diagnostics]
+verify_jwt = true

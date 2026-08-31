@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input, Select } from '@/components/ui/Field';
 import { Switch } from '@/components/ui/Switch';
+import { Tabs } from '@/components/ui/Tabs';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { getEmailTemplate, updateEmailTemplate } from '@/services/emailService';
@@ -461,23 +462,15 @@ export function TemplateEditorPage(): JSX.Element {
                 Preview
               </h2>
             </div>
-            <div className="mb-4 flex gap-1 border-b border-border">
-              {(['email', 'mobile'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setPreviewMode(m)}
-                  className={cn(
-                    'border-b-2 px-3 py-2 text-sm font-medium capitalize',
-                    previewMode === m
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground',
-                  )}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              className="mb-4"
+              tabs={[
+                { key: 'email' as const, label: 'Email' },
+                { key: 'mobile' as const, label: 'Mobile' },
+              ]}
+              active={previewMode}
+              onChange={setPreviewMode}
+            />
 
             {/*
             Deliberately fixed hex, not theme tokens — this pane previews

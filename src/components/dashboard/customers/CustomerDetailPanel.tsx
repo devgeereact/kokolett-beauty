@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CommunicationAssistancePanel } from '@/components/dashboard/assistant/CommunicationAssistancePanel';
 import { CustomerTimeline } from '@/components/dashboard/customers/CustomerTimeline';
+import { Dropdown } from '@/components/ui/Dropdown';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Switch } from '@/components/ui/Switch';
+import { Tabs } from '@/components/ui/Tabs';
 import { formatDateShort, formatDateTime } from '@/lib/format';
 import {
   setCustomerMarketingConsent,
@@ -17,7 +19,6 @@ import {
 } from '@/services/customerService';
 import { listEmailsForCustomer } from '@/services/emailService';
 import type { AppointmentDetailed, EmailMessage } from '@/types';
-import { cn } from '@/lib/utils';
 
 type Tab = 'overview' | 'history' | 'notes' | 'message' | 'email';
 const TABS: { key: Tab; label: string }[] = [
@@ -94,7 +95,6 @@ export function CustomerDetailPanel({
   onConsentChange: (consent: boolean) => void;
 }): JSX.Element {
   const [tab, setTab] = useState<Tab>('overview');
-  const [menuOpen, setMenuOpen] = useState(false);
   const [consent, setConsent] = useState(customer.marketing_consent);
   const [consentBusy, setConsentBusy] = useState(false);
   const [emails, setEmails] = useState<EmailMessage[]>([]);
@@ -223,60 +223,38 @@ export function CustomerDetailPanel({
                 )}
               </div>
             </div>
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                aria-label="More options"
-                onClick={() => setMenuOpen((o) => !o)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <MoreHorizontal aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-              </button>
-              {menuOpen && (
-                <div className="absolute right-0 top-9 z-dropdown w-44 rounded-xl border border-border bg-popover p-1 shadow-popover">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onStartEdit();
-                    }}
-                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
-                  >
-                    Edit details
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onExport();
-                    }}
-                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
-                  >
-                    Export data
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onRevokeSessions();
-                    }}
-                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
-                  >
-                    Sign out everywhere
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onErase();
-                    }}
-                    className="block w-full rounded-md px-3 py-2 text-left text-sm text-destructive hover:bg-muted"
-                  >
-                    Erase this customer
-                  </button>
-                </div>
+            <Dropdown
+              className="shrink-0"
+              trigger={({ toggle }) => (
+                <button
+                  type="button"
+                  aria-label="More options"
+                  onClick={toggle}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <MoreHorizontal
+                    aria-hidden="true"
+                    className="h-4 w-4"
+                    strokeWidth={2}
+                  />
+                </button>
               )}
-            </div>
+              items={[
+                { key: 'edit', label: 'Edit details', onSelect: onStartEdit },
+                { key: 'export', label: 'Export data', onSelect: onExport },
+                {
+                  key: 'revoke-sessions',
+                  label: 'Sign out everywhere',
+                  onSelect: onRevokeSessions,
+                },
+                {
+                  key: 'erase',
+                  label: 'Erase this customer',
+                  destructive: true,
+                  onSelect: onErase,
+                },
+              ]}
+            />
             <Button variant="ghost" size="sm" className="shrink-0" onClick={onClose}>
               Close
             </Button>
@@ -298,23 +276,7 @@ export function CustomerDetailPanel({
             />
           </div>
 
-          <div className="flex gap-1 border-b border-border">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setTab(t.key)}
-                className={cn(
-                  'border-b-2 px-3 py-2 text-sm font-medium',
-                  tab === t.key
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
           {tab === 'overview' && (
             <div className="space-y-4">

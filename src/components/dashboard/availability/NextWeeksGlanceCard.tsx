@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { addDays, DAYS_OF_WEEK, formatDateShort, toSalonDate } from '@/lib/format';
 import { listMonthSummary, type DaySummary } from '@/services/availabilityService';
 import { routes } from '@/lib/routes';
@@ -75,24 +76,25 @@ export function NextWeeksGlanceCard({
                   const hasSlots = (s?.slot_count ?? 0) > 0;
                   const past = date < today;
                   return (
-                    <span
+                    <Tooltip
                       key={date}
-                      title={`${formatDateShort(`${date}T00:00:00Z`)} — ${hasSlots ? `${s!.slot_count} slots` : 'no slots'}`}
-                      className="flex items-center justify-center"
+                      label={`${formatDateShort(`${date}T00:00:00Z`)} — ${hasSlots ? `${s!.slot_count} slots` : 'no slots'}`}
                     >
-                      <span
-                        className={cn(
-                          'h-2.5 w-2.5 rounded-full',
-                          past
-                            ? 'bg-muted'
-                            : hasSlots
-                              ? 'bg-status-completed'
-                              : usuallyOpen.has(dow)
-                                ? 'border-2 border-status-no-show bg-transparent'
-                                : 'bg-border',
-                        )}
-                      />
-                    </span>
+                      <span className="flex items-center justify-center">
+                        <span
+                          className={cn(
+                            'h-2.5 w-2.5 rounded-full',
+                            past
+                              ? 'bg-muted'
+                              : hasSlots
+                                ? 'bg-status-completed'
+                                : usuallyOpen.has(dow)
+                                  ? 'border-2 border-status-no-show bg-transparent'
+                                  : 'bg-border',
+                          )}
+                        />
+                      </span>
+                    </Tooltip>
                   );
                 })}
               </div>

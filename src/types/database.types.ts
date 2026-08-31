@@ -627,6 +627,38 @@ export type Database = {
           },
         ]
       }
+      email_template_revisions: {
+        Row: {
+          created_at: string
+          html_body: string
+          id: string
+          subject: string
+          template_key: string
+        }
+        Insert: {
+          created_at?: string
+          html_body: string
+          id?: string
+          subject: string
+          template_key: string
+        }
+        Update: {
+          created_at?: string
+          html_body?: string
+          id?: string
+          subject?: string
+          template_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_template_revisions_template_key_fkey"
+            columns: ["template_key"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           active: boolean

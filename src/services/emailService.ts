@@ -1,5 +1,10 @@
 import { invokeFunction, supabase } from '@/lib/supabase';
-import type { EmailMessage, EmailTemplateRow, EmailTemplateUpdate } from '@/types';
+import type {
+  EmailMessage,
+  EmailTemplateRevision,
+  EmailTemplateRow,
+  EmailTemplateUpdate,
+} from '@/types';
 
 /**
  * `email_messages` — the delivery log and retry queue an Inngest worker
@@ -125,6 +130,25 @@ export async function updateEmailTemplate(
     .single();
   if (error) throw error;
   return data;
+}
+
+/**
+ * Prior versions of a template, newest first (`email_template_revisions`,
+ * migration 0061) — logged automatically by a trigger whenever `subject` or
+ * `html_body` actually changes. A revert is just `updateEmailTemplate()`
+ * with an earlier revision's content: no separate revert RPC, and the
+ * trigger snapshots the pre-revert state as a new revision the same way.
+ */
+export async function listTemplateRevisions(
+  key: string,
+): Promise<EmailTemplateRevision[]> {
+  const { data, error } = await supabase
+    .from('email_template_revisions')
+    .select('*')
+    .eq('template_key', key)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
 }
 
 export interface EmailPreview {

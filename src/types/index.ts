@@ -251,6 +251,8 @@ export type ServiceMenuItem = Tables['service_menu']['Row'];
 
 export type EmailTemplateRow = Tables['email_templates']['Row'];
 export type EmailTemplateUpdate = Tables['email_templates']['Update'];
+/** A snapshot logged automatically whenever a template's subject or html_body changes. */
+export type EmailTemplateRevision = Tables['email_template_revisions']['Row'];
 
 /** One group as `public_service_menu()` returns it. `duration_min` and
     `image_path` were added to the public shape in migration `0048` — before

@@ -18,6 +18,7 @@ import {
   Underline,
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { TemplateHistoryPanel } from '@/components/dashboard/templates/TemplateHistoryPanel';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -111,6 +112,7 @@ export function TemplateEditorPage(): JSX.Element {
   const meta = templateMeta(key);
 
   const [row, setRow] = useState<EmailTemplateRow | null>(null);
+  const [historyVersion, setHistoryVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [saving, setSaving] = useState(false);
@@ -178,12 +180,20 @@ export function TemplateEditorPage(): JSX.Element {
       });
       setRow(updated);
       setBodyHtml(html);
+      setHistoryVersion((v) => v + 1);
       showToast({ message: 'Template saved.' });
     } catch (e) {
       showToast({ message: errorMessage(e) });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleReverted = (updated: EmailTemplateRow): void => {
+    setRow(updated);
+    setSubject(updated.subject);
+    setBodyHtml(updated.html_body);
+    if (editorRef.current) editorRef.current.innerHTML = updated.html_body;
   };
 
   if (loading) {
@@ -444,31 +454,32 @@ export function TemplateEditorPage(): JSX.Element {
           </Card>
         </div>
 
-        <Card className="h-fit p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-serif text-base font-semibold text-foreground">
-              Preview
-            </h2>
-          </div>
-          <div className="mb-4 flex gap-1 border-b border-border">
-            {(['email', 'mobile'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setPreviewMode(m)}
-                className={cn(
-                  'border-b-2 px-3 py-2 text-sm font-medium capitalize',
-                  previewMode === m
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground',
-                )}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
+        <div className="space-y-6">
+          <Card className="h-fit p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-serif text-base font-semibold text-foreground">
+                Preview
+              </h2>
+            </div>
+            <div className="mb-4 flex gap-1 border-b border-border">
+              {(['email', 'mobile'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPreviewMode(m)}
+                  className={cn(
+                    'border-b-2 px-3 py-2 text-sm font-medium capitalize',
+                    previewMode === m
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground',
+                  )}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
 
-          {/*
+            {/*
             Deliberately fixed hex, not theme tokens — this pane previews
             the actual email HTML the customer's inbox renders, not this
             dashboard's own UI. The real template
@@ -479,61 +490,74 @@ export function TemplateEditorPage(): JSX.Element {
             the owner is in dark mode. Values below are copied from that
             file's own PAPER/INK/MUTED/LINE/BRAND constants.
           */}
-          <div
-            style={{ background: '#e8ebed', borderColor: '#dcdfe2' }}
-            className={cn(
-              'overflow-hidden rounded-lg border',
-              previewMode === 'mobile' && 'mx-auto max-w-[320px]',
-            )}
-          >
             <div
-              style={{ background: '#ffffff', borderColor: '#dcdfe2' }}
-              className="flex items-center justify-between border-b px-6 py-5"
+              style={{ background: '#e8ebed', borderColor: '#dcdfe2' }}
+              className={cn(
+                'overflow-hidden rounded-lg border',
+                previewMode === 'mobile' && 'mx-auto max-w-[320px]',
+              )}
             >
-              <p style={{ color: '#333333' }} className="font-serif text-lg font-bold">
-                Kokolett <span style={{ color: '#e05d38' }}>Beauty</span> UK
-              </p>
-              <p
-                style={{ color: '#6b7280' }}
-                className="text-2xs uppercase tracking-wide"
-              >
-                Women&rsquo;s hair salon
-              </p>
-            </div>
-            <div
-              style={{ background: '#ffffff', color: '#333333' }}
-              className="p-5 text-sm"
-            >
-              <p className="mb-3 font-serif text-base font-semibold">
-                {renderPreview(subject)}
-              </p>
               <div
-                style={{ color: '#333333' }}
-                className="[&_a]:underline [&_a]:[color:#e05d38] [&_p]:mb-3"
-                dangerouslySetInnerHTML={{ __html: renderPreview(bodyHtml) }}
-              />
-            </div>
-            <div
-              style={{ borderColor: '#dcdfe2', background: '#fafbfc', color: '#6b7280' }}
-              className="space-y-3 border-t p-4 text-center"
-            >
-              <div className="flex justify-center gap-3">
-                {[MessageCircle, Globe, Share2].map((Icon, i) => (
-                  <span
-                    key={i}
-                    style={{ background: '#ffffff', color: '#333333' }}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full"
-                  >
-                    <Icon aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-                  </span>
-                ))}
+                style={{ background: '#ffffff', borderColor: '#dcdfe2' }}
+                className="flex items-center justify-between border-b px-6 py-5"
+              >
+                <p style={{ color: '#333333' }} className="font-serif text-lg font-bold">
+                  Kokolett <span style={{ color: '#e05d38' }}>Beauty</span> UK
+                </p>
+                <p
+                  style={{ color: '#6b7280' }}
+                  className="text-2xs uppercase tracking-wide"
+                >
+                  Women&rsquo;s hair salon
+                </p>
               </div>
-              <span className="block text-xs">
-                © {new Date().getFullYear()} Kokolett Beauty UK. All rights reserved.
-              </span>
+              <div
+                style={{ background: '#ffffff', color: '#333333' }}
+                className="p-5 text-sm"
+              >
+                <p className="mb-3 font-serif text-base font-semibold">
+                  {renderPreview(subject)}
+                </p>
+                <div
+                  style={{ color: '#333333' }}
+                  className="[&_a]:underline [&_a]:[color:#e05d38] [&_p]:mb-3"
+                  dangerouslySetInnerHTML={{ __html: renderPreview(bodyHtml) }}
+                />
+              </div>
+              <div
+                style={{
+                  borderColor: '#dcdfe2',
+                  background: '#fafbfc',
+                  color: '#6b7280',
+                }}
+                className="space-y-3 border-t p-4 text-center"
+              >
+                <div className="flex justify-center gap-3">
+                  {[MessageCircle, Globe, Share2].map((Icon, i) => (
+                    <span
+                      key={i}
+                      style={{ background: '#ffffff', color: '#333333' }}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full"
+                    >
+                      <Icon aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                    </span>
+                  ))}
+                </div>
+                <span className="block text-xs">
+                  © {new Date().getFullYear()} Kokolett Beauty UK. All rights reserved.
+                </span>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+
+          <TemplateHistoryPanel
+            templateKey={key}
+            currentSubject={subject}
+            currentBodyHtml={bodyHtml}
+            onReverted={handleReverted}
+            refreshToken={historyVersion}
+          />
+        </div>
       </div>
     </DashboardLayout>
   );

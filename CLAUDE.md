@@ -58,7 +58,7 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
   and hooks.
 - **Styling:** Tailwind classes only, tokens from `tailwind.config.ts`. Not
   NativeWind — see `docs/DESIGN.md` §12.
-- **Offloaded systems:** Supabase (Auth/DB + RLS, ten Deno Edge Functions,
+- **Offloaded systems:** Supabase (Auth/DB + RLS, eleven Deno Edge Functions,
   `pg_cron` jobs), ImageKit (transformed URLs for service images only), Sentry
   (monitoring). There is no Inngest — the email pipeline is a Postgres trigger plus
   a `pg_cron` drain job.

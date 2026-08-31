@@ -72,6 +72,21 @@
     Header set Cache-Control "max-age=31536000, public, immutable"
   </FilesMatch>
 
+  # robots.txt and sitemap.xml are crawler instructions, not assets. Neither
+  # matched a rule here, so both fell through to Cloudflare's default and were
+  # cached edge-side for four hours: after a deploy that added two Disallow
+  # lines, the served robots.txt was still the previous one (cf-cache-status:
+  # HIT, age 2809). Five minutes is long enough to absorb crawler traffic and
+  # short enough that a deploy takes effect while you are still looking at it.
+  #
+  # Worth knowing: Cloudflare prepends its own "Managed Content" block of AI-bot
+  # rules to this file, so what is served is not byte-for-byte what is deployed.
+  # Our directives are appended after it and are honoured; do not be alarmed by
+  # a robots.txt that opens with rules nobody here wrote.
+  <FilesMatch "^(robots\.txt|sitemap\.xml)$">
+    Header set Cache-Control "max-age=300, public, must-revalidate"
+  </FilesMatch>
+
   # NEVER cache the service worker, manifest, or the HTML entrypoint,
   # otherwise users get stuck on stale app versions.
   <FilesMatch "(sw\.js|service-worker\.js|workbox-.*\.js|manifest\.webmanifest|index\.html)$">

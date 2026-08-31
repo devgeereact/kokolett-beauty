@@ -8,7 +8,7 @@ do not merge.
 - **Static-first.** The shipped artefact is `dist/`, served as files. No Node
   server, no SSR, nothing that needs a runtime on the web host.
 - **Server logic lives in `supabase/functions/`**, as Deno Edge Functions, plus
-  Postgres triggers and `pg_cron` jobs. There are seven functions. They are outside
+  Postgres triggers and `pg_cron` jobs. There are eleven functions. They are outside
   the Vite build and outside `npm run typecheck`, so they are checked separately with
   `deno check` (CI does this).
 - **Respect the folder map** in `docs/ARCHITECTURE.md`. No new top-level folders

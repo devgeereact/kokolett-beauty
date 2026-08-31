@@ -8,7 +8,7 @@
 
 **Tech Stack:** Postgres/Supabase (migrations, RPCs, RLS), Deno Edge Functions, OpenRouter (`openai/gpt-5-nano`), React 19 + TypeScript + Vite, Vitest, Supabase MCP for live verification (house method — no local Docker in this environment).
 
-**Spec:** `docs/superpowers/specs/2026-08-30-ai-broadcast-messaging-design.md`
+**Spec:** `docs/history/2026-08-30-ai-broadcast-messaging-design.md`
 
 ## Global Constraints
 
@@ -60,7 +60,7 @@
 --
 -- unsubscribe_via_link() is anon-callable by design: a visitor clicking
 -- the link has no session. It's keyed on the subscriber's own id rather
--- than a hashed token table (see docs/superpowers/specs/2026-08-30-
+-- than a hashed token table (see docs/history/2026-08-30-
 -- ai-broadcast-messaging-design.md §5.2 for why this is safe) —
 -- idempotent, and reveals nothing about whether an id exists or was
 -- already unsubscribed.

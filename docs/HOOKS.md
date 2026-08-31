@@ -143,11 +143,29 @@ interface UseCustomerSession {
   cancel: (appointmentId: string, reason?: string) => Promise<void>;
   /** Move a booking to another published time. Resolves to the new reference. */
   reschedule: (appointmentId: string, newStartsAt: string) => Promise<string>;
+  /** `null` until loaded — distinct from "no", which is `false`. */
+  marketingConsent: boolean | null;
+  setMarketingConsent: (consent: boolean) => Promise<void>;
   refresh: () => Promise<void>;
   signOut: () => void;
 }
 export function useCustomerSession(): UseCustomerSession;
 ```
+
+`marketingConsent`/`setMarketingConsent` (2026-08-31) read and write the customer's own
+`customers.marketing_consent` via `customer_from_session()`-gated RPCs
+(`customer_communication_preferences()` / `customer_set_marketing_consent()`,
+migration `0060`) — the same session token every other call here already uses, no new
+auth mechanism. `setMarketingConsent` is optimistic (updates local state immediately,
+reverts on failure).
+
+The `INVALID_SESSION` detection inside `load()`'s catch block reads a `.message`
+property off *any* object with one, not `e instanceof Error` — `supabase.rpc()` never
+throws a real `Error` for an RPC-level failure unless `.throwOnError()` is called
+(this app doesn't), so the `{ data, error }` result's `error` is a plain object. A
+version of this hook that checked `instanceof Error` here would silently never detect
+an expired or revoked session (found and fixed 2026-08-31, while building bulk
+session revocation — the first thing that ever exercised this path for real).
 
 ## 9. `useBusinessSettings`
 
@@ -302,9 +320,22 @@ export function useAppointmentDrag(
 
 `src/hooks/useAppointmentActions.ts`
 The status transitions an owner can apply to an appointment (confirm, check in, start,
-complete, mark no-show, cancel), with the confirmation copy and the busy state each one
-needs. Shared by the detail modal, the calendar panel and the quick-action steps so the
-same action means the same thing wherever it is offered.
+complete, mark no-show, cancel — `0063` also made `cancelled` reversible, restoring
+whichever of confirmed/checked_in/in_service it came from), with the confirmation copy
+and the busy state each one needs. Shared by the detail modal, the calendar panel and
+the quick-action steps so the same action means the same thing wherever it is offered.
+
+The same hook also owns the payment-logging form: `savePayment()`, plus
+`correctingPaymentId`/`setCorrectingPaymentId` and `correctionDirection`/
+`setCorrectionDirection` (`'add' | 'deduct'`, migration `0059`) — checking "this
+corrects an earlier payment" links the new row to the one it corrects and lets the
+amount go negative (a refund/deduction) rather than only ever adding money. The
+`onLogPayment` prop it's given takes an optional fourth `correctsPaymentId` argument;
+every call site (`TodayPage`, `CalendarPage`, `AppointmentsPage`,
+`PaymentReconciliationCard`) has to forward it explicitly — TypeScript's structural
+typing means a caller that still only passes three arguments type-checks cleanly
+against the four-argument (one optional) prop type, so a silently-dropped correction id
+is a real, non-obvious way for this to regress without `tsc` catching it.
 
 ---
 

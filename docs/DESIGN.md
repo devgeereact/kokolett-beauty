@@ -628,6 +628,34 @@ modal/drawer/toast chrome:
 - **`ToastStack`** (`components/ui/Toast.tsx`) — mounted once by `ToastProvider`; nothing
   else renders a toast directly.
 
+### 15.4b Interaction primitives (2026-08-31)
+
+Four more shared components, added the same night the pages below stopped hand-rolling
+the equivalent markup themselves. Not yet adopted everywhere that could use them —
+each was wired into at least one real consumer, not left as unused scaffolding, but a
+full app-wide migration is separate, larger work (`docs/KOKO_GAP.md`'s P3 checklist).
+
+- **`Dropdown`** (`components/ui/Dropdown.tsx`) — trigger + popover menu, closes on
+  outside pointerdown or Escape. In use: `AppointmentRowMenu.tsx`,
+  `CustomerDetailPanel.tsx`'s More options menu.
+- **`Tabs`** (`components/ui/Tabs.tsx`) — the underline tab bar (active tab gets a
+  coloured bottom border). In use: `CustomerDetailPanel.tsx`,
+  `TemplateEditorPage.tsx`'s Email/Mobile preview toggle.
+- **`Tooltip`** (`components/ui/Tooltip.tsx`) — shows on hover *and* focus (the native
+  `title` attribute it replaces is keyboard-invisible), announced via
+  `aria-describedby`. Wraps its child rather than rendering its own trigger, so it can
+  attach to any existing element without changing that element's semantics — but that
+  means it introduces its own `position: relative` wrapper, which silently breaks a
+  child that already depends on a specific `relative` ancestor for its own
+  `position: absolute` offsets (caught once, on the sidebar collapse toggle, before
+  shipping — moved to `NextWeeksGlanceCard.tsx`'s day-glance dots instead, which has no
+  such conflict).
+- **`DataTable`** (`components/ui/DataTable.tsx`) — sticky header, optional row
+  grouping with a full-width divider row, row click. In use: `AppointmentsTable.tsx`.
+  Deliberately not used for the Customers grid, which moved from a table to cards per
+  an explicit prior owner request (`CustomerCard.tsx`'s own comment) — a generic table
+  primitive is the wrong fit there regardless of how flexible it is.
+
 ### 15.5 Marketing vs dashboard
 
 Marketing: Source Serif 4 headings, large photography, generous whitespace, `rounded-xl`

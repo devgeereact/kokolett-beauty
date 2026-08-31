@@ -109,8 +109,8 @@ export function MonthView({
                     The published-times count is a fact of its own — how many
                     slots are open that day — independent of whether any of
                     them are booked. It stays visible even when there are no
-                    pills to show (docs/superpowers/specs/2026-08-11-calendar-
-                    rebuild-design.md §6), so it renders here rather than
+                    pills to show (docs/history/2026-08-14-calendar-rebuild-design.md
+                    §6), so it renders here rather than
                     folding into the pill list below.
                   */}
                   {row && row.slot_count > 0 && (

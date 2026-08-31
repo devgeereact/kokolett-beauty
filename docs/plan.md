@@ -44,19 +44,24 @@ that was never built; this list used to repeat it.
       headers are the record past that. A further pass ran 2026-08-30 (documented in
       `docs/KOKO_GAP.md` §4), fixing the migration range and Edge Function count again
       (7→9→10) plus an `ARCHITECTURE.md` §6b gap (a third AI surface, `draft-copy`,
-      wasn't described). This drifts every ~1-2 weeks of active work — next pass due
-      whenever migrations pass roughly `0065` or another Edge Function ships.
-- [ ] **`google_place_id` is unset**, deliberately — the reviews sync stays idle and the
-      public Reviews block renders nothing (a clean empty state, not a fault). Two
-      separate places, both required before reviews appear: `google_place_id` in
-      Settings → Business, and the `GOOGLE_PLACES_API_KEY` Edge Function secret
-      (`supabase secrets set`) — the one secret deliberately left unset. Everything
-      else the owner had to key in is done: address, phone, Instagram, review link,
-      402 published slots, 49 menu items, and the
-      `HairSalon` structured data in `index.html`
-      (`docs/history/2026-08-19-go-live-checklist.md` §4.7 — `docs/GO-LIVE.md`
-      was rewritten 2026-08-30 as an undated setup procedure; the dated
-      completion record moved to `docs/history/`).
+      wasn't described). A third pass ran 2026-08-31 (migrations now at `0064`,
+      Edge Functions at 11): fixed the stale function count in `RULES.md` §1
+      (was still "seven"), resolved the `google_place_id` item below, added two new
+      shared interaction primitives to `DESIGN.md` §15.4b, extended `HOOKS.md` §8/§18
+      for fields those hooks had grown, and closed an `rls_test.sql` coverage gap for
+      two tables (`email_template_revisions`, `product_events`) that had shipped
+      without being added to the probe list, violating `RULES.md` §1's own rule. This
+      drifts every ~1-2 weeks of active work — next pass due whenever migrations pass
+      roughly `0075` or another Edge Function ships.
+- [x] ~~`google_place_id` is unset~~ — **resolved.** It is now set in Settings →
+      Business, `GOOGLE_PLACES_API_KEY` is set as an Edge Function secret, and reviews
+      are syncing live: `google_place_snapshot` shows `rating: 5.0, rating_count: 11,
+      last_error: null` (verified live via Supabase 2026-08-31). Everything else the
+      owner had to key in is done: address, phone, Instagram, review link, 402
+      published slots, 49 menu items, and the `HairSalon` structured data in
+      `index.html` (`docs/history/2026-08-19-go-live-checklist.md` §4.7 — `docs/GO-LIVE.md`
+      was rewritten 2026-08-30 as an undated setup procedure; the dated completion
+      record moved to `docs/history/`).
 
 ### Explicitly not doing
 

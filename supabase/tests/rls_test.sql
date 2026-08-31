@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(51);
+select plan(59);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -124,6 +124,19 @@ insert into public.audit_events (actor, action, entity_type, entity_id, summary)
 values ('owner', 'payment.recorded', 'payment',
         '44444444-4444-4444-4444-444444444444', 'Fixture audit row under test');
 
+-- Same reasoning as audit_events above: written only by a trigger
+-- (log_email_template_revision(), 0061), never a client insert path.
+-- 'booking_confirmed' is one of 0032's own seeded default templates, so it
+-- already exists by the time this fixture runs.
+insert into public.email_template_revisions (template_key, subject, html_body)
+values ('booking_confirmed', 'Fixture revision subject under test', '<p>fixture</p>');
+
+-- Same reasoning again: written only by track_product_event() (0064), never
+-- a client insert path, despite anon/authenticated holding the base INSERT
+-- grant this suite deliberately gives everyone (see the Grants note above).
+insert into public.product_events (event_name, session_id)
+values ('book_page_viewed', 'rls-fixture-session');
+
 -- Published availability. Unlike the catalogue tables, nothing in the
 -- migrations seeds these two, so on a fresh database they are empty and §5's
 -- "anon can read them" assertions have nothing to find — which is exactly how
@@ -179,7 +192,7 @@ begin
       'google_place_snapshot','day_decided','profiles','app_settings',
       'availability_requests','services','service_categories','service_menu',
       'booking_settings','availability_slots','weekly_template','google_reviews',
-      'audit_events'
+      'audit_events','email_template_revisions','product_events'
     ] loop
       begin
         if r.subject_id is null then
@@ -213,7 +226,9 @@ do $guard$
 begin
   if (select count(*) from public.appointments) = 0
      or (select count(*) from public.payments) = 0
-     or (select count(*) from public.audit_events) = 0 then
+     or (select count(*) from public.audit_events) = 0
+     or (select count(*) from public.email_template_revisions) = 0
+     or (select count(*) from public.product_events) = 0 then
     raise exception 'fixtures did not seed — the denial assertions would be vacuous';
   end if;
 end
@@ -268,6 +283,10 @@ select is((select visible from rls_probe where tbl='email_templates' and as_role
           0::bigint, 'anon cannot read email_templates even when granted — RLS denies it');
 select is((select visible from rls_probe where tbl='audit_events' and as_role='anon'),
           0::bigint, 'anon cannot read audit_events');
+select is((select visible from rls_probe where tbl='email_template_revisions' and as_role='anon'),
+          0::bigint, 'anon cannot read email_template_revisions');
+select is((select visible from rls_probe where tbl='product_events' and as_role='anon'),
+          0::bigint, 'anon cannot read product_events');
 
 -- --------------------------------------------------------------------------
 -- 3. A signed-in user who is not the owner is no better off.
@@ -297,6 +316,10 @@ select is((select visible from rls_probe where tbl='availability_requests' and a
           0::bigint, 'a signed-in non-owner cannot read availability_requests');
 select is((select visible from rls_probe where tbl='audit_events' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read audit_events');
+select is((select visible from rls_probe where tbl='email_template_revisions' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read email_template_revisions');
+select is((select visible from rls_probe where tbl='product_events' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read product_events');
 
 -- --------------------------------------------------------------------------
 -- 4. The owner can. Without this the suite would pass just as happily if RLS
@@ -321,6 +344,10 @@ select cmp_ok((select visible from rls_probe where tbl='availability_requests' a
               '>', 0::bigint, 'the owner can read availability_requests');
 select cmp_ok((select visible from rls_probe where tbl='audit_events' and as_role='owner'),
               '>', 0::bigint, 'the owner can read audit_events');
+select cmp_ok((select visible from rls_probe where tbl='email_template_revisions' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read email_template_revisions');
+select cmp_ok((select visible from rls_probe where tbl='product_events' and as_role='owner'),
+              '>', 0::bigint, 'the owner can read product_events');
 
 -- --------------------------------------------------------------------------
 -- 5. The public surface stays public.
@@ -433,6 +460,12 @@ select is((select count(*) from public.appointments
 -- 6b. audit_events is immutable even for the owner (0052) — the log has no
 --     client write path at all. If a future migration ever adds an owner
 --     write policy here by mistake, this is what would catch it.
+--
+-- email_template_revisions (0061) and product_events (0064) are the same
+-- shape: trigger/function-written only, no client insert path for anyone,
+-- despite each holding the base INSERT grant this suite deliberately gives
+-- anon/authenticated (see the Grants note above) — RLS, not the grant, is
+-- what closes them.
 -- --------------------------------------------------------------------------
 
 create temp table audit_write_probe (
@@ -458,12 +491,50 @@ begin
     reset role;
   end;
   insert into audit_write_probe values ('insert', st);
+
+  begin
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+                       json_build_object('sub', '11111111-1111-1111-1111-111111111111',
+                                         'role', 'authenticated')::text,
+                       true);
+    insert into public.email_template_revisions (template_key, subject, html_body)
+    values ('booking_confirmed', 'attempted client insert', '<p>x</p>');
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into audit_write_probe values ('insert_email_template_revisions', st);
+
+  begin
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+                       json_build_object('sub', '11111111-1111-1111-1111-111111111111',
+                                         'role', 'authenticated')::text,
+                       true);
+    insert into public.product_events (event_name, session_id)
+    values ('book_page_viewed', 'attempted-client-insert');
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into audit_write_probe values ('insert_product_events', st);
 end
 $audit_write$;
 
 select is((select sqlstate_out from audit_write_probe where op = 'insert'),
           '42501',
           'even the owner cannot insert into audit_events directly — log_audit_event() is the only path');
+select is((select sqlstate_out from audit_write_probe where op = 'insert_email_template_revisions'),
+          '42501',
+          'even the owner cannot insert into email_template_revisions directly — log_email_template_revision() is the only path');
+select is((select sqlstate_out from audit_write_probe where op = 'insert_product_events'),
+          '42501',
+          'even the owner cannot insert into product_events directly — track_product_event() is the only path');
 
 -- --------------------------------------------------------------------------
 -- The contact form's rate limit (0049).

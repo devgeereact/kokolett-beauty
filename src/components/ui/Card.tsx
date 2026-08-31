@@ -13,7 +13,7 @@ const VARIANTS: Record<CardVariant, string> = {
 };
 
 /**
- * Surface container — docs/design/new-design-guideline.png §09. `default`
+ * Surface container — see docs/DESIGN.md for the token system. `default`
  * carries the card elevation tier (`shadow-card`) plus the border; `subtle`
  * and `accent` are flat fills for a card that should read as a nested
  * region rather than a floating one.

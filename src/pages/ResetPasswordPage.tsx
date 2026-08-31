@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { Spinner } from '@/components/ui/States';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * Where a password-recovery email lands.
@@ -35,6 +36,10 @@ function scrubUrl(): void {
 }
 
 export function ResetPasswordPage(): JSX.Element {
+  /* Reached only from a single-use recovery link. `noindex`, and no `path`, so
+     it does not inherit index.html's canonical and get reported as a duplicate
+     of the home page. */
+  useDocumentMeta({ title: 'Reset your password', noindex: true });
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('checking');
   const [password, setPassword] = useState('');

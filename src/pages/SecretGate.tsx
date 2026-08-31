@@ -4,6 +4,7 @@ import { invokeFunction } from '@/lib/supabase';
 import { RESERVED_SLUGS } from '@/lib/routes';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * Mounted at `/:maybeSecretSlug` — every single-segment path that isn't a
@@ -17,6 +18,13 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
  * Fails closed: a network error must never render the sign-in form.
  */
 export function SecretGate(): JSX.Element {
+  /* This route is every unmatched path, so it is what a crawler hits on any
+     guessed or retired URL. `noindex` with no `path`, so it neither enters the
+     index nor inherits index.html's canonical and gets reported as a duplicate
+     of the home page. The title is deliberately the 404's, not "sign in": the
+     slug is meant to be unguessable and naming it here would advertise that a
+     login exists at some path. */
+  useDocumentMeta({ title: 'Page not found', noindex: true });
   const { maybeSecretSlug } = useParams<{ maybeSecretSlug: string }>();
   const [state, setState] = useState<'checking' | 'match' | 'no-match'>('checking');
 

@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0060`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0061`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -39,6 +39,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0058_broadcast_messaging.sql`                      | Added `send_broadcast_as_owner()` and `unsubscribe_via_link()`, and a new `broadcast.sent` value in `audit_events.action`'s check constraint — no new table. Broadcast messaging uses the existing email outbox queue. `unsubscribe_via_link()` is anon-callable by design, since a visitor clicking the link has no session. |
 | `0059_payment_corrections.sql`                      | Added `payments.corrects_payment_id` (nullable FK to `payments.id`) and loosened the `amount_pence` check to allow negative only when `corrects_payment_id` is set (a plain payment must still be positive). `log_payment()` gained an optional `p_corrects_payment_id` param and validates the linked payment is on the same appointment. |
 | `0060_customer_communication_preferences.sql`       | Added `customer_communication_preferences()` and `customer_set_marketing_consent()` — no new table, no new column. Session-scoped RPCs (via `customer_from_session()`, `0021`) so a customer on `/my` can read and change her own `customers.marketing_consent` without asking the owner. |
+| `0061_email_template_history.sql`                   | Added `email_template_revisions` (append-only) and a `before update` trigger on `email_templates` that logs the old subject/html_body whenever either actually changes. No revert RPC — a revert is just a normal update with an earlier revision's content, which the same trigger logs again. |
 
 ### Every table, and where it is documented
 
@@ -59,6 +60,7 @@ migration that created them as the authoritative source.
 | `service_menu`          | `0018`     | website menu copy: `group_name`, `name`, `note`, `sort_order`, `active`; `0031` added `duration_min`, `buffer_min`, `image_path` |
 | `payments`              | `0027`, `corrects_payment_id` added by `0059` | money actually taken: `appointment_id`, `amount_pence` (> 0, or negative when `corrects_payment_id` links it to an earlier payment on the same appointment), `note`, `recorded_by`. `appointments.price_pence` stays 0 |
 | `email_templates`       | `0032`     | owner-editable overlay keyed by template `key`; `0037` added `include_in_automation`, default-off in practice                    |
+| `email_template_revisions` | `0061`  | append-only history of `email_templates`: `template_key`, `subject`, `html_body`, `created_at`. Written only by a trigger, never inserted directly; SELECT-only for the owner |
 | `google_reviews`        | `0017`     | synced review cache: `author_name`, `rating`, `body`, `published_at`, `fetched_at`                                               |
 | `google_place_snapshot` | `0017`     | single-row (`id boolean primary key`) aggregate: `rating`, `rating_count`, `last_error`. `0038` removed its public read          |
 | `calendar_feeds`        | `0019`     | ICS feed tokens: `token_hash`, `label`, `fetch_count`, `revoked_at`. The raw token exists only in the URL                        |

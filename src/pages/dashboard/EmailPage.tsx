@@ -39,7 +39,7 @@ import type { EmailMessage } from '@/types';
 type Lane = 'inbox' | 'all' | EmailMessage['status'];
 
 const LANES: { key: Lane; label: string; icon: typeof Inbox }[] = [
-  { key: 'inbox', label: 'Inbox', icon: Inbox },
+  { key: 'inbox', label: 'To me', icon: Inbox },
   { key: 'all', label: 'All mail', icon: Mail },
   { key: 'sent', label: 'Sent', icon: Send },
   { key: 'queued', label: 'Queued', icon: Clock },
@@ -48,8 +48,13 @@ const LANES: { key: Lane; label: string; icon: typeof Inbox }[] = [
 
 /**
  * Templates that notify the owner herself, as opposed to going out to a
- * customer or the mailing list — the closest thing this outbox log has to a
- * real "Inbox". Not in `templateCatalog.ts`'s `TEMPLATE_CATALOG`: two of
+ * customer or the mailing list — the closest thing this one-way outbox log
+ * has to a real inbox. Labelled "To me" rather than "Inbox" (2026-08-31):
+ * every row here still carries its own delivery-status badge (Sent/Queued/
+ * Failed), and a "Sent" badge sitting inside a lane literally called "Inbox"
+ * read as a contradiction, even though the underlying filter — "addressed to
+ * the owner", independent of whether it has shipped yet — was always
+ * correct. Not in `templateCatalog.ts`'s `TEMPLATE_CATALOG`: two of
  * these (`contact_message_received`, `secret_login_under_attack`) have no
  * matching `email_templates` row, and that catalog assumes every entry does
  * (TemplatesPage links straight to an editor keyed on that assumption).

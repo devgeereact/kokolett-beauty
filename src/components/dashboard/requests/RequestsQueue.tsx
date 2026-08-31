@@ -203,7 +203,7 @@ export const RequestsQueue = forwardRef<
     try {
       const result = await offerSlotToRequest(selected.id, startsAtIso, overrideReason);
       showToast({
-        message: `Booked in — reference ${result.reference}. They have been emailed.`,
+        message: `Booked in. Reference ${result.reference}. They have been emailed.`,
       });
       await load();
     } catch (e) {

@@ -82,8 +82,8 @@ export function AppointmentDetailModal({
   const [deleting, setDeleting] = useState(false);
 
   const deleteWarning = ALREADY_CLOSED.has(appointment.status)
-    ? 'This removes it entirely — not the same as cancelling. There is no undo.'
-    : `This appointment is still ${appointment.status.replace('_', ' ')} — deleting it removes the record entirely and, unlike Cancel, does not notify the customer. There is no undo.`;
+    ? 'This removes it entirely, which is not the same as cancelling. There is no undo.'
+    : `This appointment is still ${appointment.status.replace('_', ' ')}. Deleting it removes the record entirely and, unlike Cancel, does not notify the customer. There is no undo.`;
 
   return (
     <Card className="flex flex-col gap-5 p-5">
@@ -117,7 +117,7 @@ export function AppointmentDetailModal({
               className="h-4 w-4 shrink-0 text-muted-foreground"
               strokeWidth={2}
             />
-            {formatTime(appointment.starts_at, timezone)} –{' '}
+            {formatTime(appointment.starts_at, timezone)} to{' '}
             {formatTime(appointment.ends_at, timezone)}{' '}
             <span className="text-muted-foreground">
               (
@@ -275,7 +275,7 @@ export function AppointmentDetailModal({
                   className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
                 >
                   <span className="truncate">
-                    {p.corrects_payment_id ? 'Correction — ' : ''}
+                    {p.corrects_payment_id ? 'Correction: ' : ''}
                     {p.note || (p.corrects_payment_id ? 'no note' : 'payment')} ·{' '}
                     {formatDateTime(p.created_at, timezone)}
                   </span>

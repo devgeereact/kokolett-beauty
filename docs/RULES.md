@@ -183,3 +183,56 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
 - Status is never communicated by colour alone; always pair with a text label.
 - Touch targets ≥ 44×44px, which sets the minimum time-slot button size.
 - Do not remove the global `:focus-visible` ring.
+
+### 9.9 Business identity has one home, and copy carries no dashes
+
+**RULE.** Static business facts live in `src/lib/business.ts`: the name, locality,
+region, postcode, site origin, contact email, social URLs, service groups and the
+schema.org `@id`s. Do not redeclare any of them as a `const` in a page or a component.
+That is how the site, the Google profile and Instagram drifted apart in the first place:
+the contact email existed in four files and the origin in about sixteen.
+
+Three deliberate exceptions, and no others:
+
+- **`booking_settings`** owns the address line, phone, opening hours, Instagram URL,
+  Google review URL and Place ID. The owner edits these in Settings, so code reads them
+  through `useBusinessSettings` and never hard-codes them.
+- **`index.html`** hand-keys the address, phone and opening hours into its JSON-LD. A
+  crawler reads the served HTML before any JavaScript runs, so the structured data
+  cannot come from the database. It must be re-synced by hand; `docs/GO-LIVE.md` §3
+  carries the step.
+- **`supabase/functions/_shared/templates.ts`** keeps its own copy of the name, origin
+  and email, because Deno cannot import from `src/`.
+
+`docs/SOCIAL_PROFILE.md` §2 is the full map.
+
+**RULE.** No em dashes (—) and no en dashes (–) in anything a person reads. Copy, error
+messages, email bodies, meta tags, structured data, dashboard labels, the PWA manifest.
+Use a full stop, a comma, a colon or parentheses; a full stop is usually right. Write
+time and date ranges as "09:00 to 17:00", not "09:00 – 17:00", because a screen reader
+announces the dash as nothing at all and the range reads as two unconnected times.
+
+Code comments are exempt. A comment is not copy.
+
+Enforced by `npm run lint:copy` (`scripts/check-copy.py`), which runs in CI and strips
+comments before checking. `.claude/hookify.em-dash-in-copy.local.md` warns earlier, in
+the editor, but it is advisory. A file that must quote a dash in order to remove one,
+such as a migration doing a find-and-replace over live copy, opts out with a
+`copy-check: allow-dashes` marker and nothing else does.
+
+This has been swept by hand twice and come back twice, once into production:
+`0020_subject_lines_without_em_dashes.sql` exists only because `0018` was applied before
+its subject lines were fixed.
+
+### 9.10 Locs are not a service
+
+**RULE.** The salon does not do locs. Not faux, butterfly, soft or starter locs, and no
+loc maintenance or retwists. `0018` seeded five of them into `service_menu` and they
+were advertised on the site, in the structured data, in the meta descriptions and inside
+the AI assistant's grounding prompt until `0066_retire_locs.sql` retired them on
+2026-08-31.
+
+Twists are a different service and she does do them, so the service group is **Twists**,
+never "Twists and locs". Do not reintroduce the word on any surface, and say so plainly
+when asked: an honest no costs less than a customer arriving for something that cannot
+be done.

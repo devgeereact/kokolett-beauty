@@ -368,6 +368,27 @@ behaves differently in three dialogs defeats the point of having one.
 
 ---
 
+## 21. `useDocumentMeta`
+
+`src/hooks/useDocumentMeta.ts`
+Per-page `<head>` for a client-rendered multi-page site: title, description, canonical,
+Open Graph, Twitter card, `robots`, and a two-level `BreadcrumbList`. Takes either a
+plain title string or a `DocumentMeta` object (`title`, `description`, `fullTitle`,
+`path`, `image`, `noindex`).
+
+`path` is the important one. `index.html` carries site-wide defaults for the first paint
+before React mounts, and those defaults describe the home page. Any route that does not
+pass a `path` inherits the home page's canonical and Open Graph URL, which tells a
+crawler and every link preview that it *is* the home page. Until 2026-08-31 every route
+did exactly that, and six of them set no head at all.
+
+Everything it writes is restored on unmount, including tags it created, so a page that
+unmounts before the next one mounts never leaves a stale head behind.
+
+Undocumented here until 2026-08-31, which is part of how the gap above survived.
+
+---
+
 ## Conventions
 
 - Every hook is fully typed with an explicit return interface.

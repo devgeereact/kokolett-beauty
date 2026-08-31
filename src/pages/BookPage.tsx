@@ -16,6 +16,7 @@ import { toAppError } from '@/lib/errors';
 import { formatDateLong } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { BookingResult, TimeSlot } from '@/types';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 interface Details {
   fullName: string;
@@ -45,6 +46,12 @@ const EMPTY_DETAILS: Details = {
  * `SLOT_TAKEN`, the list refreshes, and they pick again.
  */
 export function BookPage(): JSX.Element {
+  useDocumentMeta({
+    title: 'Book an appointment',
+    description:
+      "Pick a time that is genuinely free in the diary at Kokolett Beauty UK, a women's hair salon in Thamesmead, South East London. No account and no password.",
+    path: routes.public.book,
+  });
   const { services } = useServices();
   const { settings, timezone } = useBusinessSettings();
 
@@ -350,7 +357,7 @@ export function BookPage(): JSX.Element {
 
             <Field
               label="What are you after?"
-              hint="Braids, locs, a weave, colour, a trim. Whatever you have in mind, so we know what to prepare and how long to keep aside."
+              hint="Braids, twists, a weave, colour, a trim. Whatever you have in mind, so we know what to prepare and how long to keep aside."
             >
               {({ id, describedBy }) => (
                 <Textarea

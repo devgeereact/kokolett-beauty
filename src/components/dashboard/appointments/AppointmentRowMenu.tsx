@@ -69,8 +69,8 @@ export function AppointmentRowMenu({
         title="Delete this appointment?"
         message={
           ALREADY_CLOSED.has(appointment.status)
-            ? 'This removes it entirely — not the same as cancelling. There is no undo.'
-            : `This appointment is still ${appointment.status.replace('_', ' ')} — deleting it removes the record entirely and, unlike Cancel, does not notify the customer. There is no undo.`
+            ? 'This removes it entirely, which is not the same as cancelling. There is no undo.'
+            : `This appointment is still ${appointment.status.replace('_', ' ')}. Deleting it removes the record entirely and, unlike Cancel, does not notify the customer. There is no undo.`
         }
         tone="destructive"
         confirmLabel="Delete appointment"

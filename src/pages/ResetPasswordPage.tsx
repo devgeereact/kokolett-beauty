@@ -137,7 +137,7 @@ export function ResetPasswordPage(): JSX.Element {
     } catch (e) {
       reportError(e, { where: 'ResetPasswordPage.updateUser' });
       setError(
-        'Could not set that password. The link may have expired — ask for a new one.',
+        'Could not set that password. The link may have expired, so ask for a new one.',
       );
     } finally {
       setBusy(false);

@@ -127,7 +127,7 @@ export function ReportsPage(): JSX.Element {
               </select>
             </div>
             <span className="hidden text-sm text-muted-foreground md:inline">
-              {formatDateShort(`${overview.from}T00:00:00Z`)} –{' '}
+              {formatDateShort(`${overview.from}T00:00:00Z`)} to{' '}
               {formatDateShort(`${overview.to}T00:00:00Z`)}
             </span>
             <Button variant="ghost" size="sm" onClick={exportReport}>
@@ -375,7 +375,7 @@ export function ReportsPage(): JSX.Element {
             </h2>
             {reviewsConfigured ? (
               <p className="text-sm text-foreground">
-                Reviews are set up — a request goes out automatically a couple of hours
+                Reviews are set up. A request goes out automatically a couple of hours
                 after each appointment is marked complete.
                 {settings?.google_review_url && (
                   <>

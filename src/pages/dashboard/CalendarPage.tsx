@@ -253,7 +253,7 @@ export function CalendarPage(): JSX.Element {
         await load();
 
         showToast({
-          message: `Action applied — ${statusLabel(status)}.`,
+          message: `Action applied: ${statusLabel(status)}.`,
           action: {
             label: 'Undo',
             onClick: () => {
@@ -391,7 +391,7 @@ export function CalendarPage(): JSX.Element {
     view === 'month'
       ? monthLabel(cursor.year, cursor.month)
       : view === 'week'
-        ? `${formatDateShort(`${range.from}T12:00:00Z`, 'UTC')} – ${formatDateShort(`${range.to}T12:00:00Z`, 'UTC')}`
+        ? `${formatDateShort(`${range.from}T12:00:00Z`, 'UTC')} to ${formatDateShort(`${range.to}T12:00:00Z`, 'UTC')}`
         : formatDateLong(`${anchor}T12:00:00Z`, 'UTC');
 
   return (

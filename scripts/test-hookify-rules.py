@@ -83,9 +83,25 @@ DASH_CASES = [
     (('src/pages/HomePage.tsx', 'Braids, locs — and colour'), True),
     (('supabase/functions/_shared/templates.ts', 'confirmed — KB-XXXX'), True),
     (('src/pages/HomePage.tsx', 'Braids, locs and colour'), False),
-    (('src/pages/dashboard/SettingsPage.tsx', 'Booking rules — advanced'), False),
-    (('src/components/dashboard/AppointmentCard.tsx', 'Note — private'), False),
+    # These two used to be exempt: the rule covered only the marketing site,
+    # on the reasoning that the owner is not a customer. The 2026-08-31 sweep
+    # dropped that distinction. The owner reads her dashboard all day, the copy
+    # is written in the same voice, and half of it is quoted back to a customer
+    # anyway ("Booked in. Reference KB-XXXXXX").
+    (('src/pages/dashboard/SettingsPage.tsx', 'Booking rules — advanced'), True),
+    (('src/components/dashboard/AppointmentCard.tsx', 'Note — private'), True),
     (('src/pages/SubscribePage.tsx', 'A few emails a year — not a few a week'), True),
+    # The paths the old pattern missed, each of which was really leaking.
+    (('src/lib/errors.ts', "'Sorry — that slot was taken.'"), True),
+    (('src/components/OfflineBanner.tsx', "You're offline — showing cached content."), True),
+    (('supabase/migrations/0066_new_copy.sql', "'Just a reminder — see you tomorrow'"), True),
+    (('vite.config.ts', "description: 'Book a salon — online.'"), True),
+    (('public/offline.html', '<title>Kokolett Beauty UK — offline</title>'), True),
+    # En dashes count too: a screen reader announces one as nothing at all, so
+    # "09:00 – 17:00" reads as two unconnected times.
+    (('src/hooks/useUsualHours.ts', '`${times[0]} – ${times[1]}`'), True),
+    (('src/lib/errors.ts', "'Sorry, that slot was taken.'"), False),
+    (('docs/SOCIAL_PROFILE.md', 'A dash — in a doc is fine'), False),
 ]
 
 failures = 0

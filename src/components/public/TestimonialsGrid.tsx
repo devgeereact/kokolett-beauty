@@ -41,10 +41,15 @@ function Avatar({ review }: { review: PublicReview }): JSX.Element {
 export function TestimonialsGrid({
   reviews,
   reviewUrl,
+  profileUrl,
 }: {
   reviews: PublicReview[];
+  /** Google's write-a-review link (`g.page/r/<id>/review`). */
   reviewUrl?: string | null;
+  /** Where the reviews are read. See `buildGoogleProfileUrl`. */
+  profileUrl?: string | null;
 }): JSX.Element {
+  const readUrl = profileUrl ?? reviewUrl;
   const [open, setOpen] = useState<PublicReview | null>(null);
 
   return (
@@ -82,9 +87,9 @@ export function TestimonialsGrid({
           </button>
         ))}
 
-        {reviewUrl && (
+        {readUrl && (
           <a
-            href={reviewUrl}
+            href={readUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -116,6 +121,19 @@ export function TestimonialsGrid({
           </a>
         )}
       </div>
+
+      {reviewUrl && (
+        <p className="mt-8 text-center">
+          <a
+            href={reviewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-12 min-h-touch items-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Leave a review
+          </a>
+        </p>
+      )}
 
       <Modal
         open={open !== null}

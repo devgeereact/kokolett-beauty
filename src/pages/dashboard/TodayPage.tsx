@@ -159,7 +159,7 @@ export function TodayPage(): JSX.Element {
         await Promise.all([refresh(), refreshSummary()]);
 
         showToast({
-          message: `Action applied — ${statusLabel(status)}.`,
+          message: `Action applied: ${statusLabel(status)}.`,
           action: {
             label: 'Undo',
             onClick: () => {
@@ -422,13 +422,14 @@ export function TodayPage(): JSX.Element {
         </div>
 
         <BookingsOverviewChart className="lg:col-span-6" timezone={timezone} />
-        <AvailabilityRequestsCard className="lg:col-span-3" />
-        <PaymentReconciliationCard className="lg:col-span-3" />
+        <AvailabilityRequestsCard className="lg:col-span-6" />
 
-        {/* Full-width row inside the same grid — not a bolted-on section
-            below it — so it shares the grid's own gap-4 rhythm and its
-            horizontal edges line up with every card above it. */}
-        <AssistantInsightsRow className="lg:col-span-12" timezone={timezone} />
+        {/* A matched pair, both lg:col-span-6, sharing one row. The grid's
+            `lg:items-stretch` sizes the taller of the two and both cards carry
+            `flex h-full flex-col`, so their top and bottom edges line up
+            whatever each one happens to contain that day. */}
+        <PaymentReconciliationCard className="lg:col-span-6" />
+        <AssistantInsightsRow className="lg:col-span-6" timezone={timezone} />
       </div>
 
       <Modal

@@ -39,7 +39,7 @@ export function AboutPhotoCard(): JSX.Element {
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      setError('That image is too large — please choose one under 8MB.');
+      setError('That image is too large. Please choose one under 8MB.');
       return;
     }
 

@@ -5,12 +5,18 @@ single-owner UK **women's hair salon**. It is edited by humans **and** AI agents
 (Claude Code, CodeRabbit, Cursor, etc.). These rules are binding for any automated
 contribution.
 
-**Scope is women's hair only.** Cutting, colouring, styling, braids, locs, weaves and
+**Scope is women's hair only.** Cutting, colouring, styling, braids, twists, weaves and
 treatments. Not nails, brows, lashes or aesthetics; not unisex; not barbering. The word
 "Beauty" in the name is branding, not scope, and structured data uses `HairSalon`
 rather than `BeautySalon` for exactly that reason. Never write copy, a service name, a
 meta tag or a model prompt that implies anything wider: it invites enquiries the salon
 cannot serve.
+
+**And no locs.** Faux, butterfly, soft and starter locs, and loc retwists, were seeded
+into the service menu by `0018` and advertised everywhere until `0066` retired them on
+2026-08-31. The owner does not do them and never did. Twists are a different service and
+she does do those, so "Twists" is a group name and "Twists and locs" is not. Do not
+reintroduce the word on any surface.
 
 Two things in this codebase are load-bearing in ways that are easy to break by
 accident. Read them before touching anything near booking:
@@ -37,6 +43,9 @@ Before generating or modifying code, load and obey, in this order:
 2. `docs/ARCHITECTURE.md` — directory layout and data flow.
 3. `docs/SCHEMA.md` — database shape, types, and RLS.
 4. `docs/HOOKS.md` — the sanctioned hook contracts.
+5. `docs/SOCIAL_PROFILE.md` — the business's own facts: name, locality, services,
+   and which store owns each one. Read it before touching any customer-facing copy,
+   meta tag or structured data.
 
 ## 2. Deployment reality (non-negotiable)
 The build target is a **static** PWA on cPanel.

@@ -79,7 +79,7 @@ export default defineConfig({
         name: 'Kokolett Beauty UK',
         short_name: 'Kokolett',
         description:
-          'Salon booking and operations for Kokolett Beauty UK — passwordless for customers, one dashboard for the owner.',
+          "Book a women's hair salon in Thamesmead, South East London. Braids, twists, weaves, natural hair, colour and treatments at Kokolett Beauty UK.",
         theme_color: '#e05d38',
         background_color: '#e8ebed',
         display: 'standalone',

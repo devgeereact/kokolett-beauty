@@ -156,7 +156,7 @@ export function WeeklyDefaultPage(): JSX.Element {
       );
       setMessage(
         result.days_filled === 0
-          ? 'Nothing to fill — every day in that period had already been decided.'
+          ? 'Nothing to fill. Every day in that period had already been decided.'
           : `Filled ${result.days_filled} day${result.days_filled === 1 ? '' : 's'} with ${result.slots_written} time${result.slots_written === 1 ? '' : 's'}.`,
       );
       await load();
@@ -229,7 +229,7 @@ export function WeeklyDefaultPage(): JSX.Element {
               normally closed.
             </p>
             <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
-              This is your repeating pattern only — changes here don&rsquo;t reach the
+              This is your repeating pattern only. Changes here don&rsquo;t reach the
               calendar on their own.{' '}
               <button
                 type="button"
@@ -284,7 +284,7 @@ export function WeeklyDefaultPage(): JSX.Element {
                         </span>
                         {open && (
                           <span className="hidden text-sm text-muted-foreground md:inline">
-                            {sorted[0]}–{sorted.at(-1)}
+                            {sorted[0]} to {sorted.at(-1)}
                           </span>
                         )}
                       </div>
@@ -360,7 +360,7 @@ export function WeeklyDefaultPage(): JSX.Element {
                               )
                             }
                           >
-                            Fill {fill.from}–{fill.to}
+                            Fill {fill.from} to {fill.to}
                           </Button>
                           {times.length > 0 && (
                             <Button
@@ -472,7 +472,7 @@ export function WeeklyDefaultPage(): JSX.Element {
                       Put it on the calendar
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      The pattern does nothing on its own — this is what writes it into
+                      The pattern does nothing on its own. This is what writes it into
                       real days.
                     </p>
                   </div>

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { routes } from '@/lib/routes';
+import { CONTACT_EMAIL } from '@/lib/business';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 /**
  * Privacy, booking policy and terms.
@@ -18,17 +20,24 @@ import { routes } from '@/lib/routes';
  * A privacy notice with a made-up registration number is worse than none.
  */
 
-const SALON_EMAIL = 'booking@kokolettbeauty.com';
-
 function LegalPage({
   title,
   updated,
+  description,
+  path,
   children,
 }: {
   title: string;
   updated: string;
+  description: string;
+  path: string;
   children: ReactNode;
 }): JSX.Element {
+  /* All three legal pages set their head here rather than each doing it
+     separately. Without it they inherit index.html's canonical and claim to
+     be the home page. */
+  useDocumentMeta({ title, description, path });
+
   return (
     <SiteShell>
       <article className="mx-auto max-w-2xl px-4 py-14 md:px-6">
@@ -58,7 +67,12 @@ export function PrivacyPage(): JSX.Element {
   const { settings } = useBusinessSettings();
 
   return (
-    <LegalPage title="Privacy" updated="August 2026">
+    <LegalPage
+      title="Privacy"
+      updated="August 2026"
+      description="How Kokolett Beauty UK handles your personal information, what is stored, and how to have it removed."
+      path={routes.public.privacy}
+    >
       <p>
         Kokolett Beauty UK is a single-owner women&rsquo;s hair salon. This page explains
         exactly what we hold about you, why, and how to get rid of it. It describes what
@@ -106,7 +120,7 @@ export function PrivacyPage(): JSX.Element {
         </li>
         <li>
           <strong>Our email host</strong> delivers confirmations and reminders from{' '}
-          {SALON_EMAIL}.
+          {CONTACT_EMAIL}.
         </li>
       </ul>
       <p>
@@ -139,10 +153,10 @@ export function PrivacyPage(): JSX.Element {
         Under UK GDPR you can ask for a copy of what we hold, ask us to correct it, or ask
         us to erase it. Email{' '}
         <a
-          href={`mailto:${SALON_EMAIL}`}
+          href={`mailto:${CONTACT_EMAIL}`}
           className="underline underline-offset-4 hover:text-foreground"
         >
-          {SALON_EMAIL}
+          {CONTACT_EMAIL}
         </a>{' '}
         and we will deal with it within one month.
       </p>
@@ -172,10 +186,10 @@ export function PrivacyPage(): JSX.Element {
         Kokolett Beauty UK
         {settings?.address_line ? `, ${settings.address_line}` : ''}.{' '}
         <a
-          href={`mailto:${SALON_EMAIL}`}
+          href={`mailto:${CONTACT_EMAIL}`}
           className="underline underline-offset-4 hover:text-foreground"
         >
-          {SALON_EMAIL}
+          {CONTACT_EMAIL}
         </a>
         {settings?.phone ? ` · ${settings.phone}` : ''}
       </p>
@@ -189,7 +203,12 @@ export function BookingPolicyPage(): JSX.Element {
   const lead = settings?.lead_time_min ?? 120;
 
   return (
-    <LegalPage title="Booking policy" updated="August 2026">
+    <LegalPage
+      title="Booking policy"
+      updated="August 2026"
+      description="How booking, approval, rescheduling and cancellation work at Kokolett Beauty UK."
+      path={routes.public.bookingPolicy}
+    >
       <H2>Booking</H2>
       <p>
         Every time shown on the booking page is genuinely free, the salon publishes the
@@ -257,7 +276,12 @@ export function TermsPage(): JSX.Element {
   const { settings } = useBusinessSettings();
 
   return (
-    <LegalPage title="Terms of use" updated="August 2026">
+    <LegalPage
+      title="Terms of use"
+      updated="August 2026"
+      description="The terms that apply when you use the Kokolett Beauty UK website and book an appointment."
+      path={routes.public.terms}
+    >
       <p>
         These terms cover using this website. They are not the whole relationship between
         you and the salon, what happens at your appointment is a matter of ordinary
@@ -272,10 +296,10 @@ export function TermsPage(): JSX.Element {
           : ' in the United Kingdom'}
         . Contact us at{' '}
         <a
-          href={`mailto:${SALON_EMAIL}`}
+          href={`mailto:${CONTACT_EMAIL}`}
           className="underline underline-offset-4 hover:text-foreground"
         >
-          {SALON_EMAIL}
+          {CONTACT_EMAIL}
         </a>
         .
       </p>

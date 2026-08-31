@@ -71,7 +71,7 @@ export async function suggestSlotsForRequest(
       date,
       startsAt: startsAt.toISOString(),
       endsAt: endsAt.toISOString(),
-      label: `${formatTime(startsAt, timezone)} – ${formatTime(endsAt, timezone)}`,
+      label: `${formatTime(startsAt, timezone)} to ${formatTime(endsAt, timezone)}`,
     });
   }
 

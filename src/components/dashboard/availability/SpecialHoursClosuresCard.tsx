@@ -92,7 +92,7 @@ export function SpecialHoursClosuresCard({
         Special hours &amp; closures
       </h2>
       <p className="mb-4 text-sm text-muted-foreground">
-        Dates that differ from your normal week — a day off, or extra hours added.
+        Dates that differ from your normal week: a day off, or extra hours added.
       </p>
 
       {summary === null ? (
@@ -147,7 +147,7 @@ export function SpecialHoursClosuresCard({
           to={routes.owner.calendar}
           className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
         >
-          +{hiddenCount} more — view full calendar
+          +{hiddenCount} more, view full calendar
           <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
         </Link>
       )}

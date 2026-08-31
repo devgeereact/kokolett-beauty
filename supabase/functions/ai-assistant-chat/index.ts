@@ -64,7 +64,7 @@ interface ChatMessage {
 
 const SYSTEM_PROMPT = `You are Kokolett Beauty UK's advisory AI assistant, built into the owner's dashboard.
 
-Kokolett Beauty is a single-owner women's hair salon in London (braids, locs, weaves, natural hair, colour and treatments — no nails, brows, lashes, or unisex services). The owner's name is Koko. Contact email is booking@kokolettbeauty.com. Money is always GBP, written as £, values arrive from tools as integer pence — divide by 100 before showing a customer-facing figure. Dates and times you receive are already in Europe/London. Copy is British English.
+Kokolett Beauty is a single-owner women's hair salon in Thamesmead, South East London (braids, twists, weaves, natural hair and styling, colour and treatments; no locs, and no nails, brows, lashes, or unisex services). The owner's name is Christy. Contact email is booking@kokolettbeauty.com. Money is always GBP, written as £, values arrive from tools as integer pence — divide by 100 before showing a customer-facing figure. Dates and times you receive are already in Europe/London. Copy is British English.
 
 You can read business data through the get_* tools, and you can propose two real actions: booking an appointment (propose_booking) and sending a one-off email to a customer (propose_email). Calling either shows the owner a card with exactly what you've filled in — she has to press Confirm herself before anything actually happens. Nothing you do executes on its own, so never say "booked" or "sent" — say "I've set that up for you to confirm" and let the card speak for the rest. For anything else that would require a write (cancelling, rescheduling, approving a request), you still don't have a tool for it — explain what you'd do and point at the real screen (e.g. "approve it from the Approvals queue").
 
@@ -77,7 +77,7 @@ CONTENT GROUNDING — before drafting any social post, caption, email, or busine
 WRITING STYLE — for every reply, but hold drafted content to this strictly:
 - Write like a person talking to a client, not a marketing template. No em dashes. No "vibrant / stunning / must-visit / nestled in the heart of" style promotional language. No "not just X, it's Y" constructions. No padding things into groups of three just to sound thorough.
 - Warm and calm, like a considerate hairdresser, not a hype account.
-- Keep responses concise and scannable — short paragraphs, a table or list when the data is tabular, no filler, no "Let me know if you'd like me to expand on that" sign-offs.
+- Keep responses concise and scannable: short paragraphs, a table or list when the data is tabular, no filler, no "Let me know if you'd like me to expand on that" sign-offs.
 
 SOCIAL MEDIA POSTS — give exactly one ready-to-post version by default, formatted so it can be copied straight into Instagram: the caption, then a blank line, then hashtags on their own line, nothing else inside that block. Don't present multiple lettered/numbered options or mix tailoring tips into the caption itself. If it's worth offering a variant or asking what to tailor it to, say that in one short line after the copy-paste block, clearly separate from it.`;
 
@@ -144,7 +144,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'get_business_profile',
-      description: "The salon's real identity — business name, address, phone, Instagram handle, opening hours, and the current style menu (grouped by category, e.g. Braids, Twists and locs, Colour). Call this before drafting any social media post, caption, email, or business description so it's grounded in what the salon actually offers, not generic placeholders.",
+      description: "The salon's real identity — business name, address, phone, Instagram handle, opening hours, and the current style menu (grouped by category, e.g. Braids, Twists, Colour). Call this before drafting any social media post, caption, email, or business description so it's grounded in what the salon actually offers, not generic placeholders.",
       parameters: { type: 'object', properties: {} },
     },
   },
@@ -509,7 +509,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           args = actionCall.function.arguments ? JSON.parse(actionCall.function.arguments) : {};
         } catch {
           return Response.json(
-            { error: "I couldn't put that proposal together — try asking again." },
+            { error: "I couldn't put that proposal together. Try asking again." },
             { status: 502, headers: CORS },
           );
         }
@@ -569,7 +569,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       openaiMessages.push(...toolResults);
     }
 
-    return Response.json({ reply: finalText || "I couldn't put together an answer for that — try rephrasing?" }, { headers: CORS });
+    return Response.json({ reply: finalText || "I couldn't put together an answer for that. Try rephrasing it?" }, { headers: CORS });
   } catch (e) {
     console.error('[ai-assistant-chat] unhandled error', e);
     return Response.json({ error: 'Something went wrong.' }, { status: 500, headers: CORS });

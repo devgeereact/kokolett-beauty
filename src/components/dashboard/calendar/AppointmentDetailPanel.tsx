@@ -91,7 +91,7 @@ export function AppointmentDetailPanel({
           <div className="space-y-1.5 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
               <Clock aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
-              {formatTime(appointment.starts_at, timezone)} –{' '}
+              {formatTime(appointment.starts_at, timezone)} to{' '}
               {formatTime(appointment.ends_at, timezone)} (
               {formatDuration(
                 (new Date(appointment.ends_at).getTime() -

@@ -12,6 +12,14 @@
   RewriteCond %{HTTPS} off
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+  # Apex to www. The canonical link, the sitemap and every Open Graph URL all
+  # use www.kokolettbeauty.com, so without this the apex serves the same pages
+  # on a second hostname that nothing points at: a duplicate of the whole site
+  # for a crawler to work out on its own. Placed after the HTTPS redirect so a
+  # plain http://kokolettbeauty.com request takes two hops, not a loop.
+  RewriteCond %{HTTP_HOST} ^kokolettbeauty\.com$ [NC]
+  RewriteRule ^ https://www.kokolettbeauty.com%{REQUEST_URI} [L,R=301]
+
   # Send every non-file, non-directory request to index.html
   # so React Router can resolve client-side routes.
   RewriteCond %{REQUEST_FILENAME} !-f

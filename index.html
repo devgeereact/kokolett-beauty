@@ -13,7 +13,7 @@
     -->
     <meta
       name="description"
-      content="Kokolett Beauty UK: a women's hair salon in Woolwich, South East London, specialising in braids, locs, weaves, natural hair and colour. Book a real, free time online, no account or password."
+      content="Kokolett Beauty UK is a women's hair salon in Thamesmead, South East London. Braids, twists, weaves, natural hair and styling, colour and treatments. Book a real, free time online, no account or password."
     />
     <link rel="canonical" href="https://www.kokolettbeauty.com/" />
 
@@ -36,21 +36,24 @@
     -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Kokolett Beauty UK" />
-    <meta property="og:title" content="Kokolett Beauty UK: women's hair salon" />
+    <meta property="og:title" content="Kokolett Beauty UK: women's hair salon in Thamesmead" />
     <meta
       property="og:description"
-      content="Braids, locs, weaves, natural hair, colour, cutting and treatments. Book a real, free time online, no account and no password."
+      content="Braids, twists, weaves, natural hair and styling, colour and treatments, in Thamesmead, South East London. Book a real, free time online, no account and no password."
     />
     <meta property="og:url" content="https://www.kokolettbeauty.com/" />
-    <meta property="og:image" content="https://www.kokolettbeauty.com/icons/pwa-512.png" />
+    <meta property="og:image" content="https://www.kokolettbeauty.com/icons/social-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Kokolett Beauty UK, women's hair salon in Thamesmead, South East London" />
     <meta property="og:locale" content="en_GB" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Kokolett Beauty UK: women's hair salon" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Kokolett Beauty UK: women's hair salon in Thamesmead" />
     <meta
       name="twitter:description"
-      content="Braids, locs, weaves, natural hair, colour, cutting and treatments. Book a real, free time online, no account and no password."
+      content="Braids, twists, weaves, natural hair and styling, colour and treatments, in Thamesmead, South East London. Book a real, free time online, no account and no password."
     />
-    <meta name="twitter:image" content="https://www.kokolettbeauty.com/icons/pwa-512.png" />
+    <meta name="twitter:image" content="https://www.kokolettbeauty.com/icons/social-card.png" />
 
     <!--
       Fonts (Inter, Source Serif 4, JetBrains Mono).
@@ -67,7 +70,7 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Source+Serif+4:wght@400;600&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Source+Serif+4:wght@400;600&display=swap" />
 
-    <title>Kokolett Beauty UK: women's hair salon in South East London</title>
+    <title>Kokolett Beauty UK: women's hair salon in Thamesmead, London</title>
     <!--
       Paint the right theme before the first frame.
 
@@ -104,54 +107,98 @@
       Static in index.html rather than rendered by React, because the crawlers
       that build this result read the served HTML and this is a client-rendered
       SPA — anything injected after mount is not reliably seen.
+
+      That is also the cost: the address, telephone and opening hours here are
+      hand-keyed and cannot track `booking_settings` or the weekly availability
+      template. The hours below are derived from that template (09:00 open every
+      day, last start plus the 45-minute appointment). Re-derive them whenever
+      the template changes. docs/GO-LIVE.md §3 carries the step, and
+      docs/SOCIAL_PROFILE.md §2 is the full source-of-truth map.
+
+      `geo` is deliberately absent until the real coordinates are read off the
+      Google profile's own pin. A guessed lat/long is worse than none.
     -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "HairSalon",
-        "name": "Kokolett Beauty UK",
-        "url": "https://www.kokolettbeauty.com",
-        "email": "booking@kokolettbeauty.com",
-        "image": "https://www.kokolettbeauty.com/icons/pwa-512.png",
-        "description": "Women's hair salon in the UK. Braids, locs, colour, cutting, styling and treatments, by appointment.",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Redbourne Dr",
-          "addressLocality": "London",
-          "postalCode": "SE28 8RX",
-          "addressCountry": "GB"
-        },
-        "telephone": "+44 7707 906408",
-        "openingHoursSpecification": [
+        "@graph": [
           {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": [
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday",
-              "Sunday"
+            "@type": "HairSalon",
+            "@id": "https://www.kokolettbeauty.com/#salon",
+            "name": "Kokolett Beauty UK",
+            "url": "https://www.kokolettbeauty.com",
+            "email": "booking@kokolettbeauty.com",
+            "image": "https://www.kokolettbeauty.com/icons/social-card.png",
+            "logo": "https://www.kokolettbeauty.com/icons/pwa-512.png",
+            "description": "Women's hair salon in Thamesmead, South East London. Braids, twists, weaves, natural hair and styling, colour and treatments, by appointment.",
+            "founder": { "@type": "Person", "name": "Christy" },
+            "sameAs": [
+              "https://www.instagram.com/kokolettbeautyuk/",
+              "https://www.google.com/maps/place/?q=place_id:ChIJxSluewCv2EcRgkwfgTqnij8"
             ],
-            "opens": "08:00",
-            "closes": "20:00"
-          }
-        ],
-        "areaServed": { "@type": "Country", "name": "United Kingdom" },
-        "currenciesAccepted": "GBP",
-        "potentialAction": {
-          "@type": "ReserveAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://www.kokolettbeauty.com/book",
-            "actionPlatform": [
-              "http://schema.org/DesktopWebPlatform",
-              "http://schema.org/MobileWebPlatform"
-            ]
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Redbourne Dr",
+              "addressLocality": "Thamesmead",
+              "addressRegion": "London",
+              "postalCode": "SE28 8RX",
+              "addressCountry": "GB"
+            },
+            "telephone": "+44 7707 906408",
+            "openingHoursSpecification": [
+              { "@type": "OpeningHoursSpecification", "dayOfWeek": "Monday", "opens": "09:00", "closes": "18:45" },
+              { "@type": "OpeningHoursSpecification", "dayOfWeek": "Tuesday", "opens": "09:00", "closes": "16:45" },
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+                "opens": "09:00",
+                "closes": "17:45"
+              }
+            ],
+            "areaServed": [
+              { "@type": "Place", "name": "Thamesmead" },
+              { "@type": "Place", "name": "Abbey Wood" },
+              { "@type": "Place", "name": "Plumstead" },
+              { "@type": "Place", "name": "Woolwich" },
+              { "@type": "Place", "name": "Charlton" },
+              { "@type": "Place", "name": "Greenwich" },
+              { "@type": "Place", "name": "Eltham" }
+            ],
+            "hasOfferCatalog": {
+              "@type": "OfferCatalog",
+              "name": "Women's hair services",
+              "itemListElement": [
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Braids", "description": "Knotless, box, cornrow, feed-in, Ghana, Fulani, lemonade, stitch, tribal and micro braids, plus braids for children." } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Twists", "description": "Senegalese, passion, spring, Marley and two strand twists, sized and parted to suit your hair." } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Weaves, wigs and extensions", "description": "Sew-in weaves, closure and frontal installs, quick weaves, crochet braids, wig installs, tape-in and micro-link extensions." } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Natural hair and styling", "description": "Wash and go, silk press, blow dry, twist-outs, cutting and shaping, transitioning support, bridal and occasion styling." } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Colour", "description": "Full colour, root touch-ups, highlights and lowlights, bleaching and lifting, toning and glossing." } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Treatments", "description": "Deep conditioning, protein and bond repair, scalp and steam treatments, hot oil, and split-end care." } }
+              ]
+            },
+            "currenciesAccepted": "GBP",
+            "potentialAction": {
+              "@type": "ReserveAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://www.kokolettbeauty.com/book",
+                "actionPlatform": [
+                  "http://schema.org/DesktopWebPlatform",
+                  "http://schema.org/MobileWebPlatform"
+                ]
+              },
+              "result": { "@type": "Reservation", "name": "Appointment booking" }
+            }
           },
-          "result": { "@type": "Reservation", "name": "Appointment booking" }
-        }
+          {
+            "@type": "WebSite",
+            "@id": "https://www.kokolettbeauty.com/#website",
+            "url": "https://www.kokolettbeauty.com",
+            "name": "Kokolett Beauty UK",
+            "inLanguage": "en-GB",
+            "publisher": { "@id": "https://www.kokolettbeauty.com/#salon" }
+          }
+        ]
       }
     </script>
   </head>

@@ -245,7 +245,7 @@ export function RequestDetailPanel({
             {request.preferred_dates.length > 0
               ? request.preferred_dates
                   .map((d) => formatDateLong(`${d}T00:00:00Z`))
-                  .join(' – ')
+                  .join(' to ')
               : 'Any date'}
           </p>
           <p className="flex items-center gap-2">
@@ -421,8 +421,8 @@ export function RequestDetailPanel({
                 </Field>
               </div>
               <p className="text-xs text-muted-foreground">
-                This books them straight in and emails a confirmation — it does not have
-                to be inside your published hours.
+                This books them straight in and emails a confirmation. It does not have to
+                be inside your published hours.
               </p>
               <Button className="w-full" loading={busy} onClick={submitCustomOffer}>
                 Book this time

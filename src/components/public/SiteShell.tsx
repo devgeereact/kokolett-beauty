@@ -6,8 +6,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useUsualHours } from '@/hooks/useUsualHours';
 import { toWhatsAppLink } from '@/lib/whatsapp';
 import { splitAddressLines } from '@/lib/format';
-
-const SALON_EMAIL = 'booking@kokolettbeauty.com';
+import { CONTACT_EMAIL, buildGoogleProfileUrl, buildMapUrl } from '@/lib/business';
 
 /** The site's real pages, in nav order — reinstated 2026-08-25 (marketing
     rebrand). `My bookings` stays separate: it's a customer utility, not a
@@ -43,11 +42,13 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   const year = new Date().getFullYear();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const mapUrl = settings?.address_line
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        `Kokolett Beauty UK, ${settings.address_line}`,
-      )}`
-    : null;
+  const mapUrl = settings?.address_line ? buildMapUrl(settings.address_line) : null;
+  /* The footer icon sits in the social row next to Instagram, so it has to go
+     to the profile. `google_review_url` is the write-a-review dialog. */
+  const googleProfileUrl =
+    buildGoogleProfileUrl(settings?.google_place_id) ??
+    settings?.google_review_url ??
+    null;
   const whatsappUrl = toWhatsAppLink(settings?.phone ?? null);
 
   /* Street / city / postcode, one per line, with "United Kingdom" appended
@@ -220,8 +221,8 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 Kokolett <span className="text-primary">Beauty</span> UK
               </p>
               <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-                A women&rsquo;s hair salon in South East London. Braids, locs, weaves,
-                natural hair and colour.
+                A women&rsquo;s hair salon in Thamesmead, South East London. Braids,
+                twists, weaves, natural hair and colour.
               </p>
 
               <address className="mt-6 space-y-4 text-sm not-italic">
@@ -253,10 +254,10 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                 <p>
                   <span className="text-muted-foreground">Email: </span>
                   <a
-                    href={`mailto:${SALON_EMAIL}`}
+                    href={`mailto:${CONTACT_EMAIL}`}
                     className="text-foreground hover:text-primary"
                   >
-                    {SALON_EMAIL}
+                    {CONTACT_EMAIL}
                   </a>
                 </p>
               </address>
@@ -296,9 +297,9 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     </svg>
                   </a>
                 )}
-                {settings?.google_review_url && (
+                {googleProfileUrl && (
                   <a
-                    href={settings.google_review_url}
+                    href={googleProfileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Kokolett Beauty reviews on Google"

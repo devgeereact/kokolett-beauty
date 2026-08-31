@@ -10,8 +10,7 @@ import { errorMessage } from '@/lib/errors';
 import { buildImageKitUrl } from '@/lib/imagekit';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-
-const SALON_EMAIL = 'booking@kokolettbeauty.com';
+import { CONTACT_EMAIL, buildMapUrl } from '@/lib/business';
 
 type FormState = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -22,10 +21,12 @@ type FormState = 'idle' | 'sending' | 'sent' | 'error';
  * (migration `0047`) — no account, no separate dashboard queue to check.
  */
 export function ContactPage(): JSX.Element {
-  useDocumentMeta(
-    'Contact',
-    'Call, WhatsApp, email or message Kokolett Beauty, a women’s hair salon in South East London.',
-  );
+  useDocumentMeta({
+    title: 'Contact',
+    description:
+      'Call, WhatsApp, email or message Kokolett Beauty, a women’s hair salon in Thamesmead, South East London.',
+    path: routes.public.contact,
+  });
   const { settings } = useBusinessSettings();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -34,11 +35,7 @@ export function ContactPage(): JSX.Element {
   const [state, setState] = useState<FormState>('idle');
 
   const whatsappUrl = toWhatsAppLink(settings?.phone ?? null);
-  const mapUrl = settings?.address_line
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        `Kokolett Beauty UK, ${settings.address_line}`,
-      )}`
-    : null;
+  const mapUrl = settings?.address_line ? buildMapUrl(settings.address_line) : null;
 
   const channels = [
     settings?.phone && {
@@ -47,7 +44,7 @@ export function ContactPage(): JSX.Element {
       href: `tel:${settings.phone.replace(/\s/g, '')}`,
     },
     whatsappUrl && { label: 'WhatsApp', value: 'Message us', href: whatsappUrl },
-    { label: 'Email', value: SALON_EMAIL, href: `mailto:${SALON_EMAIL}` },
+    { label: 'Email', value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
     {
       label: 'Book online',
       value: 'See open times',
@@ -244,7 +241,7 @@ export function ContactPage(): JSX.Element {
                     quality: 85,
                   },
                 )}
-                alt="A finished braided style at Kokolett Beauty"
+                alt="A finished braided style at Kokolett Beauty UK, a women's hair salon in Thamesmead, South East London"
                 className="absolute inset-0 h-full w-full object-cover"
                 style={{ objectPosition: '50% 25%' }}
               />
@@ -254,7 +251,7 @@ export function ContactPage(): JSX.Element {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               <p className="absolute bottom-4 left-4 right-4 font-serif text-lg font-semibold text-hero-fg">
-                Kokolett Beauty, Woolwich
+                Kokolett Beauty UK, Thamesmead
               </p>
             </div>
 

@@ -169,7 +169,7 @@ export function TemplateHistoryPanel({
       <ConfirmDialog
         open={revertId !== null}
         title="Revert to this version?"
-        message="The subject and body go back to what they were at that point. Your current version isn't lost — it's logged here too, so you can revert again if you change your mind."
+        message="The subject and body go back to what they were at that point. Your current version isn't lost. It is logged here too, so you can revert again if you change your mind."
         confirmLabel={reverting ? 'Reverting…' : 'Revert'}
         cancelLabel="Cancel"
         onConfirm={() => {

@@ -2,6 +2,7 @@ import { type JSX } from 'react';
 import { SiteShell } from '@/components/public/SiteShell';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { routes } from '@/lib/routes';
 
 interface Faq {
   question: string;
@@ -14,10 +15,12 @@ interface Faq {
  * only page that owns this content — 2026-08-25 rebrand).
  */
 export function FAQsPage(): JSX.Element {
-  useDocumentMeta(
-    'FAQs',
-    'Common questions about booking, cancelling and what to expect at Kokolett Beauty, a women’s hair salon in South East London.',
-  );
+  useDocumentMeta({
+    title: 'FAQs',
+    description:
+      'Common questions about booking, cancelling and what to expect at Kokolett Beauty, a women’s hair salon in Thamesmead, South East London.',
+    path: routes.public.faqs,
+  });
   const { settings } = useBusinessSettings();
 
   const faqs: Faq[] = [
@@ -47,7 +50,7 @@ export function FAQsPage(): JSX.Element {
     {
       question: 'Do you do all hair types?',
       answer:
-        'Kokolett Beauty specialises in braids, locs, weaves, natural hair and colour. Not sure if we cover what you need? Ask when you book.',
+        'Kokolett Beauty specialises in braids, twists, weaves, natural hair and colour. We do not do locs. Not sure if we cover what you need? Ask when you book.',
     },
     {
       question: 'How do I get in touch if I have a question first?',

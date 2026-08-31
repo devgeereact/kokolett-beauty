@@ -71,7 +71,7 @@ export async function getNotifications(
       at: p.created_at,
       title: 'Payment received',
       detail: appt
-        ? `You received a payment for ${appt.service_name}${appt.customer_name ? ` — ${appt.customer_name}` : ''}.`
+        ? `You received a payment for ${appt.service_name}${appt.customer_name ? `, ${appt.customer_name}` : ''}.`
         : 'You received a payment.',
     };
   });
@@ -105,7 +105,7 @@ function activityToNotification(e: ActivityEvent): NotificationEvent {
     kind: e.kind,
     at: e.at,
     title: e.customerName
-      ? `${e.kind === 'created' ? 'New booking received' : e.kind[0]!.toUpperCase() + e.kind.slice(1)} — ${e.customerName}`
+      ? `${e.kind === 'created' ? 'New booking received' : e.kind[0]!.toUpperCase() + e.kind.slice(1)}: ${e.customerName}`
       : e.kind,
     detail: detailByKind[e.kind],
   };

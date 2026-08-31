@@ -20,6 +20,9 @@ response.
 | Repo | `github.com/devgeereact/kokolett-beauty` (**public**) |
 | Supabase ref / region | `erqrfjlozqyhogneqraj` / `eu-west-2` (London) |
 | Dev + preview port | `5082` (block 08, `strictPort`) |
+| Locality | **Thamesmead**, London SE28 8RX, matching the verified Google profile. Woolwich is SE18 and is an area served, never the location claim. |
+| Owner | **Christy**. Not "Koko": that was seeded into the AI prompt and two email templates and corrected on 2026-08-31. |
+| Instagram / Google | `@kokolettbeautyuk` · Place ID `ChIJxSluewCv2EcRgkwfgTqnij8` |
 
 DB password: macOS Keychain, `security find-generic-password -a $USER -s supabase-kokolett-db -w`.
 Never in a file.
@@ -49,6 +52,7 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
 | Product scope & metrics      | `docs/PRD.md`           |
 | Deploy process & safety      | `docs/DEPLOYMENT.md`    |
 | Hand-keyed go-live steps     | `docs/GO-LIVE.md`       |
+| Google, Instagram, SEO       | `docs/SOCIAL_PROFILE.md`|
 
 ## Hard constraints
 - **Static build only.** Output is `dist/`, deployed via Git/FTP to cPanel.
@@ -67,14 +71,23 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
 - **Money is integer pence. Time is UTC in storage, `Europe/London` on screen.**
 - **The AI assistant can propose but never execute.** It can read business data and propose two writes — booking an appointment, sending a one-off customer email — but calling either only produces a card in the chat; the actual write (`createAppointmentAsOwner` / `sendCustomEmailAsOwner`) happens client-side, under the owner's own session, only when she clicks Confirm. The AI assistant edge function itself has no path to execute a write on its own.
 - Copy is British English.
-- **Women's hair only.** Cutting, colouring, styling, braids, locs, weaves and
+- **Women's hair only.** Cutting, colouring, styling, braids, twists, weaves and
   treatments. Not a general beauty salon — no nails, brows, lashes or aesthetics —
   and not unisex, and not barbering. The word "Beauty" in the name is branding, not
   scope. Structured data uses `HairSalon`.
+- **No locs.** Retired 2026-08-31 (`0066_retire_locs.sql`): five loc styles had been
+  seeded by `0018` and advertised on the site, in the structured data and in the AI
+  prompt, and the owner does not offer them. Twists are a separate service she does
+  offer, so the group is **Twists**, never "Twists and locs".
 
 ## Architecture at a glance
 - **Dependency direction:** `pages → services → lib`. Components consume `hooks`/
   `context`. `lib` never imports from `pages`/`components` — no cycles.
+- **Static business identity lives in `src/lib/business.ts`**, and nowhere else in
+  `src/`: name, locality, origin, contact email, socials, schema `@id`s. Address
+  line, phone and opening hours are *not* there, because the owner edits those in
+  `booking_settings`. `index.html`'s JSON-LD is a third, hand-keyed copy that no
+  code can reach. `docs/SOCIAL_PROFILE.md` §2 is the map.
 - **One appointment type, no service-selection step.** `/book` goes straight from
   date to time; there is no per-service picker, and no price is quoted anywhere.
 - **Two AI assistants and a third drafting-only surface — do not conflate them**

@@ -325,9 +325,9 @@ export function AccountSecuritySection(): JSX.Element {
             Change your sign-in link
           </h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            This is the only way into your dashboard — it isn&rsquo;t linked anywhere on
-            the website. Changing it stops the old link from working immediately, so save
-            the new one somewhere safe before you close this.
+            This is the only way into your dashboard, and it isn&rsquo;t linked anywhere
+            on the website. Changing it stops the old link from working immediately, so
+            save the new one somewhere safe before you close this.
           </p>
           <Field
             label="Sign-in link"

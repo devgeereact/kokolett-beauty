@@ -12,7 +12,7 @@ export function OfflineBanner(): JSX.Element | null {
       aria-live="polite"
       className="fixed inset-x-0 bottom-0 z-toast animate-fade-up bg-card px-4 py-3 text-center text-sm text-muted-foreground border-t border-border"
     >
-      You're offline — showing cached content.
+      You&rsquo;re offline. Showing cached content.
     </div>
   );
 }

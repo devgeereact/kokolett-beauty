@@ -44,7 +44,7 @@ const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30];
 // 7th one never crashes or all lands on one colour.
 const CATEGORY_TONES: Record<string, Tone> = {
   Braids: 'primary',
-  'Twists and locs': 'pending',
+  Twists: 'pending',
   'Weaves, wigs and extensions': 'in_service',
   'Natural hair and styling': 'confirmed',
   Colour: 'urgent',
@@ -534,7 +534,7 @@ export const ServicesCatalogue = forwardRef<ServicesCatalogueHandle>(
               </Field>
             </div>
 
-            <Field label="Image path" hint="An ImageKit path — leave blank for none.">
+            <Field label="Image path" hint="An ImageKit path. Leave blank for none.">
               {({ id }) => (
                 <Input
                   id={id}

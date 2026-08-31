@@ -3,9 +3,9 @@ import { listWeeklyTemplate } from '@/services/availabilityService';
 import { useRealtimeTable } from '@/hooks/useRealtimeTable';
 
 export interface HoursLine {
-  /** e.g. "Tuesday – Sunday" or "Monday" */
+  /** e.g. "Tuesday to Sunday" or "Monday" */
   days: string;
-  /** e.g. "09:00 – 17:00", or null when closed. */
+  /** e.g. "09:00 to 17:00", or null when closed. */
   hours: string | null;
 }
 
@@ -30,8 +30,8 @@ const ORDER = [1, 2, 3, 4, 5, 6, 0];
  * the template is what generates days, but any individual day can be changed on
  * the calendar, so the only authority on a specific date is the booking page.
  *
- * Consecutive days with the same hours are collapsed — "Tuesday – Sunday
- * 09:00 – 17:00" is what a person reads, not seven identical lines.
+ * Consecutive days with the same hours are collapsed — "Tuesday to Sunday
+ * 09:00 to 17:00" is what a person reads, not seven identical lines.
  */
 export function useUsualHours(): { lines: HoursLine[]; loading: boolean } {
   const [lines, setLines] = useState<HoursLine[]>([]);
@@ -49,7 +49,7 @@ export function useUsualHours(): { lines: HoursLine[]; loading: boolean } {
         if (times.length === 0) return null;
         return times.length === 1
           ? times[0]!
-          : `${times[0]} – ${times[times.length - 1]}`;
+          : `${times[0]} to ${times[times.length - 1]}`;
       };
 
       const grouped: HoursLine[] = [];
@@ -59,7 +59,7 @@ export function useUsualHours(): { lines: HoursLine[]; loading: boolean } {
 
         // Extend the run only if this day is adjacent in the displayed order.
         if (previous && previous.hours === hours) {
-          previous.days = `${previous.days.split(' – ')[0]} – ${DAY_NAMES[day]}`;
+          previous.days = `${previous.days.split(' to ')[0]} to ${DAY_NAMES[day]}`;
         } else {
           grouped.push({ days: DAY_NAMES[day] ?? '', hours });
         }

@@ -78,7 +78,7 @@ export function NextWeeksGlanceCard({
                   return (
                     <Tooltip
                       key={date}
-                      label={`${formatDateShort(`${date}T00:00:00Z`)} — ${hasSlots ? `${s!.slot_count} slots` : 'no slots'}`}
+                      label={`${formatDateShort(`${date}T00:00:00Z`)}: ${hasSlots ? `${s!.slot_count} slots` : 'no slots'}`}
                     >
                       <span className="flex items-center justify-center">
                         <span

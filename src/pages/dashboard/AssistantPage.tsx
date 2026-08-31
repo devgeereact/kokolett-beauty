@@ -32,7 +32,7 @@ export function AssistantPage(): JSX.Element {
   return (
     <DashboardLayout
       title="AI Assistant"
-      subtitle="Advisory only — nothing here acts on its own"
+      subtitle="Advisory only. Nothing here acts on its own"
       actions={
         <Button size="sm" onClick={() => setBooking(true)}>
           <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />

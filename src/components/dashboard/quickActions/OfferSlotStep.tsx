@@ -77,7 +77,7 @@ export function OfferSlotStep({
     <div>
       <StepHeader
         title="Offer slot to request"
-        description="Find the request — you'll answer it from the Requests queue, where the date/time picker and fairness checks live."
+        description="Find the request. You'll answer it from the Requests queue, where the date/time picker and fairness checks live."
         onBack={onBack}
         onClose={onClose}
       />

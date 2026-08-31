@@ -45,6 +45,7 @@ src/
 │   ├── sentry.ts    # Sentry init
 │   ├── imagekit.ts  # ImageKit URL builder
 │   ├── utils.ts     # cn() and small helpers
+│   ├── business.ts  # static business identity: name, locality, socials, @ids
 │   └── routes.ts    # the single route map
 ├── pages/         # route-level views (public / customer / dashboard)
 ├── services/      # typed data access over Supabase

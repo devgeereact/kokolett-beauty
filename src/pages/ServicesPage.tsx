@@ -6,6 +6,7 @@ import { useServiceMenu } from '@/hooks/useServiceMenu';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { formatDuration } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import { SALON_SCHEMA_ID } from '@/lib/business';
 
 /**
  * The full live service menu — duration only, never a price (2026-08-25
@@ -16,14 +17,54 @@ import { routes } from '@/lib/routes';
  * be a promise the salon cannot keep.
  */
 export function ServicesPage(): JSX.Element {
-  useDocumentMeta(
-    'Services',
-    'Braids, locs, weaves, natural hair and colour at Kokolett Beauty, a women’s hair salon in South East London. See the full menu and book online.',
-  );
+  useDocumentMeta({
+    title: 'Services',
+    description:
+      'Braids, twists, weaves, natural hair and styling, colour and treatments at Kokolett Beauty in Thamesmead, South East London. See the full menu and book online.',
+    path: routes.public.services,
+  });
   const { groups, loading } = useServiceMenu();
+
+  /* Built from the live `service_menu` rather than hand-written, so the
+     structured data cannot drift from what the owner has in the console.
+     Attached to the salon's own `@id` from index.html, so Google reads it as
+     this salon's catalogue and not a second business. */
+  const catalogueJsonLd =
+    groups.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'HairSalon',
+          '@id': SALON_SCHEMA_ID,
+          hasOfferCatalog: {
+            '@type': 'OfferCatalog',
+            name: "Women's hair services",
+            itemListElement: groups.map((group) => ({
+              '@type': 'OfferCatalog',
+              name: group.group_name,
+              itemListElement: group.items.map((item) => ({
+                '@type': 'Offer',
+                itemOffered: {
+                  '@type': 'Service',
+                  name: item.name,
+                  serviceType: group.group_name,
+                  provider: { '@id': SALON_SCHEMA_ID },
+                  ...(item.note ? { description: item.note } : {}),
+                },
+              })),
+            })),
+          },
+        }
+      : null;
 
   return (
     <SiteShell>
+      {catalogueJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(catalogueJsonLd) }}
+        />
+      )}
+
       <section className="mx-auto max-w-4xl px-4 py-16 md:px-6">
         <div className="mx-auto mb-12 max-w-2xl text-center">
           <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">
@@ -74,14 +115,20 @@ export function ServicesPage(): JSX.Element {
           ))}
         </div>
 
-        <p className="mt-10 text-center">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link
             to={routes.public.book}
             className="inline-flex h-12 items-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground"
           >
             Book an appointment
           </Link>
-        </p>
+          <Link
+            to={routes.public.gallery}
+            className="inline-flex h-12 items-center rounded-lg border border-border px-6 text-base font-semibold text-foreground hover:bg-muted"
+          >
+            See the work
+          </Link>
+        </div>
       </section>
     </SiteShell>
   );

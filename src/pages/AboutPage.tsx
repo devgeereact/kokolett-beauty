@@ -16,10 +16,12 @@ const FALLBACK_PHOTO_PATH = '/kokolett/marketing/about-christy-portrait.jpg';
  * owner-editable (`booking_settings.about_photo_path`, Settings → About photo).
  */
 export function AboutPage(): JSX.Element {
-  useDocumentMeta(
-    'About',
-    'Meet Christy, the stylist behind Kokolett Beauty: 15+ years doing hair in Woolwich, South East London.',
-  );
+  useDocumentMeta({
+    title: 'About',
+    description:
+      'Meet Christy, the stylist behind Kokolett Beauty: over 15 years doing hair in Thamesmead, South East London.',
+    path: routes.public.about,
+  });
   const { settings } = useBusinessSettings();
 
   return (
@@ -37,7 +39,7 @@ export function AboutPage(): JSX.Element {
             />
             <p className="absolute bottom-4 left-4 rounded-lg bg-card px-3.5 py-2.5 text-sm text-foreground shadow-popover">
               <strong className="block font-serif text-base">15+ years</strong>
-              doing hair in Woolwich
+              doing hair in Thamesmead
             </p>
           </div>
 
@@ -52,17 +54,17 @@ export function AboutPage(): JSX.Element {
             <div className="mt-6 space-y-4 text-base leading-relaxed text-muted-foreground">
               <p>
                 Christy has been doing hair for more than{' '}
-                <strong className="text-foreground">fifteen years</strong>, right here in
-                Woolwich. She started Kokolett Beauty because she loves this work: helping
-                women walk out feeling like the best version of themselves.
+                <strong className="text-foreground">fifteen years</strong>, and works out
+                of Thamesmead in South East London. She started Kokolett Beauty because
+                she likes the work, and because she would rather take one client at a time
+                and get the finish right than rush three.
               </p>
               <p>
-                Originally from <strong className="text-foreground">Nigeria</strong>, she
-                brought her training and her eye for detail with her, and a way of putting
-                people at ease the moment they sit down. Ask anyone who has been in her
-                chair and they will tell you the same thing: it does not feel like a salon
-                appointment, it feels like catching up with someone who actually cares how
-                your hair, and your week, is going.
+                She trained in <strong className="text-foreground">Nigeria</strong> and
+                brought that training with her. What people tend to mention afterwards is
+                not the technique, though. It is that an appointment feels less like a
+                salon slot and more like catching up with someone who wants to know how
+                your week has gone.
               </p>
               <p>
                 Every client is different, so every appointment starts the same way:
@@ -70,16 +72,13 @@ export function AboutPage(): JSX.Element {
                 getting ready for. Then she gets to work.
               </p>
               <p>
-                Fifteen years in, her philosophy has not changed:{' '}
+                Fifteen years in, she still holds the same view:{' '}
                 <strong className="text-foreground">
                   when you look good, you feel good.
                 </strong>{' '}
-                That is the whole point of coming in.
+                That is why she takes the time.
               </p>
-              <p>
-                Whether you have been coming for years or you are booking your first
-                appointment, she is looking forward to having you in the chair.
-              </p>
+              <p>First appointment or fiftieth, she will be glad to see you.</p>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">

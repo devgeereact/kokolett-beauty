@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0058`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0059`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -37,6 +37,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0056_customer_data_export.sql`                     | Added `export_customer_data()` and a new `customer.data_exported` value in `audit_events.action`'s check constraint — no new table. The GDPR subject-access counterpart to `erase_customer_as_owner` (`0042`): same tables, read instead of deleted. |
 | `0057_drop_ai_recommendations.sql`                  | Dropped `ai_recommendations` and `recommendation_status` — confirmed dead across every audit this session, owner-approved for removal 2026-08-30. Does not affect the AI chat's ability to draft messages (`ai-assistant-chat`), which never used this table. |
 | `0058_broadcast_messaging.sql`                      | Added `send_broadcast_as_owner()` and `unsubscribe_via_link()`, and a new `broadcast.sent` value in `audit_events.action`'s check constraint — no new table. Broadcast messaging uses the existing email outbox queue. `unsubscribe_via_link()` is anon-callable by design, since a visitor clicking the link has no session. |
+| `0059_payment_corrections.sql`                      | Added `payments.corrects_payment_id` (nullable FK to `payments.id`) and loosened the `amount_pence` check to allow negative only when `corrects_payment_id` is set (a plain payment must still be positive). `log_payment()` gained an optional `p_corrects_payment_id` param and validates the linked payment is on the same appointment. |
 
 ### Every table, and where it is documented
 
@@ -55,7 +56,7 @@ migration that created them as the authoritative source.
 | `weekly_template`       | `0013`     | the repeating week: `day_of_week` (0 = Sunday), `starts_at`. Rolled forward nightly by `extend-weekly-template`                  |
 | `day_decided`           | `0013`     | `on_date` primary key + `decided_by` (`owner`/`template`) — records a deliberate closure so the template can't refill it         |
 | `service_menu`          | `0018`     | website menu copy: `group_name`, `name`, `note`, `sort_order`, `active`; `0031` added `duration_min`, `buffer_min`, `image_path` |
-| `payments`              | `0027`     | money actually taken: `appointment_id`, `amount_pence` (> 0), `note`, `recorded_by`. `appointments.price_pence` stays 0          |
+| `payments`              | `0027`, `corrects_payment_id` added by `0059` | money actually taken: `appointment_id`, `amount_pence` (> 0, or negative when `corrects_payment_id` links it to an earlier payment on the same appointment), `note`, `recorded_by`. `appointments.price_pence` stays 0 |
 | `email_templates`       | `0032`     | owner-editable overlay keyed by template `key`; `0037` added `include_in_automation`, default-off in practice                    |
 | `google_reviews`        | `0017`     | synced review cache: `author_name`, `rating`, `body`, `published_at`, `fetched_at`                                               |
 | `google_place_snapshot` | `0017`     | single-row (`id boolean primary key`) aggregate: `rating`, `rating_count`, `last_error`. `0038` removed its public read          |
@@ -869,3 +870,15 @@ cancelled or marked no-show.
 `appointments_detailed` view gains `paid_pence`, summing all payments for each
 appointment. `price_pence` and `services.price_pence` remain in the schema for
 booking history; nothing in the booking path reads them any more.
+
+## 24b. Migration `0059` — payment corrections
+
+`payments.corrects_payment_id` (nullable FK to `payments.id`) links a correction
+row back to the payment it corrects — still append-only, still no update/delete
+RPC, just linkage on top of the `0027` design. The `amount_pence > 0` check now
+reads `(corrects_payment_id is null and amount_pence > 0) or (corrects_payment_id
+is not null and amount_pence <> 0)`: a plain payment must still be positive, a
+correction may be negative (a refund/deduction) or positive (an added top-up),
+but never zero. `log_payment()` takes an optional `p_corrects_payment_id` and
+raises `ILLEGAL_TRANSITION` if the linked payment belongs to a different
+appointment, `NOT_FOUND` if it doesn't exist.

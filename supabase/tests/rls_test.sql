@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(59);
+select plan(61);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -566,6 +566,38 @@ select throws_ok(
   'but a fourth inside 24 hours is refused');
 
 reset role;
+
+-- ---------------------------------------------------------------------------
+-- Trigger functions are not a client-callable surface.
+--
+-- Supabase's advisor found `log_email_template_revision` executable by anon and
+-- authenticated: the only one of the eight trigger functions in this schema
+-- with any client grant. `0061` had revoked it from PUBLIC, which does not
+-- touch the explicit grants anon and authenticated hold, so the revoke read as
+-- complete and did nothing. `0069` revokes it properly, and from the other
+-- seven defensively.
+--
+-- Postgres refuses to run a trigger function outside a trigger context anyway,
+-- so this asserts the grant rather than the behaviour: the point is that a
+-- later edit cannot quietly hand anon a writer into an append-only audit table.
+select is_empty(
+  $$select p.proname
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.prorettype = 'pg_catalog.trigger'::regtype
+       and (has_function_privilege('anon', p.oid, 'EXECUTE')
+            or has_function_privilege('authenticated', p.oid, 'EXECUTE'))$$,
+  'no trigger function is executable by anon or authenticated');
+
+-- `secret_login_attempts` is the rate limiter behind the owner's sign-in slug.
+-- RLS enabled with no policies is deny-all, which is the correct posture: it is
+-- written only by the Edge Function under the service role. The advisor reports
+-- it as rls_enabled_no_policy. Asserting it here stops anyone "fixing" that.
+select is_empty(
+  $$select policyname from pg_policies
+     where schemaname = 'public' and tablename = 'secret_login_attempts'$$,
+  'secret_login_attempts stays deny-all: RLS on, no policies, written only by the service role');
 
 select * from finish();
 

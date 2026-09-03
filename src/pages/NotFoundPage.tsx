@@ -10,8 +10,16 @@ export function NotFoundPage(): JSX.Element {
   return (
     <main className="grid min-h-screen place-items-center px-6 text-center">
       <div>
-        <p className="font-serif text-7xl font-extrabold text-primary">404</p>
-        <p className="mt-2 mb-8 text-muted-foreground">This page doesn't exist.</p>
+        {/* Decoration. The numeral carried the whole page before, as a <p>, so
+            this screen had no h1 at all and a screen reader announced it as
+            "404 This page doesn't exist" with no document heading to land on.
+            It also renders for a signed-out hit on a dashboard route
+            (ProtectedRoute), which makes it a page the owner sees, not only a
+            stranger. The wording stays generic for that reason. */}
+        <p aria-hidden="true" className="font-serif text-7xl font-extrabold text-primary">
+          404
+        </p>
+        <h1 className="mt-2 mb-8 text-muted-foreground">This page doesn't exist.</h1>
         <Link to="/">
           <Button>Back home</Button>
         </Link>

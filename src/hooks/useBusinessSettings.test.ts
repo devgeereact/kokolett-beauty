@@ -87,6 +87,35 @@ describe('useBusinessSettings', () => {
     expect(b.result.current.timezone).toBe('UTC');
   });
 
+  it('does not let a read that started before a save publish over it', async () => {
+    const first = renderHook(() => useBusinessSettings());
+    const reader = renderHook(() => useBusinessSettings());
+    await waitFor(() => expect(first.result.current.settings).toEqual(ROW));
+
+    // A refresh that will not resolve until we say so.
+    let releaseStaleRead: (row: unknown) => void = () => {};
+    getBookingSettings.mockReturnValue(
+      new Promise((resolve) => {
+        releaseStaleRead = resolve;
+      }),
+    );
+
+    const saved = { ...ROW, max_horizon_days: 7 };
+    updateBookingSettings.mockResolvedValue(saved);
+
+    await act(async () => {
+      void first.result.current.refresh();
+      // The save lands while that read is still open, which is the ordering
+      // that used to leave every card rendering pre-save values.
+      await first.result.current.update({ max_horizon_days: 7 });
+      releaseStaleRead(ROW);
+      await Promise.resolve();
+    });
+
+    expect(first.result.current.settings).toEqual(saved);
+    expect(reader.result.current.settings).toEqual(saved);
+  });
+
   it('surfaces a failure and falls back to the default timezone', async () => {
     getBookingSettings.mockRejectedValue(new Error('offline'));
 

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { reportError } from '@/lib/sentry';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useFocusTrap, FOCUSABLE_SELECTOR } from '@/hooks/useFocusTrap';
 import { getProfile } from '@/services/profileService';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -94,7 +94,23 @@ export function DashboardLayout({
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuPanelRef = useRef<HTMLDivElement>(null);
+  const menuTriggerRef = useRef<HTMLElement | null>(null);
   useFocusTrap(menuOpen, menuPanelRef, () => setMenuOpen(false));
+
+  /* `aria-modal` is a promise to a screen reader, and a trap alone does not keep
+     it: `useFocusTrap` only wraps Tab once focus is already inside the panel. On
+     open, focus stayed on the Menu button behind the overlay, so a keyboard user
+     went on tabbing through the obscured dashboard; on close, the focused element
+     was removed from the document and focus fell to <body>. The hook deliberately
+     leaves placement to the caller (Modal and ConfirmDialog want different
+     things), so this belongs here rather than in the hook. */
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    menuTriggerRef.current = document.activeElement as HTMLElement | null;
+    const panel = menuPanelRef.current;
+    (panel?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ?? panel)?.focus();
+    return () => menuTriggerRef.current?.focus();
+  }, [menuOpen]);
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
@@ -532,6 +548,7 @@ export function DashboardLayout({
             role="dialog"
             aria-modal="true"
             aria-label="Navigation menu"
+            tabIndex={-1}
             className="absolute inset-y-0 left-0 flex w-64 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar"
           >
             <div className="p-4">

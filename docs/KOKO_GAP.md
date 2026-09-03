@@ -141,7 +141,7 @@ below had ever been recorded. Full detail in `docs/SOCIAL_PROFILE.md` §9.
 ### PWA / Offline
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
-| Offline-safe booking blocking | `isOffline()` guard on `BookPage`'s submit, plus an `OFFLINE` branch in `toAppError` so a dropped connection anywhere reads as one | ✅ | `src/pages/BookPage.tsx`, `src/lib/errors.ts`, `src/lib/errors.test.ts` (12 assertions) | Verified 2026-09-03. It was 🔍 for good reason: nothing blocked the write and every network failure rendered "Something went wrong. Please try again." | — |
+| Offline-safe booking blocking | `isOffline()` guard on `BookPage`'s submit, plus an `OFFLINE` branch in `toAppError` so a dropped connection anywhere reads as one | ✅ | `src/pages/BookPage.tsx`, `src/lib/errors.ts`, `src/lib/errors.test.ts` (12 assertions) | Code and unit tests verified 2026-09-03 (`errors.test.ts`, 12 assertions); the offline browser run itself is still outstanding, see section 7. It was 🔍 for good reason: nothing blocked the write and every network failure rendered "Something went wrong. Please try again." | — |
 | Runtime caching of authenticated data | Scoped to four public tables; `purgeApiCache()` on both sign-out paths | ✅ | `vite.config.ts` runtimeCaching, `src/lib/apiCache.ts` | Fixed 2026-09-03. The route used to match every `/rest/v1/` path: `customers` and `appointments` reads were written to Cache Storage, keyed by URL alone, and survived sign-out. Confirmed in a real browser before and after | — |
 | Update UX, install prompt | Real. The install banner is now genuinely dismissible (remembered in `localStorage`) and sits at `bottom-20` so it no longer stacks on `OfflineBanner` | ✅ | See §2; `src/components/InstallPrompt.tsx` | Its own docstring had said "dismissible" since it was written, with no control to dismiss it | — |
 | App version visibility | Git short SHA + build timestamp, shown on the System Health page | ✅ | See Today/Owner dashboard section above (`0053_system_health.sql`) | — | — |
@@ -218,10 +218,18 @@ rather than the folder needing a refresh.
 ### Fourth pass, 2026-09-03 (PWA production audit, code + docs)
 
 A full PWA audit, run against a real browser and the live Supabase project rather
-than by reading. Everything below was reproduced before it was changed and
-re-checked after. The theme of the pass: three separate places where a document
+than by reading. The theme of the pass: three separate places where a document
 described a behaviour the code had never had, and one where the code had quietly
 acquired a behaviour nobody would have written down on purpose.
+
+**What "verified" means in this table, and what it does not.** Every finding was
+reproduced before it was changed. What differs is the confidence in the fix.
+Anything reachable while signed out was re-checked in the browser and is marked
+so. Anything behind a session, an install prompt or the live host was reasoned
+about and covered by tests, and is listed as outstanding in section 7: the
+signed-in dashboard, the sign-out purge, the install banner, the `.htaccess`
+headers and the apex redirect. Section 7 is the authority on that split, not this
+table.
 
 | File | Fix |
 |---|---|

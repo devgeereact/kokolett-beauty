@@ -38,7 +38,7 @@ interface UseCustomerSession {
   marketingConsent: boolean | null;
   setMarketingConsent: (consent: boolean) => Promise<void>;
   refresh: () => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 }
 
 /**
@@ -163,15 +163,17 @@ export function useCustomerSession(): UseCustomerSession {
     [sessionToken, marketingConsent],
   );
 
-  const signOut = useCallback((): void => {
+  const signOut = useCallback(async (): Promise<void> => {
     storeSession(null);
     setSessionToken(null);
     setCustomer(null);
     setAppointments([]);
     setMarketingConsentState(null);
     // Her bookings were read through the same API the service worker caches.
-    // Signing out on a borrowed phone has to leave nothing behind.
-    void purgeApiCache();
+    // Signing out on a borrowed phone has to leave nothing behind. Awaited, not
+    // fired and forgotten: a caller that navigates away on the next line would
+    // otherwise tear the page down before the delete resolved.
+    await purgeApiCache();
   }, []);
 
   return {

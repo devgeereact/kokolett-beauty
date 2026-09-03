@@ -151,12 +151,20 @@ export default defineConfig({
                app on that device next. Verified in a real browser: the cache
                was created and populated on a first page load.
 
-               The four tables below are the ones the marketing pages read while
-               signed out, and they hold no personal data: opening hours, the
-               service list and its categories, and the single public
-               `booking_settings` row. Every other table now goes straight to
-               the network and is never written to disk. RPCs are POSTs, so
-               Workbox never routed them in the first place.
+               The two tables below are the ones the marketing shell needs and
+               that have no privileged variant: the salon's published hours and
+               the single public `booking_settings` row. Every other table now
+               goes straight to the network and is never written to disk. RPCs
+               are POSTs, so Workbox never routed them in the first place.
+
+               `services` and `service_categories` were in this list and came
+               out again: `listAllServices()` reads the same table without the
+               `is_active` filter, so an owner-only response carrying unpublished
+               rows was being written to disk. Matching on the query string to
+               tell the two apart is brittle, and the public service list already
+               arrives through the `public_service_menu` RPC, which is a POST and
+               was never cached. Dropping them costs one uncached read and
+               removes the whole question.
 
                The cache name is unchanged deliberately. Existing installs
                already hold personal rows under it, and keeping the name means
@@ -172,7 +180,7 @@ export default defineConfig({
                the app expects rows. ImageKit keeps 0 because images legitimately
                arrive opaque. */
             urlPattern:
-              /^https:\/\/[a-z0-9-]+\.supabase\.co\/rest\/v1\/(booking_settings|services|service_categories|weekly_template)(\?|$)/i,
+              /^https:\/\/[a-z0-9-]+\.supabase\.co\/rest\/v1\/(booking_settings|weekly_template)(\?|$)/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api',

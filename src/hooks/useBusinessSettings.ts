@@ -66,18 +66,33 @@ function getSnapshot(): StoreState {
 /** In-flight load, shared by every caller that mounts while it is running. */
 let inFlight: Promise<void> | null = null;
 
+/**
+ * Bumped by every load and by every successful write.
+ *
+ * Without it a read that started before a save could land after it and publish
+ * the pre-save row to every subscriber: `refresh()` opens a request, the owner
+ * saves, `update()` resolves first and publishes what the database accepted,
+ * then the older read resolves and overwrites it. The settings cards would then
+ * render the values they had before the save until something refreshed again,
+ * which is the exact bug the shared store was written to remove.
+ */
+let generation = 0;
+
 function load(force: boolean): Promise<void> {
   if (inFlight) return inFlight;
   // A row already read successfully is reused. `refresh()` passes force.
   if (!force && state.settings && !state.error) return Promise.resolve();
 
+  const started = ++generation;
   setState({ ...state, loading: true });
 
   const request = getBookingSettings()
     .then((settings) => {
+      if (started !== generation) return; // a write overtook this read
       setState({ settings, loading: false, error: null });
     })
     .catch((e: unknown) => {
+      if (started !== generation) return;
       setState({
         settings: state.settings,
         loading: false,
@@ -100,6 +115,7 @@ function load(force: boolean): Promise<void> {
 export function resetBusinessSettingsStore(): void {
   state = { settings: null, loading: true, error: null };
   inFlight = null;
+  generation = 0;
   listeners.clear();
 }
 
@@ -116,6 +132,8 @@ export function useBusinessSettings(): UseBusinessSettings {
     // UI should show what the database actually accepted. Publishing the
     // returned row is also what keeps the other settings cards in step.
     const next = await updateBookingSettings(patch);
+    // Invalidates any read still in flight, so it cannot publish over this.
+    generation += 1;
     setState({ settings: next, loading: false, error: null });
   }, []);
 

@@ -231,7 +231,7 @@ export function MyBookingsPage(): JSX.Element {
               <p className="mt-1 text-muted-foreground">{customer.full_name}</p>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut}>
+          <Button variant="ghost" size="sm" onClick={(): void => void signOut()}>
             Sign out
           </Button>
         </div>

@@ -10,17 +10,17 @@ function setOnline(value: boolean): void {
   vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(value);
 }
 
-afterEach(() => {
+afterEach((): void => {
   vi.restoreAllMocks();
 });
 
-describe('toAppError', () => {
-  it('maps a coded database exception to its copy', () => {
+describe('toAppError', (): void => {
+  it('maps a coded database exception to its copy', (): void => {
     const e = { message: 'SLOT_TAKEN: someone else got there', code: 'P0001' };
     expect(toAppError(e).code).toBe('SLOT_TAKEN');
   });
 
-  it('never leaks raw Postgres text for an unrecognised failure', () => {
+  it('never leaks raw Postgres text for an unrecognised failure', (): void => {
     setOnline(true);
     const result = toAppError(new Error('duplicate key value violates something'));
     expect(result.code).toBe('UNKNOWN');
@@ -32,12 +32,12 @@ describe('toAppError', () => {
     'NetworkError when attempting to fetch resource.',
     'Load failed',
     'fetch failed',
-  ])('recognises %s as an offline failure', (message) => {
+  ])('recognises %s as an offline failure', (message): void => {
     setOnline(true); // the flag can lag reality, so the text has to carry it
     expect(toAppError(new Error(message)).code).toBe('OFFLINE');
   });
 
-  it('recognises a supabase-js network error, which arrives as a PostgrestError', () => {
+  it('recognises a supabase-js network error, which arrives as a PostgrestError', (): void => {
     setOnline(true);
     const e = { message: 'TypeError: Failed to fetch', details: '', hint: '', code: '' };
     const result = toAppError(e);
@@ -45,18 +45,18 @@ describe('toAppError', () => {
     expect(result.message).toContain('offline');
   });
 
-  it('treats any failure as offline while the browser reports no connection', () => {
+  it('treats any failure as offline while the browser reports no connection', (): void => {
     setOnline(false);
     expect(toAppError(new Error('anything at all')).code).toBe('OFFLINE');
   });
 
-  it('keeps the original error for Sentry without rendering it', () => {
+  it('keeps the original error for Sentry without rendering it', (): void => {
     setOnline(true);
     const cause = new Error('Failed to fetch');
     expect(toAppError(cause).cause).toBe(cause);
   });
 
-  it('does not misread a coded exception as a network failure', () => {
+  it('does not misread a coded exception as a network failure', (): void => {
     setOnline(true);
     expect(toAppError(new Error('DAILY_CAPACITY_REACHED')).code).toBe(
       'DAILY_CAPACITY_REACHED',
@@ -64,15 +64,15 @@ describe('toAppError', () => {
   });
 });
 
-describe('isOffline / offlineError', () => {
-  it('reports the browser connectivity flag', () => {
+describe('isOffline / offlineError', (): void => {
+  it('reports the browser connectivity flag', (): void => {
     setOnline(false);
     expect(isOffline()).toBe(true);
     setOnline(true);
     expect(isOffline()).toBe(false);
   });
 
-  it('offlineError carries no cause, because nothing was thrown', () => {
+  it('offlineError carries no cause, because nothing was thrown', (): void => {
     expect(offlineError()).toEqual({
       code: 'OFFLINE',
       message: 'You appear to be offline. Please check your connection and try again.',

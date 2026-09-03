@@ -44,6 +44,14 @@ export function InstallPrompt(): JSX.Element | null {
     }
   };
 
+  /* The browser's own prompt can be declined too, and that answer counts.
+     Discarding it meant a customer who said no to Chrome still saw this banner
+     again on their next visit. */
+  const install = async (): Promise<void> => {
+    const outcome = await promptInstall();
+    if (outcome === 'dismissed') dismiss();
+  };
+
   return (
     <div className="fixed inset-x-4 bottom-20 z-toast mx-auto flex max-w-md animate-fade-up items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-popover">
       <div>
@@ -51,7 +59,7 @@ export function InstallPrompt(): JSX.Element | null {
         <p className="text-sm text-muted-foreground">Faster, offline-ready, no store.</p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <Button size="sm" onClick={() => void promptInstall()}>
+        <Button size="sm" onClick={(): void => void install()}>
           Install
         </Button>
         <button

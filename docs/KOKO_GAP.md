@@ -1,6 +1,6 @@
 # KOKO_GAP — Gap Analysis vs. the Transformation Brief
 
-**Date:** 2026-08-29, updated through 2026-08-31 as P1/P2 items shipped (see §5's checked items for exact dates).
+**Date:** 2026-08-29, updated through 2026-09-03 as P1/P2 items shipped (see §5's checked items for exact dates). The 2026-09-03 pass was a PWA production audit, run against a real browser and the live project: see §4.
 **Scope:** Verified against the actual codebase (frontend, Supabase schema, Edge Functions, cron, tests), not against what docs or the brief *claim* exists.
 
 ## 0. Framing
@@ -30,7 +30,7 @@ The brief assumed several things were missing that are, in fact, built. Listed f
 - **AI governance** (propose-only, owner-confirms, no autonomous writes) — `supabase/functions/ai-assistant-chat/index.ts`. `propose_booking`/`propose_email` end the model's turn and hand a proposal object to the client; no dispatcher branch executes either as a write. Runs under the caller's own JWT (not service role), so a non-owner gets a working chat that reads nothing. Tool results are fenced (`<<<RECORDS ... RECORDS>>>`) against prompt injection.
 - **Approvals + Requests → Inbox merge** — `src/pages/dashboard/InboxPage.tsx`, tabbed. `/dashboard/approvals` and `/dashboard/requests` are intentional `<Navigate>` redirects (`src/lib/routes.ts:40-51`, `@deprecated` on the old constants) preserving old bookmarks.
 - **`/subscribe`** — real feature (mailing-list opt-in, deliberately unlinked from nav for pasting into an Instagram bio), not a dead route.
-- **PWA offline/update UX** — `src/components/UpdatePrompt.tsx` (autoUpdate, hourly poll, non-destructive "reload when ready" banner), `src/components/OfflineBanner.tsx` + `useOnlineStatus.ts`, `src/components/InstallPrompt.tsx`.
+- **PWA offline/update UX** — `src/components/UpdatePrompt.tsx` (autoUpdate, hourly poll, and a brief "Updating" notice that announces the reload rather than asking permission for it), `src/components/OfflineBanner.tsx` + `useOnlineStatus.ts`, `src/components/InstallPrompt.tsx`.
 - **Security account card** — real MFA/TOTP (`supabase.auth.mfa.*`), password change, changeable secret-login slug — `src/components/dashboard/settings/AccountSecurityCard.tsx`, `0051_secret_owner_login.sql`.
 - **GDPR erasure** — `eraseCustomer()` → `erase_customer_as_owner` RPC, reaches four tables (mailing list, enquiries, outbox, access tokens) per `0042`/`0044`.
 - **Booking race protection** — GiST exclusion constraint (`appointments_no_overlap`, `0002_salon.sql:204-210`) stops same-slot double-booking; `pg_advisory_xact_lock(hashtext('book_day:'...))` (`0039_book_appointment_input_rules.sql:145`) stops the daily-capacity-cap race. Both quoted, both live in `book_appointment()`'s current definition. What's *not* done is an automated end-to-end test proving it (see §5 P1) — the DB-level protection itself is solid.
@@ -141,14 +141,18 @@ below had ever been recorded. Full detail in `docs/SOCIAL_PROFILE.md` §9.
 ### PWA / Offline
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
-| Offline-safe booking blocking | Not separately checked in this pass | 🔍 | `OfflineBanner.tsx` exists; whether write actions specifically are blocked offline wasn't verified line-by-line | — | — |
-| Update UX, install prompt | Real | ✅ | See §2 | — | — |
+| Offline-safe booking blocking | `isOffline()` guard on `BookPage`'s submit, plus an `OFFLINE` branch in `toAppError` so a dropped connection anywhere reads as one | ✅ | `src/pages/BookPage.tsx`, `src/lib/errors.ts`, `src/lib/errors.test.ts` (12 assertions) | Code and unit tests verified 2026-09-03 (`errors.test.ts`, 12 assertions); the offline browser run itself is still outstanding, see section 7. It was 🔍 for good reason: nothing blocked the write and every network failure rendered "Something went wrong. Please try again." | — |
+| Runtime caching of authenticated data | Scoped to four public tables; `purgeApiCache()` on both sign-out paths | ✅ | `vite.config.ts` runtimeCaching, `src/lib/apiCache.ts` | Fixed 2026-09-03. The route used to match every `/rest/v1/` path: `customers` and `appointments` reads were written to Cache Storage, keyed by URL alone, and survived sign-out. Confirmed in a real browser before and after | — |
+| Update UX, install prompt | Real. The install banner is now genuinely dismissible (remembered in `localStorage`) and sits at `bottom-20` so it no longer stacks on `OfflineBanner` | ✅ | See §2; `src/components/InstallPrompt.tsx` | Its own docstring had said "dismissible" since it was written, with no control to dismiss it | — |
 | App version visibility | Git short SHA + build timestamp, shown on the System Health page | ✅ | See Today/Owner dashboard section above (`0053_system_health.sql`) | — | — |
+| Web app manifest identity | `id: '/'`, absolute `scope`/`start_url` | ✅ | `vite.config.ts` manifest, verified in `dist/manifest.webmanifest` | Fixed 2026-09-03. There was no `id`, so identity was inferred from `start_url`: changing that later would have registered as a second app on every device that already had this one. `/` is the value already inferred, so existing installs are unaffected | — |
+| Production sourcemaps | `build.sourcemap: 'hidden'` + `workbox.sourcemap: false` | ✅ | `vite.config.ts`, verified 0 chunks carry `sourceMappingURL`, 78 maps still emitted | Fixed 2026-09-03. Maps were built, excluded from the deploy by `docs/DEPLOYMENT.md` §7, and never uploaded anywhere, while every shipped chunk pointed at a `.map` that 404s. The upload itself is still missing: see §5 P2 | P2 |
+| Security headers on error responses | `Header always set` for nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy | ✅ | `.htaccess` | Fixed 2026-09-03. `Header set` applies to the success table only, so the 403 the origin lock returns on every direct-to-origin request went out bare. HSTS and CSP were already `always`, which is how it stayed invisible. **Not yet verified against the live host** (needs a deploy) | P2 |
 
 ### Testing
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
-| Unit tests | 25 Vitest files, concentrated in pure logic/hooks | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
+| Unit tests | 32 Vitest files, 293 tests, concentrated in pure logic/hooks. Up from 30 files / 276 tests on 2026-09-03 (`errors.test.ts`, `useBusinessSettings.test.ts`) | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
 | RLS/security tests | Thorough, CI-run | ✅ | See §2 | — | — |
 | E2E tests | Playwright framework + a real booking-race test | ✅ | See Calendar/Bookings section (`e2e/marketing-site.spec.ts`, `e2e/booking-race.spec.ts`) | Customer-journey and full owner-journey E2E tests still don't exist — only the race scenario and marketing-site smoke tests | P2 |
 
@@ -211,6 +215,44 @@ rather than the folder needing a refresh.
 | `docs/plan.md` | Resolved the stale "`google_place_id` is unset" item — reviews are live in production; appended this pass to the "docs drift fast" note |
 | `docs/history/` | Folder deleted outright (23 files). Every reference into it — `README.md`, `CLAUDE.md`, this file, `docs/GO-LIVE.md`, `docs/SCHEMA.md`, `docs/plan.md`, and a source comment in `src/components/dashboard/calendar/MonthView.tsx` — rewritten to state the fact inline instead of citing a file that no longer exists. `docs/GPT.md` was left untouched (frozen input artifact, not a live doc) even though it still names `docs/history/` in its own table |
 
+### Fourth pass, 2026-09-03 (PWA production audit, code + docs)
+
+A full PWA audit, run against a real browser and the live Supabase project rather
+than by reading. The theme of the pass: three separate places where a document
+described a behaviour the code had never had, and one where the code had quietly
+acquired a behaviour nobody would have written down on purpose.
+
+**What "verified" means in this table, and what it does not.** Every finding was
+reproduced before it was changed. What differs is the confidence in the fix.
+Anything reachable while signed out was re-checked in the browser and is marked
+so. Anything behind a session, an install prompt or the live host was reasoned
+about and covered by tests, and is listed as outstanding in section 7: the
+signed-in dashboard, the sign-out purge, the install banner, the `.htaccess`
+headers and the apex redirect. Section 7 is the authority on that split, not this
+table.
+
+| File | Fix |
+|---|---|
+| `src/hooks/useBusinessSettings.ts` | Rewritten onto a module-level store. 41 components call this hook and each held its own `useState` copy, so every mount refetched the same single row: **three identical `booking_settings` requests measured on `/services` alone**, and `/dashboard/settings` renders five cards that each kept a private copy, so saving in one left the other four rendering pre-write values. One shared fetch, one shared row, `update()` publishes to every subscriber. Measured after: 3 requests → 1. New `useBusinessSettings.test.ts` (5 assertions) |
+| `vite.config.ts` runtimeCaching | The Supabase route matched every `/rest/v1/` path. Cache Storage is keyed by URL alone, so authenticated reads of `customers` and `appointments` were written to disk with no record of whose token fetched them, and nothing in the app clears Cache Storage on sign-out. Narrowed to `booking_settings`, `services`, `service_categories`, `weekly_template`. Cache name kept deliberately so ExpirationPlugin sweeps existing installs. Status 0 dropped from `cacheableResponse` (an opaque response to a CORS API request is a failure, not data) |
+| `src/lib/apiCache.ts` (new) | `purgeApiCache()`, called from both sign-out paths (`AuthContext`, `useCustomerSession`). Belt and braces for installs still running the old worker |
+| `src/lib/errors.ts` | New `OFFLINE` code, checked before the coded matches. A dropped connection used to fall through to "Something went wrong. Please try again.", which tells a customer on a train nothing. New `errors.test.ts` (12 assertions) |
+| `src/pages/BookPage.tsx` | `isOffline()` guard before submit. `docs/PRD.md` §9 has always said an offline write is "blocked with an explanation rather than queued"; nothing enforced it. Also keeps `booking_submitted` out of analytics for an attempt that never left the device |
+| `src/lib/sentry.client.ts` | `beforeSend` drops events while `navigator.onLine` is false. With `replaysOnErrorSampleRate: 1.0`, one offline page dragged a session replay up per failed request. Filters on the connectivity flag, not the message text, so a "Failed to fetch" while genuinely online (CORS, CSP) still reports |
+| `src/components/InstallPrompt.tsx` | Its own docstring said "dismissible" and there was nothing to dismiss it with: a fixed banner over the bottom of every page, every visit, stacked on top of `OfflineBanner`. Added a dismiss control, a remembered dismissal, and `bottom-20` so the two no longer overlap |
+| `src/components/OfflineBanner.tsx` | "Showing cached content" was never quite true and is now plainly not. Says what offline actually means here |
+| `src/pages/NotFoundPage.tsx` | Had no `<h1>` at all; the "404" numeral was a `<p>`. Now decoration, with a real heading. This page also renders for a signed-out hit on any dashboard route, so it is a page the owner sees |
+| `vite.config.ts` build | `sourcemap: true` → `'hidden'`, and `workbox.sourcemap: false`. The deploy excludes `*.map` (`docs/DEPLOYMENT.md` §7) and there is no Sentry upload step, so the maps were built and discarded while every shipped chunk carried a `sourceMappingURL` pointing at a 404. Verified: 0 chunks carry the comment, maps still emitted for a future upload |
+| `vite.config.ts` manifest | Added `id: '/'`; `scope`/`start_url` `'./'` → `'/'`. Without `id` an installed app's identity is inferred from `start_url`, so changing that later registers as a second app on every device that already has this one |
+| `.htaccess` | `Header set` → `Header always set` for `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`. Without `always` Apache applies them to the success table only, so the 403 the origin lock returns on every direct-to-origin request went out bare. HSTS and CSP were already `always`, which is how the gap stayed invisible |
+| `docs/ARCHITECTURE.md` §5 | Described `registerType: 'prompt'` + `skipWaiting: false` and a `public/offline.html`. The update strategy was inverted months ago and the file is deleted. Rewritten, including what offline actually delivers |
+| `docs/PRD.md` §7/§9/§11 | "cached read-only owner views" and "the owner dashboard is readable offline" withdrawn, with the reason recorded rather than quietly deleted |
+| `README.md` | Same offline claim, plus a `public/` tree still listing `offline.html` |
+
+`docs/GPT.md` was left untouched again, for the reason given in the third pass:
+frozen input artifact, not a live doc. It still describes the old update strategy
+and `offline.html`. Its own header already says the live docs win.
+
 ### Open questions — recommended, not executed
 
 These are judgment calls, not factual corrections, so they weren't auto-applied:
@@ -236,6 +278,9 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [x] Stand up an E2E test framework — done: `@playwright/test`, `playwright.config.ts`, `npm run test:e2e` / `test:e2e:ui`.
 - [x] Write the automated two-customer booking-race test — done: `e2e/booking-race.spec.ts`. Run live 2026-08-29 against the real Supabase project (`KOKO_OWNER_EMAIL`/`KOKO_DEV_PASSWORD` set): passed — one customer's `book_appointment()` call won, the other failed with `SLOT_TAKEN`, owner-session cleanup (cancel + hard delete) ran cleanly.
 - [x] Payment reconciliation view — done: `PaymentReconciliationCard` on Today, flags completed appointments (last 30 days) with no logged payment. Removed and restored on 2026-08-31; it now sits beside the AI assistant card rather than full width.
+- [x] **Stop the service worker caching authenticated customer data to disk** — opened and closed 2026-09-03 by the PWA audit. The runtime-caching route matched every `/rest/v1/` path, so reads of `customers` and `appointments` were written to Cache Storage, which keys on URL alone, keeps no record of whose token fetched the response, and is cleared by nothing: not `signOut()`, not Supabase, not closing the tab. Reproduced in a real browser before the change (the `supabase-api` cache was created and populated on a first page load), and re-checked after (only the four public tables present). Narrowed the route to `booking_settings`, `services`, `service_categories`, `weekly_template`; added `src/lib/apiCache.ts` → `purgeApiCache()` on both sign-out paths; dropped status `0` from `cacheableResponse`. Cache name deliberately unchanged so existing installs get swept rather than orphaned.
+- [x] **Stop refetching the `booking_settings` row once per component** — opened and closed 2026-09-03. 41 components call `useBusinessSettings` and each held a private `useState` copy. Measured **3 identical `booking_settings` requests on `/services`**, and `/dashboard/settings` renders five cards each holding their own copy, so saving in one card left the other four rendering pre-write values. Rewritten onto a module-level store (`useSyncExternalStore`): one shared in-flight request, cached row for later mounts, `update()` publishes the saved row to every subscriber. Measured after: 3 → 1.
+- [x] **Block and explain offline writes** — opened and closed 2026-09-03. `docs/PRD.md` §9 had always specified that an offline write is "blocked with an explanation rather than queued"; nothing enforced it. The request went out, `fetch` rejected, and `toAppError` fell through to "Something went wrong. Please try again." Added an `OFFLINE` code checked ahead of the coded matches (recognises the per-engine `fetch` texts and `navigator.onLine`), plus an `isOffline()` guard on `BookPage`'s submit. This closes the `🔍 NEEDS VERIFICATION` row that had sat in §3's PWA table since 2026-08-29 saying offline write blocking "wasn't verified line-by-line" — it was not verified because it did not exist.
 
 **P2**
 - [x] Audit trail (`audit_events` table + UI) — done: `supabase/migrations/0052_audit_trail.sql`, `/dashboard/audit`. Scoped to the highest-risk actions (appointment lifecycle, customer erasure, payment logging, login-slug change); verified live against production. Follow-up: the ~15 direct client-side `.update()` mutations with no single server-side hook point are not covered.
@@ -251,6 +296,9 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [x] AI-drafted broadcast messaging — done: `supabase/migrations/0058_broadcast_messaging.sql`, `/dashboard/broadcasts`. New `draft-copy` Edge Function drafts subject/body from a rough idea; owner reviews and sends to confirmed, not-unsubscribed mailing-list subscribers via the existing outbox. New unsubscribe link on every broadcast email (previously nonexistent anywhere in the app), click-to-confirm plus RFC 8058 `List-Unsubscribe` headers. Same drafting engine reused on the one-off Compose modal and the customer-profile reply panel (`emailDrafts.ts`'s deterministic templating deleted). Verified live against production; final whole-branch review caught and fixed 4 issues before shipping (unsubscribe-on-load, missing deliverability header, half-done audit tab, reply-panel error state). **Full round-trip verified live 2026-08-30**: real self-subscribe → real one-recipient send → real delivery (Gmail, DKIM/SPF/DMARC all pass) → real click → `unsubscribed_at` set — then cleaned up (test subscriber + its queued email deleted). This also caught and fixed a real deploy gap: the whole frontend (`dist/`) had never actually been shipped to `kokolettbeauty.com`'s live docroot after this feature's work, only committed to git — the unsubscribe link 404'd until `cpanel-deploy` actually ran. Deployed and re-verified; test data removed.
 - [ ] Broaden unit-test coverage to service files and pages currently untested — **in progress, 2026-08-31**: added `redact.test.ts` (magic-link token redaction before Sentry — the highest-risk untested file in the repo), `csv.test.ts`, `requestStatus.test.ts`, `appointmentsDateRange.test.ts`, `requestSlots.test.ts` (222 tests total, up from 208). Most `services/*.ts` files remain untested — many are thin Supabase RPC/`.from()` wrappers with little logic of their own to assert on, so the remaining value is concentrated in a handful of files with real branching (`dashboardService.ts`, `reportsService.ts`, `insights.ts` already has coverage). Not closing this item — it names an open-ended standard, not a finishable task.
 
+- [ ] **Sentry release sourcemap upload** — opened 2026-09-03 by the PWA audit. `build.sourcemap` is now `'hidden'`, so the maps are emitted and the dangling `sourceMappingURL` comments are gone, but nothing uploads them: `docs/DEPLOYMENT.md` §7 forbids publishing `*.map` to the docroot (correctly), and there is no upload step. Every stack frame in Sentry is therefore minified, which is most of what monitoring is for. The fix is `@sentry/vite-plugin` plus `SENTRY_AUTH_TOKEN`/org/project as CI secrets, gated on a release build. Not done here because it needs credentials this repo cannot create and a decision about whether CI or the local deploy owns the release.
+- [ ] **Measure Supabase read latency from the salon's own connection** — observed 2026-09-03, not diagnosed. A single-row `booking_settings` read measured **~0.82s TTFB on a warm keep-alive connection** and 2.9-3.2s cold (DNS 2ms, connect 0.87s, TLS 1.85s) from one developer machine to `eu-west-2`. That is slow enough to be felt on first paint and it is the reason the duplicate-fetch bug above was worth fixing rather than tolerating. One machine on one network is not a measurement, though: repeat it from the owner's own device and from a phone on mobile data before concluding anything about the project, the region, or the plan.
+
 **P3**
 - [x] Shared `DataTable`/`Tooltip`/`Dropdown`/`Tabs` UI primitives — done: `src/components/ui/{DataTable,Dropdown,Tabs,Tooltip}.tsx`. Deliberately not a full app-wide migration — each is real and adopted into at least one genuine existing consumer rather than left as unused scaffolding, but retrofitting every page that hand-rolls its own table/dropdown/tab-bar in one night is real blast radius with no live-verification budget to match. `Dropdown` → `AppointmentRowMenu.tsx` and `CustomerDetailPanel.tsx`'s More options menu (which previously had no outside-click close at all — a real UX fix, not just deduplication). `Tabs` → `CustomerDetailPanel.tsx` and `TemplateEditorPage.tsx`'s Email/Mobile toggle. `Tooltip` → `NextWeeksGlanceCard.tsx`'s day-glance dots (the sidebar collapse toggle was tried first and reverted — its `absolute -right-3 top-4` positioning depends on its current nearest-`relative`-ancestor, which `Tooltip`'s own wrapper span would have silently changed). `DataTable` → `AppointmentsTable.tsx` is now column definitions over the shared primitive; deliberately not used for Customers, which moved to cards per an explicit prior owner request. Verified live against production for all four. (`Timeline` is its own component — `CustomerTimeline.tsx`, see Customers section above.)
 - [x] Product-event/analytics instrumentation — done, explicitly requested: `supabase/migrations/0064_product_events.sql`, `src/lib/analytics.ts`, `BookingFunnelCard.tsx` on Reports. First-party, not a third-party vendor — `product_events` holds no personal data (event name, random per-tab `sessionStorage` id, timestamp), avoiding the new-external-service/API-key/privacy-review decision a PostHog/Plausible/Mixpanel integration would have needed. Instruments the four real booking-funnel steps (page viewed, slot selected, submitted, confirmed), rate-limited (20/min per session, 500/min globally). Verified live against production with a real anonymous booking through the actual `/book` flow — all four events recorded correctly, Reports showed the resulting funnel with correct counts and percentages. Test data cleaned up.
@@ -264,3 +312,90 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 ## 6. Scope boundary
 
 This document, and the mechanical doc corrections applied in §4, do **not** authorise building anything listed 🔴/🟡 above. Each checklist item in §5 needs its own separate plan and explicit approval before any code or migration is written.
+
+## 7. Verifying the 2026-09-03 pass
+
+### State as of writing
+
+**Uncommitted and undeployed.** 21 files modified, 3 new (`src/lib/apiCache.ts`,
+`src/lib/errors.test.ts`, `src/hooks/useBusinessSettings.test.ts`). The live site
+still runs the previous build. Nothing here reaches a customer until `dist/` is
+rebuilt and `cpanel-deploy` actually runs, which is its own task and has been
+forgotten before (see the P2 broadcast-messaging entry in §5).
+
+The tree also still carries earlier in-flight work from the session before this
+one, which this pass reviewed rather than wrote: `autoUpdate` + `onNeedReload` in
+`UpdatePrompt.tsx`, DOMPurify on the template preview, `useFocusTrap` on the
+mobile nav, and the deletion of `public/offline.html`. All four were checked and
+are sound. `onNeedReload` in particular is a real callback in vite-plugin-pwa
+1.3.0 and fires on `activated` in the autoUpdate branch
+(`node_modules/vite-plugin-pwa/dist/client/build/register.js:42`), not a silent
+no-op.
+
+### Gates, all green after the pass
+
+`npm run typecheck` · `npm run lint` · `npm run lint:copy` · `npm run format:check`
+· `npm run test:hooks` · `npm test` (**293 passed, up from 276**) · `npm run build`.
+
+CI's own extra assertions were not re-run locally: the CSP script-hash check was
+verified by hand against the built `index.html` and matches, the PWA-artefact
+check passes by inspection (`dist/sw.js`, `dist/manifest.webmanifest`, `.htaccess`
+all present), and the Deno and pgTAP jobs are untouched by this pass.
+
+### What was verified in a real browser, and how
+
+Headless Chromium against `npm run preview` on 5082 serving a production build,
+hitting the live Supabase project. Not `npm run dev`: the service worker only
+exists in a real build, so every finding here is invisible in dev.
+
+| Check | Result |
+|---|---|
+| Service worker registers, one active, no waiting | Pass |
+| Console errors across `/`, `/book`, `/about`, `/services`, `/gallery`, `/contact`, `/faqs`, `/testimonials`, `/my`, a 404 | Zero, before and after |
+| `caches.keys()` after the fix | `workbox-precache-v2`, `imagekit-media`, `google-fonts`, `supabase-api` |
+| `supabase-api` contents after the fix | Only `services`, `service_categories`, `weekly_template`, `booking_settings`. Before the fix it also took whatever the signed-in session had read |
+| `booking_settings` requests on one `/services` load | 3 before, 1 after |
+| Horizontal overflow at 320, 375, 768, 1280 on `/`, `/book`, `/services` | None |
+| `<h1>` present on every public route | Yes, including the 404 now |
+| Manifest in `dist/` | `"id":"/","scope":"/","start_url":"/"` |
+| `sourceMappingURL` comments in shipped chunks | 0, with 78 maps still emitted for a future upload |
+
+### What was NOT verified, and needs your pass
+
+These are the gaps in the above. Worth doing exactly because nothing here proves them.
+
+1. **Signed-in owner dashboard.** Every browser check above ran signed out. The
+   `useBusinessSettings` rewrite touches 41 components, and the settings screen is
+   where its behaviour changed most. Open `/dashboard/settings`, change something in
+   **Booking rules**, and confirm the other four cards on that screen reflect it
+   without a reload. That specific staleness is the bug the rewrite fixes, and it is
+   the one thing most likely to have been fixed wrongly.
+2. **Sign-out purge.** Sign in, load a dashboard page, sign out, then check
+   `caches.keys()` in DevTools: `supabase-api` should be gone. Do it for the
+   customer side too (`/my`, then Sign out).
+3. **Offline behaviour, first hand.** DevTools → Network → Offline, then: the
+   banner should read "You're offline. You can browse, but nothing can be booked or
+   changed until you reconnect"; `/book` should refuse the submit with "You appear to
+   be offline. Please check your connection and try again" rather than a spinner or a
+   generic failure; and a hard reload should still boot the shell.
+4. **Install banner.** It only appears on a real `beforeinstallprompt`, which
+   headless Chromium does not fire, so the dismiss control and the `bottom-20`
+   spacing are unverified in the browser. Install on a phone, dismiss it, reload, and
+   confirm it stays gone.
+5. **`.htaccess` on the live host.** `Header always set` was reasoned about, not
+   measured. After the next deploy:
+   `curl -sI --resolve www.kokolettbeauty.com:443:185.61.152.45 https://www.kokolettbeauty.com/`
+   should return 403 (origin lock) **carrying** `x-content-type-options`,
+   `x-frame-options`, `referrer-policy` and `permissions-policy`. Before this change
+   that 403 went out bare.
+6. **The apex-to-www 301**, still listed as untested in §3's marketing table, is
+   also still untested.
+
+### Note for anyone reading the service worker
+
+An installed PWA that has not updated is still running the **old** worker, which
+cached every `/rest/v1/` read. It keeps doing so until it picks up the new build.
+`registerType: 'autoUpdate'` plus the hourly poll in `UpdatePrompt.tsx` means that
+happens on its own, but it is not instant, and on the owner's own installed app it
+is worth forcing once (DevTools → Application → Service Workers → Update, or just
+sign out, which now purges the cache outright).

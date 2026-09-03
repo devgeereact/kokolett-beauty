@@ -32,7 +32,9 @@ Live at **https://www.kokolettbeauty.com**
   See `docs/ARCHITECTURE.md` §6b.
 - **Automated email** — branded confirmations with `.ics` invites, reminders,
   completion, and Google review requests, all logged and retried.
-- **Installable PWA** — the owner's dashboard stays readable offline.
+- **Installable PWA** — the app shell and the public pages open with no signal. The
+  dashboard needs a connection: caching the owner's diary would mean writing her
+  customers' details to disk, where signing out does not reach them.
 
 ---
 
@@ -175,7 +177,7 @@ kokolett-beauty/
 ├── tailwind.config.ts    # design tokens (see docs/DESIGN.md)
 ├── docs/                 # PRD, DESIGN, ARCHITECTURE, SCHEMA, RULES, HOOKS,
 │                         # SOCIAL_PROFILE, DEPLOYMENT, GO-LIVE, KOKO_GAP, plan
-├── public/               # manifest icons, offline.html, robots.txt
+├── public/               # manifest icons, robots.txt, sitemap.xml
 ├── supabase/migrations/  # SQL schema + RLS policies
 └── src/
     ├── assets/           # static assets imported by code

@@ -194,11 +194,24 @@ not a literal HTTP 403.
   own UI (e.g. `OfflineBanner`) communicates connectivity.
 - **Runtime caching:**
   - ImageKit → `CacheFirst` (30-day, 200 entries).
-  - Supabase REST → `NetworkFirst` (5s timeout, 5-min fallback).
+  - Supabase REST, **public tables only** → `NetworkFirst` (5s timeout, 5-min
+    fallback). The route matches `booking_settings`, `services`,
+    `service_categories` and `weekly_template` and nothing else. It used to
+    match every `/rest/v1/` path, which wrote authenticated reads of
+    `customers` and `appointments` into Cache Storage keyed by URL alone, with
+    no record of whose token fetched them and no clearing on sign-out.
+    `src/lib/apiCache.ts` now purges the cache on both sign-out paths.
   - Google Fonts → `StaleWhileRevalidate`.
-- **Updates:** `registerType: 'prompt'` + `skipWaiting: false`. A new SW waits;
-  the app shows a "Reload to update" prompt so users are never interrupted.
-- `public/offline.html` ships as a last-resort static fallback.
+- **Updates:** `registerType: 'autoUpdate'` + `skipWaiting: true`. A new worker
+  activates immediately; `UpdatePrompt` intercepts the reload only to show a
+  brief "Updating" notice, and cannot cancel it. An opt-in prompt was tried and
+  withdrawn: a precached shell kept serving a build with a known auth bug, and
+  an update the user has to accept is not an update.
+- **Offline reality.** The shell boots with no network and the public pages
+  render their cached opening hours and service list. Nothing can be booked or
+  changed offline, there is no write queue, and `OfflineBanner` says so. There
+  is no `offline.html`: it was a second, hand-maintained copy of the offline
+  message that `navigateFallback` meant nobody ever saw.
 
 ## 6. Data flow example — a customer books a slot
 

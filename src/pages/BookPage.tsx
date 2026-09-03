@@ -12,7 +12,7 @@ import { useServices } from '@/hooks/useServices';
 import { useAvailability } from '@/hooks/useAvailability';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { submitBooking } from '@/services/bookingService';
-import { toAppError } from '@/lib/errors';
+import { isOffline, offlineError, toAppError } from '@/lib/errors';
 import { formatDateLong } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { BookingResult, TimeSlot } from '@/types';
@@ -98,6 +98,17 @@ export function BookPage(): JSX.Element {
     }
     if (details.mobile.replace(/\D/g, '').length < 7) {
       return setError('Please give a mobile number the salon can reach you on.');
+    }
+
+    /* Refuse before trying, rather than after failing. `docs/PRD.md` §9 says an
+       offline write is "blocked with an explanation rather than queued", and
+       nothing enforced that: the request went out, `fetch` rejected, and the
+       customer read "Something went wrong. Please try again." with no hint that
+       waiting for signal was the answer. Blocking here also keeps
+       `booking_submitted` out of analytics for an attempt that never left the
+       device, which would otherwise read as a conversion that got lost. */
+    if (isOffline()) {
+      return setError(offlineError().message);
     }
 
     setSubmitting(true);

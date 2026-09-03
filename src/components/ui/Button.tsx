@@ -46,7 +46,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ) => (
     <button
       ref={ref}
-      disabled={disabled ?? loading}
+      /* `||`, not `??`. `??` only falls through on null/undefined, so a call
+         site passing an explicit `disabled={false}` — which is what
+         `disabled={!canSend}` evaluates to the moment the form is valid —
+         beat `loading` and left the button live for the whole request. Seven
+         call sites did exactly that, including "Send" on the Compose email
+         modal and "Offer this slot" on a request, so a second click sent a
+         second email. `||` makes `loading` sufficient on its own. */
+      disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-sm font-semibold',

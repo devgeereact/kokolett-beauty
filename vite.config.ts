@@ -70,10 +70,13 @@ export default defineConfig({
          redeploying could reach a browser that was never asking for new HTML.
          An update she has to notice and accept is not an update. */
       registerType: 'autoUpdate',
-      injectRegister: null, // registration handled manually in src/main.tsx
+      // Registration is ours, in src/components/UpdatePrompt.tsx, which needs
+      // to own it in order to intercept the reload. (This said main.tsx for a
+      // long time; main.tsx has never registered the worker.)
+      injectRegister: null,
 
       // Files pulled into the precache manifest (the "app shell").
-      includeAssets: ['offline.html', 'icons/*.png'],
+      includeAssets: ['icons/*.png'],
 
       manifest: {
         name: 'Kokolett Beauty UK',
@@ -84,8 +87,17 @@ export default defineConfig({
         background_color: '#e8ebed',
         display: 'standalone',
         orientation: 'portrait',
-        scope: './',
-        start_url: './',
+        /* Absolute, and pinned with `id`. `./` resolved to `/` correctly, but
+           only because the manifest happens to sit at the root; the same two
+           lines would silently scope the installed app to a subdirectory if it
+           ever moved. `id` is what an installed app is recognised by, and
+           without it the identity is inferred from `start_url`, so changing
+           `start_url` later would register as a second, separate app on every
+           device that already has this one. `/` is what the inferred value
+           already is, so adding it now changes nothing for existing installs. */
+        id: '/',
+        scope: '/',
+        start_url: '/',
         icons: [
           { src: 'icons/pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/pwa-512.png', sizes: '512x512', type: 'image/png' },
@@ -99,6 +111,12 @@ export default defineConfig({
       },
 
       workbox: {
+        /* Workbox emits its own map for sw.js, independently of `build.sourcemap`,
+           and appends a `sourceMappingURL` comment to the worker. The deploy
+           excludes `*.map`, so that comment pointed at a 404 on the one file the
+           browser refetches most often. Nothing debugs the generated worker from
+           a map anyway; the readable version is this config. */
+        sourcemap: false,
         // Precache the shell so the SPA boots with no network.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // SPA navigations resolve to the precached index.html.
@@ -122,14 +140,45 @@ export default defineConfig({
             },
           },
           {
-            // Supabase REST/GraphQL reads — network-first with short fallback.
-            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
+            /* Supabase REST reads, PUBLIC TABLES ONLY. Network-first with a
+               short fallback.
+
+               This used to match every `/rest/v1/` path. A Cache Storage entry
+               is keyed by URL alone, so an authenticated read of `customers`
+               or `appointments` was written to disk with no reference to whose
+               token fetched it, survived sign-out untouched (nothing in the app
+               clears Cache Storage), and would be served to whoever opened the
+               app on that device next. Verified in a real browser: the cache
+               was created and populated on a first page load.
+
+               The four tables below are the ones the marketing pages read while
+               signed out, and they hold no personal data: opening hours, the
+               service list and its categories, and the single public
+               `booking_settings` row. Every other table now goes straight to
+               the network and is never written to disk. RPCs are POSTs, so
+               Workbox never routed them in the first place.
+
+               The cache name is unchanged deliberately. Existing installs
+               already hold personal rows under it, and keeping the name means
+               ExpirationPlugin sweeps them out on the first public read after
+               this ships. A new name would orphan that cache instead, and an
+               orphaned Cache Storage entry is never collected.
+
+               `src/lib/apiCache.ts` also purges it on sign-out.
+
+               Status 0 was dropped from `cacheableResponse`. A 0 here is an
+               opaque response, which for a CORS API request means the request
+               failed or was blocked, and caching that stores a failure where
+               the app expects rows. ImageKit keeps 0 because images legitimately
+               arrive opaque. */
+            urlPattern:
+              /^https:\/\/[a-z0-9-]+\.supabase\.co\/rest\/v1\/(booking_settings|services|service_categories|weekly_template)(\?|$)/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api',
               networkTimeoutSeconds: 5,
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
           {
@@ -186,7 +235,22 @@ export default defineConfig({
 
   build: {
     outDir: 'dist',
-    sourcemap: true, // required for readable Sentry stack traces
+    /**
+     * Built, but never served.
+     *
+     * This was `true`, commented "required for readable Sentry stack traces".
+     * Half of that was wrong in a way nothing surfaced: `docs/DEPLOYMENT.md`
+     * §7 forbids publishing `*.map` to the docroot and the deploy excludes
+     * them, and there is no Sentry upload step in CI, so the maps were built
+     * and then thrown away. What did reach production was the
+     * `//# sourceMappingURL=` comment at the foot of every chunk, pointing at
+     * a file that 404s.
+     *
+     * `'hidden'` emits the maps and omits the comment, which is exactly the
+     * shape a Sentry release upload wants. Until that upload exists, Sentry
+     * frames stay minified: see `docs/KOKO_GAP.md` §5.
+     */
+    sourcemap: 'hidden',
     target: 'es2020',
     rollupOptions: {
       output: {

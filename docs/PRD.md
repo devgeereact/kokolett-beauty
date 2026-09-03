@@ -177,7 +177,7 @@ Nothing any of the three produces reaches a customer without an explicit owner a
 rescheduled, cancelled, completed, review request, availability request received,
 availability offer. All branded, all logged, all retried on failure.
 
-**PWA** — installable, offline app shell, cached read-only owner views, update prompt.
+**PWA** — installable, offline app shell, cached public pages, automatic updates.
 
 ## 8. Success metrics
 
@@ -204,10 +204,16 @@ availability offer. All branded, all logged, all retried on failure.
   A documented deletion path. Sentry in the EU region with PII scrubbing on.
 - **Reliability** — every background job retries with exponential backoff; email
   failures surface in an owner-visible queue rather than disappearing.
-- **Offline** — the owner dashboard remains readable from cache when offline, with a
-  visible "showing cached data" banner. Offline **writes are not supported in V1**;
-  attempting one is blocked with an explanation rather than queued, because a queued
-  booking mutation can conflict with reality by the time it syncs.
+- **Offline** — the app shell boots with no network and the public pages render from
+  cache: opening hours, the service list, the salon's details. The **owner dashboard
+  does not read from cache**. That was the V1 intent and it was withdrawn on
+  2026-09-03: delivering it meant writing authenticated reads of `customers` and
+  `appointments` into Cache Storage, which is keyed by URL alone, carries no record of
+  whose session fetched it, and is not cleared by signing out. A day-old copy of the
+  diary on a device that has since changed hands is a worse outcome than a dashboard
+  that needs signal. Offline **writes are not supported**; attempting one is blocked
+  with an explanation rather than queued, because a queued booking mutation can
+  conflict with reality by the time it syncs.
 - **Availability** — 99.9% is the target, but it is a property of Supabase and the
   cPanel host. The application offers no SLA of its own.
 
@@ -245,5 +251,6 @@ The product is production-ready when:
 - Magic links authenticate customers, expire correctly, and cannot be replayed.
 - Every lifecycle transition fires its email; every email is logged and retried.
 - AI output is advisory and cannot mutate data without an explicit owner action.
-- The app installs as a PWA and the owner dashboard is readable offline.
+- The app installs as a PWA, boots offline to its shell and public pages, and refuses
+  an offline write with an explanation rather than a generic failure.
 - Axe reports zero critical violations on the booking flow.

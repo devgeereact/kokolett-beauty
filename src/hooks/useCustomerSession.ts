@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { purgeApiCache } from '@/lib/apiCache';
 import {
   cancelOwnAppointment,
   fetchCustomerAppointments,
@@ -168,6 +169,9 @@ export function useCustomerSession(): UseCustomerSession {
     setCustomer(null);
     setAppointments([]);
     setMarketingConsentState(null);
+    // Her bookings were read through the same API the service worker caches.
+    // Signing out on a borrowed phone has to leave nothing behind.
+    void purgeApiCache();
   }, []);
 
   return {

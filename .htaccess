@@ -97,10 +97,19 @@
     Header set Expires 0
   </FilesMatch>
 
-  # Baseline security headers
-  Header set X-Content-Type-Options "nosniff"
-  Header set X-Frame-Options "SAMEORIGIN"
-  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  # Baseline security headers.
+  #
+  # `always`, not the bare `set`. Without it Apache only applies the header to
+  # the success table, so a 403, a 404 or a 500 goes out with no nosniff, no
+  # frame protection and a full Referer. The origin lock at the top of this
+  # file answers every direct-to-origin request with a 403, and an error page
+  # is exactly the kind of response that carries reflected content, so those
+  # are the responses that need the headers most. HSTS and the CSP below were
+  # already `always`; these three were not, which is how the gap stayed
+  # invisible.
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
   # ---- HSTS ---------------------------------------------------
   # Two years, subdomains included. Safe here because every domain on this
@@ -116,7 +125,7 @@
   # ---- Permissions-Policy -------------------------------------
   # A booking form needs none of these. Denying them means a compromised
   # dependency cannot quietly reach for a camera or a location.
-  Header set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
 
   # ---- CSP, enforcing --------------------------------------------
   # Promoted from Report-Only on 2026-08-20, after the policy was actually

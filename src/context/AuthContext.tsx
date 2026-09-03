@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { purgeApiCache } from '@/lib/apiCache';
 
 export interface AuthContextValue {
   user: User | null;
@@ -53,6 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       loading,
       signOut: async () => {
         await supabase.auth.signOut();
+        // Cache Storage outlives the session unless something clears it. An
+        // install still running the pre-audit service worker cached every
+        // REST read, customers and appointments included.
+        await purgeApiCache();
       },
     }),
     [session, loading],

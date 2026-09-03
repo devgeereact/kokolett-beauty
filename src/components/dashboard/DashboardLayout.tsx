@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, type JSX } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type JSX } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { reportError } from '@/lib/sentry';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { getProfile } from '@/services/profileService';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -92,6 +93,8 @@ export function DashboardLayout({
   });
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(menuOpen, menuPanelRef, () => setMenuOpen(false));
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
@@ -524,7 +527,13 @@ export function DashboardLayout({
             className="overlay-backdrop absolute inset-0"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 flex w-64 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar">
+          <div
+            ref={menuPanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            className="absolute inset-y-0 left-0 flex w-64 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar"
+          >
             <div className="p-4">
               {buildWordmark(false)}
               {buildNav(false)}

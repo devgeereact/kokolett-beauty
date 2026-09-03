@@ -1,5 +1,6 @@
 import { type JSX, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import {
   AlignCenter,
   AlignLeft,
@@ -72,11 +73,19 @@ const SAMPLE_VALUES: Record<string, string> = {
   reset_ttl_minutes: '60',
 };
 
+/**
+ * Sanitised for the preview render only. `bodyHtml` comes from a
+ * contentEditable `execCommand` editor the owner types into — the browser
+ * happily lets `execCommand('insertHTML')` (paste) carry a `<script>` or an
+ * `onerror` attribute straight through, and the one place this string is
+ * rendered as HTML is the `dangerouslySetInnerHTML` preview below.
+ */
 function renderPreview(html: string): string {
-  return html.replace(
+  const withTokens = html.replace(
     /\{\{(\w+)\}\}/g,
     (_, key: string) => SAMPLE_VALUES[key] ?? `{{${key}}}`,
   );
+  return DOMPurify.sanitize(withTokens);
 }
 
 function execCmd(command: string, value?: string): void {

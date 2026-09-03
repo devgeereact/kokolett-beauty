@@ -29,6 +29,15 @@ export function initSentryClient(): void {
     // (request URL, transaction name, stack frames) or through a navigation
     // breadcrumb, so both are scrubbed.
     beforeSend(event) {
+      /* A device with no connection produces a "Failed to fetch" for every
+         request the page attempts, and `replaysOnErrorSampleRate: 1.0` means
+         each one drags a session replay up with it. That is quota spent on a
+         condition the app already handles and shows the customer (see
+         `toAppError`'s OFFLINE branch). The check is the connectivity flag
+         rather than the message text on purpose: a "Failed to fetch" while
+         the browser believes it is online is a real fault, usually CORS or
+         CSP, and losing those would cost far more than the noise. */
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
       return redactDeep(event);
     },
     beforeBreadcrumb(breadcrumb) {

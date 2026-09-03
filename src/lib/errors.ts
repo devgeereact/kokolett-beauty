@@ -47,14 +47,54 @@ const MESSAGES: Record<BookingErrorCode, string> = {
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];
 
 export interface AppError {
-  code: BookingErrorCode | 'UNKNOWN';
+  code: BookingErrorCode | 'UNKNOWN' | 'OFFLINE';
   message: string;
   /** Original error, for Sentry — never rendered. */
   cause?: unknown;
 }
 
+/**
+ * Copy for a request that never reached the server.
+ *
+ * Deliberately says nothing about what did or did not happen at the salon's
+ * end, because a lost response is indistinguishable from a lost request. It is
+ * safe to invite a retry: a booking that did land is protected by the
+ * `appointments_no_overlap` exclusion constraint, so a duplicate attempt comes
+ * back as SLOT_TAKEN rather than booking the same slot twice.
+ */
+const OFFLINE_MESSAGE =
+  'You appear to be offline. Please check your connection and try again.';
+
+/**
+ * A failure of the network itself, not of the request.
+ *
+ * `fetch` rejects with a `TypeError` whose text differs per engine, and
+ * supabase-js hands that text on inside a PostgrestError with an empty `code`,
+ * so there is nothing structured to match on. The browser's own connectivity
+ * flag is checked first because it is the one signal that is not a string.
+ */
+function isNetworkFailure(error: unknown, raw: string): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  return (
+    /failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(
+      raw,
+    ) ||
+    (error instanceof DOMException && error.name === 'AbortError')
+  );
+}
+
 function isPostgrestError(e: unknown): e is PostgrestError {
   return typeof e === 'object' && e !== null && 'message' in e && 'code' in e;
+}
+
+/** True while the browser reports no connectivity. */
+export function isOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+/** The offline error, for a caller that wants to refuse before it tries. */
+export function offlineError(): AppError {
+  return { code: 'OFFLINE', message: OFFLINE_MESSAGE };
 }
 
 /** Map any thrown value to a coded, displayable error. */
@@ -64,6 +104,13 @@ export function toAppError(error: unknown): AppError {
     : error instanceof Error
       ? error.message
       : String(error);
+
+  // Before the coded matches: a dropped connection used to fall all the way
+  // through to "Something went wrong. Please try again.", which tells a
+  // customer on a train nothing about why, or that waiting would fix it.
+  if (isNetworkFailure(error, raw)) {
+    return { code: 'OFFLINE', message: OFFLINE_MESSAGE, cause: error };
+  }
 
   const matched = CODES.find((code) => raw.includes(code));
   if (matched) return { code: matched, message: MESSAGES[matched], cause: error };

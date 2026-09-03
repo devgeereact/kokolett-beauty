@@ -147,7 +147,7 @@ below had ever been recorded. Full detail in `docs/SOCIAL_PROFILE.md` §9.
 | App version visibility | Git short SHA + build timestamp, shown on the System Health page | ✅ | See Today/Owner dashboard section above (`0053_system_health.sql`) | — | — |
 | Web app manifest identity | `id: '/'`, absolute `scope`/`start_url` | ✅ | `vite.config.ts` manifest, verified in `dist/manifest.webmanifest` | Fixed 2026-09-03. There was no `id`, so identity was inferred from `start_url`: changing that later would have registered as a second app on every device that already had this one. `/` is the value already inferred, so existing installs are unaffected | — |
 | Production sourcemaps | `build.sourcemap: 'hidden'` + `workbox.sourcemap: false` | ✅ | `vite.config.ts`, verified 0 chunks carry `sourceMappingURL`, 78 maps still emitted | Fixed 2026-09-03. Maps were built, excluded from the deploy by `docs/DEPLOYMENT.md` §7, and never uploaded anywhere, while every shipped chunk pointed at a `.map` that 404s. The upload itself is still missing: see §5 P2 | P2 |
-| Security headers on error responses | `Header always set` for nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy | ✅ | `.htaccess` | Fixed 2026-09-03. `Header set` applies to the success table only, so the 403 the origin lock returns on every direct-to-origin request went out bare. HSTS and CSP were already `always`, which is how it stayed invisible. **Not yet verified against the live host** (needs a deploy) | P2 |
+| Security headers on error responses | `Header always set` for nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy | ✅ | `.htaccess` | Fixed and verified live 2026-09-03: the origin lock's 403 now carries all four headers, where it previously carried none. `Header set` applies to the success table only. HSTS and CSP were already `always`, which is how it stayed invisible | — |
 
 ### Testing
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
@@ -317,11 +317,31 @@ This document, and the mechanical doc corrections applied in §4, do **not** aut
 
 ### State as of writing
 
-**Uncommitted and undeployed.** 21 files modified, 3 new (`src/lib/apiCache.ts`,
-`src/lib/errors.test.ts`, `src/hooks/useBusinessSettings.test.ts`). The live site
-still runs the previous build. Nothing here reaches a customer until `dist/` is
-rebuilt and `cpanel-deploy` actually runs, which is its own task and has been
-forgotten before (see the P2 broadcast-messaging entry in §5).
+**Merged and deployed 2026-09-03.** PR #57, eight commits, merged to `main` as
+`4b89a04` with all five CI checks green including the `database` job (migrations
+applied from scratch plus the pgTAP RLS suite) and `verify` (Deno checks, CSP
+script-hash assertion, PWA artefact assertion). Built from merged `main` and
+shipped with:
+
+```
+cpanel-deploy dist kokolettbeauty.com --keep cgi-bin --keep .well-known \
+  --with-htaccess .htaccess --prune --go
+```
+
+`--prune` was required and is worth understanding rather than copying: the script
+aborts on any deletion whose top-level path is absent from `dist/`, and
+`offline.html` is exactly that. The guard did its job; the removal was deliberate.
+The live `.htaccess` was diffed against the repo's first (only this pass's change,
+nothing the server carried alone) and backed up to
+`~/private_backups/configs/htaccess-kokolettbeauty-20260903-021409.bak`.
+
+**CodeRabbit found nine issues on the first push and six were real**, including a
+race this pass introduced: a `booking_settings` read that started before a save
+could resolve after it and publish the pre-save row over the saved one, which is
+the exact bug the shared store was written to remove. Fixed with a load
+generation, and the regression test was checked both ways (fails without the
+guard, passes with it). The full triage, including the one finding answered
+rather than built, is in commit `1922cc2`.
 
 The tree also still carries earlier in-flight work from the session before this
 one, which this pass reviewed rather than wrote: `autoUpdate` + `onNeedReload` in
@@ -364,7 +384,8 @@ exists in a real build, so every finding here is invisible in dev.
 
 These are the gaps in the above. Worth doing exactly because nothing here proves them.
 
-1. **Signed-in owner dashboard.** Every browser check above ran signed out. The
+1. **Signed-in owner dashboard.** Every browser check ran signed out, against the
+   live site after deploy as well as against the preview build. The
    `useBusinessSettings` rewrite touches 41 components, and the settings screen is
    where its behaviour changed most. Open `/dashboard/settings`, change something in
    **Booking rules**, and confirm the other four cards on that screen reflect it
@@ -382,14 +403,22 @@ These are the gaps in the above. Worth doing exactly because nothing here proves
    headless Chromium does not fire, so the dismiss control and the `bottom-20`
    spacing are unverified in the browser. Install on a phone, dismiss it, reload, and
    confirm it stays gone.
-5. **`.htaccess` on the live host.** `Header always set` was reasoned about, not
-   measured. After the next deploy:
-   `curl -sI --resolve www.kokolettbeauty.com:443:185.61.152.45 https://www.kokolettbeauty.com/`
-   should return 403 (origin lock) **carrying** `x-content-type-options`,
-   `x-frame-options`, `referrer-policy` and `permissions-policy`. Before this change
-   that 403 went out bare.
-6. **The apex-to-www 301**, still listed as untested in §3's marketing table, is
-   also still untested.
+~~5. `.htaccess` on the live host.~~ **Verified after the deploy.** Direct to
+   185.61.152.45 returns 403 carrying `x-content-type-options`, `x-frame-options`,
+   `referrer-policy` and `permissions-policy`; before this change that 403 went out
+   bare. Note the probe needs `curl -sk`: the origin serves a Cloudflare Origin
+   certificate, which curl and browsers both reject outside the proxy, so without
+   `-k` you get `code=000` and learn nothing.
+
+~~6. The apex-to-www 301.~~ **Verified after the deploy**, closing the item §3's
+   marketing table had carried as untested since 2026-08-31:
+   `https://kokolettbeauty.com/` returns 301 to `https://www.kokolettbeauty.com/`.
+
+7. **A 200 still proves nothing here.** The SPA rewrite answers every non-file path
+   with `index.html`, so `/offline.html` and `/sw.js.map` both return 200 after this
+   deploy even though neither file exists. Check `content-type` (`text/html` means
+   the fallback answered) or look on the server. Confirmed by hand: zero `*.map`
+   files in the docroot.
 
 ### Note for anyone reading the service worker
 

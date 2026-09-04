@@ -284,8 +284,17 @@ export function SiteFooter({
             <Link to={routes.public.privacy} className="hover:text-foreground">
               Privacy
             </Link>
+            <Link to={routes.public.cookies} className="hover:text-foreground">
+              Cookies
+            </Link>
             <Link to={routes.public.terms} className="hover:text-foreground">
               Terms
+            </Link>
+            <Link to={routes.public.accessibility} className="hover:text-foreground">
+              Accessibility
+            </Link>
+            <Link to={routes.public.complaints} className="hover:text-foreground">
+              Complaints
             </Link>
           </nav>
         </div>

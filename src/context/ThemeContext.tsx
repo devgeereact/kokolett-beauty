@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
   type JSX,
@@ -57,11 +58,24 @@ export function ThemeProvider({ children }: { children: ReactNode }): JSX.Elemen
     getInitialTheme() === 'system' ? systemTheme() : (getInitialTheme() as ResolvedTheme),
   );
 
+  /* Paint on every change, but persist only once the visitor has actually
+     chosen something. Writing on mount put a key on the device of every
+     visitor who never touched the toggle, which is storage nobody asked for
+     and one more thing the cookies page would have to account for. */
+  const persisted = useRef(false);
   useEffect(() => {
     const next: ResolvedTheme = theme === 'system' ? systemTheme() : theme;
     setResolvedTheme(next);
     apply(next);
-    window.localStorage.setItem(STORAGE_KEY, theme);
+    if (!persisted.current) {
+      persisted.current = true;
+      return;
+    }
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      /* Storage refused. The choice still holds for this visit. */
+    }
   }, [theme]);
 
   // Track OS changes only while the user is actually on 'system'.

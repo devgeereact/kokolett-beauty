@@ -10,6 +10,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { SiteFooter } from '@/components/public/SiteFooter';
+import { ConsentBanner } from '@/components/public/ConsentBanner';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useUsualHours } from '@/hooks/useUsualHours';
@@ -278,6 +279,10 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
         instagramUrl={instagramUrl}
         googleProfileUrl={googleProfileUrl}
       />
+
+      {/* Public chrome only. The dashboard fires no product events, and the
+          owner is not the person the banner is asking. */}
+      <ConsentBanner />
     </div>
   );
 }

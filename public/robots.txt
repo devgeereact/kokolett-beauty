@@ -7,7 +7,9 @@ Allow: /
 # searches for it.
 Disallow: /dashboard
 Disallow: /my
-Disallow: /access
+# Trailing slash on purpose: robots.txt matching is a prefix match, so a bare
+# "/access" would also hide /accessibility, which is a public page.
+Disallow: /access/
 Disallow: /login
 # Single-use links from an email. Neither is a page anyone should reach from a
 # search result, and an indexed /unsubscribe/<id> lets a stranger unsubscribe

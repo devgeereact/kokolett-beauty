@@ -47,8 +47,12 @@ describe('sitemap and robots.txt agree with the route map', () => {
   });
 
   it('lists no private path', () => {
+    /* Boundary-aware: a bare `startsWith` makes `/access` swallow the public
+       `/accessibility`, which is also why robots.txt disallows `/access/`
+       with the slash rather than the bare prefix. */
     for (const path of private_) {
-      expect(listed.some((l) => l.startsWith(path))).toBe(false);
+      const clash = listed.some((l) => l === path || l.startsWith(`${path}/`));
+      expect(clash, `${path} appears in sitemap.xml`).toBe(false);
     }
   });
 

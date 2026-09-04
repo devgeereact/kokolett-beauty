@@ -501,6 +501,37 @@ export function useCalendarMutations(
 
 ---
 
+## 28. `useConsent`
+
+`src/hooks/useConsent.ts`
+React view over the module-level consent store in `src/lib/consent.ts`.
+
+```ts
+interface UseConsent {
+  /** `null` until the visitor has actually chosen. Undecided grants nothing. */
+  consent: ConsentState;
+  decided: boolean;
+  analytics: boolean;
+  accept: () => void;
+  reject: () => void;
+  /** Back to undecided, which brings the banner back. */
+  reopen: () => void;
+}
+export function useConsent(): UseConsent;
+```
+
+The store lives outside React on purpose: `trackEvent` in `src/lib/analytics.ts`
+is called from plain event handlers and has to read the answer without a hook.
+This is the same `useSyncExternalStore` shape as `useBusinessSettings`, so every
+consumer re-renders when any of them changes the choice.
+
+There is exactly one optional category, the booking funnel. PECR regulation 6 is
+about storing information on a device, not about cookies specifically, so the
+`sessionStorage` id counts even though the site sets no cookies. Undecided,
+malformed, and an older `CONSENT_VERSION` all read as a refusal.
+
+---
+
 ## Conventions
 
 - Every hook is fully typed with an explicit return interface.

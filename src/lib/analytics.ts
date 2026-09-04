@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { reportError } from '@/lib/sentry';
+import { analyticsAllowed } from '@/lib/consent';
 import type { Json } from '@/types/database.types';
 
 /**
@@ -17,6 +18,13 @@ import type { Json } from '@/types/database.types';
  * The session id is `sessionStorage`-backed: random, resets every new tab,
  * never sent anywhere else, and is not a cookie — nothing here can be used
  * to identify a person or link their events across visits.
+ *
+ * None of that exempts it from consent. PECR regulation 6 is about storing
+ * information on someone's device, not about cookies specifically, and a
+ * random id written so the salon can measure a funnel is not strictly
+ * necessary to deliver the booking page. So every entry point below reads
+ * `analyticsAllowed()` first and an undecided visitor is treated as a no:
+ * nothing is written, nothing is sent.
  */
 
 export type ProductEventName =
@@ -50,6 +58,11 @@ export function trackEvent(
   name: ProductEventName,
   metadata?: Record<string, Json>,
 ): void {
+  /* The gate is here rather than at the five call sites so there is no way to
+     add a sixth that forgets it, and it is before `getSessionId()` so an
+     undecided visitor never has anything written to their device. */
+  if (!analyticsAllowed()) return;
+
   void supabase
     .rpc('track_product_event', {
       p_event_name: name,

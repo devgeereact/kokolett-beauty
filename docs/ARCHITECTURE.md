@@ -111,7 +111,8 @@ every path is declared once in `src/lib/routes.ts` — two exceptions, `/login` 
 | `/book`                               | The booking flow — no per-service step; one appointment type                                                           |
 | `/request-availability`               | Enquiry when nothing's open                                                                                            |
 | `/subscribe`                          | Mailing-list opt-in — not linked in-app; meant to be pasted externally (e.g. an Instagram bio)                         |
-| `/privacy` `/booking-policy` `/terms` | Policies                                                                                                               |
+| `/privacy` `/cookies` `/terms`        | Policies. `/cookies` also carries the live consent control                                                             |
+| `/booking-policy` `/accessibility` `/complaints` | Booking rules including the patch test, the accessibility statement, and the complaints route                |
 
 `routes.public.about`/`gallery`/`services`/`testimonials`/`faqs`/`contact` were
 reinstated 2026-08-25 (marketing rebrand), reversing the single-page simplification

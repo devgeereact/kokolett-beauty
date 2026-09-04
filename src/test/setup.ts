@@ -10,7 +10,43 @@ afterEach(() => {
   // teardown that throws turns every passing test in the file red for a reason
   // that has nothing to do with the assertions.
   globalThis.localStorage?.clear();
+  globalThis.sessionStorage?.clear();
 });
+
+/** Same shim, same Node 22 reason. Used by the analytics session id. */
+function inMemoryStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    get length(): number {
+      return store.size;
+    },
+    key: (index: number): string | null => [...store.keys()][index] ?? null,
+    getItem: (key: string): string | null => store.get(String(key)) ?? null,
+    setItem: (key: string, value: string): void => {
+      store.set(String(key), String(value));
+    },
+    removeItem: (key: string): void => {
+      store.delete(String(key));
+    },
+    clear: (): void => {
+      store.clear();
+    },
+  };
+}
+
+if (!globalThis.sessionStorage) {
+  const storage = inMemoryStorage();
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    value: storage,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(window, 'sessionStorage', {
+    value: storage,
+    configurable: true,
+    writable: true,
+  });
+}
 
 /**
  * In-memory `localStorage`.

@@ -137,7 +137,9 @@ test('unknown route falls back to the not-found page, not a blank screen', async
   // real users don't load four tabs on one CPU simultaneously.
   await page.goto('/this-route-does-not-exist', { waitUntil: 'networkidle' });
   await expect(page.getByText('404')).toBeVisible();
-  await expect(page.getByRole('heading', { name: /could not find that page/i })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /could not find that page/i }),
+  ).toBeVisible();
 });
 
 /**
@@ -159,8 +161,11 @@ const PUBLIC_ROUTES = [
   '/request-availability',
   '/subscribe',
   '/privacy',
+  '/cookies',
   '/terms',
   '/booking-policy',
+  '/accessibility',
+  '/complaints',
 ];
 
 /**

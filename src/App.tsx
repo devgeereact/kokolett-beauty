@@ -19,7 +19,12 @@ import { BookPage } from '@/pages/BookPage';
 import { RequestAvailabilityPage } from '@/pages/RequestAvailabilityPage';
 import { SubscribePage } from '@/pages/SubscribePage';
 import { MyBookingsPage } from '@/pages/MyBookingsPage';
-import { PrivacyPage, BookingPolicyPage, TermsPage } from '@/pages/PolicyPages';
+import { PrivacyPage } from '@/pages/PrivacyPage';
+import { CookiesPage } from '@/pages/CookiesPage';
+import { BookingPolicyPage } from '@/pages/BookingPolicyPage';
+import { TermsPage } from '@/pages/TermsPage';
+import { AccessibilityPage } from '@/pages/AccessibilityPage';
+import { ComplaintsPage } from '@/pages/ComplaintsPage';
 import { SecretGate } from '@/pages/SecretGate';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -149,8 +154,11 @@ export function App(): JSX.Element {
               <Route path={routes.customer.appointments} element={<MyBookingsPage />} />
 
               <Route path={routes.public.privacy} element={<PrivacyPage />} />
+              <Route path={routes.public.cookies} element={<CookiesPage />} />
               <Route path={routes.public.bookingPolicy} element={<BookingPolicyPage />} />
               <Route path={routes.public.terms} element={<TermsPage />} />
+              <Route path={routes.public.accessibility} element={<AccessibilityPage />} />
+              <Route path={routes.public.complaints} element={<ComplaintsPage />} />
 
               <Route path={routes.auth.resetPassword} element={<ResetPasswordPage />} />
 

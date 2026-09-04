@@ -172,7 +172,10 @@ export function SiteFooter({
               </dl>
               <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
                 Some days differ.{' '}
-                <Link to={routes.public.book} className="text-foreground hover:underline">
+                <Link
+                  to={routes.public.book}
+                  className="text-foreground underline underline-offset-4"
+                >
                   See what is open
                 </Link>
                 .

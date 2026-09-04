@@ -327,7 +327,7 @@ export function HomePage(): JSX.Element {
           <p className="mt-8 text-center text-sm text-muted-foreground">
             <Link
               to={routes.public.services}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-primary underline underline-offset-4"
             >
               See the full menu
             </Link>

@@ -298,14 +298,14 @@ export function ContactPage(): JSX.Element {
                 Looking for a time instead?{' '}
                 <Link
                   to={routes.public.book}
-                  className="font-medium text-primary hover:underline"
+                  className="font-medium text-primary underline underline-offset-4"
                 >
                   Book online
                 </Link>{' '}
                 or{' '}
                 <Link
                   to={routes.public.requestAvailability}
-                  className="font-medium text-primary hover:underline"
+                  className="font-medium text-primary underline underline-offset-4"
                 >
                   ask for a time
                 </Link>{' '}

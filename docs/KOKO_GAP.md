@@ -323,13 +323,13 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 so they are not live yet)**
 - [x] **A loading button could be clicked twice** — `Button` used `disabled ?? loading`. `??` only falls through on null/undefined, so a call site combining `loading={sending}` with `disabled={!canSend}` handed it an explicit `false` the moment the form went valid, and the button stayed live for the whole request. Seven call sites did exactly that: Send on the Compose email modal (a second email), Offer this slot on a request (a second offer to the same customer), Apply and Apply to future weeks on the weekly template, the note save on a request, and the name save on Profile. One character (`||`), plus `Button.test.tsx` asserting the explicit-`false` case specifically. Absorbed into `1922cc2`, so this one **is** live.
 - [x] **SMTP header injection through the contact form** — `submit_contact_message()` is granted to `anon` and builds its subject as `'Message from ' || v_full_name`, checking only that the name is non-empty and at most 200 characters. denomailer 1.6.0's `quotedPrintableEncodeInline` returns pure-ASCII input **unchanged** (`config/mail/encoding.ts`) and `connection.ts:114` then writes `"Subject: " + value + "\r\n"` raw, so a CRLF in that name ends the header early and everything after it is parsed as further headers, or after a blank line as the body. The relay is the salon's own authenticated, DKIM-signed sender and the recipient is the owner's inbox. Fixed at the one place a string becomes an SMTP header (`_shared/smtp.ts`), which also covers owner-edited template subjects that never pass through `queue_email()`. Five Deno assertions.
-- [x] **An unsubscribe could be undone by anyone who knew the address** — `subscribe_to_updates()` (0018) ended its upsert with `set unsubscribed_at = null`, and `confirmed` defaults to true and is never cleared, so re-submitting an opted-out address put that person straight back into the broadcast audience (`0058` sends to `confirmed and unsubscribed_at is null`). The anon key ships inside the browser bundle, so the caller did not have to be the person. Migration `0071` drops the clause, adds length ceilings and a global hourly cap; `MailingListCard` gains an owner-only "Show N who opted out" / "Add back", which is where a re-consent decision belongs. The confirm dialog's "They would need to sign up again to rejoin" was describing the bug, and is corrected. **Needs `supabase db push`.**
+- [x] **An unsubscribe could be undone by anyone who knew the address** — `subscribe_to_updates()` (0018) ended its upsert with `set unsubscribed_at = null`, and `confirmed` defaults to true and is never cleared, so re-submitting an opted-out address put that person straight back into the broadcast audience (`0058` sends to `confirmed and unsubscribed_at is null`). The anon key ships inside the browser bundle, so the caller did not have to be the person. Migration `0071` drops the clause, adds length ceilings and a global hourly cap; `MailingListCard` gains an owner-only "Show N who opted out" / "Add back", which is where a re-consent decision belongs. The confirm dialog's "They would need to sign up again to rejoin" was describing the bug, and is corrected. **Deployed 2026-09-04** — see §9.
 
 **P2 (second 2026-09-03 pass)**
 - [x] **Every Google reviewer avatar was CSP-blocked** — `img-src` did not carry `lh3.googleusercontent.com`, which is where `sync-reviews` stores `authorAttribution.photoUri`. `ReviewerAvatar` and `TestimonialsGrid`'s `Avatar` both fall back to an initial-letter badge `onError`, so it degraded silently and only the console knew. Proven both ways against a local server serving the real header: 10 violations and 0 avatars before, 0 violations and 5 avatars after.
 - [x] **The public mobile menu was not a dialog** — no focus trap, no Escape, no `role="dialog"`, no scroll lock, no focus return, and the page behind stayed tabbable. Now uses the same `useFocusTrap` the dashboard drawer got.
 - [x] **The booking form was not a form** — the details step was four inputs and an `onClick` button, so Enter did nothing on the last step of the booking flow.
-- [x] **`draft-copy` CORS fell back to `*`** — and carried no loopback origins, so "Polish with AI" was the one owner action that could not be exercised against a dev server. Also now rejects an unknown `kind` with a 400 instead of sending `undefined` to OpenRouter and returning a 502, and caps input length. **Needs redeploying.**
+- [x] **`draft-copy` CORS fell back to `*`** — and carried no loopback origins, so "Polish with AI" was the one owner action that could not be exercised against a dev server. Also now rejects an unknown `kind` with a 400 instead of sending `undefined` to OpenRouter and returning a 502, and caps input length. **Redeployed 2026-09-04** — see §9.
 - [x] **The privacy notice named two of six processors** — Cloudflare, Sentry, ImageKit and Google Fonts were all absent, its cookie section predated `product_events`, and it still said marketing email was stopped by replying rather than by the unsubscribe link `0058` added. Rewritten against what the code actually does.
 - [x] **The 404 was a dead end** — no nav, no footer, one button. It is also what a signed-out dashboard hit renders and what every unmatched single-segment path falls through to, so it is a page the owner sees too.
 
@@ -525,7 +525,7 @@ Six and eight respectively, all fixed. See §5.
 | `BookPage` details step becomes a `<form>` | Real browser: selected a slot, typed a first name only, pressed Enter, and read back the validation message plus **zero** Supabase requests, so the form submitted and stopped where it should |
 | Hero carousel responsive and deferred | Real browser at 390x844: two image requests at `w-1280`, not six at `w-1920` |
 | Privacy notice, 404, lazy images, `lang`, `jsonLd()`, `Modal` scroll lock, `tel:`/`mailto:`, Contact success state | `npm run typecheck` / `lint` / `format:check` / `lint:copy` / `test` / `build`, plus a real-browser sweep of all 14 public routes (see below). `jsonLd()` additionally has three unit assertions |
-| `draft-copy` CORS and input validation | `deno check` clean; not exercised against the deployed function, which is why it is marked "needs redeploying" |
+| `draft-copy` CORS and input validation | `deno check` clean; redeployed and CORS re-probed against the live function 2026-09-04, see §9 |
 
 ### Verified in a real browser
 
@@ -550,9 +550,9 @@ no such header, which is how the blocked avatars survived every previous pass).
 
 | Area | Verdict | Why |
 |---|---|---|
-| Security | **PASS, with one deploy outstanding** | No P0. RLS is the boundary and it is tested. The three real findings (SMTP injection, unsubscribe resurrection, `draft-copy`'s wildcard) are fixed; `0071` and the `draft-copy` redeploy have not been applied to production. Secrets: `.env` is git-ignored, only `VITE_*` reach the bundle, `env.ts` uses static members so nothing else is inlined, no service-role key anywhere in `src/`, sourcemaps emitted but not linked and not deployed. `npm audit --omit=dev` clean |
+| Security | ~~PASS, with one deploy outstanding~~ **PASS** | No P0. RLS is the boundary and it is tested. The three real findings (SMTP injection, unsubscribe resurrection, `draft-copy`'s wildcard) are fixed and, as of §9, deployed. Secrets: `.env` is git-ignored, only `VITE_*` reach the bundle, `env.ts` uses static members so nothing else is inlined, no service-role key anywhere in `src/`, sourcemaps emitted but not linked and not deployed. `npm audit --omit=dev` clean |
 | SEO | **PASS** | Unique title, description, canonical, OG, Twitter and a breadcrumb per route; one `<h1>` each; `HairSalon` + `WebSite` + a live `hasOfferCatalog`; robots.txt and sitemap.xml correct and guarded by `sitemap.test.ts`; apex-to-www 301 verified live in §7. Outstanding and not fixable from here: the sitemap has never been submitted to Search Console (§3, P1, needs the owner's Google account) |
-| Accessibility | **PASS** | Skip link, focus-visible rings throughout, semantic landmarks, labelled controls, `role="alert"` on error copy, reduced-motion honoured globally and per component, 44px touch targets on the customer path. The two real gaps found (the mobile menu, the Contact success state) are fixed. Not audited: colour contrast measured against WCAG ratios, and no screen-reader run |
+| Accessibility | ~~PASS~~ **PASS, one P2 open** | Skip link, focus-visible rings throughout, semantic landmarks, labelled controls, `role="alert"` on error copy, reduced-motion honoured globally and per component, 44px touch targets on the customer path. The two real gaps found (the mobile menu, the Contact success state) are fixed. §9 replaces "not audited" with a real automated pass (`@axe-core/playwright`, WCAG 2.2 AA) and found one real, tracked gap: the brand accent's contrast at small sizes. No screen-reader run still |
 | Performance | **PASS** | Dashboard fully lazy so a customer downloads none of it; Sentry deferred past first paint; hero now responsive and deferred; images lazy below the fold; fonts preconnected and preloaded. Largest chunks are Sentry (88 kB gzip, after idle), react-vendor (73 kB) and supabase (54 kB). §7's Supabase-latency observation is still the open question and still needs measuring from the owner's own connection |
 | Mobile | **PASS** | No horizontal overflow on any public route at 390px; menu is now a proper dialog with a scroll lock; forms use correct input types and `autoComplete` |
 | Conversion | **PASS** | One primary action everywhere (Book), a secondary that does not compete, no popups, no autoplay video, no invented testimonials or statistics, and the deliberate absence of prices is a documented product decision (`docs/PRD.md` §7), not an omission. The 404 now converts instead of dead-ending |
@@ -560,9 +560,8 @@ no such header, which is how the blocked avatars survived every previous pass).
 
 ### Remaining risks
 
-1. **Two fixes are not live.** `0071` needs `supabase db push`; `draft-copy` needs
-   `supabase functions deploy draft-copy`. Everything else here is frontend or
-   `.htaccess` and ships with the next `cpanel-deploy`.
+1. ~~Two fixes are not live.~~ **Deployed 2026-09-04, see §9.** Everything else
+   here is frontend or `.htaccess` and ships with the next `cpanel-deploy`.
 2. **`0071` changes behaviour the owner may not expect.** Somebody who unsubscribes
    and later signs up again on the website will be told "thanks" and will not be
    added back. That is deliberate (the alternative is an unsubscribe a stranger can
@@ -574,8 +573,9 @@ no such header, which is how the blocked avatars survived every previous pass).
 4. **No email was actually sent.** The SMTP fix is a pure function with tests and a
    read of the library's source. A delivered message should be checked after deploy,
    and the injection itself should be re-probed against the deployed function.
-5. **Contrast ratios and screen readers were not measured.** Accessibility above is
-   a structural pass, not an audited one.
+5. ~~Contrast ratios and screen readers were not measured.~~ **Contrast is now
+   measured (§9) and one real gap is tracked as a P2; screen readers still
+   are not.**
 6. **`AdvisorySection.tsx` is dead code** — 56 lines, imported by nothing,
    tree-shaken out of the build, and referenced in two comments as a deliberate
    future affordance. Left in place on that basis rather than deleted. If those
@@ -587,11 +587,135 @@ no such header, which is how the blocked avatars survived every previous pass).
 
 ### Launch decision
 
-**READY WITH MINOR FIXES.**
+~~READY WITH MINOR FIXES.~~ **Superseded by §9** — both minor fixes are now
+deployed and verified live.
 
-The site is live and was already production-shaped. The two "minor fixes" are
+The site is live and was already production-shaped. The two "minor fixes" were
 specific and small: apply `0071`, redeploy `draft-copy`, and ship the frontend and
-`.htaccess` changes. Until `0071` is applied, an unsubscribe on the live site can
-still be undone by anyone who knows the address, which is the one finding here
-with a real person on the other end of it.
+`.htaccess` changes. Until `0071` was applied, an unsubscribe on the live site
+could still be undone by anyone who knows the address, which was the one finding
+here with a real person on the other end of it.
+
+## 9. Verification and deploy pass, 2026-09-04
+
+Picked up where §8 left off: this pass did not re-derive a new 42-phase audit
+from zero (the project already carries one, scored above), it re-verified the
+existing 86/100 pass is still accurate, closed the two outstanding P1 deploys,
+added real automated accessibility evidence in place of the "structural pass"
+verdict, and fixed what that evidence found that was safe to fix narrowly.
+
+### Baseline re-verified before touching anything
+
+Six commits had landed since §8 was written: five are mechanical file-splits
+under the 500-line limit (`git show --stat` on each confirms pure
+extraction/move, no behaviour change), and the sixth, `0e735ae`, turned out to
+**be** the code side of §8's own second pass (its diff is exactly `0071`, the
+`draft-copy` fix, the SMTP header fix and the KOKO_GAP.md write-up from §8) —
+not new, unreviewed work. Confirmed by re-running every local gate:
+`typecheck` · `lint` · `format:check` · `lint:copy` · `test:hooks` · `test`
+(**301 passed, up from 293** — `redact.test.ts`/`csv.test.ts`/etc. from §5's P2
+coverage push plus the new `smtp.test.ts`/`utils.test.ts` from `0e735ae`) ·
+`build` · `deno check` on every edge function · `deno test` (15 passed).
+All green, no regressions.
+
+### Ground truth checked against production, not just the doc
+
+Before deploying anything, `list_migrations`/`list_edge_functions` (Supabase
+MCP) were read directly against project `erqrfjlozqyhogneqraj` to confirm §8's
+"needs deploy" claims were still true rather than assumed: migrations stopped
+at `20260831091023_product_events` (`0071` absent) and `draft-copy` was last
+updated 2026-08-30 (`version: 4`), predating the CORS/validation fix. Both
+confirmed outstanding.
+
+### The two deploys, and how each was verified live
+
+- **`0071_unsubscribing_sticks.sql`** applied via `apply_migration`. Verified:
+  `list_migrations` now lists it (as `20260904152812_0071_unsubscribing_sticks`);
+  the function body deployed matches the reviewed source exactly (read back
+  before applying, not assumed).
+- **`draft-copy`** redeployed via `deploy_edge_function`; version moved 4 → 5.
+  Verified live, not just by deploy success: an `OPTIONS` preflight from
+  `Origin: http://localhost:5082` against
+  `https://erqrfjlozqyhogneqraj.supabase.co/functions/v1/draft-copy` returned
+  `access-control-allow-origin: http://localhost:5082` — the dev origin,
+  not a `*` wildcard and not silently rejected.
+- `get_advisors` (security) re-run after the migration: no new findings tied to
+  `subscribe_to_updates` or the new `subscribers_created_at_idx`; the one
+  pre-existing item (`secret_login_attempts` RLS-enabled-no-policy) is the
+  already-documented deliberate deny-all false positive from §27, unchanged.
+
+### Real accessibility evidence added
+
+`@axe-core/playwright` added as a devDependency (new package, justified:
+reuses the Playwright infrastructure already in this repo rather than adding a
+second E2E tool, and directly replaces an "inspected, not measured" claim with
+one that is actually measured). `e2e/marketing-site.spec.ts` gained a WCAG 2.2
+AA scan (`wcag2a`/`wcag2aa`/`wcag22aa` tags) for every one of the 13 public
+routes plus the 404 page plus the mobile nav dialog opened.
+
+First run surfaced three real, distinct findings:
+
+1. **`link-in-text-block`**: four inline links (`SiteFooter.tsx`'s "See what is
+   open", `HomePage.tsx`'s "See the full menu", `ContactPage.tsx`'s "Book
+   online" and "ask for a time") relied on `hover:underline` alone, so a
+   sighted mouse-less reader had no way to tell they were links inside a
+   sentence of running text. Fixed narrowly: `underline underline-offset-4`,
+   matching the pattern `PolicyPages.tsx` already used correctly for the same
+   kind of link. No colour change.
+2. **A stale test, not a regression.** `unknown route falls back to the
+   not-found page, not a blank screen` asserted `/doesn't exist/i`, which
+   `0e735ae`'s `NotFoundPage` redesign replaced with "We could not find that
+   page" (deliberately, per that file's own comment, to give the 404 a real
+   `<h1>`). E2E is not wired into CI (§5, P2, still open) so nothing had run
+   this test since the copy changed. Updated the assertion to match the
+   current, correct copy.
+3. **`color-contrast`, real and not fixed here.** `text-primary` (`#c24d2c`)
+   on `--background` (`#e8ebed`) measures 3.99:1 where small text needs 4.5:1
+   (the "See the full menu" link, the decorative "404" numeral, six
+   `text-brand` footer category labels); `text-primary-foreground/80` on
+   `bg-primary` measures 3.62:1 in a four-item stat band ("Years experience",
+   "Google rated", etc.). `src/index.css`'s own comment shows `--primary` was
+   deliberately tuned once already — "4.78:1 with white" — against a
+   background this token is not actually always shown on. Not retuned here:
+   the salon's brand accent colour is a visual-identity decision for the
+   owner, not a mechanical accessibility fix, and the fix likely differs by
+   context (full-opacity foreground for the stat band vs. a decision about
+   `text-primary`/`text-brand` at small sizes elsewhere). Left as a tracked P2
+   below. The seven affected routes (`/`, `/about`, `/gallery`, `/services`,
+   `/testimonials`, `/faqs`, `/contact`) plus the 404 page and the mobile nav
+   dialog carry `test.fail()` in the e2e file with a comment pointing here, so
+   the assertion keeps running for real (an unexpected pass would flag loudly
+   that the gap closed) rather than being weakened or silently skipped.
+
+All 23 tests in the file pass (14 real passes, 9 expected failures via
+`test.fail()`). Full local gate re-run after these edits — `typecheck` ·
+`lint` · `format:check` · `test` (still 301) · `build` — all green.
+
+### New finding
+
+**P2 — brand-accent text contrast under 4.5:1 at small sizes**, on `/`,
+`/about`, `/gallery`, `/services`, `/testimonials`, `/faqs`, `/contact`, the
+404 page and the mobile nav dialog. Evidence: axe `color-contrast`, 3.62-3.99
+measured against a 4.5:1 requirement, exact nodes listed above. Needs an
+owner-level decision (darken the token vs. restrict small-text use vs. accept
+as-is for a small enough delta) before a code fix — not invented here per
+`AGENTS.md`'s scope-discipline instruction. Tracked, not fixed.
+
+### What is still not verified (unchanged from §7/§8)
+
+Signed-in owner dashboard journeys, real email delivery through the now-fixed
+SMTP path, contrast against the live host's actual rendered fonts (this pass
+used the same local-preview method as §8), and a manual screen-reader pass.
+Privacy legal review and the ICO/consent-banner decision remain open, human
+items — unchanged by this pass.
+
+### Launch decision
+
+**READY FOR PRODUCTION.** No P0, no open P1: both P1 deploys are live and
+verified. One new P2 (brand-accent contrast) is tracked, not blocking — it is
+a real, evidence-backed usability gap, not an outage, a data-loss path or an
+authentication issue, and the same bar §8 itself used to reach "ready" while
+carrying six open P2s already. The human-judgment items (privacy legal review,
+ICO/consent-banner decision, screen-reader pass) remain exactly what §8 named
+them: decisions for the owner, not blockers this document can resolve.
 

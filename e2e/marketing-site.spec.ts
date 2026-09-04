@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 /**
  * Read-only smoke tests over the public marketing site. Deliberately no writes —
@@ -136,5 +137,84 @@ test('unknown route falls back to the not-found page, not a blank screen', async
   // real users don't load four tabs on one CPU simultaneously.
   await page.goto('/this-route-does-not-exist', { waitUntil: 'networkidle' });
   await expect(page.getByText('404')).toBeVisible();
-  await expect(page.getByText(/doesn't exist/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /could not find that page/i })).toBeVisible();
+});
+
+/**
+ * Automated WCAG 2.2 AA coverage over every public route, added 2026-09-04.
+ * `docs/KOKO_GAP.md` §8 had carried accessibility as a "structural pass" —
+ * manually verified landmarks/labels/focus, but contrast ratios and other
+ * rule-based checks were never actually run. This closes that gap with real
+ * evidence rather than upgrading the claim on inspection alone.
+ */
+const PUBLIC_ROUTES = [
+  '/',
+  '/about',
+  '/gallery',
+  '/services',
+  '/testimonials',
+  '/faqs',
+  '/contact',
+  '/book',
+  '/request-availability',
+  '/subscribe',
+  '/privacy',
+  '/terms',
+  '/booking-policy',
+];
+
+/**
+ * Routes where the brand accent (`text-primary`/`text-brand`, `#c24d2c` on
+ * `#e8ebed`; `text-primary-foreground/80` on `bg-primary`) measures under the
+ * 4.5:1 AA text threshold at small sizes — 3.62-3.99:1, per axe. Tracked as a
+ * P2 in docs/KOKO_GAP.md rather than fixed here: the token was deliberately
+ * tuned once already (`--primary: #c24d2c /* 4.78:1 with white *\/` in
+ * src/index.css) against a different background than it is actually used on,
+ * and retuning the salon's brand colour is a visual-identity call for the
+ * owner, not a mechanical accessibility fix. `test.fail()` keeps this a real,
+ * running assertion — an unexpected pass here means the gap closed and this
+ * annotation should come out.
+ */
+const KNOWN_CONTRAST_GAP = new Set([
+  '/',
+  '/about',
+  '/gallery',
+  '/services',
+  '/testimonials',
+  '/faqs',
+  '/contact',
+]);
+
+for (const path of PUBLIC_ROUTES) {
+  test(`${path} has no automated WCAG 2.2 AA violations`, async ({ page }) => {
+    if (KNOWN_CONTRAST_GAP.has(path)) test.fail();
+    await page.goto(path, { waitUntil: 'networkidle' });
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
+      .analyze();
+    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+  });
+}
+
+test('the 404 page has no automated WCAG 2.2 AA violations', async ({ page }) => {
+  test.fail(); // same brand-accent contrast gap as KNOWN_CONTRAST_GAP above, on the "404" numeral
+  await page.goto('/this-route-does-not-exist', { waitUntil: 'networkidle' });
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
+    .analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+test('the mobile nav dialog has no automated WCAG 2.2 AA violations when open', async ({
+  page,
+}) => {
+  test.fail(); // same brand-accent contrast gap as KNOWN_CONTRAST_GAP above, in the footer reached via the drawer
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: /menu/i }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
+    .analyze();
+  expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 });

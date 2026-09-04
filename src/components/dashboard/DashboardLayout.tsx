@@ -1,62 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode, type JSX } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { reportError } from '@/lib/sentry';
+import {
+  buildNavGroups,
+  isEntryActive,
+  type DashboardNavBadges,
+} from '@/lib/dashboardNav';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useFocusTrap, FOCUSABLE_SELECTOR } from '@/hooks/useFocusTrap';
 import { getProfile } from '@/services/profileService';
-import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { QuickActionLauncher } from '@/components/dashboard/QuickActionLauncher';
 import { NotificationBellPopover } from '@/components/dashboard/NotificationBellPopover';
-import { NAV_ICONS } from '@/lib/icons';
+import { DashboardNavList } from '@/components/dashboard/DashboardNavList';
+import { DashboardWordmark } from '@/components/dashboard/DashboardWordmark';
+import { DashboardAccountFooter } from '@/components/dashboard/DashboardAccountFooter';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 
 const SIDEBAR_COLLAPSED_KEY = 'kokolett-sidebar-collapsed';
-
-interface NavEntry {
-  to: string;
-  label: string;
-  icon: LucideIcon;
-  /** Rendered as a count beside the label; omitted when zero. */
-  badge?: number;
-  /**
-   * Extra paths that also count as "active" for this entry, for a single nav
-   * item that fronts more than one route — Calendar also owns Appointment
-   * type (`CalendarCapacityTabs`'s in-page switcher). Availability
-   * (`weeklyDefault`) is deliberately NOT included here even though it's
-   * also reachable from that switcher — it has its own direct nav row under
-   * Salon, and including it here would double-highlight the sidebar.
-   */
-  activePaths?: string[];
-  /**
-   * For entries that deep-link into Inbox's `?tab=` param (Approvals,
-   * Availability Requests) rather than owning a distinct route.
-   */
-  matchTab?: 'approvals' | 'requests';
-}
-
-interface NavGroup {
-  label: string;
-  items: NavEntry[];
-}
-
-/** Mirrors `NavLink`'s own non-`end` matching: exact, or a path segment below. */
-function isEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
-  if (entry.matchTab) {
-    return (
-      pathname === routes.owner.inbox &&
-      new URLSearchParams(search).get('tab') === entry.matchTab
-    );
-  }
-  if (entry.activePaths) return entry.activePaths.includes(pathname);
-  if (entry.to === routes.owner.dashboard) return pathname === entry.to;
-  return pathname === entry.to || pathname.startsWith(`${entry.to}/`);
-}
 
 /**
  * The owner shell: a persistent sidebar on desktop/tablet, a slide-over on
@@ -80,7 +44,7 @@ export function DashboardLayout({
   title: ReactNode;
   subtitle?: string;
   actions?: ReactNode;
-  badges?: { approvals?: number; requests?: number; notifications?: number };
+  badges?: DashboardNavBadges;
 }): JSX.Element {
   /* Owner pages inherited index.html's marketing title, so every dashboard tab
      and bookmark read "Kokolett Beauty UK is a women's hair salon in
@@ -143,103 +107,7 @@ export function DashboardLayout({
       .catch(() => setOwnerName(null));
   }, [user]);
 
-  // Grouped Owner Console nav (docs/planning/owner-console-rebuild-plan.md §0).
-  const navGroups: NavGroup[] = [
-    {
-      label: 'Workspace',
-      items: [
-        { to: routes.owner.dashboard, label: 'Dashboard', icon: NAV_ICONS.Dashboard },
-        {
-          to: routes.owner.calendar,
-          label: 'Calendar',
-          icon: NAV_ICONS.Calendar,
-          activePaths: [routes.owner.calendar, routes.owner.appointmentType],
-        },
-        {
-          to: routes.owner.appointments,
-          label: 'Appointments',
-          icon: NAV_ICONS.Appointments,
-        },
-        {
-          to: routes.owner.dailyClose,
-          label: 'Daily Close',
-          icon: NAV_ICONS['Daily Close'],
-        },
-      ],
-    },
-    {
-      label: 'Bookings',
-      items: [
-        {
-          to: `${routes.owner.inbox}?tab=approvals`,
-          label: 'Approvals',
-          icon: NAV_ICONS.Approvals,
-          matchTab: 'approvals',
-          badge: badges?.approvals,
-        },
-        {
-          to: `${routes.owner.inbox}?tab=requests`,
-          label: 'Availability Requests',
-          icon: NAV_ICONS['Availability Requests'],
-          matchTab: 'requests',
-          badge: badges?.requests,
-        },
-      ],
-    },
-    {
-      label: 'Customers',
-      items: [
-        { to: routes.owner.customers, label: 'Customers', icon: NAV_ICONS.Customers },
-      ],
-    },
-    {
-      label: 'Salon',
-      items: [
-        { to: routes.owner.serviceMenu, label: 'Services', icon: NAV_ICONS.Services },
-        {
-          to: routes.owner.weeklyDefault,
-          label: 'Availability',
-          icon: NAV_ICONS.Availability,
-        },
-      ],
-    },
-    {
-      label: 'Insights',
-      items: [
-        { to: routes.owner.reports, label: 'Reports', icon: NAV_ICONS.Reports },
-        {
-          to: routes.owner.assistant,
-          label: 'AI Assistant',
-          icon: NAV_ICONS['AI Assistant'],
-        },
-      ],
-    },
-    {
-      label: 'Communications',
-      items: [
-        {
-          to: routes.owner.notifications,
-          label: 'Notifications',
-          icon: NAV_ICONS.Notifications,
-        },
-        { to: routes.owner.email, label: 'Email', icon: NAV_ICONS.Email },
-        { to: routes.owner.templates, label: 'Templates', icon: NAV_ICONS.Templates },
-        { to: routes.owner.broadcasts, label: 'Broadcasts', icon: NAV_ICONS.Broadcasts },
-      ],
-    },
-    {
-      label: 'Account',
-      items: [
-        { to: routes.owner.settings, label: 'Settings', icon: NAV_ICONS.Settings },
-        { to: routes.owner.audit, label: 'Audit Log', icon: NAV_ICONS.Audit },
-        {
-          to: routes.owner.systemHealth,
-          label: 'System Health',
-          icon: NAV_ICONS['System Health'],
-        },
-      ],
-    },
-  ];
+  const navGroups = buildNavGroups(badges);
 
   // The header's title icon is never hand-picked per page — it's whichever
   // sidebar row is currently active, via the exact same `isEntryActive`
@@ -252,71 +120,6 @@ export function DashboardLayout({
     .find((entry) => isEntryActive(entry, location.pathname, location.search));
   const HeaderIcon = activeNavEntry?.icon;
 
-  const renderEntry = (entry: NavEntry, rail: boolean): JSX.Element => {
-    const active = isEntryActive(entry, location.pathname, location.search);
-    const Icon = entry.icon;
-    return (
-      // Plain `Link`, not `NavLink`: `NavLink`'s own prefix-based matching
-      // computes `aria-current` from its *own* `isActive` (driven only by
-      // `to`), which can't express `activePaths` grouping or `matchTab`
-      // deep-linking into Inbox's `?tab=` param. A plain `Link` with
-      // `aria-current` set directly from the same `active`/`isEntryActive`
-      // boolean the styling below uses gives exactly one correct current
-      // entry on every path, including the grouped and tab-based ones.
-      <Link
-        key={entry.to}
-        to={entry.to}
-        onClick={() => setMenuOpen(false)}
-        aria-current={active ? 'page' : undefined}
-        title={rail ? entry.label : undefined}
-        className={cn(
-          'relative flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-          rail && 'justify-center px-0',
-          active
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold'
-            : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-        )}
-      >
-        <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2} />
-        {!rail && <span className="flex-1 truncate">{entry.label}</span>}
-        {entry.badge ? (
-          rail ? (
-            <span className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-primary" />
-          ) : (
-            <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
-              {entry.badge}
-            </span>
-          )
-        ) : null}
-      </Link>
-    );
-  };
-
-  const buildNav = (rail: boolean): JSX.Element => (
-    <nav className="flex flex-col gap-3.5" aria-label="Dashboard">
-      {navGroups.map((group) => (
-        <div key={group.label}>
-          {!rail && (
-            <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
-              {group.label}
-            </p>
-          )}
-          <div className="flex flex-col gap-1">
-            {group.items.map((entry) => renderEntry(entry, rail))}
-          </div>
-        </div>
-      ))}
-    </nav>
-  );
-
-  /**
-   * The signed-in address and the way out.
-   *
-   * Rendered in the mobile drawer as well as the desktop sidebar. It used to
-   * live only inside the `hidden md:flex` sidebar, so below that breakpoint —
-   * which includes a phone — there was no way to sign out at all.
-   */
   const doSignOut = (): void => {
     setMenuOpen(false);
     // Navigate whether or not the network call succeeds. `signOut()` rejects
@@ -328,79 +131,7 @@ export function DashboardLayout({
       .finally(() => void navigate(routes.public.home));
   };
 
-  const buildAccount = (rail: boolean): JSX.Element =>
-    rail ? (
-      <div className="flex flex-col items-center gap-2 px-1">
-        <Link
-          to={routes.owner.profile}
-          onClick={() => setMenuOpen(false)}
-          title={ownerName ?? user?.email ?? 'Owner'}
-        >
-          <Avatar name={ownerName ?? user?.email ?? '?'} size="sm" />
-        </Link>
-        <button
-          type="button"
-          title="Sign out"
-          onClick={doSignOut}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-        >
-          <ChevronRight
-            aria-hidden="true"
-            className="h-4 w-4 rotate-180"
-            strokeWidth={2}
-          />
-        </button>
-      </div>
-    ) : (
-      // Profile (avatar, name, business address/phone/email, theme) and the
-      // public-site link all live one click away on Settings/Profile now —
-      // this footer stays a single "Sign out" button, pinned below the
-      // scrollable nav list rather than growing with it.
-      <Button variant="ghost" size="sm" className="w-full" onClick={doSignOut}>
-        Sign out
-      </Button>
-    );
-
-  const buildWordmark = (rail: boolean): JSX.Element => (
-    <div
-      className={cn(
-        'mb-4 flex items-center',
-        rail ? 'justify-center px-0' : 'justify-between px-3',
-      )}
-    >
-      {rail ? (
-        <span
-          title="Kokolett Beauty UK"
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-serif text-sm font-bold text-primary-foreground"
-        >
-          K
-        </span>
-      ) : (
-        <div className="min-w-0">
-          <p className="truncate font-serif text-lg font-semibold leading-tight text-sidebar-foreground">
-            Kokolett
-          </p>
-          <p className="text-xs font-semibold tracking-wide text-primary">BEAUTY UK</p>
-        </div>
-      )}
-      <button
-        type="button"
-        onClick={toggleCollapsed}
-        aria-label={rail ? 'Expand sidebar' : 'Collapse sidebar'}
-        className={cn(
-          'hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground md:flex',
-          rail &&
-            'absolute -right-3 top-4 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-popover',
-        )}
-      >
-        {rail ? (
-          <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-        ) : (
-          <ChevronLeft aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-        )}
-      </button>
-    </div>
-  );
+  const closeMenu = (): void => setMenuOpen(false);
 
   return (
     <>
@@ -443,7 +174,7 @@ export function DashboardLayout({
               collapsed ? 'overflow-x-visible px-2 pt-4' : 'px-4 pt-4',
             )}
           >
-            {buildWordmark(collapsed)}
+            <DashboardWordmark rail={collapsed} onToggleCollapsed={toggleCollapsed} />
           </div>
           {/*
             The nav list is the one part of the sidebar that grows with the
@@ -459,7 +190,13 @@ export function DashboardLayout({
               collapsed ? 'overflow-x-visible px-2 pb-4' : 'px-4 pb-4',
             )}
           >
-            {buildNav(collapsed)}
+            <DashboardNavList
+              navGroups={navGroups}
+              rail={collapsed}
+              pathname={location.pathname}
+              search={location.search}
+              onNavigate={closeMenu}
+            />
           </div>
           <div
             className={cn(
@@ -467,7 +204,13 @@ export function DashboardLayout({
               collapsed ? 'p-2' : 'p-4',
             )}
           >
-            {buildAccount(collapsed)}
+            <DashboardAccountFooter
+              rail={collapsed}
+              ownerName={ownerName}
+              userEmail={user?.email}
+              onNavigate={closeMenu}
+              onSignOut={doSignOut}
+            />
           </div>
         </aside>
 
@@ -541,7 +284,7 @@ export function DashboardLayout({
             type="button"
             aria-label="Close menu"
             className="overlay-backdrop absolute inset-0"
-            onClick={() => setMenuOpen(false)}
+            onClick={closeMenu}
           />
           <div
             ref={menuPanelRef}
@@ -552,11 +295,23 @@ export function DashboardLayout({
             className="absolute inset-y-0 left-0 flex w-64 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar"
           >
             <div className="p-4">
-              {buildWordmark(false)}
-              {buildNav(false)}
+              <DashboardWordmark rail={false} onToggleCollapsed={toggleCollapsed} />
+              <DashboardNavList
+                navGroups={navGroups}
+                rail={false}
+                pathname={location.pathname}
+                search={location.search}
+                onNavigate={closeMenu}
+              />
             </div>
             <div className="mt-auto shrink-0 border-t border-sidebar-border p-4">
-              {buildAccount(false)}
+              <DashboardAccountFooter
+                rail={false}
+                ownerName={ownerName}
+                userEmail={user?.email}
+                onNavigate={closeMenu}
+                onSignOut={doSignOut}
+              />
             </div>
           </div>
         </div>

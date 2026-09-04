@@ -442,6 +442,61 @@ interface UseAssistantConversations {
 export function useAssistantConversations(firstName: string): UseAssistantConversations;
 ```
 
+## 25. `useCalendarData`
+
+`src/hooks/useCalendarData.ts`
+The date math and the single Supabase fetch behind all four `CalendarPage` views:
+which dates are visible for the current view/anchor, the range that covers them, and
+the summary/appointments/open-slots rows for that range. `view` and `anchor` stay
+owned by the page (its header controls act on them directly); this hook only reacts
+to them.
+
+```ts
+interface UseCalendarData {
+  cursor: { year: number; month: number };
+  visibleDates: string[];
+  range: { from: string; to: string };
+  heading: string;
+  summary: Map<string, DaySummary>;
+  appointments: AppointmentDetailed[];
+  daySlots: Map<string, OwnerDaySlot[]>;
+  error: Error | null;
+  reload: () => Promise<void>;
+}
+export function useCalendarData(
+  view: CalendarView,
+  anchor: string,
+  timezone: string,
+  showCancelledNoShow: boolean,
+): UseCalendarData;
+```
+
+## 26. `useCalendarMutations`
+
+`src/hooks/useCalendarMutations.ts`
+The write side of `CalendarPage`: status changes (with an Undo toast, matching
+`TodayPage.changeStatus`), owner notes, payments and deletes. Every call reloads the
+page's data afterwards via the `reload` it's given.
+
+```ts
+interface UseCalendarMutations {
+  changeStatus: (id: string, status: AppointmentStatus) => Promise<void>;
+  saveNote: (id: string, note: string) => Promise<void>;
+  logPaymentHandler: (
+    id: string,
+    amountPence: number,
+    note: string,
+    correctsPaymentId?: string,
+  ) => Promise<void>;
+  deleteHandler: (id: string) => Promise<void>;
+}
+export function useCalendarMutations(
+  appointments: AppointmentDetailed[],
+  reload: () => Promise<void>,
+  onDeleted: () => void,
+): UseCalendarMutations;
+```
+
 ---
 
 ## Conventions

@@ -1,4 +1,4 @@
-import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, ChevronDown } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { CalendarShell } from '@/components/dashboard/calendar/CalendarShell';
@@ -15,49 +15,19 @@ import { NewBookingPanel } from '@/components/dashboard/NewBookingPanel';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ErrorState } from '@/components/ui/States';
-import { useToast } from '@/context/ToastContext';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import {
-  listMonthSummary,
-  listDaySlots,
-  type DaySummary,
-  type OwnerDaySlot,
-} from '@/services/availabilityService';
-import {
-  deleteAppointmentAsOwner,
-  listAppointments,
-  setAppointmentStatus,
-  setOwnerNote,
-} from '@/services/appointmentService';
-import { logPayment } from '@/services/paymentService';
-import { errorMessage } from '@/lib/errors';
-import { statusLabel } from '@/lib/status';
-import {
-  formatDateLong,
-  formatDateShort,
-  formatTime,
-  salonDayRange,
-  toSalonDate,
-} from '@/lib/format';
+import { useCalendarData } from '@/hooks/useCalendarData';
+import { useCalendarMutations } from '@/hooks/useCalendarMutations';
+import type { OwnerDaySlot } from '@/services/availabilityService';
+import { formatTime, toSalonDate } from '@/lib/format';
 import {
   CALENDAR_GRID_HEIGHT_CLASS,
-  monthGrid,
-  monthLabel,
-  parseDate,
   shiftAnchor,
-  weekDates,
   type CalendarView,
 } from '@/lib/calendar';
 import { STATUS_CATEGORIES, STATUS_CATEGORY, type StatusCategory } from '@/lib/status';
 import { cn } from '@/lib/utils';
-import { LIVE_STATUSES } from '@/types';
-import type { AppointmentDetailed, AppointmentStatus } from '@/types';
-
-const CANCELLED_AND_NO_SHOW_STATUSES: AppointmentStatus[] = [
-  'cancelled',
-  'rejected',
-  'no_show',
-];
+import type { AppointmentDetailed } from '@/types';
 
 /** Bucket appointments by their salon-local calendar date. */
 function groupByDate(
@@ -82,13 +52,11 @@ function groupByDate(
  * working shape of a fortnight, Day for the hour-by-hour grid a chair-side
  * owner actually works from. `view` and `anchor` (the focused date) live here
  * because the header's prev/today/next controls and the view tabs both act on
- * them, and because the three grids read from a single Supabase fetch keyed
- * off whichever date range the active view needs — a day never re-derives
- * data another view already holds.
+ * them; the date math and the underlying fetch live in `useCalendarData`, and
+ * the write side in `useCalendarMutations`.
  */
 export function CalendarPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
-  const { showToast } = useToast();
   const today = toSalonDate(new Date(), timezone);
 
   const [view, setView] = useState<CalendarView>('week');
@@ -99,84 +67,22 @@ export function CalendarPage(): JSX.Element {
     null,
   );
 
-  const [summary, setSummary] = useState<Map<string, DaySummary>>(new Map());
-  const [appointments, setAppointments] = useState<AppointmentDetailed[]>([]);
-  const [daySlots, setDaySlots] = useState<Map<string, OwnerDaySlot[]>>(new Map());
-  const [error, setError] = useState<Error | null>(null);
-
   // Rail filters — client-side only, over whatever `load()` already fetched.
   const [visibleCategories, setVisibleCategories] = useState<Set<StatusCategory>>(
     () => new Set(STATUS_CATEGORIES),
   );
   const [showCancelledNoShow, setShowCancelledNoShow] = useState(false);
 
-  const cursor = useMemo(() => {
-    const d = parseDate(anchor);
-    return { year: d.getUTCFullYear(), month: d.getUTCMonth() };
-  }, [anchor]);
-
-  // Every view's date list, in salon-calendar order. Month's list is the full
-  // six-week grid (padding days included) so `range` below spans exactly what
-  // `MonthView` renders; Week, Day and Agenda only ever request their own day.
-  const visibleDates = useMemo(() => {
-    if (view === 'day' || view === 'agenda') return [anchor];
-    if (view === 'week') return weekDates(anchor);
-    return monthGrid(cursor.year, cursor.month).flat();
-  }, [view, anchor, cursor]);
-
-  const range = useMemo(
-    () => ({
-      from: visibleDates[0] ?? anchor,
-      to: visibleDates[visibleDates.length - 1] ?? anchor,
-    }),
-    [visibleDates, anchor],
-  );
-
-  // Stepping through views or dates restarts this fetch before the previous
-  // one has landed. Without the sequence guard a slow earlier request can
-  // overwrite what is now on screen — see CalendarPage's prior single-month
-  // version, which carried the same guard for the same reason.
-  const requestId = useRef(0);
-
-  const load = useCallback(async (): Promise<void> => {
-    const id = (requestId.current += 1);
-    try {
-      const needsSummary = view === 'month';
-      const needsSlots = view === 'week' || view === 'day' || view === 'agenda';
-
-      const [summaryRows, appts, slotRows] = await Promise.all([
-        needsSummary ? listMonthSummary(range.from, range.to) : Promise.resolve([]),
-        listAppointments({
-          from: salonDayRange(range.from, timezone).start,
-          to: salonDayRange(range.to, timezone).end,
-          statuses: showCancelledNoShow
-            ? [...LIVE_STATUSES, ...CANCELLED_AND_NO_SHOW_STATUSES]
-            : [...LIVE_STATUSES],
-        }),
-        needsSlots
-          ? Promise.all(visibleDates.map((d) => listDaySlots(d)))
-          : Promise.resolve([]),
-      ]);
-
-      if (id !== requestId.current) return;
-
-      setSummary(new Map(summaryRows.map((r) => [r.on_date, r])));
-      setAppointments(appts);
-      setDaySlots(
-        needsSlots
-          ? new Map(visibleDates.map((d, i) => [d, slotRows[i] ?? []]))
-          : new Map(),
-      );
-      setError(null);
-    } catch (e) {
-      if (id !== requestId.current) return;
-      setError(e instanceof Error ? e : new Error(String(e)));
-    }
-  }, [view, range.from, range.to, timezone, visibleDates, showCancelledNoShow]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const {
+    cursor,
+    visibleDates,
+    heading,
+    summary,
+    appointments,
+    daySlots,
+    error,
+    reload,
+  } = useCalendarData(view, anchor, timezone, showCancelledNoShow);
 
   // A detail card open when the owner switches view or date must not survive
   // the switch — including on a failed refetch, where `appointments` is left
@@ -237,86 +143,8 @@ export function CalendarPage(): JSX.Element {
         ? 'Next up'
         : undefined;
 
-  // A Toast with an Undo action — same pattern as TodayPage.changeStatus.
-  const changeStatus = useCallback(
-    async (id: string, status: AppointmentStatus): Promise<void> => {
-      try {
-        const app = appointments.find((a) => a.id === id);
-        if (!app) {
-          await setAppointmentStatus(id, status);
-          await load();
-          return;
-        }
-        const prevStatus = app.status;
-
-        await setAppointmentStatus(id, status);
-        await load();
-
-        showToast({
-          message: `Action applied: ${statusLabel(status)}.`,
-          action: {
-            label: 'Undo',
-            onClick: () => {
-              void (async (): Promise<void> => {
-                try {
-                  await setAppointmentStatus(id, prevStatus);
-                  await load();
-                } catch (e) {
-                  showToast({ message: errorMessage(e) });
-                }
-              })();
-            },
-          },
-        });
-      } catch (e) {
-        showToast({ message: errorMessage(e) });
-      }
-    },
-    [appointments, load, showToast],
-  );
-
-  const saveNote = useCallback(
-    async (id: string, note: string): Promise<void> => {
-      try {
-        await setOwnerNote(id, note);
-      } catch (e) {
-        showToast({ message: errorMessage(e) });
-      }
-    },
-    [showToast],
-  );
-
-  const logPaymentHandler = useCallback(
-    async (
-      id: string,
-      amountPence: number,
-      note: string,
-      correctsPaymentId?: string,
-    ): Promise<void> => {
-      try {
-        await logPayment(id, amountPence, note, correctsPaymentId);
-        await load();
-      } catch (e) {
-        showToast({ message: errorMessage(e) });
-        throw e;
-      }
-    },
-    [load, showToast],
-  );
-
-  const deleteHandler = useCallback(
-    async (id: string): Promise<void> => {
-      try {
-        await deleteAppointmentAsOwner(id);
-        showToast({ message: 'Appointment deleted.' });
-        setSelectedId(null);
-        await load();
-      } catch (e) {
-        showToast({ message: errorMessage(e) });
-      }
-    },
-    [load, showToast],
-  );
+  const { changeStatus, saveNote, logPaymentHandler, deleteHandler } =
+    useCalendarMutations(appointments, reload, () => setSelectedId(null));
 
   const goToDay = useCallback((date: string): void => {
     setAnchor(date);
@@ -387,13 +215,6 @@ export function CalendarPage(): JSX.Element {
     [],
   );
 
-  const heading =
-    view === 'month'
-      ? monthLabel(cursor.year, cursor.month)
-      : view === 'week'
-        ? `${formatDateShort(`${range.from}T12:00:00Z`, 'UTC')} to ${formatDateShort(`${range.to}T12:00:00Z`, 'UTC')}`
-        : formatDateLong(`${anchor}T12:00:00Z`, 'UTC');
-
   return (
     <DashboardLayout
       title="Calendar"
@@ -445,7 +266,7 @@ export function CalendarPage(): JSX.Element {
         <CalendarShell view={view} onViewChange={setView} />
       </div>
 
-      {error && <ErrorState error={error} onRetry={() => void load()} />}
+      {error && <ErrorState error={error} onRetry={() => void reload()} />}
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">
@@ -471,7 +292,7 @@ export function CalendarPage(): JSX.Element {
               onSelectAppointment={selectAppointment}
               onSelectDate={goToDay}
               onSelectOpenSlot={selectOpenSlot}
-              onChanged={() => void load()}
+              onChanged={() => void reload()}
             />
           )}
 
@@ -484,7 +305,7 @@ export function CalendarPage(): JSX.Element {
               openSlots={daySlots.get(anchor) ?? []}
               onSelectAppointment={selectAppointment}
               onSelectOpenSlot={(slot) => selectOpenSlot(anchor, slot)}
-              onChanged={() => void load()}
+              onChanged={() => void reload()}
             />
           )}
 
@@ -551,7 +372,7 @@ export function CalendarPage(): JSX.Element {
         onDelete={deleteHandler}
         onMoved={() => {
           setSelectedId(null);
-          void load();
+          void reload();
         }}
       />
 
@@ -568,7 +389,7 @@ export function CalendarPage(): JSX.Element {
             onClose={() => setNewBooking(null)}
             onBooked={() => {
               setNewBooking(null);
-              void load();
+              void reload();
             }}
           />
         )}

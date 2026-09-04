@@ -43,10 +43,13 @@ export function ComplaintsPage(): JSX.Element {
 
       <H2>What happens then</H2>
       <ul className="list-disc space-y-1 pl-5">
-        <li>{OWNER_NAME} will acknowledge your message within three working days.</li>
         <li>
-          She will give you a proper answer within fourteen days, or tell you why it is
-          taking longer.
+          {OWNER_NAME} will let you know she has your message as soon as she can, usually
+          within a few days.
+        </li>
+        <li>
+          She will come back to you with a proper answer, and if it is going to take a
+          while she will say so rather than leave you waiting.
         </li>
         <li>
           Complaints go to her directly. There is nobody else in the salon they pass

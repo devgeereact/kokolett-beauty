@@ -105,8 +105,8 @@ export function AccessibilityPage(): JSX.Element {
       <p>
         Email <LegalLink href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</LegalLink>
         {settings?.phone ? ` or call ${settings.phone}` : ''} and say what you were trying
-        to do and what got in the way. We will reply within five working days and tell you
-        what we can do.
+        to do and what got in the way. We will come back to you as soon as we can and tell
+        you what we are able to do about it.
       </p>
       <p>
         If you cannot use the booking page at all, telephone or email the salon and your

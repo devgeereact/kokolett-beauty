@@ -160,16 +160,17 @@ agreement first. Neither is a legal-page edit.
 2. **Under-16 clients.** `/terms` currently says 18 or over to book online and
    `/privacy` says a parent should book for anyone under 18. Confirm that
    matches what the salon actually does.
-3. **Complaint timings.** `/complaints` promises acknowledgement within three
-   working days and an answer within fourteen. Confirm those are achievable.
-4. **Accessibility reply time.** `/accessibility` promises five working days.
-5. **The assistant.** Now that OpenRouter has to be disclosed as receiving
+3. **Complaint and accessibility reply times.** Both pages deliberately say "as
+   soon as she can" rather than naming a number, because a published deadline is
+   a commitment and nobody has confirmed one. Tell us what she can actually
+   manage and the pages can say it plainly, which is better for everyone.
+4. **The assistant.** Now that OpenRouter has to be disclosed as receiving
    customer names and notes, confirm the assistant is worth keeping. If it is,
    check whether OpenRouter's terms include a data processing agreement.
-6. **The published address.** `index.html`'s structured data carries a street
+5. **The published address.** `index.html`'s structured data carries a street
    address and mobile number. If that is a home address, decide whether it
    should be public.
-7. **Insurance.** Confirm the salon's insurer's patch-test requirement matches
+6. **Insurance.** Confirm the salon's insurer's patch-test requirement matches
    the 48 hours now stated on the site.
 
 ---

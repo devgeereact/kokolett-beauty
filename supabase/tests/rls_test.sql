@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(61);
+select plan(64);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -598,6 +598,76 @@ select is_empty(
   $$select policyname from pg_policies
      where schemaname = 'public' and tablename = 'secret_login_attempts'$$,
   'secret_login_attempts stays deny-all: RLS on, no policies, written only by the service role');
+
+-- ---------------------------------------------------------------------------
+-- An unsubscribe cannot be undone from the public endpoint.
+--
+-- `subscribe_to_updates()` is granted to anon and used to end its upsert with
+-- `set unsubscribed_at = null`, so calling it with an address that had opted
+-- out put that person straight back into the broadcast audience (`0058` sends
+-- to `confirmed and unsubscribed_at is null`, and `confirmed` defaults to true
+-- and is never cleared). The anon key ships inside the browser bundle, so the
+-- caller did not have to be the person whose address it was. `0071` drops that
+-- clause; these three assertions are what stops it coming back.
+--
+-- Same DO-block shape as the write probe above, and for the same reason: an
+-- assertion called while `set local role anon` is active dies on pgTAP's own
+-- temp tables, so the outcome is captured first and asserted afterwards.
+
+create temp table subscribe_probe (
+  step         text primary key,
+  sqlstate_out text
+) on commit drop;
+
+do $subscribe$
+declare st text;
+begin
+  begin
+    set local role anon;
+    set local request.jwt.claims = '{"role":"anon"}';
+    perform public.subscribe_to_updates('optout@rls.test', 'Opt Out');
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into subscribe_probe values ('join', st);
+end
+$subscribe$;
+
+select is((select sqlstate_out from subscribe_probe where step = 'join'),
+          'NONE', 'anon can join the mailing list');
+
+update public.subscribers
+   set unsubscribed_at = now()
+ where email = 'optout@rls.test';
+
+do $resubscribe$
+declare st text;
+begin
+  begin
+    set local role anon;
+    set local request.jwt.claims = '{"role":"anon"}';
+    perform public.subscribe_to_updates('optout@rls.test', 'Opt Out');
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into subscribe_probe values ('rejoin', st);
+end
+$resubscribe$;
+
+select is((select sqlstate_out from subscribe_probe where step = 'rejoin'),
+          'NONE',
+          'signing up again with an opted-out address still succeeds, so the endpoint leaks nothing about who is on the list');
+
+select isnt(
+  (select unsubscribed_at from public.subscribers where email = 'optout@rls.test'),
+  null,
+  'and the unsubscribe survives it');
 
 select * from finish();
 

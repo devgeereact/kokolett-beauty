@@ -1,8 +1,16 @@
-import { useState, type JSX, type ReactNode } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type JSX,
+  type ReactNode,
+} from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useUsualHours } from '@/hooks/useUsualHours';
 import { toWhatsAppLink } from '@/lib/whatsapp';
 import { splitAddressLines } from '@/lib/format';
@@ -46,6 +54,41 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   const { lines: hours } = useUsualHours();
   const year = new Date().getFullYear();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const { pathname } = useLocation();
+
+  /* The dashboard's drawer got a trap when `useFocusTrap` was extracted; this
+     one did not, and it is the overlay a customer on a phone actually meets.
+     Without it Tab walked straight out of the full-screen panel into the page
+     underneath — which is still rendered and still focusable — so a keyboard
+     or screen-reader user was tabbing through invisible links with no way to
+     tell where they were, and Escape did nothing. */
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  useFocusTrap(menuOpen, menuPanelRef, closeMenu);
+
+  /* Close on navigation. Every link already calls `closeMenu`, but the browser
+     Back button and any programmatic navigation do not, and a menu left open
+     over the page it navigated to reads as a frozen app. */
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  /* Return focus to the trigger, and stop the page behind scrolling under the
+     overlay: on iOS a scroll gesture over a `fixed` overlay scrolls the body,
+     so closing the menu landed the customer somewhere they had not chosen. */
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    /* Captured now rather than read in the cleanup: by the time the cleanup
+       runs the ref may point at a different node, or none. */
+    const trigger = menuButtonRef.current;
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = overflow;
+      trigger?.focus();
+    };
+  }, [menuOpen]);
 
   const mapUrl = settings?.address_line ? buildMapUrl(settings.address_line) : null;
   /* The footer icon sits in the social row next to Instagram, so it has to go
@@ -147,9 +190,11 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
               Book
             </Link>
             <button
+              ref={menuButtonRef}
               type="button"
               aria-label="Open menu"
               aria-expanded={menuOpen}
+              aria-controls="site-menu"
               onClick={() => setMenuOpen(true)}
               className="ml-1 grid h-11 w-11 place-items-center rounded-full border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
             >
@@ -169,12 +214,19 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
       </header>
 
       {menuOpen && (
-        <div className="fixed inset-0 z-drawer flex flex-col bg-background p-5 lg:hidden">
+        <div
+          ref={menuPanelRef}
+          id="site-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Site menu"
+          className="fixed inset-0 z-drawer flex flex-col bg-background p-5 lg:hidden"
+        >
           <div className="flex justify-end">
             <button
               type="button"
               aria-label="Close menu"
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenu}
               className="grid h-11 w-11 place-items-center rounded-full border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <svg
@@ -194,7 +246,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
               <Link
                 key={link.to}
                 to={link.to}
-                onClick={() => setMenuOpen(false)}
+                onClick={closeMenu}
                 className="border-b border-border py-3.5 font-serif text-2xl font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {link.label}
@@ -202,7 +254,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             ))}
             <Link
               to={routes.customer.home}
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenu}
               className="py-3.5 text-sm font-medium text-muted-foreground"
             >
               My bookings
@@ -210,7 +262,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
           </nav>
           <Link
             to={routes.public.book}
-            onClick={() => setMenuOpen(false)}
+            onClick={closeMenu}
             className="mt-6 inline-flex h-12 items-center justify-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground"
           >
             Book an appointment

@@ -63,7 +63,7 @@ describe('ProtectedRoute', () => {
     Object.assign(mockOwner, { isOwner: false, loading: false, failed: false });
 
     renderAt('/dashboard');
-    expect(screen.getByText("This page doesn't exist.")).toBeInTheDocument();
+    expect(screen.getByText(/We could not find that page/i)).toBeInTheDocument();
   });
 
   it('shows the same generic 404 regardless of the deep link a signed-out visitor hit', () => {
@@ -73,7 +73,7 @@ describe('ProtectedRoute', () => {
     // by design, since there is nowhere login-shaped left to send her.
     renderAt('/dashboard/inbox?tab=requests');
 
-    expect(screen.getByText("This page doesn't exist.")).toBeInTheDocument();
+    expect(screen.getByText(/We could not find that page/i)).toBeInTheDocument();
   });
 
   it('lets salon staff through', () => {
@@ -155,7 +155,7 @@ describe('ProtectedRoute', () => {
       Object.assign(mockOwner, { isOwner: false, loading: false, failed: false });
 
       renderLayout('/dashboard/inbox');
-      expect(screen.getByText("This page doesn't exist.")).toBeInTheDocument();
+      expect(screen.getByText(/We could not find that page/i)).toBeInTheDocument();
     });
 
     it('lets an owner navigate between sibling child routes without hitting the gate again', async () => {
@@ -168,7 +168,7 @@ describe('ProtectedRoute', () => {
       await userEvent.click(screen.getByRole('link', { name: 'Go to inbox' }));
 
       expect(screen.getByText('Inbox')).toBeInTheDocument();
-      expect(screen.queryByText("This page doesn't exist.")).not.toBeInTheDocument();
+      expect(screen.queryByText(/We could not find that page/i)).not.toBeInTheDocument();
       expect(screen.queryByText('No access')).not.toBeInTheDocument();
       expect(
         screen.queryByText('Cannot reach the salon right now'),

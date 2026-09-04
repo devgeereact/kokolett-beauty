@@ -5,7 +5,12 @@ import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
-import { listSubscribers, unsubscribeSubscriber } from '@/services/subscriberService';
+import {
+  listSubscribers,
+  listUnsubscribed,
+  resubscribeSubscriber,
+  unsubscribeSubscriber,
+} from '@/services/subscriberService';
 import { errorMessage } from '@/lib/errors';
 import { formatDateShort } from '@/lib/format';
 import type { Subscriber } from '@/types';
@@ -18,13 +23,18 @@ import type { Subscriber } from '@/types';
 export function MailingListCard(): JSX.Element {
   const { showToast } = useToast();
   const [subscribers, setSubscribers] = useState<Subscriber[] | null>(null);
+  const [unsubscribed, setUnsubscribed] = useState<Subscriber[]>([]);
+  const [showUnsubscribed, setShowUnsubscribed] = useState(false);
   const [pendingRemove, setPendingRemove] = useState<Subscriber | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
     try {
-      setSubscribers(await listSubscribers());
+      const [active, off] = await Promise.all([listSubscribers(), listUnsubscribed()]);
+      setSubscribers(active);
+      setUnsubscribed(off);
     } catch {
       setSubscribers([]);
+      setUnsubscribed([]);
     }
   }, []);
 
@@ -36,6 +46,18 @@ export function MailingListCard(): JSX.Element {
     try {
       await unsubscribeSubscriber(subscriber.id);
       await load();
+    } catch (e) {
+      showToast({ message: errorMessage(e) });
+    }
+  };
+
+  const addBack = async (subscriber: Subscriber): Promise<void> => {
+    try {
+      await resubscribeSubscriber(subscriber.id);
+      await load();
+      showToast({
+        message: `${subscriber.full_name ?? subscriber.email} is back on the list.`,
+      });
     } catch (e) {
       showToast({ message: errorMessage(e) });
     }
@@ -87,6 +109,55 @@ export function MailingListCard(): JSX.Element {
         )}
       </div>
 
+      {/*
+        Who has opted out, and the one way back onto the list.
+
+        Since `0071` the public sign-up form no longer clears an unsubscribe:
+        letting it meant anyone who knew an address could put its owner back
+        into the newsletter audience. That makes this panel the re-consent
+        path, and it is deliberately a person deciding about a named
+        individual rather than an anonymous endpoint clearing a flag.
+      */}
+      {unsubscribed.length > 0 && (
+        <div className="mt-4 border-t border-border pt-4">
+          <button
+            type="button"
+            aria-expanded={showUnsubscribed}
+            onClick={() => setShowUnsubscribed((v) => !v)}
+            className="min-h-touch text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {showUnsubscribed ? 'Hide' : 'Show'} {unsubscribed.length} who opted out
+          </button>
+
+          {showUnsubscribed && (
+            <ul className="mt-2 divide-y divide-border">
+              {unsubscribed.map((s) => (
+                <li key={s.id} className="flex items-center gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-muted-foreground">
+                      {s.full_name ?? s.email}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {s.email}
+                      {s.unsubscribed_at
+                        ? ` · opted out ${formatDateShort(s.unsubscribed_at)}`
+                        : ''}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => void addBack(s)}>
+                    Add back
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Only add somebody back if they have asked you to. Signing up again on the
+            website will not do it for them.
+          </p>
+        </div>
+      )}
+
       <ConfirmDialog
         open={pendingRemove !== null}
         title={
@@ -94,7 +165,7 @@ export function MailingListCard(): JSX.Element {
             ? `Remove ${pendingRemove.full_name ?? pendingRemove.email} from the list?`
             : ''
         }
-        message="They will stop receiving updates. They would need to sign up again to rejoin."
+        message="They will stop receiving updates. Signing up again on the website will not put them back: only you can, from the list of people who opted out."
         tone="destructive"
         confirmLabel="Remove"
         onConfirm={() => {

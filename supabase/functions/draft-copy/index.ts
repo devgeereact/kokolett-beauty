@@ -9,6 +9,15 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const OPENROUTER_MODEL = 'openai/gpt-5-nano';
+const SITE = 'https://www.kokolettbeauty.com';
+
+// Local dev only, and the same fixed loopback list every other function in
+// this directory carries. This one was the last holdout: it fell back to `*`
+// when `ALLOWED_ORIGIN` was unset (a wildcard nobody chose) and had no dev
+// origins at all, so "Polish with AI" was the one owner action that could not
+// be exercised against a dev server — the identical bug that was found and
+// fixed in `email-diagnostics`. The list cannot widen to an attacker origin.
+const DEV_ORIGINS = ['http://localhost:5082', 'http://127.0.0.1:5082'];
 
 function env(name: string): string {
   const v = Deno.env.get(name);
@@ -16,9 +25,12 @@ function env(name: string): string {
   return v;
 }
 
-function corsHeaders(): HeadersInit {
+function corsHeaders(requestOrigin: string | null): Record<string, string> {
+  const configured = Deno.env.get('ALLOWED_ORIGIN') ?? SITE;
+  const origin =
+    requestOrigin && DEV_ORIGINS.includes(requestOrigin) ? requestOrigin : configured;
   return {
-    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
@@ -97,15 +109,28 @@ function parseCompletion(text: string): { subject?: string; body: string } {
   return subject ? { subject, body } : { body };
 }
 
+/** The three prompts this function knows. Anything else is a bad request. */
+function isKind(value: unknown): value is Kind {
+  return value === 'broadcast' || value === 'compose' || value === 'reply';
+}
+
+/**
+ * Longest rough idea worth paying an LLM to read. Generous for the real case
+ * (a few sentences the owner types), and a ceiling on what a compromised or
+ * mistaken client can spend per call.
+ */
+const MAX_INPUT_CHARS = 4000;
+
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders() });
+  const CORS = corsHeaders(req.headers.get('origin'));
+  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
         status: 401,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+        headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -114,7 +139,7 @@ Deno.serve(async (req: Request) => {
     if (ownerError || !isOwner) {
       return new Response(JSON.stringify({ error: 'NOT_AUTHORISED' }), {
         status: 403,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+        headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -122,7 +147,25 @@ Deno.serve(async (req: Request) => {
     if (!body.roughIdea || !body.roughIdea.trim()) {
       return new Response(JSON.stringify({ error: 'roughIdea is required' }), {
         status: 400,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
+    /* An unrecognised `kind` used to index `SYSTEM_PROMPTS` to `undefined`,
+       which OpenRouter rejects — the owner saw a 502 "unavailable right now"
+       for what is a bad request. */
+    if (!isKind(body.kind)) {
+      return new Response(JSON.stringify({ error: 'Unknown draft kind' }), {
+        status: 400,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
+    if (
+      body.roughIdea.length > MAX_INPUT_CHARS ||
+      (body.originalMessage?.length ?? 0) > MAX_INPUT_CHARS
+    ) {
+      return new Response(JSON.stringify({ error: 'That is too long to draft from.' }), {
+        status: 413,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -147,7 +190,7 @@ Deno.serve(async (req: Request) => {
       console.error('[draft-copy] OpenRouter error', response.status, detail);
       return new Response(JSON.stringify({ error: 'The drafting service is unavailable right now.' }), {
         status: 502,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+        headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
 
@@ -156,18 +199,18 @@ Deno.serve(async (req: Request) => {
     if (!text.trim()) {
       return new Response(JSON.stringify({ error: 'The drafting service returned nothing.' }), {
         status: 502,
-        headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+        headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
 
     return new Response(JSON.stringify(parseCompletion(text)), {
-      headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   } catch (e) {
     console.error('[draft-copy] unhandled error', e);
     return new Response(JSON.stringify({ error: 'Something went wrong. Please try again.' }), {
       status: 500,
-      headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json' },
     });
   }
 });

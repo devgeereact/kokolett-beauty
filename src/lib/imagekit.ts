@@ -26,3 +26,23 @@ export function buildImageKitUrl(path: string, t: ImageTransform = {}): string {
 
   return `${endpoint}/${cleanPath}?tr=${params.join(',')}`;
 }
+
+/** Widths a hero or full-bleed photo is actually rendered at, in CSS pixels. */
+const RESPONSIVE_WIDTHS = [640, 960, 1280, 1600, 1920];
+
+/**
+ * A `srcSet` for a full-bleed image, so a phone fetches a phone-sized file.
+ *
+ * ImageKit renders any width on demand, so the only thing stopping this was
+ * that nothing asked for it: the home page's hero requested `w-1920` and
+ * nothing else, and a 390px phone downloaded a 1920px file for every slide.
+ * Pair it with `sizes` at the call site (`100vw` for a full-bleed photo).
+ */
+export function buildImageKitSrcSet(
+  path: string,
+  t: Omit<ImageTransform, 'width'> = {},
+): string {
+  return RESPONSIVE_WIDTHS.map(
+    (w) => `${buildImageKitUrl(path, { ...t, width: w })} ${w}w`,
+  ).join(', ');
+}

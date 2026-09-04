@@ -19,6 +19,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 import { render, type TemplateOverride, type TemplatePayload, SITE } from '../_shared/templates.ts';
 import { requireCronSecret } from '../_shared/auth.ts';
+import { headerSafe } from '../_shared/smtp.ts';
 
 const MAX_ATTEMPTS = 5;
 const BATCH = 25;
@@ -178,8 +179,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const body = render(row.template, row.payload ?? {}, overrides.get(row.template));
 
       await client.send({
-        from: `${fromName} <${fromEmail}>`,
-        to: row.to_email,
+        from: `${headerSafe(fromName)} <${fromEmail}>`,
+        to: headerSafe(row.to_email),
         /**
          * `||`, not `??`: an owner-edited template with a blank subject must
          * fall back to the one the database built when the row was queued.
@@ -187,7 +188,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
          * ("Your appointment is confirmed · KB-1234", "New booking: Jane
          * Doe"); losing them makes the owner's own inbox unsortable.
          */
-        subject: body.subject || row.subject,
+        /**
+         * `headerSafe`, because denomailer writes a pure-ASCII subject into
+         * the DATA block verbatim and a CRLF in it ends the `Subject:` header
+         * early. `submit_contact_message()` is granted to `anon` and builds
+         * its subject from the caller's own name, so this string is not
+         * always ours. See `_shared/smtp.ts`.
+         */
+        subject: headerSafe(body.subject || row.subject),
         content: body.text,
         html: body.html,
         replyTo: fromEmail,

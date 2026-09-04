@@ -3,6 +3,7 @@ import { SiteShell } from '@/components/public/SiteShell';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { routes } from '@/lib/routes';
+import { jsonLd } from '@/lib/utils';
 
 interface Faq {
   question: string;
@@ -66,7 +67,7 @@ export function FAQsPage(): JSX.Element {
         // FAQPage schema — this is the only page describing this content,
         // so the structured data lives beside it rather than in index.html.
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             '@context': 'https://schema.org',
             '@type': 'FAQPage',
             mainEntity: faqs.map((f) => ({

@@ -69,7 +69,7 @@ export function PrivacyPage(): JSX.Element {
   return (
     <LegalPage
       title="Privacy"
-      updated="August 2026"
+      updated="September 2026"
       description="How Kokolett Beauty UK handles your personal information, what is stored, and how to have it removed."
       path={routes.public.privacy}
     >
@@ -105,24 +105,45 @@ export function PrivacyPage(): JSX.Element {
       <p>
         The lawful basis for all of this is performing the appointment you asked for.
         Marketing email is separate and only ever goes to people who explicitly ticked the
-        box; you can stop it at any time by replying to any message.
+        box; every one of those messages carries an unsubscribe link, and you can also
+        stop it by replying to any message.
       </p>
 
       <H2>Who else sees it</H2>
       <p>
-        The salon owner. Nobody else has an account on this system. Behind the scenes we
-        use two suppliers:
+        The salon owner. Nobody else has an account on this system. Behind the scenes the
+        site relies on these suppliers, and this is the whole list:
       </p>
       <ul className="list-disc space-y-1 pl-5">
         <li>
-          <strong>Supabase</strong> hosts the database, in their London region. Your data
-          stays in the United Kingdom.
+          <strong>Supabase</strong> hosts the database, in their London region. Your
+          booking details stay in the United Kingdom.
         </li>
         <li>
           <strong>Our email host</strong> delivers confirmations and reminders from{' '}
           {CONTACT_EMAIL}.
         </li>
+        <li>
+          <strong>Cloudflare</strong> sits in front of the website and handles the
+          connection between your browser and us.
+        </li>
+        <li>
+          <strong>Sentry</strong> records technical errors so faults get fixed. Reports
+          are stored in the European Union and are stripped of your typed text before they
+          are sent.
+        </li>
+        <li>
+          <strong>ImageKit</strong> delivers the photographs on the site.
+        </li>
+        <li>
+          <strong>Google</strong> serves the typefaces the site is set in, and supplies
+          the public reviews shown on the home page.
+        </li>
       </ul>
+      <p>
+        The last four see your IP address and browser, because your browser has to ask
+        them for something. None of them is given your name, email address or booking.
+      </p>
       <p>
         We do not sell your details, share them with advertisers, or use them to build a
         profile of you.
@@ -145,7 +166,8 @@ export function PrivacyPage(): JSX.Element {
       </p>
       <p>
         Sign-in links expire after 30&nbsp;minutes and work once. Expired ones are deleted
-        automatically.
+        automatically. Sent email and any availability request you raised are deleted
+        after two years.
       </p>
 
       <H2>Your rights</H2>
@@ -174,11 +196,29 @@ export function PrivacyPage(): JSX.Element {
         .
       </p>
 
-      <H2>Cookies</H2>
+      <H2>Cookies and what is stored on your device</H2>
       <p>
-        This site sets no advertising or analytics cookies. If you use a sign-in link,
-        your browser stores a single token so the site can show you your own bookings.
-        Signing out removes it.
+        This site sets no cookies at all, and there is no advertising, no tracking across
+        other websites, and no third-party analytics product. Three things are kept in
+        your own browser instead:
+      </p>
+      <ul className="list-disc space-y-1 pl-5">
+        <li>Whether you chose the light or dark version of the site.</li>
+        <li>
+          If you use a sign-in link, a single token so the site can show you your own
+          bookings. Signing out removes it.
+        </li>
+        <li>
+          A random number for the current browser tab, which is discarded when you close
+          it.
+        </li>
+      </ul>
+      <p>
+        That random number is the only thing behind our own counting of how the booking
+        page is used: we record that a page was opened, a time was picked, and a booking
+        was submitted or confirmed. Those records hold no name, no email address and no IP
+        address, and they cannot be tied back to you or followed between visits. They
+        exist so the salon can see where the booking form loses people.
       </p>
 
       <H2>Contact</H2>

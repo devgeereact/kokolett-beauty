@@ -32,7 +32,7 @@ Never in a file.
 - `npm run build` — `tsc --noEmit` then `vite build` → `dist/`; this is also the CI type-check gate
 - `npm run typecheck` — `tsc --noEmit` only
 - `npm run lint` / `npm run lint:fix` — ESLint, zero-warning policy (`--max-warnings 0`)
-- `npm run format` / `npm run format:check` — Prettier (`format:check` is a CI gate; run `format` before committing if CI flags drift)
+- `npm run format` / `npm run format:check` — Prettier (`format:check` is a CI gate; run `format` before committing if CI flags drift). Bare `npm run format` also rewrites every `docs/**/*.md`, so target files explicitly: `npx prettier --write src/path/file.tsx`
 - `npm test` — Vitest, single run · `npm run test:watch` — watch mode · `npm run test:coverage` — V8 coverage
 - `npm run lint:copy` — no em or en dashes in copy (`scripts/check-copy.py`); a CI gate
 - `npm run test:hooks` — verifies the tracked hookify safety rules; a CI gate
@@ -41,12 +41,35 @@ Never in a file.
 - `npm run preview` — serve the production `dist/` build locally
 
 Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build —
-`npm run typecheck`/`npm test` never touch them; CI checks them separately with
-`deno check`.
+`npm run typecheck`/`npm test` never touch them, and eslint ignores them. Check them
+the way CI does, **from `supabase/functions/`** (Deno reads its config from the CWD;
+run it from the repo root and it treats the repo as an npm project and pulls the whole
+Vite tree):
+
+```bash
+cd supabase/functions
+for f in */index.ts _shared/*.ts; do deno check --no-lock --node-modules-dir=none "$f"; done
+deno test --no-lock --node-modules-dir=none --allow-read .
+```
+
+CI has a second job for the database: `supabase db start` applies all
+`supabase/migrations/NNNN_*.sql` in filename order against a fresh Postgres, then
+`supabase test db` runs the pgTAP RLS suite in `supabase/tests/`. A migration that
+cannot apply, or an RLS regression, fails there and nowhere else.
+
+Three build-time gates in CI are easy to trip without noticing:
+- **CSP script hash.** `.htaccess` pins the one inline script in `index.html` by
+  sha256 instead of `'unsafe-inline'`. Edit that script and CI recomputes the hash and
+  fails; ship it unfixed and the browser silently refuses to run it (no theme on first
+  paint, no error).
+- **PWA artefacts.** `dist/sw.js` and `dist/manifest.webmanifest` must exist.
+- **Built with no `.env`.** Vite inlines `VITE_*` at build time, so CI builds without
+  one deliberately — that is what catches a missing variable.
 
 ## Load these first
 | Need                         | File                    |
 | ---------------------------- | ----------------------- |
+| Binding rules for AI edits   | `AGENTS.md` (repo root) |
 | Coding standards             | `docs/RULES.md`         |
 | Folder layout & data flow    | `docs/ARCHITECTURE.md`  |
 | DB tables, types, RLS        | `docs/SCHEMA.md`        |
@@ -63,13 +86,26 @@ Supabase Edge Functions (`supabase/functions/`) are Deno and outside this build 
 - **TypeScript strict.** No implicit `any`; explicit return types on functions
   and hooks.
 - **Styling:** Tailwind classes only, tokens from `tailwind.config.ts`. Not
-  NativeWind — see `docs/DESIGN.md` §12.
+  NativeWind — see `docs/DESIGN.md` §12. The token scale **replaces** Tailwind's
+  defaults rather than extending them, so `bg-red-500` and `z-50` do not resolve — add
+  a token instead of reaching for `text-[11px]`. Tints are `color-mix()` strings and
+  cannot take an alpha modifier: `bg-tint-brand/40` renders nothing, silently.
 - **Offloaded systems:** Supabase (Auth/DB + RLS, eleven Deno Edge Functions,
   `pg_cron` jobs), ImageKit (transformed URLs for service images only), Sentry
   (monitoring). There is no Inngest — the email pipeline is a Postgres trigger plus
   a `pg_cron` drain job.
 - **Path alias:** import app code with `@/…` (maps to `src/`).
+- **`src/lib/env.ts` is the only file that may read `import.meta.env`**, and only as
+  static `import.meta.env.VITE_*` members. A dynamic `import.meta.env[key]` defeats
+  Vite's replacement and inlines every variable into the public bundle.
+- **`.htaccess` is not in `dist/`.** It lives at the repo root, carries the CSP and the
+  SPA rewrite, and has to be copied to the docroot separately — `cpanel-deploy` excludes
+  it unless passed `--with-htaccess`. Without it every deep link 404s while the home
+  page works.
 - **Booking writes go through `book_appointment()`** — never a direct client insert.
+- **Double-booking is prevented by a Postgres exclusion constraint**, not by
+  application logic. Do not replace it with a client-side check that only looks
+  authoritative.
 - **`pending_approval` holds a slot.** Availability logic must treat it as occupied.
 - **Money is integer pence. Time is UTC in storage, `Europe/London` on screen.**
 - **The AI assistant can propose but never execute.** It can read business data and propose two writes — booking an appointment, sending a one-off customer email — but calling either only produces a card in the chat; the actual write (`createAppointmentAsOwner` / `sendCustomEmailAsOwner`) happens client-side, under the owner's own session, only when she clicks Confirm. The AI assistant edge function itself has no path to execute a write on its own.

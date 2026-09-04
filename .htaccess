@@ -141,6 +141,14 @@
   # Origins, and why each is here:
   #   supabase.co        REST, Auth, Edge Functions; wss for realtime bookings
   #   ik.imagekit.io     media delivery
+  #   lh3.googleusercontent.com  the reviewer avatars on the Google reviews the
+  #                      site caches (`authorAttribution.photoUri` from the
+  #                      Places API, stored as `google_reviews.profile_photo_url`).
+  #                      Omitting it did not look broken: `ReviewerAvatar` and
+  #                      `TestimonialsGrid`'s `Avatar` both fall back to an
+  #                      initial-letter badge `onError`, so every avatar on the
+  #                      home page and /testimonials silently degraded to a
+  #                      letter while the console filled with CSP violations.
   #   *.sentry.io        error + trace ingest (EU region host is o<id>.ingest.de.sentry.io)
   #   fonts.googleapis   the stylesheet; fonts.gstatic serves the font files
   #
@@ -167,7 +175,7 @@
   # 12 components using style={{}} for genuinely dynamic geometry emit style
   # attributes. Removing it needs those reworked first, and buys much less than
   # the script-src hash already does.
-  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-2sS670w3y+a111IgzoyiIyJ5ha3SL6VCrwVNnqtH1oM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://ik.imagekit.io; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ik.imagekit.io https://fonts.googleapis.com https://fonts.gstatic.com https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-2sS670w3y+a111IgzoyiIyJ5ha3SL6VCrwVNnqtH1oM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://ik.imagekit.io https://lh3.googleusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ik.imagekit.io https://fonts.googleapis.com https://fonts.gstatic.com https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
 </IfModule>
 
 # ---- Pretty error handling ------------------------------------

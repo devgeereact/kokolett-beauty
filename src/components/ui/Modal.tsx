@@ -35,7 +35,14 @@ export function Modal({
   useEffect(() => {
     if (!open) return undefined;
     returnFocusRef.current = document.activeElement as HTMLElement | null;
+    /* Lock the page behind the dialog. Without this the backdrop is only
+       visually opaque: a scroll gesture over it still moves the page
+       underneath, so dismissing a modal on a phone left the owner somewhere
+       down the list she had not chosen to be. */
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
     return () => {
+      document.body.style.overflow = overflow;
       returnFocusRef.current?.focus();
     };
   }, [open]);

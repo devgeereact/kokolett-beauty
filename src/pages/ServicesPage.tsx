@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { useServiceMenu } from '@/hooks/useServiceMenu';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { formatDuration } from '@/lib/format';
+import { jsonLd } from '@/lib/utils';
 import { routes } from '@/lib/routes';
 import { SALON_SCHEMA_ID } from '@/lib/business';
 
@@ -61,7 +62,7 @@ export function ServicesPage(): JSX.Element {
       {catalogueJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(catalogueJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(catalogueJsonLd) }}
         />
       )}
 

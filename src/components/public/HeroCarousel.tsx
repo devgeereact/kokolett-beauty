@@ -1,6 +1,6 @@
 import { type JSX, type ReactNode, useEffect, useState } from 'react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { buildImageKitUrl } from '@/lib/imagekit';
+import { buildImageKitSrcSet, buildImageKitUrl } from '@/lib/imagekit';
 import { cn } from '@/lib/utils';
 
 export interface HeroSlide {
@@ -37,6 +37,22 @@ export function HeroCarousel({
   const [index, setIndex] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
 
+  /**
+   * How far through the carousel anyone has actually got.
+   *
+   * Every slide used to render its `<img>` on mount, all six of them, all at
+   * `w-1920`, all eagerly — the home page pulled the entire carousel down
+   * before showing one frame of it, and `loading="lazy"` is no help because
+   * the slides are stacked in the viewport, merely transparent. Rendering
+   * only up to `reached` means the first paint fetches one photo. The `+ 1`
+   * keeps one slide ahead of the customer so a cross-fade never starts
+   * against an empty box.
+   */
+  const [reached, setReached] = useState(0);
+  useEffect(() => {
+    setReached((r) => Math.max(r, index));
+  }, [index]);
+
   useEffect(() => {
     if (reducedMotion || slides.length < 2) return;
     const id = window.setInterval(() => {
@@ -61,12 +77,22 @@ export function HeroCarousel({
           style={{ opacity: i === index ? 1 : 0 }}
           aria-hidden="true"
         >
-          <img
-            src={buildImageKitUrl(slide.photoPath, { width: 1920, quality: 85 })}
-            alt=""
-            className="h-full w-full object-cover"
-            style={{ objectPosition: slide.objectPosition }}
-          />
+          {i <= reached + 1 && (
+            <img
+              src={buildImageKitUrl(slide.photoPath, { width: 1920, quality: 85 })}
+              /* The first slide is the largest thing on the page and almost
+                 certainly its LCP element, so it is fetched at high priority
+                 and never deferred. The rest are explicitly low, so they
+                 cannot compete with it or with the JavaScript. */
+              srcSet={buildImageKitSrcSet(slide.photoPath, { quality: 85 })}
+              sizes="100vw"
+              fetchPriority={i === 0 ? 'high' : 'low'}
+              decoding={i === 0 ? 'sync' : 'async'}
+              alt=""
+              className="h-full w-full object-cover"
+              style={{ objectPosition: slide.objectPosition }}
+            />
+          )}
           <div className="absolute inset-0" style={{ background: SCRIM }} />
         </div>
       ))}

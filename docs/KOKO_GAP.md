@@ -1,6 +1,6 @@
 # KOKO_GAP — Gap Analysis vs. the Transformation Brief
 
-**Date:** 2026-08-29, updated through 2026-09-03 as P1/P2 items shipped (see §5's checked items for exact dates). The 2026-09-03 pass was a PWA production audit, run against a real browser and the live project: see §4.
+**Date:** 2026-08-29, updated through 2026-09-03 as P1/P2 items shipped (see §5's checked items for exact dates). Two passes ran on 2026-09-03: a PWA production audit (§4's fourth pass, §7) and, after it deployed, a full production-readiness audit covering functional QA, responsive, navigation, conversion, SEO, social, accessibility, performance, security, privacy, analytics, error handling, content, media, trust, forms, links, code quality and production config (§8). The second found three P1s the first did not look for.
 **Scope:** Verified against the actual codebase (frontend, Supabase schema, Edge Functions, cron, tests), not against what docs or the brief *claim* exists.
 
 ## 0. Framing
@@ -123,6 +123,25 @@ below had ever been recorded. Full detail in `docs/SOCIAL_PROFILE.md` §9.
 | Email diagnostics (SPF/DKIM/DMARC/SMTP status screen) | Live SPF/DKIM/DMARC check via a new `email-diagnostics` Edge Function reading public DNS TXT records over DNS-over-HTTPS (no credentials); an "Email authentication" card on the existing System Health page, alongside the outbox queued/failed counts it already showed | ✅ | `supabase/functions/email-diagnostics/index.ts`, `src/pages/dashboard/SystemHealthPage.tsx` | — | — |
 | AI-drafted broadcast messaging | Rough idea → AI draft (`draft-copy` Edge Function) → owner-reviewed subject/body → send to confirmed, not-unsubscribed mailing-list subscribers only, queued through the existing outbox. Unsubscribe link on every broadcast email (new, previously nonexistent anywhere in the app). Same drafting reused on the one-off Compose modal and the customer-profile reply panel (deterministic templating there is now gone — `emailDrafts.ts` deleted). | ✅ | `supabase/migrations/0058_broadcast_messaging.sql`, `supabase/functions/draft-copy/index.ts`, `src/pages/dashboard/BroadcastsPage.tsx`, `src/pages/UnsubscribePage.tsx` | — | — | — |
 
+### Production readiness (audited 2026-09-03, second pass)
+
+Full detail, including how each was verified, in §8. Listed here so §3 stays the
+single matrix rather than the first pass's matrix plus a separate report.
+
+| Feature | Current implementation | Status | Evidence | What's missing | Priority |
+|---|---|---|---|---|---|
+| A loading button cannot be clicked twice | `Button` resolves `disabled \|\| loading` | ✅ | `src/components/ui/Button.tsx`, `Button.test.tsx` | Fixed 2026-09-03. It was `disabled ?? loading`, and `??` only falls through on null/undefined, so any call site passing `disabled={!canSend}` handed it an explicit `false` the moment its form went valid and the button stayed live for the whole request. Seven such call sites, including Send on the Compose email modal and Offer this slot on a request | — |
+| SMTP headers cannot be injected | `headerSafe()` on subject, recipient and From name | ✅ | `supabase/functions/_shared/smtp.ts` + `smtp.test.ts` (5 assertions), `send-emails/index.ts` | Fixed 2026-09-03. denomailer 1.6.0 returns a pure-ASCII subject unchanged and writes it into the DATA block verbatim, and `submit_contact_message()` is granted to `anon` and builds the subject from the caller's own name | — |
+| An unsubscribe cannot be undone by a stranger | `subscribe_to_updates()` no longer clears `unsubscribed_at`; owner-only "Add back" | ✅ | `supabase/migrations/0071_unsubscribing_sticks.sql`, `rls_test.sql` (3 new assertions), `MailingListCard.tsx` | Fixed 2026-09-03, **not yet applied to production**: needs `supabase db push`. See §8 | P1 (deploy) |
+| Google reviewer avatars render | `img-src` carries `https://lh3.googleusercontent.com` | ✅ | `.htaccess`, verified before/after under an enforcing CSP | Fixed 2026-09-03. Every avatar on the home page and `/testimonials` was CSP-blocked; the `onError` fallback to a letter badge is what hid it | — |
+| Public mobile menu is a real dialog | `role="dialog"`, `aria-modal`, focus trap, Escape, scroll lock, focus return | ✅ | `src/components/public/SiteShell.tsx` | Fixed 2026-09-03. The dashboard drawer got a trap when `useFocusTrap` was extracted; the customer-facing one did not | — |
+| Booking details are a real form | `<form onSubmit>`, `type="submit"` | ✅ | `src/pages/BookPage.tsx` | Fixed 2026-09-03. Enter did nothing, so the phone keyboard's Go key was inert on the last step of the booking flow | — |
+| Hero carousel is not six full-size photos | `srcSet`/`sizes`, `fetchPriority`, slides mounted as reached | ✅ | `src/components/public/HeroCarousel.tsx`, `src/lib/imagekit.ts` | Fixed 2026-09-03. Six `w-1920` images were fetched on every home-page load; measured 2 at `w-1280` after | — |
+| Privacy notice names its processors | Supabase, mail host, Cloudflare, Sentry, ImageKit, Google | ✅ | `src/pages/PolicyPages.tsx` | Fixed 2026-09-03. It named two of six, and its cookie section predated `product_events` | — |
+| 404 is not a dead end | `SiteShell` chrome plus Book / home / three onward links | ✅ | `src/pages/NotFoundPage.tsx` | Fixed 2026-09-03. It was a bare centred block with one button, and it is also what a signed-out dashboard hit and every unmatched single-segment path render | — |
+| `draft-copy` CORS matches the other functions | Configured origin plus the fixed loopback list, no wildcard | ✅ | `supabase/functions/draft-copy/index.ts` | Fixed 2026-09-03, **not yet deployed**. It fell back to `*` when `ALLOWED_ORIGIN` was unset and carried no dev origins: the same bug already found once in `email-diagnostics` | P2 (deploy) |
+| Structured data cannot be broken out of | `jsonLd()` escapes `<` and the JS line separators | ✅ | `src/lib/utils.ts`, `utils.test.ts` | Fixed 2026-09-03. `/services` builds its catalogue from `service_menu` rows the owner types, and `JSON.stringify` escapes nothing HTML cares about. CSP would have refused the injected script, so this is hardening, not a live hole | — |
+
 ### Security / Privacy
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
@@ -152,7 +171,7 @@ below had ever been recorded. Full detail in `docs/SOCIAL_PROFILE.md` §9.
 ### Testing
 | Feature | Current implementation | Status | Evidence | What's missing | Priority |
 |---|---|---|---|---|---|
-| Unit tests | 32 Vitest files, 293 tests, concentrated in pure logic/hooks. Up from 30 files / 276 tests on 2026-09-03 (`errors.test.ts`, `useBusinessSettings.test.ts`) | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
+| Unit tests | 34 Vitest files, 301 tests, concentrated in pure logic/hooks. Up from 30 files / 276 tests over the two 2026-09-03 passes (`errors.test.ts`, `useBusinessSettings.test.ts`, `Button.test.tsx`, `utils.test.ts`) | 🟡 | `lib/`, `hooks/`, a handful of `components/`/`services/`/`pages/` | Most service files and most pages have no test file | P2 |
 | RLS/security tests | Thorough, CI-run | ✅ | See §2 | — | — |
 | E2E tests | Playwright framework + a real booking-race test | ✅ | See Calendar/Bookings section (`e2e/marketing-site.spec.ts`, `e2e/booking-race.spec.ts`) | Customer-journey and full owner-journey E2E tests still don't exist — only the race scenario and marketing-site smoke tests | P2 |
 
@@ -299,6 +318,31 @@ These are judgment calls, not factual corrections, so they weren't auto-applied:
 - [ ] **Sentry release sourcemap upload** — opened 2026-09-03 by the PWA audit. `build.sourcemap` is now `'hidden'`, so the maps are emitted and the dangling `sourceMappingURL` comments are gone, but nothing uploads them: `docs/DEPLOYMENT.md` §7 forbids publishing `*.map` to the docroot (correctly), and there is no upload step. Every stack frame in Sentry is therefore minified, which is most of what monitoring is for. The fix is `@sentry/vite-plugin` plus `SENTRY_AUTH_TOKEN`/org/project as CI secrets, gated on a release build. Not done here because it needs credentials this repo cannot create and a decision about whether CI or the local deploy owns the release.
 - [ ] **Measure Supabase read latency from the salon's own connection** — observed 2026-09-03, not diagnosed. A single-row `booking_settings` read measured **~0.82s TTFB on a warm keep-alive connection** and 2.9-3.2s cold (DNS 2ms, connect 0.87s, TLS 1.85s) from one developer machine to `eu-west-2`. That is slow enough to be felt on first paint and it is the reason the duplicate-fetch bug above was worth fixing rather than tolerating. One machine on one network is not a measurement, though: repeat it from the owner's own device and from a phone on mobile data before concluding anything about the project, the region, or the plan.
 
+**P1 (second 2026-09-03 pass, all fixed in the working tree; the two marked
+"deploy" are code-complete and gate-green but were found after PR #57 shipped,
+so they are not live yet)**
+- [x] **A loading button could be clicked twice** — `Button` used `disabled ?? loading`. `??` only falls through on null/undefined, so a call site combining `loading={sending}` with `disabled={!canSend}` handed it an explicit `false` the moment the form went valid, and the button stayed live for the whole request. Seven call sites did exactly that: Send on the Compose email modal (a second email), Offer this slot on a request (a second offer to the same customer), Apply and Apply to future weeks on the weekly template, the note save on a request, and the name save on Profile. One character (`||`), plus `Button.test.tsx` asserting the explicit-`false` case specifically. Absorbed into `1922cc2`, so this one **is** live.
+- [x] **SMTP header injection through the contact form** — `submit_contact_message()` is granted to `anon` and builds its subject as `'Message from ' || v_full_name`, checking only that the name is non-empty and at most 200 characters. denomailer 1.6.0's `quotedPrintableEncodeInline` returns pure-ASCII input **unchanged** (`config/mail/encoding.ts`) and `connection.ts:114` then writes `"Subject: " + value + "\r\n"` raw, so a CRLF in that name ends the header early and everything after it is parsed as further headers, or after a blank line as the body. The relay is the salon's own authenticated, DKIM-signed sender and the recipient is the owner's inbox. Fixed at the one place a string becomes an SMTP header (`_shared/smtp.ts`), which also covers owner-edited template subjects that never pass through `queue_email()`. Five Deno assertions.
+- [x] **An unsubscribe could be undone by anyone who knew the address** — `subscribe_to_updates()` (0018) ended its upsert with `set unsubscribed_at = null`, and `confirmed` defaults to true and is never cleared, so re-submitting an opted-out address put that person straight back into the broadcast audience (`0058` sends to `confirmed and unsubscribed_at is null`). The anon key ships inside the browser bundle, so the caller did not have to be the person. Migration `0071` drops the clause, adds length ceilings and a global hourly cap; `MailingListCard` gains an owner-only "Show N who opted out" / "Add back", which is where a re-consent decision belongs. The confirm dialog's "They would need to sign up again to rejoin" was describing the bug, and is corrected. **Needs `supabase db push`.**
+
+**P2 (second 2026-09-03 pass)**
+- [x] **Every Google reviewer avatar was CSP-blocked** — `img-src` did not carry `lh3.googleusercontent.com`, which is where `sync-reviews` stores `authorAttribution.photoUri`. `ReviewerAvatar` and `TestimonialsGrid`'s `Avatar` both fall back to an initial-letter badge `onError`, so it degraded silently and only the console knew. Proven both ways against a local server serving the real header: 10 violations and 0 avatars before, 0 violations and 5 avatars after.
+- [x] **The public mobile menu was not a dialog** — no focus trap, no Escape, no `role="dialog"`, no scroll lock, no focus return, and the page behind stayed tabbable. Now uses the same `useFocusTrap` the dashboard drawer got.
+- [x] **The booking form was not a form** — the details step was four inputs and an `onClick` button, so Enter did nothing on the last step of the booking flow.
+- [x] **`draft-copy` CORS fell back to `*`** — and carried no loopback origins, so "Polish with AI" was the one owner action that could not be exercised against a dev server. Also now rejects an unknown `kind` with a 400 instead of sending `undefined` to OpenRouter and returning a 502, and caps input length. **Needs redeploying.**
+- [x] **The privacy notice named two of six processors** — Cloudflare, Sentry, ImageKit and Google Fonts were all absent, its cookie section predated `product_events`, and it still said marketing email was stopped by replying rather than by the unsubscribe link `0058` added. Rewritten against what the code actually does.
+- [x] **The 404 was a dead end** — no nav, no footer, one button. It is also what a signed-out dashboard hit renders and what every unmatched single-segment path falls through to, so it is a page the owner sees too.
+
+**P3 (second 2026-09-03 pass)**
+- [x] Hero carousel fetched six `w-1920` photos on every home-page load, one of which is visible. Added `srcSet`/`sizes`, `fetchPriority` and mount-as-reached: measured 2 requests at `w-1280` on a 390px viewport after.
+- [x] `loading="lazy"`/`decoding="async"` on the four below-the-fold images that had neither.
+- [x] `JSON.stringify` into `<script type="application/ld+json">` on three pages, one of which interpolates owner-typed `service_menu` values. `jsonLd()` escapes `<` and the two JS line separators.
+- [x] `<html lang="en">` against JSON-LD claiming `"inLanguage": "en-GB"`.
+- [x] No body scroll lock behind `Modal`, so a scroll gesture over the backdrop moved the page underneath.
+- [x] `tel:` and `mailto:` on the Contact page opened with `target="_blank"`, leaving an empty tab behind.
+- [x] The Contact form's success state replaced the form with no `role="status"` and no focus move, so it announced nothing.
+- [x] One dev-only `fast-uri` advisory (high, via the eslint tree). `npm audit --omit=dev` was and is clean; `npm audit fix` cleared it.
+
 **P3**
 - [x] Shared `DataTable`/`Tooltip`/`Dropdown`/`Tabs` UI primitives — done: `src/components/ui/{DataTable,Dropdown,Tabs,Tooltip}.tsx`. Deliberately not a full app-wide migration — each is real and adopted into at least one genuine existing consumer rather than left as unused scaffolding, but retrofitting every page that hand-rolls its own table/dropdown/tab-bar in one night is real blast radius with no live-verification budget to match. `Dropdown` → `AppointmentRowMenu.tsx` and `CustomerDetailPanel.tsx`'s More options menu (which previously had no outside-click close at all — a real UX fix, not just deduplication). `Tabs` → `CustomerDetailPanel.tsx` and `TemplateEditorPage.tsx`'s Email/Mobile toggle. `Tooltip` → `NextWeeksGlanceCard.tsx`'s day-glance dots (the sidebar collapse toggle was tried first and reverted — its `absolute -right-3 top-4` positioning depends on its current nearest-`relative`-ancestor, which `Tooltip`'s own wrapper span would have silently changed). `DataTable` → `AppointmentsTable.tsx` is now column definitions over the shared primitive; deliberately not used for Customers, which moved to cards per an explicit prior owner request. Verified live against production for all four. (`Timeline` is its own component — `CustomerTimeline.tsx`, see Customers section above.)
 - [x] Product-event/analytics instrumentation — done, explicitly requested: `supabase/migrations/0064_product_events.sql`, `src/lib/analytics.ts`, `BookingFunnelCard.tsx` on Reports. First-party, not a third-party vendor — `product_events` holds no personal data (event name, random per-tab `sessionStorage` id, timestamp), avoiding the new-external-service/API-key/privacy-review decision a PostHog/Plausible/Mixpanel integration would have needed. Instruments the four real booking-funnel steps (page viewed, slot selected, submitted, confirmed), rate-limited (20/min per session, 500/min globally). Verified live against production with a real anonymous booking through the actual `/book` flow — all four events recorded correctly, Reports showed the resulting funnel with correct counts and percentages. Test data cleaned up.
@@ -428,3 +472,126 @@ cached every `/rest/v1/` read. It keeps doing so until it picks up the new build
 happens on its own, but it is not instant, and on the owner's own installed app it
 is worth forcing once (DevTools → Application → Service Workers → Update, or just
 sign out, which now purges the cache outright).
+
+## 8. Production-readiness audit, 2026-09-03 (second pass)
+
+Run after §7's PWA pass had merged and deployed, against a wider brief: functional
+QA, responsive, navigation, conversion, SEO, social, accessibility, performance,
+security, privacy, analytics, error handling, content, media, trust, forms, links,
+code quality and production configuration. Everything below was read in the code
+and, where it could be, exercised in a real browser against a production build.
+
+### Executive summary
+
+**86/100.** The application was already in good shape and the two gates that
+matter most (RLS, CI) are genuinely thorough, which is why the findings here are
+concentrated in places nothing was looking: a `??` in a shared button, a
+third-party SMTP library's encoder, an upsert clause from migration 0018, and a
+CSP origin nobody had a reason to add. Three P1s, six P2s, eight P3s. All fixed;
+two need a deploy step this pass did not take.
+
+The score is held down by the two undeployed fixes and by what could not be
+verified from here at all (signed-in dashboard journeys, real email delivery,
+the live host's headers after the next deploy), not by anything known-broken.
+
+### Critical (P0)
+
+None. Nothing found is a live outage, a data-loss path, an authentication
+bypass, or a way for one customer to read another's data. The RLS suite covers
+anon, signed-in-non-owner and owner across 24 tables and it passes.
+
+### High (P1)
+
+Three, all fixed. Each is listed with its root cause in §5's P1 block:
+
+1. **`Button` let a loading action be clicked again.** `disabled ?? loading`.
+2. **SMTP header injection reachable by an anonymous caller** through the contact
+   form's name field.
+3. **An unsubscribe could be undone by anyone who knew the address.**
+
+### Medium (P2) and low (P3)
+
+Six and eight respectively, all fixed. See §5.
+
+### Fixes, and how each was tested
+
+| Fix | Tested by |
+|---|---|
+| `Button`: `disabled \|\| loading` | `Button.test.tsx`, four assertions, one of them the explicit-`disabled={false}` case that was the bug |
+| `headerSafe()` on every SMTP header value | `_shared/smtp.test.ts`, five Deno assertions, including that a CRLF cannot end the header block. The library behaviour was confirmed by reading denomailer 1.6.0's own `encoding.ts` and `connection.ts`, not assumed |
+| `0071`: unsubscribe survives a re-signup | All 71 migrations applied in order against a throwaway `supabase/postgres:17.6.1.143` container, then the pgTAP suite run against it. Three new assertions pass, including "and the unsubscribe survives it". The 11 owner-read assertions that fail in that container fail identically on the unmodified suite from `HEAD`, so they are the container's missing GoTrue schema, not a regression |
+| CSP `img-src` gains `lh3.googleusercontent.com` | A local server serving the exact header from `.htaccess`, run twice: with the old value (10 CSP violations, 0 avatars rendered) and the new one (0 violations, 5 avatars at 128x128) |
+| Public mobile menu becomes a dialog | Real browser: opened it and read back `role="dialog"`, `aria-modal="true"`, `body.style.overflow === "hidden"`, `aria-expanded="true"`; pressed Escape and read back that the panel was gone, the scroll lock released and focus was on the trigger |
+| `BookPage` details step becomes a `<form>` | Real browser: selected a slot, typed a first name only, pressed Enter, and read back the validation message plus **zero** Supabase requests, so the form submitted and stopped where it should |
+| Hero carousel responsive and deferred | Real browser at 390x844: two image requests at `w-1280`, not six at `w-1920` |
+| Privacy notice, 404, lazy images, `lang`, `jsonLd()`, `Modal` scroll lock, `tel:`/`mailto:`, Contact success state | `npm run typecheck` / `lint` / `format:check` / `lint:copy` / `test` / `build`, plus a real-browser sweep of all 14 public routes (see below). `jsonLd()` additionally has three unit assertions |
+| `draft-copy` CORS and input validation | `deno check` clean; not exercised against the deployed function, which is why it is marked "needs redeploying" |
+
+### Verified in a real browser
+
+Headless Chromium, production build. Two servers: `npm run preview` on 5082, and
+a local static server replaying the exact `Content-Security-Policy` from
+`.htaccess` so the enforced policy was actually under test (`vite preview` sends
+no such header, which is how the blocked avatars survived every previous pass).
+
+| Check | Result |
+|---|---|
+| Console errors on `/`, `/about`, `/gallery`, `/services`, `/faqs`, `/contact`, `/book`, `/request-availability`, `/subscribe`, `/privacy`, `/terms`, `/booking-policy`, `/my`, a 404, under the enforced CSP | Zero on all fourteen |
+| Horizontal overflow at 390px on the same fourteen | None; `scrollWidth === clientWidth` on every one |
+| Exactly one `<h1>` per route, unique `<title>` per route | Both, on all fourteen |
+| Per-route canonical, description, robots, Open Graph, Twitter, breadcrumb | Present and route-correct (checked on `/services`: canonical, `og:url`, `og:image` 1200x630, `twitter:title`) |
+| Google reviewer avatars under the real CSP | 5 rendered after the fix, 0 before it |
+| JSON-LD blocks parse on `/`, `/services`, `/testimonials`, `/faqs` | All parse; `/services` emits `HairSalon` with six offer-catalogue groups |
+| `/dashboard` while signed out | Renders the 404, no hint a login exists |
+| CI's CSP script-hash assertion, re-run by hand against `dist/index.html` | Match |
+| `<html lang>` | `en-GB` |
+
+### Status by area
+
+| Area | Verdict | Why |
+|---|---|---|
+| Security | **PASS, with one deploy outstanding** | No P0. RLS is the boundary and it is tested. The three real findings (SMTP injection, unsubscribe resurrection, `draft-copy`'s wildcard) are fixed; `0071` and the `draft-copy` redeploy have not been applied to production. Secrets: `.env` is git-ignored, only `VITE_*` reach the bundle, `env.ts` uses static members so nothing else is inlined, no service-role key anywhere in `src/`, sourcemaps emitted but not linked and not deployed. `npm audit --omit=dev` clean |
+| SEO | **PASS** | Unique title, description, canonical, OG, Twitter and a breadcrumb per route; one `<h1>` each; `HairSalon` + `WebSite` + a live `hasOfferCatalog`; robots.txt and sitemap.xml correct and guarded by `sitemap.test.ts`; apex-to-www 301 verified live in §7. Outstanding and not fixable from here: the sitemap has never been submitted to Search Console (§3, P1, needs the owner's Google account) |
+| Accessibility | **PASS** | Skip link, focus-visible rings throughout, semantic landmarks, labelled controls, `role="alert"` on error copy, reduced-motion honoured globally and per component, 44px touch targets on the customer path. The two real gaps found (the mobile menu, the Contact success state) are fixed. Not audited: colour contrast measured against WCAG ratios, and no screen-reader run |
+| Performance | **PASS** | Dashboard fully lazy so a customer downloads none of it; Sentry deferred past first paint; hero now responsive and deferred; images lazy below the fold; fonts preconnected and preloaded. Largest chunks are Sentry (88 kB gzip, after idle), react-vendor (73 kB) and supabase (54 kB). §7's Supabase-latency observation is still the open question and still needs measuring from the owner's own connection |
+| Mobile | **PASS** | No horizontal overflow on any public route at 390px; menu is now a proper dialog with a scroll lock; forms use correct input types and `autoComplete` |
+| Conversion | **PASS** | One primary action everywhere (Book), a secondary that does not compete, no popups, no autoplay video, no invented testimonials or statistics, and the deliberate absence of prices is a documented product decision (`docs/PRD.md` §7), not an omission. The 404 now converts instead of dead-ending |
+| Privacy and legal | **NEEDS ATTENTION (human)** | The notice is now accurate about what is collected, who processes it, what is stored on the device and how long things are kept. It has never been reviewed by anyone qualified, it carries no ICO registration or trading-name detail, and whether this site needs a consent banner at all is a judgement about the `sessionStorage` analytics id that a lawyer should make, not this document. Flagged, not claimed |
+
+### Remaining risks
+
+1. **Two fixes are not live.** `0071` needs `supabase db push`; `draft-copy` needs
+   `supabase functions deploy draft-copy`. Everything else here is frontend or
+   `.htaccess` and ships with the next `cpanel-deploy`.
+2. **`0071` changes behaviour the owner may not expect.** Somebody who unsubscribes
+   and later signs up again on the website will be told "thanks" and will not be
+   added back. That is deliberate (the alternative is an unsubscribe a stranger can
+   undo, and telling them would make the endpoint an is-this-address-on-the-list
+   oracle), and the way back is the new "Add back" control. Worth her knowing.
+3. **The signed-in dashboard was not exercised.** Same gap §7 records. Every browser
+   check here ran signed out, so the `MailingListCard` change is verified by
+   typecheck and reading, not by use.
+4. **No email was actually sent.** The SMTP fix is a pure function with tests and a
+   read of the library's source. A delivered message should be checked after deploy,
+   and the injection itself should be re-probed against the deployed function.
+5. **Contrast ratios and screen readers were not measured.** Accessibility above is
+   a structural pass, not an audited one.
+6. **`AdvisorySection.tsx` is dead code** — 56 lines, imported by nothing,
+   tree-shaken out of the build, and referenced in two comments as a deliberate
+   future affordance. Left in place on that basis rather than deleted. If those
+   comments stop being true, delete it.
+7. **The remaining P2s from earlier passes are unchanged** by this one: bounce
+   ingestion is infrastructure-blocked, the security-events feed is
+   infrastructure-blocked, unit-test coverage of services and pages is still thin,
+   and E2E is still not wired into CI.
+
+### Launch decision
+
+**READY WITH MINOR FIXES.**
+
+The site is live and was already production-shaped. The two "minor fixes" are
+specific and small: apply `0071`, redeploy `draft-copy`, and ship the frontend and
+`.htaccess` changes. Until `0071` is applied, an unsubscribe on the live site can
+still be undone by anyone who knows the address, which is the one finding here
+with a real person on the other end of it.
+

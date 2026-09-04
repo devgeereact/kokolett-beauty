@@ -1,4 +1,4 @@
-import { type FormEvent, type JSX, useState } from 'react';
+import { type FormEvent, type JSX, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Card } from '@/components/ui/Card';
@@ -33,18 +33,38 @@ export function ContactPage(): JSX.Element {
   const [message, setMessage] = useState('');
   const [errorText, setErrorText] = useState<string | null>(null);
   const [state, setState] = useState<FormState>('idle');
+  const sentRef = useRef<HTMLParagraphElement>(null);
+
+  /* Sending replaces the whole form with the thank-you, so the element that
+     had focus is removed from the document and focus falls back to <body>: a
+     keyboard user is returned to the top of the page with no idea the message
+     went, and a screen reader announces nothing at all. Moving focus onto the
+     confirmation is what tells both that something happened. */
+  useEffect(() => {
+    if (state === 'sent') sentRef.current?.focus();
+  }, [state]);
 
   const whatsappUrl = toWhatsAppLink(settings?.phone ?? null);
   const mapUrl = settings?.address_line ? buildMapUrl(settings.address_line) : null;
 
+  /* `sameTab` marks the two channels that are not a web page. A `tel:` or
+     `mailto:` opened with target="_blank" hands the OS the URL and leaves an
+     empty tab behind, which on desktop is a blank window the visitor has to
+     close and on iOS Safari is a dead tab in the switcher. */
   const channels = [
     settings?.phone && {
       label: 'Call',
       value: settings.phone,
       href: `tel:${settings.phone.replace(/\s/g, '')}`,
+      sameTab: true,
     },
     whatsappUrl && { label: 'WhatsApp', value: 'Message us', href: whatsappUrl },
-    { label: 'Email', value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+    {
+      label: 'Email',
+      value: CONTACT_EMAIL,
+      href: `mailto:${CONTACT_EMAIL}`,
+      sameTab: true,
+    },
     {
       label: 'Book online',
       value: 'See open times',
@@ -63,6 +83,7 @@ export function ContactPage(): JSX.Element {
     value: string;
     href: string;
     internal?: boolean;
+    sameTab?: boolean;
   }[];
 
   const onSubmit = async (e: FormEvent): Promise<void> => {
@@ -130,8 +151,9 @@ export function ContactPage(): JSX.Element {
               <a
                 key={channel.label}
                 href={channel.href}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...(channel.sameTab
+                  ? {}
+                  : { target: '_blank', rel: 'noopener noreferrer' })}
                 className={className}
               >
                 {icon}
@@ -152,7 +174,12 @@ export function ContactPage(): JSX.Element {
             </p>
 
             {state === 'sent' ? (
-              <p className="mt-6 rounded-lg bg-tint-brand p-4 text-sm text-accent-foreground">
+              <p
+                ref={sentRef}
+                tabIndex={-1}
+                role="status"
+                className="mt-6 rounded-lg bg-tint-brand p-4 text-sm text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 Thank you. Your message is on its way to us, and we will reply as soon as
                 the salon is open.
               </p>
@@ -171,6 +198,8 @@ export function ContactPage(): JSX.Element {
                   <input
                     id="contact-name"
                     type="text"
+                    autoComplete="name"
+                    maxLength={200}
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -187,6 +216,8 @@ export function ContactPage(): JSX.Element {
                   <input
                     id="contact-email"
                     type="email"
+                    autoComplete="email"
+                    maxLength={320}
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -203,6 +234,7 @@ export function ContactPage(): JSX.Element {
                   <textarea
                     id="contact-message"
                     required
+                    maxLength={4000}
                     rows={4}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -244,6 +276,8 @@ export function ContactPage(): JSX.Element {
                 alt="A finished braided style at Kokolett Beauty UK, a women's hair salon in Thamesmead, South East London"
                 className="absolute inset-0 h-full w-full object-cover"
                 style={{ objectPosition: '50% 25%' }}
+                loading="lazy"
+                decoding="async"
               />
               <div
                 className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay"

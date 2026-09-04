@@ -36,6 +36,8 @@ export function AboutPage(): JSX.Element {
               })}
               alt="A portrait representing the warmth of a Kokolett Beauty appointment"
               className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             <p className="absolute bottom-4 left-4 rounded-lg bg-card px-3.5 py-2.5 text-sm text-foreground shadow-popover">
               <strong className="block font-serif text-base">15+ years</strong>

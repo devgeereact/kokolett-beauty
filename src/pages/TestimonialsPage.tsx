@@ -7,6 +7,7 @@ import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { fetchReviews, type ReviewsSnapshot } from '@/services/reviewService';
 import { routes } from '@/lib/routes';
+import { jsonLd } from '@/lib/utils';
 import { SALON_SCHEMA_ID, buildGoogleProfileUrl } from '@/lib/business';
 
 /**
@@ -61,7 +62,7 @@ export function TestimonialsPage(): JSX.Element {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
+            __html: jsonLd({
               '@context': 'https://schema.org',
               '@type': 'HairSalon',
               '@id': SALON_SCHEMA_ID,

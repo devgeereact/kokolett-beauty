@@ -95,6 +95,8 @@ function ServiceThumb({
       })}
       alt=""
       className={cn('shrink-0 rounded-lg object-cover', THUMB_CLASS[size])}
+      loading="lazy"
+      decoding="async"
     />
   );
 }

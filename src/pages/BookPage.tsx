@@ -1,4 +1,4 @@
-import { type JSX, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, type JSX, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
@@ -82,7 +82,8 @@ export function BookPage(): JSX.Element {
     trackEvent('book_page_viewed');
   }, []);
 
-  const book = async (): Promise<void> => {
+  const book = async (e?: FormEvent): Promise<void> => {
+    e?.preventDefault();
     if (!slot) return;
     // A first name alone cannot tell two customers apart in a diary, so the
     // salon asks for both. The same rules are enforced in book_appointment —
@@ -318,98 +319,101 @@ export function BookPage(): JSX.Element {
               </Button>
             </Card>
 
-            <Field
-              label="Full name"
-              required
-              hint="First name and surname, for example Sarah Bennett."
-            >
-              {({ controlProps }) => (
-                <Input
-                  {...controlProps}
-                  autoComplete="name"
-                  placeholder="Sarah Bennett"
-                  value={details.fullName}
-                  onChange={(e) => setDetails({ ...details, fullName: e.target.value })}
-                />
+            {/* A real `<form>`, not four inputs and a button. Without it,
+                Enter in any field did nothing at all — on a phone the keyboard
+                shows a "Go" key that simply had no effect, and a keyboard user
+                had to Tab past the whole form to reach the one control that
+                worked. `book()` now takes the submit event so the same
+                validation runs either way. */}
+            <form onSubmit={(e) => void book(e)} noValidate>
+              <Field
+                label="Full name"
+                required
+                hint="First name and surname, for example Sarah Bennett."
+              >
+                {({ controlProps }) => (
+                  <Input
+                    {...controlProps}
+                    autoComplete="name"
+                    placeholder="Sarah Bennett"
+                    value={details.fullName}
+                    onChange={(e) => setDetails({ ...details, fullName: e.target.value })}
+                  />
+                )}
+              </Field>
+
+              <Field
+                label="Email"
+                required
+                hint="Your confirmation and booking reference go here."
+              >
+                {({ controlProps }) => (
+                  <Input
+                    {...controlProps}
+                    type="email"
+                    autoComplete="email"
+                    value={details.email}
+                    onChange={(e) => setDetails({ ...details, email: e.target.value })}
+                  />
+                )}
+              </Field>
+
+              <Field
+                label="Mobile number"
+                required
+                hint="So the salon can reach you if anything changes."
+              >
+                {({ controlProps }) => (
+                  <Input
+                    {...controlProps}
+                    type="tel"
+                    autoComplete="tel"
+                    value={details.mobile}
+                    onChange={(e) => setDetails({ ...details, mobile: e.target.value })}
+                  />
+                )}
+              </Field>
+
+              <Field
+                label="What are you after?"
+                hint="Braids, twists, a weave, colour, a trim. Whatever you have in mind, so we know what to prepare and how long to keep aside."
+              >
+                {({ id, describedBy }) => (
+                  <Textarea
+                    id={id}
+                    aria-describedby={describedBy}
+                    value={details.note}
+                    onChange={(e) => setDetails({ ...details, note: e.target.value })}
+                    placeholder="Trim and blow dry. My hair is quite long."
+                  />
+                )}
+              </Field>
+
+              <Checkbox
+                label="Email me occasional offers and news. You can stop at any time."
+                checked={details.marketingConsent}
+                onChange={(e) =>
+                  setDetails({ ...details, marketingConsent: e.target.checked })
+                }
+              />
+
+              {settings?.approve_first_time && (
+                <p className="mb-4 rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
+                  First visit? Your slot is held while the salon confirms, usually within{' '}
+                  {settings.approval_window_h} hours.
+                </p>
               )}
-            </Field>
 
-            <Field
-              label="Email"
-              required
-              hint="Your confirmation and booking reference go here."
-            >
-              {({ controlProps }) => (
-                <Input
-                  {...controlProps}
-                  type="email"
-                  autoComplete="email"
-                  value={details.email}
-                  onChange={(e) => setDetails({ ...details, email: e.target.value })}
-                />
+              {error && (
+                <p role="alert" className="mb-4 text-sm font-medium text-destructive">
+                  {error}
+                </p>
               )}
-            </Field>
 
-            <Field
-              label="Mobile number"
-              required
-              hint="So the salon can reach you if anything changes."
-            >
-              {({ controlProps }) => (
-                <Input
-                  {...controlProps}
-                  type="tel"
-                  autoComplete="tel"
-                  value={details.mobile}
-                  onChange={(e) => setDetails({ ...details, mobile: e.target.value })}
-                />
-              )}
-            </Field>
-
-            <Field
-              label="What are you after?"
-              hint="Braids, twists, a weave, colour, a trim. Whatever you have in mind, so we know what to prepare and how long to keep aside."
-            >
-              {({ id, describedBy }) => (
-                <Textarea
-                  id={id}
-                  aria-describedby={describedBy}
-                  value={details.note}
-                  onChange={(e) => setDetails({ ...details, note: e.target.value })}
-                  placeholder="Trim and blow dry. My hair is quite long."
-                />
-              )}
-            </Field>
-
-            <Checkbox
-              label="Email me occasional offers and news. You can stop at any time."
-              checked={details.marketingConsent}
-              onChange={(e) =>
-                setDetails({ ...details, marketingConsent: e.target.checked })
-              }
-            />
-
-            {settings?.approve_first_time && (
-              <p className="mb-4 rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
-                First visit? Your slot is held while the salon confirms, usually within{' '}
-                {settings.approval_window_h} hours.
-              </p>
-            )}
-
-            {error && (
-              <p role="alert" className="mb-4 text-sm font-medium text-destructive">
-                {error}
-              </p>
-            )}
-
-            <Button
-              size="lg"
-              className="w-full"
-              loading={submitting}
-              onClick={() => void book()}
-            >
-              Confirm booking
-            </Button>
+              <Button type="submit" size="lg" className="w-full" loading={submitting}>
+                Confirm booking
+              </Button>
+            </form>
           </div>
         )}
       </div>

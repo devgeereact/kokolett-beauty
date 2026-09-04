@@ -17,17 +17,11 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useCalendarMutations } from '@/hooks/useCalendarMutations';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { getProfile } from '@/services/profileService';
-import {
-  deleteAppointmentAsOwner,
-  setAppointmentStatus,
-  setOwnerNote,
-} from '@/services/appointmentService';
-import { logPayment } from '@/services/paymentService';
 import { listActiveServices } from '@/services/serviceCatalogService';
 import { errorMessage } from '@/lib/errors';
-import { statusLabel } from '@/lib/status';
 import { downloadCsv } from '@/lib/csv';
 import { formatMoney, formatTime, toSalonDate } from '@/lib/format';
 import { computeDateRange, type DateMode } from '@/lib/appointmentsDateRange';
@@ -37,7 +31,7 @@ import {
   STATUS_LABELS,
   type StatusCategory,
 } from '@/lib/status';
-import type { AppointmentDetailed, AppointmentStatus, Service } from '@/types';
+import type { AppointmentDetailed, Service } from '@/types';
 
 type Tab =
   'all' | 'upcoming' | 'today' | 'in_service' | 'completed' | 'cancelled_no_show';
@@ -247,74 +241,15 @@ export function AppointmentsPage(): JSX.Element {
           ? "Today's next appointment"
           : "Today's last appointment";
 
-  // A Toast with an Undo action — same pattern as TodayPage.changeStatus.
-  const changeStatus = async (id: string, status: AppointmentStatus): Promise<void> => {
-    try {
-      const app = appointments.find((a) => a.id === id);
-      if (!app) {
-        await setAppointmentStatus(id, status);
-        await refresh();
-        return;
-      }
-      const prevStatus = app.status;
-
-      await setAppointmentStatus(id, status);
-      await refresh();
-
-      showToast({
-        message: `Action applied: ${statusLabel(status)}.`,
-        action: {
-          label: 'Undo',
-          onClick: () => {
-            void (async (): Promise<void> => {
-              try {
-                await setAppointmentStatus(id, prevStatus);
-                await refresh();
-              } catch (e) {
-                showToast({ message: errorMessage(e) });
-              }
-            })();
-          },
-        },
-      });
-    } catch (e) {
-      showToast({ message: errorMessage(e) });
-    }
-  };
-
-  const saveNote = async (id: string, note: string): Promise<void> => {
-    try {
-      await setOwnerNote(id, note);
-      await refresh();
-    } catch (e) {
-      showToast({ message: errorMessage(e) });
-    }
-  };
-
-  const logPaymentHandler = async (
-    id: string,
-    amountPence: number,
-    note: string,
-    correctsPaymentId?: string,
-  ): Promise<void> => {
-    try {
-      await logPayment(id, amountPence, note, correctsPaymentId);
-      await refresh();
-    } catch (e) {
-      showToast({ message: errorMessage(e) });
-      throw e;
-    }
-  };
-
-  const handleDelete = async (id: string): Promise<void> => {
-    try {
-      await deleteAppointmentAsOwner(id);
-      showToast({ message: 'Appointment deleted.' });
-      await refresh();
-    } catch (e) {
-      showToast({ message: errorMessage(e) });
-    }
-  };
+  // Same status/note/payment/delete write side as CalendarPage, including
+  // the Undo toast on a status change — one implementation shared by both
+  // screens rather than two copies drifting apart.
+  const {
+    changeStatus,
+    saveNote,
+    logPaymentHandler,
+    deleteHandler: handleDelete,
+  } = useCalendarMutations(appointments, refresh, () => {});
 
   const exportCsv = (): void => {
     const header = [

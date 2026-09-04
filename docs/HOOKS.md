@@ -474,9 +474,11 @@ export function useCalendarData(
 ## 26. `useCalendarMutations`
 
 `src/hooks/useCalendarMutations.ts`
-The write side of `CalendarPage`: status changes (with an Undo toast, matching
-`TodayPage.changeStatus`), owner notes, payments and deletes. Every call reloads the
-page's data afterwards via the `reload` it's given.
+The write side shared by `CalendarPage` and `AppointmentsPage`: status changes (with
+an Undo toast, matching `TodayPage.changeStatus`), owner notes, payments and deletes.
+Every call reloads the caller's data afterwards via the `reload` it's given; the
+`onDeleted` callback lets a caller react to a delete (`CalendarPage` clears its
+selection, `AppointmentsPage` doesn't need to).
 
 ```ts
 interface UseCalendarMutations {

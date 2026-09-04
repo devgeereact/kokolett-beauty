@@ -7,17 +7,18 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { Clock, Scissors, Search, Timer, X } from 'lucide-react';
-import { Avatar } from '@/components/ui/Avatar';
+import { Clock, Search, Timer } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
-import { Field, Input, Select, Textarea } from '@/components/ui/Field';
-import { Switch } from '@/components/ui/Switch';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import {
+  ServiceEditModal,
+  type ServiceDraft,
+} from '@/components/dashboard/services/ServiceEditModal';
+import { ServiceThumb } from '@/components/dashboard/services/ServiceThumb';
 import { useToast } from '@/context/ToastContext';
 import {
   createMenuItem,
@@ -26,92 +27,14 @@ import {
   updateMenuItem,
 } from '@/services/serviceMenuService';
 import { formatDuration } from '@/lib/format';
-import { buildImageKitUrl } from '@/lib/imagekit';
 import { errorMessage } from '@/lib/errors';
-import type { Tone } from '@/lib/tone';
+import { toneForCategory } from '@/lib/serviceCategoryTone';
 import { cn } from '@/lib/utils';
 import type { ServiceMenuItem } from '@/types';
-import { SERVICE_GROUPS } from '@/lib/business';
 
 type Lane = 'all' | 'active' | 'archived';
 
-const DURATION_OPTIONS = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240];
-const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30];
-
-// The 6 categories seeded in migration 0018 — one distinct tone each, so the
-// badge colour actually carries information (matching the reference's
-// per-category colour coding) instead of every card wearing the same tint.
-// Falls back to a stable hash for a category the owner types fresh, so a
-// 7th one never crashes or all lands on one colour.
-const TONE_ROTATION: Tone[] = [
-  'primary',
-  'pending',
-  'in_service',
-  'confirmed',
-  'urgent',
-  'completed',
-];
-
-/* Derived from SERVICE_GROUPS rather than re-listing the six names here. The
-   group names used to be written out twice, and when `0066` renamed "Twists and
-   locs" to "Twists" only one copy was a compile error; the other degraded
-   silently to a hashed colour. */
-const CATEGORY_TONES: Record<string, Tone> = Object.fromEntries(
-  SERVICE_GROUPS.map((group, i) => [group, TONE_ROTATION[i % TONE_ROTATION.length]!]),
-);
-
-function toneForCategory(name: string): Tone {
-  const known = CATEGORY_TONES[name];
-  if (known) return known;
-  let hash = 0;
-  for (let i = 0; i < name.length; i += 1)
-    hash = (hash + name.charCodeAt(i)) % TONE_ROTATION.length;
-  return TONE_ROTATION[hash]!;
-}
-
-const THUMB_PX: Record<'sm' | 'md' | 'lg', number> = { sm: 32, md: 40, lg: 48 };
-const THUMB_CLASS: Record<'sm' | 'md' | 'lg', string> = {
-  sm: 'h-8 w-8',
-  md: 'h-10 w-10',
-  lg: 'h-12 w-12',
-};
-
-/** A real style photo when one's been uploaded, the same tinted placeholder as everywhere else when not. */
-function ServiceThumb({
-  item,
-  size,
-}: {
-  item: ServiceMenuItem;
-  size: 'sm' | 'md' | 'lg';
-}): JSX.Element {
-  if (!item.image_path) return <Avatar name={item.name} size={size} />;
-  const px = THUMB_PX[size];
-  return (
-    <img
-      src={buildImageKitUrl(item.image_path, {
-        width: px * 2,
-        height: px * 2,
-        crop: 'maintain_ratio',
-      })}
-      alt=""
-      className={cn('shrink-0 rounded-lg object-cover', THUMB_CLASS[size])}
-      loading="lazy"
-      decoding="async"
-    />
-  );
-}
-
-interface Draft {
-  name: string;
-  groupName: string;
-  note: string;
-  durationMin: number;
-  bufferMin: number;
-  imagePath: string;
-  active: boolean;
-}
-
-function draftFromItem(s: ServiceMenuItem): Draft {
+function draftFromItem(s: ServiceMenuItem): ServiceDraft {
   return {
     name: s.name,
     groupName: s.group_name,
@@ -123,7 +46,7 @@ function draftFromItem(s: ServiceMenuItem): Draft {
   };
 }
 
-const NEW_DRAFT: Draft = {
+const NEW_DRAFT: ServiceDraft = {
   name: '',
   groupName: '',
   note: '',
@@ -160,7 +83,7 @@ export const ServicesCatalogue = forwardRef<ServicesCatalogueHandle>(
     const [lane, setLane] = useState<Lane>('all');
     const [search, setSearch] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [draft, setDraft] = useState<Draft>(NEW_DRAFT);
+    const [draft, setDraft] = useState<ServiceDraft>(NEW_DRAFT);
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
     const [pendingDelete, setPendingDelete] = useState<ServiceMenuItem | null>(null);
@@ -421,164 +344,19 @@ export const ServicesCatalogue = forwardRef<ServicesCatalogueHandle>(
           </>
         )}
 
-        <Modal
+        <ServiceEditModal
           open={selectedId !== null}
+          isNew={selectedId === 'new'}
+          selected={selected}
+          draft={draft}
+          onDraftChange={setDraft}
+          groupNames={groupNames}
+          formError={formError}
+          saving={saving}
           onClose={() => setSelectedId(null)}
-          ariaLabel={selectedId === 'new' ? 'New service' : 'Edit service'}
-          className="max-w-modal-md"
-        >
-          <Card className="max-h-[85vh] overflow-y-auto p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {selected ? (
-                  <ServiceThumb item={selected} size="lg" />
-                ) : (
-                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
-                    <Scissors aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
-                  </span>
-                )}
-                <h2 className="font-serif text-lg font-semibold text-foreground">
-                  {selectedId === 'new' ? 'New service' : draft.name || 'Service'}
-                </h2>
-              </div>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setSelectedId(null)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
-              >
-                <X aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-              </button>
-            </div>
-
-            <Field label="Service name">
-              {({ id }) => (
-                <Input
-                  id={id}
-                  value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                />
-              )}
-            </Field>
-
-            <Field label="Category" hint="Pick an existing one or type a new one.">
-              {({ id }) => (
-                <>
-                  {groupNames.length > 0 && (
-                    <Select
-                      id={id}
-                      className="mb-2"
-                      value={groupNames.includes(draft.groupName) ? draft.groupName : ''}
-                      onChange={(e) => setDraft({ ...draft, groupName: e.target.value })}
-                    >
-                      <option value="">New category…</option>
-                      {groupNames.map((g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                  <Input
-                    aria-label="Category name"
-                    placeholder="e.g. Braids"
-                    value={draft.groupName}
-                    onChange={(e) => setDraft({ ...draft, groupName: e.target.value })}
-                  />
-                </>
-              )}
-            </Field>
-
-            <Field label="Description (visible to clients)">
-              {({ id }) => (
-                <Textarea
-                  id={id}
-                  value={draft.note}
-                  maxLength={300}
-                  onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-                />
-              )}
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Duration">
-                {({ id }) => (
-                  <Select
-                    id={id}
-                    value={draft.durationMin}
-                    onChange={(e) =>
-                      setDraft({ ...draft, durationMin: Number(e.target.value) })
-                    }
-                  >
-                    {DURATION_OPTIONS.map((m) => (
-                      <option key={m} value={m}>
-                        {formatDuration(m)}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
-              <Field label="Buffer time">
-                {({ id }) => (
-                  <Select
-                    id={id}
-                    value={draft.bufferMin}
-                    onChange={(e) =>
-                      setDraft({ ...draft, bufferMin: Number(e.target.value) })
-                    }
-                  >
-                    {BUFFER_OPTIONS.map((m) => (
-                      <option key={m} value={m}>
-                        {m === 0 ? 'None' : `${m}m`}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </Field>
-            </div>
-
-            <Field label="Image path" hint="An ImageKit path. Leave blank for none.">
-              {({ id }) => (
-                <Input
-                  id={id}
-                  value={draft.imagePath}
-                  onChange={(e) => setDraft({ ...draft, imagePath: e.target.value })}
-                />
-              )}
-            </Field>
-
-            <div className="mb-4 flex items-center justify-between rounded-lg border border-border p-3">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {draft.active ? 'Active' : 'Inactive'}
-                </p>
-                <p className="text-xs text-muted-foreground">Shown on the website</p>
-              </div>
-              <Switch
-                checked={draft.active}
-                onChange={(v) => setDraft({ ...draft, active: v })}
-                aria-label="Service active"
-              />
-            </div>
-
-            {formError && (
-              <p role="alert" className="mb-3 text-sm font-medium text-destructive">
-                {formError}
-              </p>
-            )}
-
-            <div className="flex flex-col gap-2">
-              <Button loading={saving} onClick={() => void save()}>
-                Save changes
-              </Button>
-              {selectedId !== 'new' && selected && (
-                <Button variant="ghost" onClick={() => setPendingDelete(selected)}>
-                  Delete service
-                </Button>
-              )}
-            </div>
-          </Card>
-        </Modal>
+          onSave={() => void save()}
+          onRequestDelete={setPendingDelete}
+        />
 
         <ConfirmDialog
           open={pendingDelete !== null}

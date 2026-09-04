@@ -719,3 +719,18 @@ carrying six open P2s already. The human-judgment items (privacy legal review,
 ICO/consent-banner decision, screen-reader pass) remain exactly what §8 named
 them: decisions for the owner, not blockers this document can resolve.
 
+## 10. Frontend deploy, 2026-09-04
+
+`cpanel-deploy dist kokolettbeauty.com --keep cgi-bin --keep .well-known --go`,
+built from `65f2fce` (which includes this pass's fixes from §9 plus the six
+legal pages and consent gate from a concurrent session). Dry run first, no
+aborts, no unexpected deletions, no `.htaccess` change so no `--with-htaccess`
+needed. Verified live, not just by exit code: the hashed entry chunk served at
+`https://www.kokolettbeauty.com/` matches `dist/index.html`'s
+(`assets/index-zz1kT92P.js`), serves as `text/javascript` rather than the SPA
+`text/html` fallback, and all six new legal routes plus `/` return 200.
+
+All local gates re-run clean against this exact commit before deploying:
+`typecheck` · `lint` · `format:check` · `lint:copy` · `test` (**321 passed**,
+up from 301 — the legal/consent commit's own new tests) · `build`.
+

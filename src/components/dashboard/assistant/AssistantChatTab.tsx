@@ -1,7 +1,5 @@
 import { type JSX, useEffect, useRef, useState } from 'react';
 import {
-  Calendar,
-  Check,
   Clock,
   FileEdit,
   HelpCircle,
@@ -13,21 +11,13 @@ import {
   Sparkles,
   Trash2,
   TrendingUp,
-  X,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
-import {
-  sendChatMessage,
-  type ChatMessage,
-  type Proposal,
-} from '@/services/aiChatService';
-import { createAppointmentAsOwner } from '@/services/appointmentService';
-import { sendCustomEmailAsOwner } from '@/services/emailService';
-import { formatDateTime } from '@/lib/format';
+import { AssistantProposalCard } from '@/components/dashboard/assistant/AssistantProposalCard';
+import { useAssistantConversations } from '@/hooks/useAssistantConversations';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { errorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 
 const CATEGORY_CARDS = [
@@ -69,177 +59,12 @@ const QUICK_ACTIONS = [
   { icon: Search, label: 'Find availability', prompt: "What's on my schedule today?" },
 ] as const;
 
-type ProposalStatus = 'pending' | 'confirmed' | 'dismissed' | 'error';
-
-/**
- * A chat message plus, for an assistant turn that proposed a real action
- * (a booking or a customer email), that proposal and where it stands. The
- * status lives on the message so it survives a reload via `localStorage` —
- * a proposal the owner hasn't acted on yet is still there, still pending,
- * next time she opens the tab.
- */
-interface DisplayMessage extends ChatMessage {
-  proposal?: Proposal;
-  proposalStatus?: ProposalStatus;
-  proposalError?: string;
-}
-
-interface Conversation {
-  id: string;
-  title: string;
-  updatedAt: string;
-  messages: DisplayMessage[];
-}
-
-const STORAGE_KEY = 'kokolett-ai-conversations';
-
-function loadConversations(): Conversation[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Conversation[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveConversations(conversations: Conversation[]): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations.slice(0, 20)));
-  } catch {
-    // Storage full or unavailable — the chat still works, it just won't remember past sessions.
-  }
-}
-
-/**
- * A proposed booking or email, shown as a reviewable card the owner must
- * explicitly act on — this is the one boundary in the whole chat where a
- * click turns into a real write (`createAppointmentAsOwner` /
- * `sendCustomEmailAsOwner`, called from here under her own session, never
- * from the edge function itself).
- */
-function ProposalCard({
-  proposal,
-  status,
-  error,
-  timezone,
-  onConfirm,
-  onDismiss,
-}: {
-  proposal: Proposal;
-  status: ProposalStatus;
-  error?: string;
-  timezone: string;
-  onConfirm: () => void;
-  onDismiss: () => void;
-}): JSX.Element {
-  if (status === 'confirmed') {
-    return (
-      <div className="flex items-center gap-2 rounded-lg border border-status-completed bg-tint-completed px-3 py-2 text-xs font-medium text-status-completed">
-        <Check aria-hidden="true" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-        {proposal.type === 'booking' ? 'Booked.' : 'Sent.'}
-      </div>
-    );
-  }
-
-  if (status === 'dismissed') {
-    return (
-      <div className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">
-        Dismissed.
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-sm rounded-lg border border-border bg-card p-3">
-      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {proposal.type === 'booking' ? (
-          <Calendar aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-        ) : (
-          <Mail aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-        )}
-        {proposal.type === 'booking' ? 'Proposed booking' : 'Proposed email'}
-      </div>
-
-      {proposal.type === 'booking' ? (
-        <dl className="space-y-1 text-sm">
-          <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">Customer</dt>
-            <dd className="text-right font-medium text-foreground">
-              {proposal.full_name}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt className="text-muted-foreground">When</dt>
-            <dd className="text-right font-medium text-foreground">
-              {formatDateTime(proposal.starts_at, timezone)}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt className="shrink-0 text-muted-foreground">Contact</dt>
-            <dd className="truncate text-right text-foreground">
-              {proposal.email}
-              {proposal.mobile ? ` · ${proposal.mobile}` : ''}
-            </dd>
-          </div>
-          {proposal.note && (
-            <div className="pt-1 text-xs text-muted-foreground">
-              Note: {proposal.note}
-            </div>
-          )}
-        </dl>
-      ) : (
-        <div className="space-y-1.5 text-sm">
-          <p className="truncate text-foreground">
-            <span className="text-muted-foreground">To </span>
-            {proposal.customer_name} &lt;{proposal.customer_email}&gt;
-          </p>
-          <p className="font-medium text-foreground">{proposal.subject}</p>
-          <p className="whitespace-pre-wrap text-xs text-muted-foreground">
-            {proposal.body}
-          </p>
-        </div>
-      )}
-
-      {status === 'error' && error && (
-        <p role="alert" className="mt-2 text-xs font-medium text-destructive">
-          {error}
-        </p>
-      )}
-
-      <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="inline-flex h-8 flex-1 items-center justify-center gap-1 rounded-lg bg-primary text-xs font-semibold text-primary-foreground hover:brightness-110"
-        >
-          <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-          {proposal.type === 'booking' ? 'Confirm booking' : 'Confirm & send'}
-        </button>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-border px-3 text-xs font-medium text-foreground hover:bg-muted"
-        >
-          <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-          Dismiss
-        </button>
-      </div>
-    </div>
-  );
-}
-
-const greeting = (firstName: string): DisplayMessage => ({
-  role: 'assistant',
-  content: `Hello ${firstName}! I'm your AI assistant. I can help you with appointments, customers, services, reports, content creation and more. What would you like to do today?`,
-});
-
 /**
  * The AI assistant chat (`docs/design/ai.png`) — a real conversation backed
  * by `supabase/functions/ai-assistant-chat`, which forwards the owner's own
  * session to Anthropic's Claude with read-only tools over the salon's real
- * data. Conversation history persists in this browser via `localStorage`
- * (no backend table for it yet — the transcript never leaves the device
- * except to the model itself).
+ * data. Conversation state and persistence live in `useAssistantConversations`;
+ * this component is the view and the input.
  *
  * Resumes the most recent conversation on mount rather than always starting
  * fresh — a follow-up question a few minutes (or a page reload) later should
@@ -248,18 +73,20 @@ const greeting = (firstName: string): DisplayMessage => ({
  */
 export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Element {
   const { timezone } = useBusinessSettings();
-  const [conversations, setConversations] = useState<Conversation[]>(() =>
-    loadConversations(),
-  );
-  const [messages, setMessages] = useState<DisplayMessage[]>(
-    () => conversations[0]?.messages ?? [greeting(firstName)],
-  );
+  const {
+    conversations,
+    messages,
+    activeConversationId,
+    sending,
+    error,
+    send,
+    confirmProposal,
+    dismissProposal,
+    startNewConversation,
+    openConversation,
+    deleteConversation,
+  } = useAssistantConversations(firstName);
   const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(
-    () => conversations[0]?.id ?? null,
-  );
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -269,117 +96,9 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
     });
   }, [messages]);
 
-  const persistTurn = (nextMessages: DisplayMessage[]): void => {
-    const firstUser = nextMessages.find((m) => m.role === 'user');
-    if (!firstUser) return;
-    const id = activeConversationId ?? crypto.randomUUID();
-    setActiveConversationId(id);
-    const title =
-      firstUser.content.length > 48
-        ? `${firstUser.content.slice(0, 48)}…`
-        : firstUser.content;
-    const updated: Conversation = {
-      id,
-      title,
-      updatedAt: new Date().toISOString(),
-      messages: nextMessages,
-    };
-    setConversations((prev) => {
-      const next = [updated, ...prev.filter((c) => c.id !== id)];
-      saveConversations(next);
-      return next;
-    });
-  };
-
-  // Updates one message in place (used when a proposal's status changes)
-  // and re-persists the conversation, so a confirmed/dismissed proposal
-  // stays that way after a reload instead of asking again.
-  const updateMessage = (index: number, patch: Partial<DisplayMessage>): void => {
-    setMessages((prev) => {
-      const next = prev.map((m, i) => (i === index ? { ...m, ...patch } : m));
-      persistTurn(next);
-      return next;
-    });
-  };
-
-  const send = async (text: string): Promise<void> => {
-    const trimmed = text.trim();
-    if (!trimmed || sending) return;
-    setError(null);
-    const next = [...messages, { role: 'user' as const, content: trimmed }];
-    setMessages(next);
+  const submit = (text: string): void => {
+    void send(text);
     setInput('');
-    setSending(true);
-    try {
-      const { reply, proposal } = await sendChatMessage(next);
-      const withReply: DisplayMessage[] = [
-        ...next,
-        {
-          role: 'assistant' as const,
-          content: reply,
-          proposal: proposal ?? undefined,
-          proposalStatus: proposal ? ('pending' as const) : undefined,
-        },
-      ];
-      setMessages(withReply);
-      persistTurn(withReply);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const confirmProposal = async (index: number, proposal: Proposal): Promise<void> => {
-    try {
-      if (proposal.type === 'booking') {
-        await createAppointmentAsOwner({
-          startsAt: new Date(proposal.starts_at),
-          fullName: proposal.full_name,
-          email: proposal.email,
-          mobile: proposal.mobile,
-          note: proposal.note,
-          durationMin: proposal.duration_min,
-        });
-      } else {
-        await sendCustomEmailAsOwner(
-          proposal.customer_email,
-          proposal.customer_name,
-          proposal.subject,
-          proposal.body,
-        );
-      }
-      updateMessage(index, { proposalStatus: 'confirmed' });
-    } catch (e) {
-      updateMessage(index, { proposalStatus: 'error', proposalError: errorMessage(e) });
-    }
-  };
-
-  const dismissProposal = (index: number): void => {
-    updateMessage(index, { proposalStatus: 'dismissed' });
-  };
-
-  const startNewConversation = (): void => {
-    setActiveConversationId(null);
-    setMessages([greeting(firstName)]);
-    setError(null);
-  };
-
-  const openConversation = (c: Conversation): void => {
-    setActiveConversationId(c.id);
-    setMessages(c.messages);
-    setError(null);
-  };
-
-  const deleteConversation = (id: string): void => {
-    setConversations((prev) => {
-      const next = prev.filter((c) => c.id !== id);
-      saveConversations(next);
-      return next;
-    });
-    if (id === activeConversationId) {
-      startNewConversation();
-    }
   };
 
   return (
@@ -443,7 +162,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                       {m.content}
                     </div>
                     {m.proposal && (
-                      <ProposalCard
+                      <AssistantProposalCard
                         proposal={m.proposal}
                         status={m.proposalStatus ?? 'pending'}
                         error={m.proposalError}
@@ -462,7 +181,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                     <button
                       key={s}
                       type="button"
-                      onClick={() => void send(s)}
+                      onClick={() => submit(s)}
                       className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
                     >
                       {s}
@@ -488,7 +207,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                void send(input);
+                submit(input);
               }}
               className="flex items-center gap-2 border-t border-border p-3"
             >
@@ -540,7 +259,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                 <button
                   key={a.label}
                   type="button"
-                  onClick={() => void send(a.prompt)}
+                  onClick={() => submit(a.prompt)}
                   className="flex items-center gap-2 rounded-lg border border-border p-2.5 text-left text-xs font-medium text-foreground hover:bg-muted"
                 >
                   <a.icon

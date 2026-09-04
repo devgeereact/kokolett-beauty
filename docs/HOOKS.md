@@ -416,6 +416,32 @@ side for `weekly_template` and `availability_slots`, so a customer looking at th
 booking page sees a slot disappear when someone else takes it rather than finding out
 at submit.
 
+## 24. `useAssistantConversations`
+
+`src/hooks/useAssistantConversations.ts`
+Conversation state for the AI assistant chat tab (`AssistantChatTab`): sending a
+message, tracking the one action a reply can propose (a booking or a customer email),
+and a `localStorage`-backed conversation list (`kokolett-ai-conversations`, most
+recent 20) so a thread survives a reload. There is no backend table for it — the
+transcript never leaves the device except to the model itself.
+
+```ts
+interface UseAssistantConversations {
+  conversations: Conversation[];
+  messages: DisplayMessage[];
+  activeConversationId: string | null;
+  sending: boolean;
+  error: string | null;
+  send: (text: string) => Promise<void>;
+  confirmProposal: (index: number, proposal: Proposal) => Promise<void>;
+  dismissProposal: (index: number) => void;
+  startNewConversation: () => void;
+  openConversation: (c: Conversation) => void;
+  deleteConversation: (id: string) => void;
+}
+export function useAssistantConversations(firstName: string): UseAssistantConversations;
+```
+
 ---
 
 ## Conventions

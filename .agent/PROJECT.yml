@@ -1,0 +1,31 @@
+project:
+  name: "kokolett-beauty"
+  type: "pwa"
+  lifecycle: "maintenance"
+  risk: "production"
+
+gee_os:
+  minimum_version: "0.5.0"
+  primary_mode: "EXISTING-APPLICATION"
+  workflows:
+    - "CHANGE-SAFETY"
+    - "PROJECT-RECOVERY"
+  conditional_workflows:
+    - "PWA-RELEASE"
+    - "WEBSITE-LAUNCH"
+    - "RELEASE-GATE"
+
+sources_of_truth:
+  project_memory: "CLAUDE.md, pending modularisation"
+  product_overview: "README.md"
+  implementation: "source tree and package.json"
+  detailed_documentation: "docs/"
+  current_task: ".agent/CURRENT-TASK.md"
+  integration_authority: ".agent/MCP-PROFILE.yml"
+
+exclusions:
+  - "feature work during the instruction-layer migration"
+  - "deletion or renaming during the first adoption wave"
+  - "remote fetch, pull, push, merge or rebase"
+  - "deployment, production mutation or external messages"
+  - "secret copying or credential discovery"

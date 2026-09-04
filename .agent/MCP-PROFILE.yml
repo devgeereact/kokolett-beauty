@@ -1,0 +1,22 @@
+mcp_profile:
+  project: "kokolett-beauty"
+  stage: "local-adoption"
+
+  permitted_reads:
+    - "local files and Git metadata inside this worktree"
+    - "installed package metadata and official documentation when relevant"
+
+  permitted_writes:
+    - "local GEE OS adoption documents explicitly included in the migration"
+
+  production_capabilities: []
+
+  excluded:
+    - "deployments and production database changes"
+    - "DNS, hosting, billing and payment mutations"
+    - "outbound email, messages and notifications"
+    - "copying or printing credentials"
+    - "remote Git operations during local migration"
+
+  environment_confirmation: "required before every future MCP use"
+  evidence: "record non-secret identifiers, operation, result and verification"

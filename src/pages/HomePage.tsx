@@ -240,7 +240,10 @@ export function HomePage(): JSX.Element {
               <dd className="font-serif text-xl font-semibold text-primary-foreground">
                 {stat.value}
               </dd>
-              <dt className="text-xs uppercase tracking-wide text-primary-foreground/80">
+              {/* No /80 here. The 80% tint measured 3.62:1 on --primary and
+                  these labels are 12px, so AA applies at 4.5:1. Full
+                  --primary-foreground is 4.78:1 on the same fill. */}
+              <dt className="text-xs uppercase tracking-wide text-primary-foreground">
                 {stat.label}
               </dt>
             </div>
@@ -309,7 +312,7 @@ export function HomePage(): JSX.Element {
             book and we will keep aside the right amount of time.
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {teaserGroups.map((group, i) => (
               <PhotoCard
                 key={group.group_name}
@@ -327,7 +330,7 @@ export function HomePage(): JSX.Element {
           <p className="mt-8 text-center text-sm text-muted-foreground">
             <Link
               to={routes.public.services}
-              className="font-medium text-primary underline underline-offset-4"
+              className="font-medium text-brand-ink underline underline-offset-4"
             >
               See the full menu
             </Link>

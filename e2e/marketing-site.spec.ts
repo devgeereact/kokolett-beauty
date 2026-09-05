@@ -37,6 +37,13 @@ test('primary marketing nav resolves', async ({ page }) => {
 test('every marketing page carries its own canonical, title and Open Graph URL', async ({
   page,
 }) => {
+  /* Seventeen full page loads in one test, each waiting on a live Supabase
+     read. It measured 29.5s against the 30s default and started failing the
+     moment the suite began running under two colour schemes at once. The work
+     is genuinely this long rather than hung, so give it the room instead of
+     splitting an assertion that reads better whole. */
+  test.slow();
+
   const pages = [
     { path: '/', canonical: 'https://www.kokolettbeauty.com/' },
     { path: '/about', canonical: 'https://www.kokolettbeauty.com/about' },
@@ -169,30 +176,22 @@ const PUBLIC_ROUTES = [
 ];
 
 /**
- * Routes where the brand accent (`text-primary`/`text-brand`, `#c24d2c` on
- * `#e8ebed`; `text-primary-foreground/80` on `bg-primary`) measures under the
- * 4.5:1 AA text threshold at small sizes — 3.62-3.99:1, per axe. Tracked as a
- * P2 in docs/KOKO_GAP.md rather than fixed here: the token was deliberately
- * tuned once already (`--primary: #c24d2c /* 4.78:1 with white *\/` in
- * src/index.css) against a different background than it is actually used on,
- * and retuning the salon's brand colour is a visual-identity call for the
- * owner, not a mechanical accessibility fix. `test.fail()` keeps this a real,
- * running assertion — an unexpected pass here means the gap closed and this
- * annotation should come out.
+ * Seven of these routes used to carry a `test.fail()` for a brand-accent
+ * contrast gap (3.02-3.99:1 where AA wants 4.5:1), deferred as a visual
+ * identity call for the owner. It was not one: `--brand` is documented in
+ * src/index.css as display type at 24px and up, and every failing element was
+ * a 12-14px label or link using it anyway. Closed 2026-09-04 by the
+ * `--brand-ink` token, so the annotations are gone and these are now plain
+ * assertions. If one starts failing again, the palette regressed.
+ *
+ * The suite runs under both colour schemes (see `playwright.config.ts`).
+ * It only ever ran in light mode before, which is how a second, unrelated
+ * failure went unseen for as long as it did: the dark `--muted-foreground`
+ * was tuned against `--card` but is also every field placeholder's colour on
+ * `--input`, where it measured 3.91:1.
  */
-const KNOWN_CONTRAST_GAP = new Set([
-  '/',
-  '/about',
-  '/gallery',
-  '/services',
-  '/testimonials',
-  '/faqs',
-  '/contact',
-]);
-
 for (const path of PUBLIC_ROUTES) {
   test(`${path} has no automated WCAG 2.2 AA violations`, async ({ page }) => {
-    if (KNOWN_CONTRAST_GAP.has(path)) test.fail();
     await page.goto(path, { waitUntil: 'networkidle' });
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
@@ -202,7 +201,6 @@ for (const path of PUBLIC_ROUTES) {
 }
 
 test('the 404 page has no automated WCAG 2.2 AA violations', async ({ page }) => {
-  test.fail(); // same brand-accent contrast gap as KNOWN_CONTRAST_GAP above, on the "404" numeral
   await page.goto('/this-route-does-not-exist', { waitUntil: 'networkidle' });
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
@@ -213,7 +211,6 @@ test('the 404 page has no automated WCAG 2.2 AA violations', async ({ page }) =>
 test('the mobile nav dialog has no automated WCAG 2.2 AA violations when open', async ({
   page,
 }) => {
-  test.fail(); // same brand-accent contrast gap as KNOWN_CONTRAST_GAP above, in the footer reached via the drawer
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /menu/i }).click();
@@ -222,4 +219,22 @@ test('the mobile nav dialog has no automated WCAG 2.2 AA violations when open', 
     .withTags(['wcag2a', 'wcag2aa', 'wcag22aa'])
     .analyze();
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+});
+
+/**
+ * The 404 numeral is decoration, but it is also the only thing on the page
+ * that proves the display end of the type scale still resolves. It carried
+ * `text-7xl`, which the closed `fontSize` scale in tailwind.config.ts does not
+ * define (it stops at `6xl`), so Tailwind emitted nothing and a 72px numeral
+ * rendered at the inherited 16px. Nothing failed: not the build, not the lint,
+ * not axe, which only measured the contrast the wrong size then caused.
+ */
+test('the 404 numeral renders at display size, not the inherited body size', async ({
+  page,
+}) => {
+  await page.goto('/this-route-does-not-exist', { waitUntil: 'networkidle' });
+  const px = await page
+    .locator('p[aria-hidden="true"]', { hasText: '404' })
+    .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(px).toBeGreaterThanOrEqual(48);
 });

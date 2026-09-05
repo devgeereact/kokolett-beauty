@@ -56,6 +56,10 @@ const config: Config = {
       /* Hero headline gradient accent + warm-on-photo text (eyebrow, star).
          Decorative only — never body text, never a fill. */
       'brand-soft': rgb('--brand-soft'),
+      /* Terracotta TEXT under the large-text threshold: eyebrow labels,
+         inline accent links, anything at 12-14px. `brand` and `primary` both
+         fall under 4.5:1 on the page background at those sizes. */
+      'brand-ink': rgb('--brand-ink'),
       /* Interactive. Any fill that carries a text label. */
       primary: {
         DEFAULT: rgb('--primary'),

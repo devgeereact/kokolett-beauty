@@ -100,6 +100,8 @@ export function Reviews({
   const readUrl = profileUrl ?? reviewUrl;
   const [data, setData] = useState<ReviewsSnapshot | null>(null);
   const [start, setStart] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [interacting, setInteracting] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -120,17 +122,23 @@ export function Reviews({
 
   const reviews = data?.reviews ?? [];
   const hasRating = typeof data?.rating === 'number' && (data?.rating_count ?? 0) > 0;
+  const rotating = !reducedMotion && !paused && !interacting;
 
   // Only three cards show at once; anything beyond that rotates through
   // rather than growing the grid, so the homepage teaser never gets taller
   // than three cards regardless of how many reviews are cached.
+  //
+  // The pause control below is WCAG 2.2.2 (Level A): motion that starts on its
+  // own and runs longer than five seconds needs a mechanism to stop it.
+  // `prefers-reduced-motion` is not that mechanism, and a review card
+  // replacing itself mid-sentence is exactly the case the criterion covers.
   useEffect(() => {
-    if (reducedMotion || reviews.length <= VISIBLE_CARDS) return;
+    if (!rotating || reviews.length <= VISIBLE_CARDS) return;
     const id = window.setInterval(() => {
       setStart((i) => (i + 1) % reviews.length);
     }, ROTATE_MS);
     return () => window.clearInterval(id);
-  }, [reducedMotion, reviews.length]);
+  }, [rotating, reviews.length]);
 
   if (reviews.length === 0 && !hasRating) return null;
 
@@ -161,8 +169,27 @@ export function Reviews({
           )}
         </div>
 
+        {reviews.length > VISIBLE_CARDS && !reducedMotion && (
+          <div className="mb-3 flex justify-center">
+            <button
+              type="button"
+              aria-pressed={paused}
+              onClick={() => setPaused((p) => !p)}
+              className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {paused ? 'Resume the review carousel' : 'Pause the review carousel'}
+            </button>
+          </div>
+        )}
+
         {visible.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            className="grid gap-3 md:grid-cols-2 lg:grid-cols-3"
+            onMouseEnter={() => setInteracting(true)}
+            onMouseLeave={() => setInteracting(false)}
+            onFocusCapture={() => setInteracting(true)}
+            onBlurCapture={() => setInteracting(false)}
+          >
             {visible.map((review) => {
               const card = (
                 <Card className="flex h-full flex-col p-4 transition-colors hover:border-brand">

@@ -41,6 +41,7 @@
     /* --- Brand -------------------------------------------------------------
        --brand is identity: display type ≥24px, marketing, focus ring.
        --primary is interactive: any fill that carries a text label.
+       --brand-ink is the same family as text small enough for AA to apply.
        They differ because #e05d38 cannot hold white label text at AA. */
     --brand: 224 93 56; /* #e05d38 */
     /* Marketing-only, decorative: the hero headline's gradient accent word
@@ -49,6 +50,16 @@
     --brand-soft: 246 200 152; /* #f6c898 */
     --primary: 194 77 44; /* #c24d2c — 4.78:1 with white */
     --primary-foreground: 255 255 255;
+    /* Terracotta TEXT below the large-text threshold (under 24px, or under
+       18.66px bold). Neither --brand nor --primary reaches 4.5:1 on the page
+       background: #e05d38 measures 3.03:1 and #c24d2c 3.99:1 on #e8ebed, and
+       every marketing eyebrow label and inline accent link was using one of
+       them at 12-14px. Same hue, darkened until the ratio holds on the worst
+       surface in the set (6.48:1 on --background, 7.76:1 on --card). Use
+       --brand for display type and --primary for fills; use this for the
+       small stuff. Value is shared with --accent-foreground by coincidence
+       of tuning, not by dependency: they are separate tokens on purpose. */
+    --brand-ink: 138 58 31; /* #8a3a1f — 6.48:1 on --background */
 
     /* Text/border/fill over a full-bleed photo (hero, PhotoCard) — always
        white regardless of site theme, since it sits on a photo's own dark
@@ -140,7 +151,13 @@
     --popover: 38 43 56; /* #262b38 */
     --popover-foreground: 229 229 229;
     --muted: 35 41 54; /* #232936 — recessed below card */
-    --muted-foreground: 163 163 163; /* #a3a3a3 — 5.2:1 on card */
+    /* Was #a3a3a3, tuned against --card alone. It is also the colour of every
+       field placeholder (`placeholder:text-muted-foreground` on `bg-input`,
+       15 call sites plus the DatePicker trigger), and on --input (#3d4354) it
+       measured 3.91:1, under the 4.5:1 AA threshold. Lifted until the worst
+       surface it lands on passes; every other surface only improves, and it
+       stays clearly below --foreground (#e5e5e5) so the hierarchy holds. */
+    --muted-foreground: 180 180 180; /* #b4b4b4 — 4.76:1 on --input, 6.35:1 on --card */
     --secondary: 42 48 62; /* #2a303e */
     --secondary-foreground: 229 229 229;
 
@@ -151,6 +168,10 @@
     --brand-soft: 246 200 152; /* #f6c898 */
     --primary: 240 128 94; /* #f0805e */
     --primary-foreground: 26 31 43; /* #1a1f2b — 6.46:1 */
+    /* Dark counterpart of the light --brand-ink: same role, opposite
+       direction. #e05d38 measures 4.29:1 on --background here, so the small
+       terracotta text needs lifting rather than darkening. */
+    --brand-ink: 246 203 184; /* #f6cbb8 — 10.49:1 on --background */
 
     --accent: 59 42 35; /* #3b2a23 */
     --accent-foreground: 246 203 184; /* #f6cbb8 */

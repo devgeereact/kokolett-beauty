@@ -46,7 +46,7 @@ export function AboutPage(): JSX.Element {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand-ink">
               Meet Christy
             </p>
             <h1 className="font-serif text-3xl font-semibold text-foreground md:text-4xl">

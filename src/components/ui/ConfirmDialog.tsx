@@ -147,7 +147,7 @@ export function ConfirmDialog({
             />
           </div>
         )}
-        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="mt-5 flex flex-col-reverse gap-2 md:flex-row md:justify-end">
           <Button ref={cancelRef} variant="ghost" size="sm" onClick={onCancel}>
             {cancelLabel}
           </Button>

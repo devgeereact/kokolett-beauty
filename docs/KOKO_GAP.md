@@ -1005,3 +1005,90 @@ failed**, across both colour schemes).
   uses RFC 2606 addresses, so no mail leaves the building, but it is a live write
   and worth knowing before running the suite. It is now pinned to one Playwright
   project so the new dark-mode project does not double it.
+
+## 12. Shipped, 2026-09-05
+
+Everything in §11 is live. Order was deliberate: database first, then the Edge
+Functions that depend on it, then the frontend.
+
+### Database
+
+Migrations `0072` to `0077`, applied to production. Each one was dry-run inside
+a rolled-back transaction, applied individually with `supabase db query
+--linked --file`, and verified by reading the stored function body back rather
+than by trusting an exit code. A rollback script covering every change was
+written and dry-run before anything was mutated.
+
+`0077` was also behaviour-tested in a rolled-back transaction before it went in:
+attacker-supplied `owner_response`/`owner_note` came back NULL, a 2500-character
+note raised `NOTE_TOO_LONG`, forty preferred dates raised `INVALID_RANGE`, a 4KB
+event payload raised `INVALID_METADATA`, an ordinary event still succeeded, and
+the purge reported its new `product_events_deleted` key.
+
+**The migration history was repaired in the same pass.** `supabase db push` was
+broken on this project: local `0050` to `0071` were recorded remotely under
+timestamp versions from an older apply path, so push saw twenty-two repo files
+it thought were pending and would have replayed them against a database that
+already had them. Replaying them proved it rather than assuming it:
+
+```
+ERROR:  42P07: relation "audit_events" already exists
+```
+
+It dies at `0052`, and push records each migration as it applies it, so it would
+have stopped with the history half-repaired. `migration repair --status applied`
+recorded the repo files that were genuinely already applied; `--status reverted`
+cleared the sixteen duplicate timestamp rows, each checked first against the
+repo file it duplicated. The history is now one-to-one from `0001` to `0077`,
+and `supabase db push --linked --dry-run` reports **"Remote database is up to
+date."** Push is the normal path again.
+
+### Edge Functions
+
+Six deployed: `owner-secret-login` v1 to v2, `send-emails` v30 to v31,
+`sync-reviews` v9 to v10, `ai-assistant-chat` v13 to v14, `draft-copy` v5 to v6,
+`email-diagnostics` v2 to v3. `verify_jwt` was checked after each: `false` on
+`send-emails`, `sync-reviews` and `owner-secret-login`, `true` on the other
+three, matching `supabase/config.toml`. A flipped flag on either cron function
+would have silently stopped the outbox draining.
+
+**The lockout fix was verified against production, not asserted.** Two POSTs to
+the deployed `owner-secret-login` with a wrong slug and two *different* forged
+`X-Forwarded-For` values landed in **one** rate-limit bucket
+(`count(distinct ip_hash) = 1`). Under the previous code they would have been
+two buckets, which is precisely why the five-in-fifteen-minutes lockout could
+never accumulate. The two probe rows were then deleted so they did not consume
+the owner's own lockout budget.
+
+### Frontend
+
+`cpanel-deploy dist kokolettbeauty.com --keep cgi-bin --keep .well-known
+--with-htaccess .htaccess --go`. Dry run first: 66 deletions, every one of them
+inside `assets/`, all superseded hashed chunks. `--with-htaccess` was required
+this time because the CSP changed; the last deploy did not need it.
+
+Verified live rather than by exit code:
+
+- the hashed entry chunk served at `https://www.kokolettbeauty.com/` matches
+  `dist/index.html`, and is served as `text/javascript` rather than falling
+  through to the SPA's `text/html`;
+- the CSP `connect-src` now carries `upload.imagekit.io`, so the owner photo
+  upload can work for the first time;
+- `/`, `/book`, `/contact`, `/services`, `/privacy` and `/accessibility` all
+  return 200;
+- direct-to-origin still returns **403**, so the Cloudflare origin lock survived
+  the `.htaccess` replacement;
+- `sw.js`, `manifest.webmanifest`, `robots.txt` and `sitemap.xml` all 200;
+- **no sourcemaps are published.** A `.js.map` URL returns 200, but with
+  `content-type: text/html`: that is the SPA fallback, not a map. `ls
+  ~/kokolettbeauty.com/assets/*.map` on the server returns 0.
+
+**axe run against the live site**, both colour schemes, all seventeen public
+routes: clean.
+
+### CI
+
+The pull request is green, including the `database` job, which applies all 78
+migrations to a fresh Postgres and then runs the pgTAP suite. That is what
+validated the new owner-guard block in `rls_test.sql`, which could not be run
+locally because the audit machine has no Docker.

@@ -973,11 +973,30 @@ and the PRD's booking-link handoff that no code mints.
   `NOTE_TOO_LONG`, forty preferred dates raise `INVALID_RANGE`, a 4KB event payload
   raises `INVALID_METADATA`, an ordinary event still succeeds, and the purge job
   reports the new `product_events_deleted` key.
-- Still open, all P2 or P3: twenty-two RLS policies call `is_owner()` per row;
-  `available_slots` runs a non-sargable correlated count per candidate slot;
-  notification read state is `localStorage` only; the Toast live region mounts with
-  its content already in it; twelve rich-text toolbar buttons have no accessible
-  name; `RequestDetailPanel.tsx` is 515 lines against a 500-line limit.
+- ~~Still open, all P2 or P3~~ **The tail is closed, 2026-09-05.** The twenty-two
+  per-row `is_owner()` policies, both mismatched owner write paths and the daily-cap
+  gap in the customer reschedule went in `0078`; the accessibility items (Toast live
+  region, twelve unlabelled toolbar buttons, the nested-Escape trap, checkbox size,
+  the unnamed destructive chip, ten `min-h-screen` gates), the five screens that
+  overstated what they knew, four Edge Function fixes and the 515-line file went in
+  PR #61; and `available_slots`'s correlated count went in `0079`.
+
+  **`0079` is worth its own note because it was measured rather than assumed.** The
+  daily-cap check ran a sequential scan of `appointments` for every candidate slot,
+  and this is the one query an unauthenticated visitor can make expensive. On the
+  live schema in a rolled-back transaction seeded with 900 appointments across the
+  90-day horizon: **607.7ms with `SubPlan 1 -> Seq Scan ... loops=424`, versus
+  15.9ms with a single `HashAggregate` joined once**, a 38x improvement, and the
+  estimated cost fell from 1,907,544 to 27,675. A grouped CTE rather than an index,
+  deliberately: an expression index on `(starts_at at time zone tz)::date` needs an
+  IMMUTABLE wrapper around a STABLE function, which is an assumption a tzdata update
+  can break. Equivalence was proved at three densities (0, 40 and 200 appointments):
+  419/419, 397/397 and 291/291 rows with zero difference either way.
+
+  Still genuinely open, and both are features rather than fixes: notification read
+  state lives in `localStorage` so it does not follow the owner between devices, and
+  contact-form enquiries have no table, so a bounced owner notification loses the
+  enquiry outright.
 
 ### Gates, all green after the pass
 

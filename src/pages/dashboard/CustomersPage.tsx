@@ -1,4 +1,4 @@
-import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Download, Plus, Search } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -79,15 +79,26 @@ export function CustomersPage(): JSX.Element {
   // ragged at any breakpoint (same reasoning as ServicesCatalogue).
   const PAGE_SIZE = 12;
 
+  /* Debounce alone does not order responses. Type "sa", pause, type "rah":
+     both requests are in flight, and if "sa" is the slower one it lands last
+     and wins. The list then shows every customer matching "sa" while the box
+     reads "sarah", and the record the owner opens is not the one she was
+     looking for. Same guard as `ComposeContentStep`. */
+  const searchId = useRef(0);
+
   const load = useCallback(async (term: string): Promise<void> => {
+    const id = (searchId.current += 1);
     setLoading(true);
     try {
-      setCustomers(await listCustomersWithStats(term));
+      const rows = await listCustomersWithStats(term);
+      if (id !== searchId.current) return;
+      setCustomers(rows);
       setError(null);
     } catch (e) {
+      if (id !== searchId.current) return;
       setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
-      setLoading(false);
+      if (id === searchId.current) setLoading(false);
     }
   }, []);
 

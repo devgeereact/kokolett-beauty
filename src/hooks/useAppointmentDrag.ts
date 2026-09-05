@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { minutesFromPercent, snapMinutes, type HourRange } from '@/lib/calendar';
 import { salonInstant } from '@/lib/format';
 import { rescheduleAppointmentAsOwner } from '@/services/appointmentService';
@@ -70,6 +70,9 @@ export function useAppointmentDrag(
     onClick: () => void;
     pointerId: number;
   } | null>(null);
+
+  /** The live gesture's listener teardown, so unmount can run it too. */
+  const detachRef = useRef<(() => void) | null>(null);
 
   const durationMinOf = (appointment: AppointmentDetailed): number =>
     (new Date(appointment.ends_at).getTime() -
@@ -192,7 +195,17 @@ export function useAppointmentDrag(
         window.removeEventListener('pointermove', handleMove);
         window.removeEventListener('pointerup', handleUp);
         window.removeEventListener('pointercancel', handleCancel);
+        if (detachRef.current === detach) detachRef.current = null;
       };
+      // These three were the only listeners in src/ with no unmount path.
+      // detach() ran from handleUp and handleCancel and nowhere else, so a
+      // CalendarPage that unmounted mid-gesture (sidebar navigation, a
+      // realtime-driven route change) left them bound to a closure over
+      // stateRef: the next pointerup anywhere in the app would finish the
+      // drag and call rescheduleAppointmentAsOwner, moving a customer's
+      // appointment from a component that no longer exists, with nothing on
+      // screen to say it happened.
+      detachRef.current = detach;
       const handleMove = (ev: PointerEvent): void => {
         if (ev.pointerId !== pointerId) return;
         onPointerMove(ev);
@@ -214,6 +227,8 @@ export function useAppointmentDrag(
     },
     [busy, onPointerMove, finishDrag, cancelDrag],
   );
+
+  useEffect(() => () => detachRef.current?.(), []);
 
   const dismissError = useCallback(() => setError(null), []);
 

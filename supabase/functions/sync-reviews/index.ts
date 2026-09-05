@@ -36,6 +36,14 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { requireCronSecret } from '../_shared/auth.ts';
 
+/**
+ * How many reviews a healthy response carries. Google's documented maximum,
+ * and the number this salon's profile has returned on every run. Anything
+ * short of it is treated as a partial answer rather than as a deletion
+ * instruction: see the prune below.
+ */
+const EXPECTED_REVIEWS = 5;
+
 interface NewReview {
   name?: string;
   relativePublishTimeDescription?: string;
@@ -109,6 +117,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   try {
     const res = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`, {
+      /* Cron-driven, so nobody is watching it hang; the catch below records
+         the abort in `last_error` where the System Health page can show it. */
+      signal: AbortSignal.timeout(15_000),
       headers: {
         'X-Goog-Api-Key': key,
         // Field mask is mandatory in the new API; asking for everything is
@@ -154,12 +165,28 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return Response.json({ error: error.message }, { status: 500 });
     }
 
-    // Drop anything Google no longer returns, so a review the author deleted
-    // does not live on the salon's front page forever.
-    await supabase
-      .from('google_reviews')
-      .delete()
-      .not('id', 'in', `(${rows.map((r) => `"${r.id}"`).join(',')})`);
+    /* Drop anything Google no longer returns, so a review the author deleted
+       does not live on the salon's front page forever.
+
+       Only on a FULL response. The Places API returns at most five reviews and
+       chooses which, and the `rows.length > 0` guard above covers the empty
+       response but not the partial one: a run that came back with one review
+       deleted the other four, and nothing could bring them back because the
+       API is the only source. It was invisible too, since the call succeeded
+       and `last_error` is cleared on this path. The home page and
+       /testimonials would simply have had most of their social proof
+       disappear between two hourly runs. */
+    if (rows.length >= EXPECTED_REVIEWS) {
+      await supabase
+        .from('google_reviews')
+        .delete()
+        .not('id', 'in', `(${rows.map((r) => `"${r.id}"`).join(',')})`);
+    } else {
+      await note(
+        `Google returned ${rows.length} review(s), fewer than the ${EXPECTED_REVIEWS} it normally does. ` +
+          'Stored them and left the existing ones alone rather than deleting reviews that may still exist.',
+      );
+    }
   }
 
   await supabase

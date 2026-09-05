@@ -58,3 +58,42 @@ export async function requireCronSecret(
 
   return null;
 }
+
+/**
+ * The caller's IP, as best a function behind a proxy can know it.
+ *
+ * `X-Forwarded-For` is append-only: each proxy adds the peer address IT saw to
+ * the END of the list, so the LAST entry is the one added by the hop closest to
+ * this function, and every earlier entry is whatever the client chose to send.
+ * Reading `[0]` therefore reads attacker-controlled input, which is what
+ * `owner-secret-login` was doing: a fresh random header per request bought a
+ * fresh rate-limit bucket, and the 5-failures-in-15-minutes lockout behind the
+ * owner's sign-in slug could never fire.
+ *
+ * `cf-connecting-ip` is preferred where present because Cloudflare sets it from
+ * the connection rather than from anything the client can influence.
+ *
+ * Anything that is not a plausible IPv4/IPv6 literal is discarded rather than
+ * hashed: bucketing on a caller-supplied string is the bug, and an unusable
+ * value should land every such caller in one shared bucket, not give each of
+ * them a private one.
+ */
+export function clientIp(req: Request): string {
+  const direct = req.headers.get('cf-connecting-ip')?.trim();
+  if (direct && isIpLiteral(direct)) return direct;
+
+  const chain = (req.headers.get('x-forwarded-for') ?? '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => isIpLiteral(part));
+
+  return chain.length > 0 ? chain[chain.length - 1]! : 'unknown';
+}
+
+/** Shape check only: this decides which bucket to count in, not who to trust. */
+function isIpLiteral(value: string): boolean {
+  if (value.length === 0 || value.length > 45) return false;
+  const ipv4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(value);
+  if (ipv4) return ipv4.slice(1).every((part) => Number(part) <= 255);
+  return /^[0-9a-fA-F:]+$/.test(value) && value.includes(':');
+}

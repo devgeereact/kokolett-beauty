@@ -54,7 +54,10 @@ async function lookupTxt(name: string): Promise<string[]> {
   try {
     const res = await fetch(
       `${DOH_ENDPOINT}?name=${encodeURIComponent(name)}&type=TXT`,
-      { headers: { accept: 'application/dns-json' } },
+      /* A DNS answer that never arrives should read as "could not check",
+         which the empty return below already means, rather than hanging the
+         System Health page. */
+      { headers: { accept: 'application/dns-json' }, signal: AbortSignal.timeout(8_000) },
     );
     if (!res.ok) return [];
     const body = (await res.json()) as DohResponse;

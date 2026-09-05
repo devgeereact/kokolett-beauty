@@ -170,7 +170,14 @@ Deno.serve(async (req: Request) => {
     }
 
     const apiKey = env('OPENROUTER_API_KEY');
+    /* Every outbound call in this function tree was a bare `fetch` until
+       2026-09-05. A model provider that is degraded rather than down leaves
+       the owner staring at a spinner until the platform kills the isolate,
+       with no error and nothing logged. 20s is generous for a single
+       completion and finite, which is the point; the 502 branch below already
+       handles the AbortError this raises. */
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      signal: AbortSignal.timeout(20_000),
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,

@@ -19,7 +19,28 @@
  * and cancel their appointments for the 30 minutes the link is valid.
  */
 export function redactAccessToken(value: string): string {
-  return value.replace(/\/access\/[^/?#\s]+/gi, '/access/[redacted]');
+  return (
+    value
+      .replace(/\/access\/[^/?#\s]+/gi, '/access/[redacted]')
+      /* The customer magic link was the only pattern here until 2026-09-05,
+     which left the OWNER's credentials in plain sight. `owner-password-reset`
+     mints `/reset-password?token_hash=<credential>&type=recovery`, and
+     `ResetPasswordPage` reads that parameter before `scrubUrl()` clears it,
+     so the recovery token reached `request.url`, the navigation breadcrumbs
+     and the session replay that `replaysOnErrorSampleRate: 1` attaches to any
+     error during recovery. Anyone who could read Sentry could take the owner's
+     account within the link's one-hour life. `access_token`/`refresh_token`
+     are the same exposure on the implicit-flow fragment `authLink.ts` also
+     accepts, and `code` is the PKCE equivalent.
+
+     Matched anywhere in a string rather than only in a URL, because these
+     arrive inside breadcrumb messages and replay payloads as often as they
+     arrive as a bare href. */
+      .replace(
+        /\b(token_hash|access_token|refresh_token|provider_token|provider_refresh_token|code)=[^&#\s"']+/gi,
+        '$1=[redacted]',
+      )
+  );
 }
 
 /** Apply `redactAccessToken` to every string reachable from `value`. */

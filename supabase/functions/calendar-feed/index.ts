@@ -44,7 +44,13 @@ function esc(value: string | null | undefined): string {
     .replace(/\\/g, '\\\\')
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
-    .replace(/\r?\n/g, '\\n');
+    /* `\r\n|\r|\n`, not `\r?\n`: the latter never matches a carriage return
+       that is not followed by a line feed, so a lone CR survived into
+       SUMMARY: and DESCRIPTION:. Both carry `customer_note` and
+       `customer_name`, which come from the public booking form, and RFC 5545
+       lines are CRLF-delimited, so several parsers treat a bare CR as a line
+       terminator and read whatever follows as a new property. */
+    .replace(/\r\n|\r|\n/g, '\\n');
 }
 
 /** 20260815T100000Z */

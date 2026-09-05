@@ -177,6 +177,29 @@ export function SystemHealthPage(): JSX.Element {
                   >
                     {health.email.failed_count}
                   </dd>
+                  {/* A message claimed by a send that never reported back. It
+                      is in neither of the two buckets above, which is why an
+                      undelivered booking confirmation could sit here while
+                      this card said the queue was clean. `send-emails` now
+                      recovers rows stranded for more than fifteen minutes, so
+                      a figure that keeps climbing means sends are being cut
+                      short rather than that mail is lost. Hidden entirely on
+                      a database still on migration 0074 or earlier, which
+                      does not report the count at all. */}
+                  {typeof health.email.sending_count === 'number' && (
+                    <>
+                      <dt className="text-muted-foreground">Mid-send</dt>
+                      <dd
+                        className={cn(
+                          health.email.sending_count > 0
+                            ? 'text-status-pending'
+                            : 'text-foreground',
+                        )}
+                      >
+                        {health.email.sending_count}
+                      </dd>
+                    </>
+                  )}
                 </dl>
                 <Link
                   to={routes.owner.email}
@@ -231,11 +254,11 @@ export function SystemHealthPage(): JSX.Element {
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <dt className="text-muted-foreground">Last synced</dt>
                   <dd className="text-foreground">
-                    {health.reviews.last_fetched_at
+                    {health.reviews?.last_fetched_at
                       ? formatDateTime(health.reviews.last_fetched_at, timezone)
                       : 'Never'}
                   </dd>
-                  {health.reviews.last_error && (
+                  {health.reviews?.last_error && (
                     <>
                       <dt className="text-muted-foreground">Last error</dt>
                       <dd className="text-status-no-show">{health.reviews.last_error}</dd>

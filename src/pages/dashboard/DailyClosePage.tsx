@@ -125,7 +125,7 @@ export function DailyClosePage(): JSX.Element {
             </Card>
           )}
 
-          <Card className="grid grid-cols-2 gap-2 p-0 sm:grid-cols-4">
+          <Card className="grid grid-cols-2 gap-2 p-0 md:grid-cols-4">
             <Stat label="Scheduled" value={summary.scheduled_count} />
             <Stat label="Completed" value={summary.completed_count} />
             <Stat label="Cancelled / no-show" value={summary.cancelled_count} />

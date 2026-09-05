@@ -31,16 +31,72 @@ leaks.
 
 ---
 
+## 0a. Migration history, repaired 2026-09-05
+
+`0072` through `0076` are **applied and verified** (see `docs/KOKO_GAP.md` §11).
+They were dry-run inside a rolled-back transaction, applied one at a time with
+`supabase db query --linked --file`, and then checked by reading the stored
+function bodies back rather than by trusting an exit code.
+
+They were NOT applied with `supabase db push`, and until the same session that
+is because push was broken on this project. The history had diverged: local
+`0050` to `0071` were recorded remotely under timestamp versions from an older
+apply path, so push saw twenty-two repo files it thought were pending and tried
+to replay them against a database that already had them. Replaying them in a
+rolled-back transaction proved it:
+
+```
+ERROR:  42P07: relation "audit_events" already exists
+```
+
+It dies at `0052`, and because push records each migration as it applies it, it
+would have left the history half-repaired.
+
+**Fixed.** `migration repair --status applied 0050 … 0071` recorded the repo
+files that were genuinely already applied, and `--status reverted` cleared the
+sixteen duplicate timestamp rows (each verified first as a byte-equivalent of a
+repo file, so no provenance was lost that the repo does not already hold). The
+history is now one-to-one, `0001` to `0076`, and `supabase db push --linked
+--dry-run` reports **"Remote database is up to date."**
+
+**From here, `supabase db push --linked` is the normal path again.** Before a
+push, still dry-run against the live database in a rolled-back transaction: it
+needs no Docker and persists nothing.
+
+```bash
+{ echo "begin;"; cat supabase/migrations/00NN_*.sql; echo "rollback;"; } > /tmp/dry.sql
+supabase db query --linked --file /tmp/dry.sql
+```
+
+What `0072` to `0076` changed, one line each:
+
+| Migration | Change |
+| --- | --- |
+| `0072` | An anonymous booking fills a blank field on an existing customer but never overwrites one, and never raises marketing consent. |
+| `0073` | Erasure reaches contact-form enquiries; revoking sessions also cancels unredeemed magic links. |
+| `0074` | Un-cancelling re-raises an exclusion violation as `SLOT_TAKEN`; drops three orphaned 0008 slot functions. |
+| `0075` | System Health reports the `sending` and `cancelled` outbox counts, and no longer returns a bare NULL for reviews. |
+| `0076` | Sign-in slug: 8-character floor, reserved list resynced with `routes.ts`, attack alert fires on a band rather than an exact count, plus the index its hourly count needs. |
+
+A rollback script covering all five lives in the audit scratch notes; every
+change is a `create or replace function` whose prior definition is in the
+migration that introduced it, except `0074`'s three `drop function` statements,
+whose bodies are in `0008`.
+
 ## 0. Before the first deploy
 
-- [ ] All migrations applied, in filename order (`0001_init.sql` through `0046_*`).
+- [ ] All migrations applied, in filename order (`0001_init.sql` through `0076_*`).
       `supabase db push --linked`.
 - [ ] `0027_payment_log.sql` pushed (`supabase db push --linked`) before or together with
       any build that reads `today_collected_pence` — otherwise the Today page's
       "Collected today" stat renders `£0.00` instead of a real figure until the
       migration is pushed.
 - [ ] `btree_gist` extension present; the `appointments_no_overlap` constraint exists.
-- [ ] Owner row inserted into `public.staff`.
+- [ ] Owner row inserted into `public.staff`, **with a `login_slug`**. No migration
+      creates that row, and a NULL slug means `resolve_owner_slug()` matches nothing,
+      so `SecretGate` 404s every URL and the sign-in form is unreachable. The
+      password reset is no way round it: it is triggered from inside that form. The
+      statement is in `README.md` and `docs/SCHEMA.md` §6.
 - [ ] `booking_settings` reviewed — lead time, horizon, daily cap, `approve_first_time`,
       `approval_window_h`, and the Google review URL.
 - [ ] Opening hours published. `availability_rules` was dropped in

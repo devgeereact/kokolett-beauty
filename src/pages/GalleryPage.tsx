@@ -61,7 +61,7 @@ export function GalleryPage(): JSX.Element {
     <SiteShell>
       <section className="mx-auto max-w-5xl px-4 py-16 md:px-6">
         <div className="mx-auto mb-10 max-w-2xl text-center">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand-ink">
             Gallery
           </p>
           <h1 className="font-serif text-3xl font-semibold text-foreground md:text-4xl">
@@ -114,7 +114,7 @@ export function GalleryPage(): JSX.Element {
           </p>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {pageItems.map((item, i) => (
                 <PhotoCard
                   key={`${item.group_name}-${item.name}`}

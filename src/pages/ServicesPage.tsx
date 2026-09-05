@@ -68,7 +68,7 @@ export function ServicesPage(): JSX.Element {
 
       <section className="mx-auto max-w-4xl px-4 py-16 md:px-6">
         <div className="mx-auto mb-12 max-w-2xl text-center">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand-ink">
             Services
           </p>
           <h1 className="font-serif text-3xl font-semibold text-foreground md:text-4xl">

@@ -27,10 +27,29 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
+  /**
+   * Both colour schemes, because the palette is two palettes. Until
+   * 2026-09-04 the axe sweep ran in light mode only, and the dark
+   * `--muted-foreground` had been sitting at 3.91:1 on `--input` (every field
+   * placeholder in the app) with nothing looking at it. Chromium twice is
+   * cheap here: the suite is read-only and finishes in about ten seconds.
+   */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'chromium-light',
+      use: { ...devices['Desktop Chrome'], colorScheme: 'light' },
+    },
+    {
+      name: 'chromium-dark',
+      use: { ...devices['Desktop Chrome'], colorScheme: 'dark' },
+      /* Every other spec here is read-only and gains from a second colour
+         scheme. `booking-race` is the one that WRITES to the live project, and
+         two copies racing the same first-available slot at the same instant is
+         a race between the test runs rather than between two customers: both
+         would report SLOT_TAKEN and the suite would fail for a reason that has
+         nothing to do with the code. Colour scheme is meaningless to it in any
+         case, since it drives the RPCs directly and never opens a page. */
+      testIgnore: /booking-race\.spec\.ts/,
     },
   ],
 

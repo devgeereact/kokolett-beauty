@@ -32,7 +32,13 @@ export function NotFoundPage(): JSX.Element {
         {/* Decoration. The numeral carried the whole page before, as a <p>, so
             this screen had no h1 at all and a screen reader announced it as
             "404 This page doesn't exist" with no document heading to land on. */}
-        <p aria-hidden="true" className="font-serif text-7xl font-extrabold text-primary">
+        {/* `text-7xl` was silently dead: the fontSize scale in
+            tailwind.config.ts REPLACES Tailwind's default rather than
+            extending it, and it stops at `6xl`, so this numeral rendered at
+            the inherited 16px. At that size the brand accent also fell under
+            the 4.5:1 AA threshold. `text-6xl` is the real top of the scale
+            and puts it back into large-text territory. */}
+        <p aria-hidden="true" className="font-serif text-6xl font-extrabold text-primary">
           404
         </p>
         <h1 className="mt-4 font-serif text-2xl font-semibold text-foreground">

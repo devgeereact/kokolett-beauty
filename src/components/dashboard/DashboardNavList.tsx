@@ -69,7 +69,7 @@ export function DashboardNavList({
       {navGroups.map((group) => (
         <div key={group.label}>
           {!rail && (
-            <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
+            <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-sidebar-muted">
               {group.label}
             </p>
           )}

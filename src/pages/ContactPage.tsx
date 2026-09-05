@@ -2,6 +2,7 @@ import { type FormEvent, type JSX, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Card } from '@/components/ui/Card';
+import { PHOTO_SCRIM } from '@/components/ui/PhotoCard';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { toWhatsAppLink } from '@/lib/whatsapp';
@@ -109,7 +110,7 @@ export function ContactPage(): JSX.Element {
     <SiteShell>
       <section className="mx-auto max-w-5xl px-4 py-16 md:px-6">
         <div className="mx-auto mb-10 max-w-2xl text-center">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand-ink">
             Contact
           </p>
           <h1 className="font-serif text-3xl font-semibold text-foreground md:text-4xl">
@@ -117,7 +118,7 @@ export function ContactPage(): JSX.Element {
           </h1>
         </div>
 
-        <div className="mb-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-12 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {channels.map((channel) => {
             const icon = (
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-tint-brand text-accent-foreground">
@@ -283,7 +284,16 @@ export function ContactPage(): JSX.Element {
                 className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay"
                 aria-hidden="true"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              {/* Was `bg-gradient-to-t from-black/70 ...`, which produced
+                  `rgba(0,0,0,0)` at every stop: the colour scale is closed and
+                  has no `black`, so the whole scrim was transparent and the
+                  caption below sat directly on the photograph. Same constant
+                  the gallery and services cards use. */}
+              <div
+                className="absolute inset-0"
+                style={{ backgroundImage: PHOTO_SCRIM }}
+                aria-hidden="true"
+              />
               <p className="absolute bottom-4 left-4 right-4 font-serif text-lg font-semibold text-hero-fg">
                 Kokolett Beauty UK, Thamesmead
               </p>
@@ -298,14 +308,14 @@ export function ContactPage(): JSX.Element {
                 Looking for a time instead?{' '}
                 <Link
                   to={routes.public.book}
-                  className="font-medium text-primary underline underline-offset-4"
+                  className="font-medium text-brand-ink underline underline-offset-4"
                 >
                   Book online
                 </Link>{' '}
                 or{' '}
                 <Link
                   to={routes.public.requestAvailability}
-                  className="font-medium text-primary underline underline-offset-4"
+                  className="font-medium text-brand-ink underline underline-offset-4"
                 >
                   ask for a time
                 </Link>{' '}

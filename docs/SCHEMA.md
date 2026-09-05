@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0070`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0076`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -276,11 +276,27 @@ Magic links. **Only the SHA-256 hash is stored** — a database leak must not yi
 working links. `purpose` ∈ `manage` | `booking_offer`. Single use (`used_at`), short
 `expires_at`. Partial index on unused tokens.
 
+`purpose` is `manage` | `session` | `booking_offer` (`0021:40`). This paragraph
+listed only the first and the last until 2026-09-05, omitting `session`, which is
+the value the entire 30-day customer session rests on and which
+`customer_from_session()` reads. `booking_offer` is in the CHECK constraint and is
+written by nothing: `offer_slot_to_request()` books the appointment directly, so
+no offer token is ever minted (see the PRD note in §11).
+
 ### `email_messages`
 
 Delivery log and retry queue: `template`, `to_email`, `subject`, optional
 `appointment_id` / `customer_id`, `status` (`queued`/`sending`/`sent`/`failed`/
-`bounced`), `attempts`, `last_error`, `provider_id`, `scheduled_for`, `sent_at`.
+`bounced`/`cancelled`), `attempts`, `last_error`, `provider_id`, `scheduled_for`,
+`sent_at`. `cancelled` arrived in `0040` and is written by `0041`; it was missing
+from this list, so a query filtering on the documented five silently dropped every
+retired reminder, which is the exact miscount `0040` was written to fix.
+
+A row can also sit in `sending`: `send-emails` claims it there before handing it to
+SMTP. Since 2026-09-05 that function sweeps anything stranded in `sending` for more
+than fifteen minutes back to `queued`, and `system_health_summary()` reports the
+count (`0075`), because a claimed-but-never-sent booking confirmation used to be
+invisible on every screen.
 Indexed on `(status, scheduled_for)` so the scheduled `drain_email_queue()` job (pg_cron + pg_net) can claim due rows cheaply.
 
 ### `ai_recommendations` — **dropped, `0057` (2026-08-30)**
@@ -303,7 +319,12 @@ dead across every audit before dropping; see `docs/ARCHITECTURE.md` §6b.
 | `expire_pending_approvals()`   | definer         | Releases stale holds; run hourly via `pg_cron` |
 | `submit_contact_message(p_full_name, p_email, p_message)` | **definer** | Contact page message form (`0047`) — validates, then `queue_email('contact_message_received', ...)` to the owner. No new table. |
 
-### `book_appointment(p_service_id, p_starts_at, p_full_name, p_email, p_mobile, p_note, p_consent)`
+### `book_appointment(p_starts_at, p_full_name, p_email, p_mobile, p_note, p_consent)`
+
+**Six arguments, not seven.** `0011` dropped the seven-argument form along with the
+per-service model; there is one appointment type and a slot is absolute, so there is
+no `p_service_id` to pass. This heading said otherwise until 2026-09-05, and
+`docs/ARCHITECTURE.md` had it right, so the two documents disagreed.
 
 Returns `(appointment_id, reference, status)`. Executed by `anon` and `authenticated`.
 Validates, in order:
@@ -312,13 +333,24 @@ Validates, in order:
 2. Start aligns to `slot_granularity_min` → `SLOT_MISALIGNED`
 3. At least `lead_time_min` away → `LEAD_TIME_VIOLATION`
 4. Within `max_horizon_days` → `BEYOND_BOOKING_HORIZON`
-5. Not inside a closure or break; inside standing hours or an `extra_hours` window →
-   `OUTSIDE_AVAILABILITY`
+5. A published slot exists for that exact local date and time
+   (`select 1 from availability_slots where on_date = ... and starts_at = ...`) →
+   `OUTSIDE_AVAILABILITY`. This step used to be described in terms of standing
+   hours, closures and `extra_hours` windows, which is the pre-`0011`
+   `availability_rules` engine: those tables were dropped, and a day is now simply
+   its own list of published start times.
 6. Day is under `max_appointments_per_day` → `DAILY_CAPACITY_REACHED`
-7. Upserts the customer by lowercased email
+7. Upserts the customer by lowercased email. On conflict it FILLS a blank field and
+   never replaces a stored one, and it never raises `marketing_consent` (`0072`).
+   Before that, an anonymous caller who knew an existing customer's address could
+   rewrite their name and mobile, and could turn marketing consent back on for
+   someone who had opted out on `/my`.
 8. Decides status: `confirmed` if the customer has any **completed** appointment or
    `approve_first_time` is off; otherwise `pending_approval` with a deadline
-9. Inserts — an `exclusion_violation` becomes `SLOT_TAKEN`
+9. Inserts. An `exclusion_violation` becomes `SLOT_TAKEN`.
+
+A sixth check sits between 6 and 7 in the code: at most five bookings per email
+address per 24 hours, `TOO_MANY_BOOKINGS` (`0039`).
 
 Every failure is a named error code, so the UI can render human copy instead of a
 Postgres message. Client-side validation exists for speed, not for safety; this
@@ -347,9 +379,24 @@ advertising a service it does not offer.
 To grant owner access after first sign-in:
 
 ```sql
-insert into public.staff (id, role)
-select id, 'owner' from public.profiles where email = 'owner@example.com';
+insert into public.staff (id, role, login_slug)
+select id, 'owner', 'owner-' || encode(gen_random_bytes(6), 'hex')
+  from public.profiles where email = 'owner@example.com'
+returning login_slug;
 ```
+
+**`login_slug` is not optional.** No migration inserts a `staff` row, and `0051`'s
+`update ... where login_slug is null` therefore touches nothing on a fresh
+database. A NULL slug matches nothing in `resolve_owner_slug()`, so `SecretGate`
+404s every URL and the owner cannot reach the sign-in form at all. The password
+reset is no escape either: it is triggered from inside that form. Note the slug
+back from `returning` and keep it somewhere; it can be changed later from
+Settings, Security, but only while signed in.
+
+**Publish opening hours before expecting a booking.** `availability_slots` is
+seeded by nothing and the nightly generator short-circuits while `weekly_template`
+is empty, so `/book` shows "No times open at the moment" until the owner sets a
+weekly pattern and applies it.
 
 ## 7. Scheduled jobs (`pg_cron`)
 

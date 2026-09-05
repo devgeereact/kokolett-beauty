@@ -75,7 +75,7 @@ export function SalonDetailsCard(): JSX.Element {
   return (
     <Card className="flex h-full flex-col justify-center p-5">
       <div className="mb-2 flex items-center gap-2">
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
           <MapPin aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
         </span>
         <h2 className="font-serif text-base font-semibold text-foreground">

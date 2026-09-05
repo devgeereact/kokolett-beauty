@@ -118,3 +118,27 @@ Follow `docs/DEPLOYMENT.md`: deploy into the app's own docroot, never mirror-del
 shared docroot, keep backups out of every webroot, and don't serve `*.map` publicly.
 CodeRabbit only sees pull requests, so raise a PR — never push straight to the default
 branch expecting review.
+
+## 8. Documentation is part of the change
+A change to user-visible behaviour, a business rule, a data shape, a permission, an
+integration, an environment variable, a deployment step, a test command or a supported
+workflow **updates the canonical document for it in the same change**. Something that
+is only planned is labelled PLANNED and never written as though it ships. A change
+where the code, the tests and the documents disagree is not finished.
+
+The canonical homes are the ones §2 already lists: `docs/PRD.md` for scope and
+lifecycle, `docs/ARCHITECTURE.md` for structure and routing, `docs/SCHEMA.md` for
+tables, functions and RLS, `docs/DESIGN.md` for tokens and layout, `docs/RULES.md`
+for the engineering rules, `docs/HOOKS.md` for hook contracts, `docs/DEPLOYMENT.md`
+for anything a deploy has to know. One fact, one home: link to it rather than
+restating it, because a second copy drifts and the stale one is the one that gets
+trusted.
+
+This is not enforced by a hook that rewrites documents, which would be unpredictable
+and would edit prose nobody reviewed. It is enforced by the deterministic checks that
+already run in CI (`lint:copy`, `lint:classes`, the CSP hash assertion, the PWA
+artefact assertion, `sitemap.test.ts`, `structuredData.test.ts`) plus review. On
+2026-09-05 an audit found sixteen documented facts that contradicted the code,
+including a function signature with the wrong number of arguments and a route that
+does not exist; every one of them was written by someone who changed the code and
+stopped there.

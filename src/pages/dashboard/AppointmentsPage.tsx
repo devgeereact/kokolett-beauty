@@ -320,7 +320,7 @@ export function AppointmentsPage(): JSX.Element {
             onClick={() => applyTab(t.key)}
             className={
               tab === t.key
-                ? 'border-b-2 border-primary px-3 pb-3 text-sm font-semibold text-primary'
+                ? 'border-b-2 border-primary px-3 pb-3 text-sm font-semibold text-brand-ink'
                 : 'border-b-2 border-transparent px-3 pb-3 text-sm font-medium text-muted-foreground hover:text-foreground'
             }
           >

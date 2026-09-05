@@ -139,11 +139,26 @@ export interface SystemHealth {
   email: {
     queued_count: number;
     failed_count: number;
+    /**
+     * Claimed by a send that never reported back (migration 0075). Optional
+     * because a project still on 0074 or earlier returns a summary without
+     * it, and a missing key must render as "not reported", not as NaN.
+     */
+    sending_count?: number;
+    cancelled_count?: number;
   };
+  /**
+   * NULL on a project whose Google reviews have never synced: the RPC used
+   * `select ... into` with no `coalesce`, unlike the jobs array beside it, so
+   * an empty `google_place_snapshot` returned a bare null and the page's
+   * `health.reviews.last_fetched_at` threw and blanked the whole route.
+   * Migration 0075 coalesces it; the type stays nullable so an older database
+   * renders rather than crashes.
+   */
   reviews: {
     last_fetched_at: string | null;
     last_error: string | null;
-  };
+  } | null;
 }
 
 /** Shape returned by `public.close_day()`, and stored verbatim as `audit_events.new_value` for a `day.closed` row. */
@@ -301,4 +316,26 @@ export type BookingErrorCode =
   | 'HAS_PAYMENT'
   | 'TOO_MANY_MESSAGES'
   | 'SLUG_INVALID'
-  | 'SLUG_RESERVED';
+  | 'SLUG_RESERVED'
+  /* Raised on the public funnel and, until 2026-09-05, absent from MESSAGES,
+     so every one of them reached the customer as "Something went wrong.
+     Please try again." The three rate limits are the ones that mattered:
+     trying again is precisely what is blocked. */
+  | 'EMAIL_INVALID'
+  | 'INVALID_EMAIL'
+  | 'INVALID_NAME'
+  | 'NAME_REQUIRED'
+  | 'NAME_TOO_LONG'
+  | 'NOTE_TOO_LONG'
+  | 'TOO_MANY_BOOKINGS'
+  | 'TOO_MANY_REQUESTS'
+  | 'TOO_MANY_SIGNUPS'
+  | 'INVALID_SESSION'
+  | 'INVALID_TOKEN'
+  | 'NOT_CANCELLABLE'
+  | 'EARLIER_REQUEST_WAITING'
+  | 'REQUEST_CLOSED'
+  /* Added with migration 0077's ceilings on the availability-request form and
+     the product-event payload. */
+  | 'INVALID_RANGE'
+  | 'INVALID_METADATA';

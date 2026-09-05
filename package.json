@@ -21,6 +21,7 @@
     "test:coverage": "vitest run --coverage",
     "test:hooks": "python3 scripts/test-hookify-rules.py",
     "lint:copy": "python3 scripts/check-copy.py",
+    "lint:classes": "python3 scripts/check-dead-classes.py",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

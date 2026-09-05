@@ -63,7 +63,7 @@ export function ServiceEditModal({
             {selected ? (
               <ServiceThumb item={selected} size="lg" />
             ) : (
-              <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
+              <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
                 <Scissors aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
               </span>
             )}

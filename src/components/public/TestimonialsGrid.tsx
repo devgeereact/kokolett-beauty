@@ -95,7 +95,7 @@ export function TestimonialsGrid({
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Card className="flex h-full flex-col items-center justify-center gap-3 p-5 text-center transition-colors hover:border-brand">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-tint-brand text-primary">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-tint-brand text-brand-ink">
                 <svg
                   viewBox="0 0 24 24"
                   className="h-5 w-5"

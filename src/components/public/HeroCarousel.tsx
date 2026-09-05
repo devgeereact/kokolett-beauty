@@ -38,6 +38,19 @@ export function HeroCarousel({
   const reducedMotion = usePrefersReducedMotion();
 
   /**
+   * WCAG 2.2.2 (Pause, Stop, Hide, Level A) wants a MECHANISM to stop motion
+   * that starts automatically and lasts more than five seconds. Honouring
+   * `prefers-reduced-motion` is not that mechanism: that exemption belongs to
+   * 2.3.3, and a visitor who simply wants to finish reading a caption has no
+   * OS setting to reach for. So: an explicit toggle, plus an automatic pause
+   * whenever the pointer or keyboard focus is inside the hero, which is the
+   * moment someone is most likely to be reading it.
+   */
+  const [paused, setPaused] = useState(false);
+  const [interacting, setInteracting] = useState(false);
+  const running = !reducedMotion && !paused && !interacting;
+
+  /**
    * How far through the carousel anyone has actually got.
    *
    * Every slide used to render its `<img>` on mount, all six of them, all at
@@ -54,12 +67,12 @@ export function HeroCarousel({
   }, [index]);
 
   useEffect(() => {
-    if (reducedMotion || slides.length < 2) return;
+    if (!running || slides.length < 2) return;
     const id = window.setInterval(() => {
       setIndex((i) => (i + 1) % slides.length);
     }, SLIDE_MS);
     return () => window.clearInterval(id);
-  }, [reducedMotion, slides.length]);
+  }, [running, slides.length]);
 
   const go = (delta: number): void => {
     setIndex((i) => (i + delta + slides.length) % slides.length);
@@ -69,6 +82,10 @@ export function HeroCarousel({
     <section
       className="relative flex flex-col justify-end overflow-hidden text-hero-fg"
       style={{ minHeight: '80vh' }}
+      onMouseEnter={() => setInteracting(true)}
+      onMouseLeave={() => setInteracting(false)}
+      onFocusCapture={() => setInteracting(true)}
+      onBlurCapture={() => setInteracting(false)}
     >
       {slides.map((slide, i) => (
         <div
@@ -103,33 +120,64 @@ export function HeroCarousel({
 
       {children}
 
+      {/* Plain buttons, not `role="tablist"`/`role="tab"`. A tab has to control
+          a `tabpanel` via `aria-controls`, and these control slides that are
+          themselves `aria-hidden`, so the ARIA contract was one a screen
+          reader could not follow. `aria-current` says the same thing honestly.
+          Each dot stays 3px tall visually but carries a transparent 24px
+          touch area (WCAG 2.5.8), since below `md` the arrows are hidden and
+          these are the only manual control a phone gets. */}
       {slides.length > 1 && (
         <div
-          className="absolute inset-x-0 z-10 flex justify-center gap-2"
-          style={{ bottom: 20 }}
-          role="tablist"
-          aria-label="Hero photo"
+          className="absolute inset-x-0 flex items-center justify-center gap-1"
+          style={{ bottom: 12 }}
         >
           {slides.map((slide, i) => (
             <button
               key={slide.photoPath}
               type="button"
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Slide ${i + 1}`}
+              aria-label={`Show photo ${i + 1} of ${slides.length}`}
+              aria-current={i === index ? 'true' : undefined}
               onClick={() => setIndex(i)}
-              className={cn(
-                'w-6 rounded-full transition-colors',
-                i === index ? 'bg-hero-fg' : 'bg-hero-fg/35',
-              )}
-              style={{ height: 3 }}
-            />
+              className="grid h-6 w-8 place-items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'block w-6 rounded-full transition-colors',
+                  i === index ? 'bg-hero-fg' : 'bg-hero-fg/35',
+                )}
+                style={{ height: 3 }}
+              />
+            </button>
           ))}
+          <button
+            type="button"
+            aria-label={
+              paused ? 'Resume the photo slideshow' : 'Pause the photo slideshow'
+            }
+            aria-pressed={paused}
+            onClick={() => setPaused((p) => !p)}
+            className="ml-2 grid h-6 w-6 place-items-center rounded-full text-hero-fg/70 hover:text-hero-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-3 w-3"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              {paused ? (
+                <path d="M8 5v14l11-7z" />
+              ) : (
+                <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+              )}
+            </svg>
+          </button>
         </div>
       )}
 
       {slides.length > 1 && (
-        <div className="absolute bottom-4 right-5 z-10 hidden gap-1.5 md:right-8 md:flex">
+        <div className="absolute bottom-4 right-5 hidden gap-1.5 md:right-8 md:flex">
           <button
             type="button"
             aria-label="Previous photo"

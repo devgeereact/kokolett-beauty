@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState, type RefObject, type JSX } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+  type JSX,
+} from 'react';
 import { Field, Input } from '@/components/ui/Field';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { StepHeader } from '@/components/dashboard/quickActions/StepHeader';
@@ -33,16 +40,25 @@ export function RebookSearchStep({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* Ordering guard, as in `ComposeContentStep` and `CustomersPage`: the
+     debounce spaces requests out, it does not stop a slower earlier one
+     landing after a faster later one and repopulating the list with results
+     for a query the owner has already typed past. */
+  const searchId = useRef(0);
+
   const load = useCallback(async (): Promise<void> => {
+    const id = (searchId.current += 1);
     setLoading(true);
     setError(null);
     try {
       const rows = await listCustomers(query);
+      if (id !== searchId.current) return;
       setResults(rows.slice(0, MAX_RESULTS));
     } catch (e) {
+      if (id !== searchId.current) return;
       setError(errorMessage(e));
     } finally {
-      setLoading(false);
+      if (id === searchId.current) setLoading(false);
     }
   }, [query]);
 

@@ -101,3 +101,54 @@ describe('redactDeep', () => {
     expect(redactDeep(undefined)).toBe(undefined);
   });
 });
+
+/**
+ * The owner's own credentials, which the original pattern did not touch.
+ * `/access/` covered the customer magic link and nothing else, so a recovery
+ * link and an implicit-flow fragment both reached Sentry intact.
+ */
+describe('redactAccessToken: owner credentials', () => {
+  it('redacts the recovery token_hash in a reset-password URL', () => {
+    expect(
+      redactAccessToken(
+        'https://www.kokolettbeauty.com/reset-password?token_hash=pkce_abc123DEF&type=recovery',
+      ),
+    ).toBe(
+      'https://www.kokolettbeauty.com/reset-password?token_hash=[redacted]&type=recovery',
+    );
+  });
+
+  it('redacts an implicit-flow access and refresh token in a fragment', () => {
+    expect(
+      redactAccessToken(
+        'https://www.kokolettbeauty.com/#access_token=eyJhbGciOi.zzz&refresh_token=r-1234&type=recovery',
+      ),
+    ).toBe(
+      'https://www.kokolettbeauty.com/#access_token=[redacted]&refresh_token=[redacted]&type=recovery',
+    );
+  });
+
+  it('redacts a PKCE code', () => {
+    expect(redactAccessToken('/reset-password?code=abc-def-123')).toBe(
+      '/reset-password?code=[redacted]',
+    );
+  });
+
+  it('redacts a credential inside prose, not only inside a URL', () => {
+    expect(
+      redactAccessToken('Navigated to /reset-password?token_hash=secret while offline'),
+    ).toBe('Navigated to /reset-password?token_hash=[redacted] while offline');
+  });
+
+  it('leaves an ordinary query string alone', () => {
+    expect(redactAccessToken('/dashboard/inbox?tab=requests&page=2')).toBe(
+      '/dashboard/inbox?tab=requests&page=2',
+    );
+  });
+
+  it('redacts both a magic link and a recovery token in one string', () => {
+    expect(
+      redactAccessToken('from /access/tok123 to /reset-password?token_hash=zzz'),
+    ).toBe('from /access/[redacted] to /reset-password?token_hash=[redacted]');
+  });
+});

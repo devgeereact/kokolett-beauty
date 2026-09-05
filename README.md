@@ -25,7 +25,8 @@ Live at **https://www.kokolettbeauty.com**
   history is via a single-use magic link. Nobody ever creates an account.
 - **Owner dashboard** — today's schedule, calendar with drag-to-reschedule, a combined
   Inbox (approvals and availability requests as tabs), customers, services,
-  availability rules, reports, daily close, broadcasts, audit trail and system health.
+  the weekly default that generates open days, reports, daily close, broadcasts,
+  audit trail and system health.
 - **Advisory AI** — three separate surfaces, and they are not the same thing: a
   deterministic insights module computed in the browser, an LLM chat assistant that can
   propose but never execute a write, and a drafting-only "polish with AI" helper.
@@ -82,19 +83,43 @@ Run the migrations **in order**, in the Supabase SQL editor or via
 ```
 supabase/migrations/0001_init.sql    # profiles, app_settings, auth triggers
 supabase/migrations/0002_salon.sql   # the salon domain schema
-...                                  # through 0070, applied in filename order
+...                                  # through 0076, applied in filename order
 ```
 
 `0002` requires the `btree_gist` extension (it creates it) for the exclusion
 constraint that makes double-booking impossible. Migrations are immutable once
 applied: fix a mistake with a follow-up file, never by editing one in place.
 
-Then grant yourself owner access after signing in once:
+Then grant yourself owner access after signing in once. **Set `login_slug` in the
+same statement.** Without it the column stays NULL, `resolve_owner_slug()` can
+never match (NULL matches nothing), and `SecretGate` renders a 404 for every URL
+on the site: the sign-in form becomes unreachable, and so does the password
+reset, which is only triggered from inside it. No migration inserts a `staff`
+row, so this statement is the only thing that creates one.
 
 ```sql
-insert into public.staff (id, role)
-select id, 'owner' from public.profiles where email = 'you@example.com';
+insert into public.staff (id, role, login_slug)
+select id, 'owner', 'pick-something-long-and-unguessable'
+  from public.profiles where email = 'you@example.com';
 ```
+
+Choose the slug the way you would choose a password, not a word: it is the only
+thing between a stranger and the sign-in form, and it must be at least 8
+characters of lowercase letters, numbers and hyphens. Change it later from
+Settings, Security. If you want one generated for you:
+
+```sql
+insert into public.staff (id, role, login_slug)
+select id, 'owner', 'owner-' || encode(gen_random_bytes(6), 'hex')
+  from public.profiles where email = 'you@example.com'
+returning login_slug;
+```
+
+**Then publish some opening hours before you expect anyone to book.**
+`available_slots()` reads `availability_slots`, no migration seeds it, and the
+nightly generator does nothing while `weekly_template` is empty. Until you set a
+weekly pattern in Availability and apply it, `/book` correctly shows "No times
+open at the moment" to every visitor.
 
 Finally, regenerate the database types:
 

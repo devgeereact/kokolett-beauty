@@ -31,7 +31,7 @@ export function DashboardWordmark({
           <p className="truncate font-serif text-lg font-semibold leading-tight text-sidebar-foreground">
             Kokolett
           </p>
-          <p className="text-xs font-semibold tracking-wide text-primary">BEAUTY UK</p>
+          <p className="text-xs font-semibold tracking-wide text-brand-ink">BEAUTY UK</p>
         </div>
       )}
       <button
@@ -39,7 +39,7 @@ export function DashboardWordmark({
         onClick={onToggleCollapsed}
         aria-label={rail ? 'Expand sidebar' : 'Collapse sidebar'}
         className={cn(
-          'hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground md:flex',
+          'hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground md:flex',
           rail &&
             'absolute -right-3 top-4 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar shadow-popover',
         )}

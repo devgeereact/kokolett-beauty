@@ -331,7 +331,7 @@ export function AccountSecuritySection(): JSX.Element {
           </p>
           <Field
             label="Sign-in link"
-            hint="Lowercase letters, numbers and hyphens, 4-40 characters."
+            hint="Lowercase letters, numbers and hyphens, 8 to 40 characters. Longer is better: this is the only thing standing between a stranger and the sign-in form."
           >
             {({ id }) => (
               <div className="flex items-center gap-1">

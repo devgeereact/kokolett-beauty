@@ -16,10 +16,17 @@
  * would never reach the threshold. 5 failures / 15 minutes, mirroring the
  * contact form's rate limit (migration 0049) in shape if not in numbers.
  *
+ * The IP comes from `clientIp()` in `_shared/auth.ts`, which reads the LAST
+ * `X-Forwarded-For` entry rather than the first. This file read `[0]` until
+ * 2026-09-05, and the first entry of that header is whatever the caller chose
+ * to send: a fresh random value per request meant a fresh bucket per request,
+ * and the lockout on the salon owner's sign-in never fired at all.
+ *
  * Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ALLOWED_ORIGIN.
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { clientIp } from '../_shared/auth.ts';
 
 const SITE = 'https://www.kokolettbeauty.com';
 const DEV_ORIGINS = ['http://localhost:5082', 'http://127.0.0.1:5082'];
@@ -63,8 +70,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   if (!slug) return fail();
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  const ipHash = await sha256Hex(ip);
+  const ipHash = await sha256Hex(clientIp(req));
 
   const supabase = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
     auth: { persistSession: false },

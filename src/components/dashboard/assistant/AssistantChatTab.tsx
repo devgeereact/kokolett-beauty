@@ -116,7 +116,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         {CATEGORY_CARDS.map((c) => (
           <Card key={c.title} className="flex items-center gap-3 p-4">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
               <c.icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             </span>
             <span className="min-w-0">

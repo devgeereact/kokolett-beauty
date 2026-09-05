@@ -130,7 +130,7 @@ export function TemplateHistoryPanel({
             <p className="mb-4 text-xs text-muted-foreground">
               {formatDateTime(compareRevision.created_at)} vs current
             </p>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   That version

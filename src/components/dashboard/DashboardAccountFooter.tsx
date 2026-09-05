@@ -53,7 +53,7 @@ export function DashboardAccountFooter({
         type="button"
         title="Sign out"
         onClick={onSignOut}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        className="flex h-9 w-9 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
       >
         <ChevronRight aria-hidden="true" className="h-4 w-4 rotate-180" strokeWidth={2} />
       </button>

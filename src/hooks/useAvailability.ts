@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchAvailableSlots } from '@/services/bookingService';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useRealtimeTable } from '@/hooks/useRealtimeTable';
@@ -61,12 +61,25 @@ export function useAvailability(
 
   const from = startDate ?? toSalonDate(new Date(), timezone);
 
+  /**
+   * Same guard as `useAppointments` and `useCalendarData`, and this hook is
+   * the one that needed it most: it has two independent triggers, the effect
+   * below and the realtime subscription under it, and it is the customer's
+   * view of the diary rather than the owner's. Without it, the owner
+   * publishing a slot while `max_horizon_days` is still resolving can leave a
+   * slower first response landing last and overwriting the newer list. What
+   * the customer then picks is a time that is no longer on offer, and the only
+   * thing that tells them is `SLOT_TAKEN` after they have filled the form in.
+   */
+  const requestId = useRef(0);
+
   const load = useCallback(async (): Promise<void> => {
     // Waiting costs one render; not waiting costs a fetch over the fallback
     // window, then a second over the real one, with the calendar visibly
     // changing shape between them.
     if (settingsLoading && days === undefined) return;
 
+    const id = (requestId.current += 1);
     setLoading(true);
     try {
       const result = await fetchAvailableSlots(
@@ -75,15 +88,17 @@ export function useAvailability(
         appointmentMinutes,
         timezone,
       );
+      if (id !== requestId.current) return;
       setSlotsByDate(result.slotsByDate);
       setOpenDates(result.openDates);
       setError(null);
     } catch (e) {
+      if (id !== requestId.current) return;
       setError(e instanceof Error ? e : new Error(String(e)));
       setSlotsByDate({});
       setOpenDates([]);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [from, days, horizonDays, settingsLoading, appointmentMinutes, timezone]);
 

@@ -108,6 +108,38 @@ Deno.serve(async (req: Request): Promise<Response> => {
     { auth: { persistSession: false } },
   );
 
+  /* Recover anything stranded in `sending`.
+   *
+   * The claim step below is a correct compare-and-swap, so two overlapping
+   * runs cannot both send the same message. What was missing is the other
+   * half: nothing moved a row back OUT of `sending`. A fresh SMTPClient is
+   * constructed, TLS-handshaked and authenticated per row, and BATCH is 25, so
+   * an isolate killed on the platform's wall clock partway through leaves the
+   * row it was working on claimed forever. The next run selects
+   * `status = 'queued'` and never looks at it again. That row is typically a
+   * booking confirmation, and the customer simply never receives it.
+   *
+   * Fifteen minutes is comfortably longer than any single send and far shorter
+   * than the cron interval matters at. `attempts` was already incremented by
+   * the claim, so MAX_ATTEMPTS still bounds a row that strands repeatedly, and
+   * a message that did in fact go out before the isolate died is re-sent at
+   * most once rather than lost: a duplicate confirmation is a smaller failure
+   * than a missing one.
+   */
+  const strandedBefore = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const { data: recovered } = await supabase
+    .from('email_messages')
+    .update({ status: 'queued', last_error: 'Recovered after an interrupted send' })
+    .eq('status', 'sending')
+    .lt('updated_at', strandedBefore)
+    .select('id');
+
+  if (recovered && recovered.length > 0) {
+    console.warn(
+      `[send-emails] recovered ${recovered.length} message(s) stranded in 'sending'`,
+    );
+  }
+
   const { data: rows, error } = await supabase
     .from('email_messages')
     .select('id, template, to_email, subject, attempts, payload, customer_id')
@@ -166,8 +198,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (!claimed || claimed.length === 0) continue;
 
+    /* Hoisted out of the `try` so the `finally` can close it. It used to be
+       declared inside, with `client.close()` on the success path only, so a
+       run against a relay that was refusing mail left up to BATCH open
+       authenticated TLS connections until the isolate was torn down. Shared
+       cPanel Exim caps concurrent connections and auth attempts per IP low
+       enough to turn a transient relay problem into a longer one. */
+    let client: SMTPClient | null = null;
     try {
-      const client = new SMTPClient({
+      client = new SMTPClient({
         connection: {
           hostname: host,
           port: Number(env('SMTP_PORT', '465')),
@@ -219,14 +258,31 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
           if (row.template === 'owner_broadcast' && row.payload.subscriber_id) {
             /**
-             * RFC 8058 one-click unsubscribe. Gmail and Yahoo have required
-             * this for bulk senders since February 2024; without it, mail to
-             * those providers is materially more likely to be spam-foldered.
-             * The URL matches the one rendered in the message body itself.
+             * `List-Unsubscribe` only, deliberately: the matching
+             * `List-Unsubscribe-Post: List-Unsubscribe=One-Click` was removed
+             * on 2026-09-05 because this deployment cannot honour it.
+             *
+             * RFC 8058 one-click is a promise that an unauthenticated POST to
+             * the URL unsubscribes the recipient with no further interaction.
+             * That URL is a client-side React route on a static build, and
+             * `UnsubscribePage` deliberately waits for a human click, because
+             * corporate link scanners were prefetching the URL and
+             * unsubscribing real people. Worse, the SPA rewrite in `.htaccess`
+             * has no method guard, so Gmail's POST got `200 OK` and a page of
+             * HTML: Gmail recorded the unsubscribe as honoured, the subscriber
+             * stayed on the list and received the next broadcast, and their
+             * next move is the spam button. A header that lies about what
+             * happened is worse for deliverability than one that is absent.
+             *
+             * The plain `List-Unsubscribe` URL is still correct and still
+             * useful: mail clients surface it as a link, and clicking it
+             * reaches the confirmation page that does work. Restoring
+             * one-click means a POST-capable endpoint calling
+             * `unsubscribe_via_link`, which is a real piece of work rather
+             * than a header.
              */
             const unsubscribeUrl = `${SITE}/unsubscribe/${row.payload.subscriber_id}`;
             h['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
-            h['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
           } else {
             /**
              * These are confirmations and reminders, not correspondence. Marking
@@ -242,8 +298,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
           return h;
         })(),
       });
-      await client.close();
-
       await supabase
         .from('email_messages')
         .update({
@@ -278,6 +332,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         })
         .eq('id', row.id);
       failed += 1;
+    } finally {
+      try {
+        await client?.close();
+      } catch {
+        // Ignored on purpose: a relay that already dropped the socket throws
+        // here, and that must not mask the send error handled above.
+      }
     }
   }
 

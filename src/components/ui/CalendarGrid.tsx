@@ -103,7 +103,14 @@ export function CalendarGrid({
         selected:
           '[&>button]:bg-primary [&>button]:font-semibold [&>button]:text-primary-foreground [&>button]:hover:bg-primary',
         today: '[&>button]:border [&>button]:border-primary',
-        outside: '[&>button]:text-muted-foreground [&>button]:opacity-50',
+        /* No `opacity-50`. `--muted-foreground` at half opacity composites to
+           #adb1b8 on white, which is 2.15:1 and the worst contrast anywhere in
+           the app. These are the trailing and leading days of the adjacent
+           months: real, enabled buttons, so WCAG 1.4.3 applies to them in full.
+           The muted token on its own is 6.06:1 and still reads a clear step
+           quieter than the 9.46:1 `--foreground` the in-month days use, which
+           is the whole job. */
+        outside: '[&>button]:text-muted-foreground',
         disabled:
           '[&>button]:text-muted-foreground [&>button]:opacity-30 [&>button]:hover:bg-transparent [&>button]:cursor-not-allowed',
         hidden: 'invisible',

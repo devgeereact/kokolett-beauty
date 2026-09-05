@@ -39,9 +39,44 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   TOO_MANY_MESSAGES:
     'You have sent us a few messages already. Please give us a little time to reply, or call or WhatsApp us if it is urgent.',
   SLUG_INVALID:
-    'That link must be 4-40 characters, using only lowercase letters, numbers and hyphens.',
+    'That link must be 8 to 40 characters, using only lowercase letters, numbers and hyphens.',
   SLUG_RESERVED:
     'That link is already used elsewhere on the site. Please choose another.',
+
+  /* ---- The public funnel -------------------------------------------------
+     Every code below is raised by an RPC a customer can reach without signing
+     in, and none of them had copy until 2026-09-05, so each one arrived as
+     "Something went wrong. Please try again." The three rate limits made that
+     actively wrong: trying again is the blocked action, and TOO_MANY_MESSAGES
+     above already had the right shape for what to say instead. */
+  EMAIL_INVALID: 'That email address does not look right. Please check it and try again.',
+  INVALID_EMAIL: 'That email address does not look right. Please check it and try again.',
+  INVALID_NAME: 'Please give a name we can put on the booking.',
+  NAME_REQUIRED: 'Please give your name so the salon knows who is asking.',
+  NAME_TOO_LONG: 'That name is longer than the booking form can take. Please shorten it.',
+  NOTE_TOO_LONG:
+    'That note is longer than the booking form can take. Please shorten it, or tell the salon the rest when you come in.',
+  TOO_MANY_BOOKINGS:
+    'You already have several bookings from this email address in the last day. If you need another, call or WhatsApp the salon and she will sort it.',
+  TOO_MANY_REQUESTS:
+    'You have already asked about a few times today. The salon has them and will come back to you as soon as something frees up.',
+  TOO_MANY_SIGNUPS:
+    'The mailing list is not taking sign-ups this minute. Please try later today, or ask the salon to add you.',
+  INVALID_SESSION:
+    'That link has expired or has already been used. Ask for a new one from the My bookings page.',
+  INVALID_TOKEN:
+    'That link has expired or has already been used. Ask for a new one from the My bookings page.',
+  NOT_CANCELLABLE:
+    'That booking can no longer be cancelled online. Please call or WhatsApp the salon.',
+  EARLIER_REQUEST_WAITING:
+    'Someone asked for that time before you did, so it goes to them first.',
+  REQUEST_CLOSED: 'That request has already been answered.',
+  /* Migration 0077 bounds what the availability-request form accepts. Both of
+     these are reachable from the public form, so both need copy rather than
+     the generic fallback. */
+  INVALID_RANGE:
+    'That is more dates than we can take in one go. Pick the ones that suit you best and we will work from those.',
+  INVALID_METADATA: 'Something in that request was too large to record.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

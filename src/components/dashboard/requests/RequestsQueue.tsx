@@ -261,7 +261,7 @@ export const RequestsQueue = forwardRef<
             className={cn(
               'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium',
               lane === l
-                ? 'border-primary text-primary'
+                ? 'border-primary text-brand-ink'
                 : 'border-transparent text-muted-foreground hover:text-foreground',
             )}
           >
@@ -270,7 +270,7 @@ export const RequestsQueue = forwardRef<
               className={cn(
                 'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
                 lane === l
-                  ? 'bg-tint-brand text-primary'
+                  ? 'bg-tint-brand text-brand-ink'
                   : 'bg-muted text-muted-foreground',
               )}
             >

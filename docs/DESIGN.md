@@ -80,10 +80,90 @@ This is the rule that most of §3 exists to serve.
 | ---------------------------------- | -------------------------------------------------------- | ----------------------------------------------- |
 | **Fill** carrying a label          | 3:1 vs adjacent surface; its `-foreground` ≥ 4.5:1 on it | `primary`, `secondary`, `destructive`, `accent` |
 | **Text / icon** on a light surface | ≥ 4.5:1 against its own background                       | `foreground`, `muted-foreground`, `status-*`    |
+| **Terracotta text below 24px**     | ≥ 4.5:1 against its own background                       | `brand-ink`                                     |
 | **Identity**                       | ≥ 3:1 only (large text and non-text UI)                  | `brand`, `ring`                                 |
 
 **RULE** — Never use a `status-*` token as a background. Never use `brand` behind text
 smaller than 24px. Never use `primary` as body text on a light surface.
+
+### 2.4 `brand-ink`: terracotta at small sizes
+
+Added 2026-09-05, after an axe sweep found nine WCAG 1.4.3 failures on the public
+pages. Every one was the rule above being broken rather than a palette that needed
+retuning: six marketing eyebrow labels used `text-brand` at 12px (3.03:1 on the page
+background), two inline links used `text-primary` at 14px (3.99:1), and the hero
+stat labels used `text-primary-foreground/80` on `bg-primary` (3.62:1, because an
+opacity modifier on a foreground token drops it below the threshold the token was
+chosen to meet).
+
+`--brand-ink` is the same hue, darkened in light mode and lifted in dark, until it
+holds on the worst surface it lands on: **6.48:1** on `--background` and **7.76:1** on
+`--card` in light, **10.49:1** on `--background` in dark. Nothing about the salon's
+identity changes; `--brand` and `--primary` are untouched and still do their own jobs.
+
+- `brand` is display type, 24px and up, marketing, and the focus ring.
+- `primary` is any fill that carries a text label.
+- `brand-ink` is terracotta TEXT small enough that 4.5:1 applies.
+
+The regression guard is `e2e/marketing-site.spec.ts`, which now runs axe over every
+public route under **both** colour schemes (`playwright.config.ts`). It only ever ran
+in light mode before, which is how a second failure went unnoticed: the dark
+`--muted-foreground` was tuned against `--card` but is also every field placeholder's
+colour on `--input`, where it measured 3.91:1. It is now `#b4b4b4`, 4.76:1 on the worst
+surface and still clearly below `--foreground`.
+
+### 2.4a The dashboard, measured for the first time
+
+The twenty dashboard screens had never had an accessibility check of any kind: they
+sit behind the secret sign-in gate, so no automated run had ever reached them. Driven
+through a real signed-in browser on 2026-09-05, **every one of them failed**, roughly
+fifty violations from six causes, all of them the same two mistakes repeated:
+
+**An opacity modifier on a foreground token.** `text-sidebar-foreground/60` on the
+nav section headings is 60% of `#333333` over `#dddfe2`, which is `#777879` and
+3.31:1 at 12px. Twenty-one instances, on every screen, because it is chrome. This is
+the third time this exact trap has bitten (the hero stat labels and the dark
+placeholders were the first two), so it is now a real token, `--sidebar-muted`, that
+an opacity modifier cannot silently re-tint. The calendar's outside-month days were
+the same shape: `--muted-foreground` at `opacity-50` composites to `#adb1b8`, 2.15:1,
+the worst ratio anywhere in the app.
+
+**Status text that was tuned against `--card` but is used on its own tint.** Every
+`--status-*` token is documented as clearing 4.5:1 "on card and on its tint". They
+cleared it on card and missed on the tint, in both themes and in opposite directions:
+in light, pending 4.25, confirmed 4.37, cancelled 4.16 and no-show 4.01; in dark,
+no-show 3.66, in-service 3.63, cancelled 3.78 and confirmed 3.81. Reducing
+`--tint-mix` does not fix it (at 6% the worst light pairing is still 4.45:1 and the
+tint has stopped reading as a tint), so the text moved instead: darker in light,
+lighter in dark, hue and saturation unchanged. `TONE_TEXT.primary` in `src/lib/tone.ts`
+also moved from `primary` to `brand-ink`, since it renders on `--tint-brand`.
+
+All twenty screens are now clean in both themes. This is browser evidence against the
+built `dist/` under the real CSP, not a static read.
+
+### 2.5 The scale is enforced by a gate, not by Tailwind
+
+`tailwind.config.ts` declares `colors`, `screens`, `fontSize`, `borderRadius`,
+`boxShadow` and `zIndex` at theme level rather than inside `extend`, with a comment
+saying `sm`, `xl` and `2xl` "are removed so nobody invents a range the system doesn't
+define". Measured against the compiled stylesheet on 2026-09-05, that is only half
+true under Tailwind v4:
+
+- `colors`, `fontSize` and `boxShadow` ARE replaced. A name outside the scale emits
+  nothing at all, silently: `text-7xl` rendered the 404 numeral at the inherited 16px
+  instead of 72px, `from-black/70` left the Contact page's photo caption sitting on
+  the photograph with no scrim, and `shadow-sm` gave the selected template-preview
+  segment no elevation. None of the three failed a build, a lint, a type check or an
+  axe run.
+- `screens` is NOT replaced. `sm:` resolved at v4's own 640px, an undeclared fifth
+  breakpoint, in seven files.
+- `zIndex` is NOT replaced either: `z-<number>` is a bare-value utility with no theme
+  lookup, so `z-10` resolved regardless of the named scale.
+
+`npm run lint:classes` (`scripts/check-dead-classes.py`, a CI step that runs after the
+build) now catches all of it: classes that produce no CSS, breakpoint variants the
+config does not declare, and bare numeric `z-` values. Arbitrary values like
+`text-[11px]` are still only caught by review.
 
 ---
 

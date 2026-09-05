@@ -36,7 +36,7 @@ export function Tabs<T extends string>({
           className={cn(
             'border-b-2 px-3 py-2 text-sm font-medium',
             active === t.key
-              ? 'border-primary text-primary'
+              ? 'border-primary text-brand-ink'
               : 'border-transparent text-muted-foreground hover:text-foreground',
           )}
         >

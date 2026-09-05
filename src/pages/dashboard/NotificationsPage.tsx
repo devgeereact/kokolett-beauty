@@ -206,7 +206,7 @@ export function NotificationsPage(): JSX.Element {
                     className={cn(
                       'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium',
                       lane === key
-                        ? 'border-primary text-primary'
+                        ? 'border-primary text-brand-ink'
                         : 'border-transparent text-muted-foreground hover:text-foreground',
                     )}
                   >
@@ -215,7 +215,7 @@ export function NotificationsPage(): JSX.Element {
                       className={cn(
                         'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
                         lane === key
-                          ? 'bg-tint-brand text-primary'
+                          ? 'bg-tint-brand text-brand-ink'
                           : 'bg-muted text-muted-foreground',
                       )}
                     >
@@ -337,7 +337,7 @@ export function NotificationsPage(): JSX.Element {
                   className={cn(
                     'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
                     categoryFilter === 'all'
-                      ? 'bg-tint-brand text-primary'
+                      ? 'bg-tint-brand text-brand-ink'
                       : 'text-foreground hover:bg-muted',
                   )}
                 >
@@ -352,7 +352,7 @@ export function NotificationsPage(): JSX.Element {
                     className={cn(
                       'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
                       categoryFilter === cat
-                        ? 'bg-tint-brand text-primary'
+                        ? 'bg-tint-brand text-brand-ink'
                         : 'text-foreground hover:bg-muted',
                     )}
                   >

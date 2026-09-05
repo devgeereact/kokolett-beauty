@@ -134,7 +134,7 @@ export function AuditPage(): JSX.Element {
                 className={cn(
                   'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
                   lane === l.key
-                    ? 'bg-tint-brand text-primary'
+                    ? 'bg-tint-brand text-brand-ink'
                     : 'text-foreground hover:bg-muted',
                 )}
               >

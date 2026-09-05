@@ -31,22 +31,44 @@ leaks.
 
 ---
 
-## 0a. Migrations written but not yet applied
+## 0a. Migration history, repaired 2026-09-05
 
-**`0072` through `0076` are in the repository and have not been run against any
-database** (written 2026-09-05, see `docs/KOKO_GAP.md` §11). None was validated
-locally: the machine that wrote them has no Docker, so `supabase db start` and the
-pgTAP suite could not run. Before pushing them:
+`0072` through `0076` are **applied and verified** (see `docs/KOKO_GAP.md` §11).
+They were dry-run inside a rolled-back transaction, applied one at a time with
+`supabase db query --linked --file`, and then checked by reading the stored
+function bodies back rather than by trusting an exit code.
 
-1. Let CI run first. The `database` job applies every migration from scratch against
-   a fresh Postgres and then runs `supabase test db`. That is the cheapest place for
-   a syntax error or a broken function body to surface.
-2. Then dry-run against the live database in a rolled-back transaction:
-   concatenate `begin;` + the five files + `rollback;` and run it with
-   `supabase db query --linked --file`. This needs no Docker and persists nothing.
-3. Only then `supabase db push --linked`.
+They were NOT applied with `supabase db push`, and until the same session that
+is because push was broken on this project. The history had diverged: local
+`0050` to `0071` were recorded remotely under timestamp versions from an older
+apply path, so push saw twenty-two repo files it thought were pending and tried
+to replay them against a database that already had them. Replaying them in a
+rolled-back transaction proved it:
 
-What they change, in one line each:
+```
+ERROR:  42P07: relation "audit_events" already exists
+```
+
+It dies at `0052`, and because push records each migration as it applies it, it
+would have left the history half-repaired.
+
+**Fixed.** `migration repair --status applied 0050 … 0071` recorded the repo
+files that were genuinely already applied, and `--status reverted` cleared the
+sixteen duplicate timestamp rows (each verified first as a byte-equivalent of a
+repo file, so no provenance was lost that the repo does not already hold). The
+history is now one-to-one, `0001` to `0076`, and `supabase db push --linked
+--dry-run` reports **"Remote database is up to date."**
+
+**From here, `supabase db push --linked` is the normal path again.** Before a
+push, still dry-run against the live database in a rolled-back transaction: it
+needs no Docker and persists nothing.
+
+```bash
+{ echo "begin;"; cat supabase/migrations/00NN_*.sql; echo "rollback;"; } > /tmp/dry.sql
+supabase db query --linked --file /tmp/dry.sql
+```
+
+What `0072` to `0076` changed, one line each:
 
 | Migration | Change |
 | --- | --- |
@@ -56,10 +78,10 @@ What they change, in one line each:
 | `0075` | System Health reports the `sending` and `cancelled` outbox counts, and no longer returns a bare NULL for reviews. |
 | `0076` | Sign-in slug: 8-character floor, reserved list resynced with `routes.ts`, attack alert fires on a band rather than an exact count, plus the index its hourly count needs. |
 
-`0075` pairs with a frontend change (the "Mid-send" row on System Health), which
-degrades cleanly on an older database: the count is optional in the type and the row
-is hidden when absent. The `send-emails` recovery sweep is function-only and can be
-deployed independently.
+A rollback script covering all five lives in the audit scratch notes; every
+change is a `create or replace function` whose prior definition is in the
+migration that introduced it, except `0074`'s three `drop function` statements,
+whose bodies are in `0008`.
 
 ## 0. Before the first deploy
 

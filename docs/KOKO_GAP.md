@@ -825,12 +825,13 @@ calendar, the status chips and the appointment lists. Hue and saturation are
 unchanged in every case; only lightness moved, by the smallest step that clears the
 threshold.
 
-**One thing this pass could not fix, because it is data rather than code:** the
-dashboard greets the owner as **Koko**. `TodayPage` reads `profiles.full_name` for
-the staff row, and the live value's first word is "Koko". The 2026-08-31 sweep that
-corrected the AI prompt and two email templates did not reach this row, so the owner
-is still greeted by the wrong name on her own dashboard every morning. It is a
-one-row update and it needs the owner to say what the value should be.
+**One finding was data rather than code, and is now fixed:** the dashboard greeted
+the owner as **Koko**. `TodayPage` reads `profiles.full_name` for the staff row and
+takes the first word; the live value was `Koko Lett`, the brand name split in two.
+The 2026-08-31 sweep that corrected the AI prompt and two email templates did not
+reach this row. Set to `Christy` on 2026-09-05 and verified on screen. The column is
+display-only (greeting, sidebar, assistant); it reaches no email and no
+customer-facing surface.
 
 ### Fixed in this pass
 
@@ -940,10 +941,13 @@ and the PRD's booking-link handoff that no code mints.
 - **`.env.example` is missing `IMAGEKIT_PUBLIC_KEY`**, which
   `owner-photo-upload/index.ts:89` reads. Not fixed here: the audit session could
   not read or write files matching `.env*`.
-- **Migrations `0072` to `0076` are written and NOT applied.** They have not been
-  run against any database. CI's `supabase db start` job applies every migration
-  from scratch and then runs the pgTAP suite, so a syntax error or a broken
-  function cannot reach production unnoticed, but that job has not run yet.
+- ~~**Migrations `0072` to `0076` are written and NOT applied.**~~ **Applied and
+  verified 2026-09-05**, after a rolled-back dry run and with a rollback script
+  prepared first. Each was checked by reading the stored function body back, not by
+  exit code. Applying them also surfaced and fixed a separate problem: the migration
+  history had diverged so far that `supabase db push` was broken on this project
+  (see `docs/DEPLOYMENT.md` §0a). It is now a clean no-op and push is the normal
+  path again.
 - The `0071` subscriber rate limit is global, so twenty requests take `/subscribe`
   offline for an hour. Reported and not changed: `0071` is already applied, and the
   right shape (per-address plus a higher global backstop) is a decision about the

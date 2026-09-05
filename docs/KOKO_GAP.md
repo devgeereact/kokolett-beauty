@@ -993,10 +993,21 @@ and the PRD's booking-link handoff that no code mints.
   can break. Equivalence was proved at three densities (0, 40 and 200 appointments):
   419/419, 397/397 and 291/291 rows with zero difference either way.
 
-  Still genuinely open, and both are features rather than fixes: notification read
-  state lives in `localStorage` so it does not follow the owner between devices, and
-  contact-form enquiries have no table, so a bounced owner notification loses the
-  enquiry outright.
+  ~~Still genuinely open: contact-form enquiries have no table.~~ **Closed by
+  `0080`**, which was a silent data-loss path rather than a missing convenience.
+  `submit_contact_message()` queued one email and stored nothing, so a bounced send
+  lost the enquiry, clearing the Email page destroyed both the history and the rate
+  limit that counted from it, and an installation with no `staff` row discarded
+  every message while showing the sender a thank-you. The RPC now writes the record
+  before it notifies anyone, the limits count from the record, erasure and retention
+  both reach it, and the Inbox has a third tab to read it in. Verified in a
+  rolled-back transaction: stored on submit, owner still notified, the fourth
+  message from one address still refused, nothing left after an erasure, the purge
+  reporting its new key, and, the case that mattered, **still stored when there is
+  no staff row at all**.
+
+  One item remains, and it is a feature rather than a fix: notification read state
+  lives in `localStorage`, so it does not follow the owner between devices.
 
 ### Gates, all green after the pass
 

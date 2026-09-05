@@ -171,19 +171,8 @@ export type Database = {
       }
       audit_events: {
         Row: {
-          action:
-            | "appointment.created"
-            | "appointment.status_changed"
-            | "appointment.rescheduled"
-            | "appointment.deleted"
-            | "customer.erased"
-            | "payment.recorded"
-            | "settings.login_slug_changed"
-            | "day.closed"
-            | "customer.data_exported"
-            | "broadcast.sent"
-            | "customer.sessions_revoked"
-          actor: "owner" | "system"
+          action: string
+          actor: string
           created_at: string
           entity_id: string | null
           entity_type: string
@@ -193,19 +182,8 @@ export type Database = {
           summary: string
         }
         Insert: {
-          action:
-            | "appointment.created"
-            | "appointment.status_changed"
-            | "appointment.rescheduled"
-            | "appointment.deleted"
-            | "customer.erased"
-            | "payment.recorded"
-            | "settings.login_slug_changed"
-            | "day.closed"
-            | "customer.data_exported"
-            | "broadcast.sent"
-            | "customer.sessions_revoked"
-          actor: "owner" | "system"
+          action: string
+          actor: string
           created_at?: string
           entity_id?: string | null
           entity_type: string
@@ -215,19 +193,8 @@ export type Database = {
           summary: string
         }
         Update: {
-          action?:
-            | "appointment.created"
-            | "appointment.status_changed"
-            | "appointment.rescheduled"
-            | "appointment.deleted"
-            | "customer.erased"
-            | "payment.recorded"
-            | "settings.login_slug_changed"
-            | "day.closed"
-            | "customer.data_exported"
-            | "broadcast.sent"
-            | "customer.sessions_revoked"
-          actor?: "owner" | "system"
+          action?: string
+          actor?: string
           created_at?: string
           entity_id?: string | null
           entity_type?: string
@@ -450,6 +417,36 @@ export type Database = {
           last_fetched_at?: string | null
           revoked_at?: string | null
           token_hash?: string
+        }
+        Relationships: []
+      }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          message: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          message: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1174,10 +1171,6 @@ export type Database = {
       }
     }
     Functions: {
-      add_day_slot: {
-        Args: { p_date: string; p_note?: string; p_time: string }
-        Returns: string
-      }
       apply_weekly_template: {
         Args: { p_from: string; p_replace?: boolean; p_to: string }
         Returns: {
@@ -1262,7 +1255,6 @@ export type Database = {
         }[]
       }
       check_login_lockout: { Args: { p_ip_hash: string }; Returns: boolean }
-      clear_day_slots: { Args: { p_date: string }; Returns: number }
       close_day: { Args: never; Returns: Json }
       copy_day_slots: {
         Args: { p_from: string; p_to: string }
@@ -1517,10 +1509,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      remove_day_slot: {
-        Args: { p_date: string; p_time: string }
-        Returns: boolean
-      }
       reschedule_appointment_as_owner: {
         Args: { p_appointment_id: string; p_new_starts_at: string }
         Returns: {
@@ -1662,12 +1650,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1691,11 +1679,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1716,11 +1704,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1741,11 +1729,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1758,11 +1746,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

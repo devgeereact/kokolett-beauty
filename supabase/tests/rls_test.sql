@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(68);
+select plan(71);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -415,7 +415,7 @@ create temp table write_probe (
 ) on commit drop;
 
 do $writes$
-declare st text; updated int; removed int;
+declare st text; updated int; removed int; contact_removed int;
 begin
   begin
     set local role anon;
@@ -434,6 +434,23 @@ begin
   end;
   insert into write_probe values ('insert', st, null);
 
+  -- contact_messages has no anon policy at all: the public path is
+  -- submit_contact_message(), which is SECURITY DEFINER. That design only
+  -- holds if the table itself refuses anon directly, so assert it rather
+  -- than trusting the absence of a policy to mean what it looks like.
+  begin
+    set local role anon;
+    set local request.jwt.claims = '{"role":"anon"}';
+    insert into public.contact_messages (full_name, email, message)
+    values ('Attacker', 'attacker@rls.test', 'Written straight into the table');
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into write_probe values ('contact_insert', st, null);
+
   set local role anon;
   set local request.jwt.claims = '{"role":"anon"}';
 
@@ -445,9 +462,13 @@ begin
   delete from public.appointments where reference = 'KB-RLST01';
   get diagnostics removed = ROW_COUNT;
 
+  delete from public.contact_messages where email = 'enquiry@rls.test';
+  get diagnostics contact_removed = ROW_COUNT;
+
   reset role;
 
-  insert into write_probe values ('update', null, updated), ('delete', null, removed);
+  insert into write_probe values ('update', null, updated), ('delete', null, removed),
+                                 ('contact_delete', null, contact_removed);
 end
 $writes$;
 
@@ -466,6 +487,15 @@ select is((select rows_affected from write_probe where op = 'delete'),
 select is((select count(*) from public.appointments
             where reference = 'KB-RLST01'),
           1::bigint, 'and that appointment is still there');
+
+select is((select sqlstate_out from write_probe where op = 'contact_insert'),
+          '42501',
+          'anon cannot insert a contact message — submit_contact_message() is the only path');
+
+select is((select rows_affected from write_probe where op = 'contact_delete'),
+          0, 'an anon DELETE cannot clear the enquiry list');
+select is((select count(*) from public.contact_messages),
+          1::bigint, 'and the seeded enquiry is still there');
 
 -- --------------------------------------------------------------------------
 -- 6b. audit_events is immutable even for the owner (0052) — the log has no

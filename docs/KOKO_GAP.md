@@ -1242,6 +1242,33 @@ radius it has never had.
 | Rendered verification of populated owner queues | The live project has no customers or queued items | P3 |
 | `ContactPage` still hand-rolls its label/input markup | It now shares the public control classes and has real `<label for>` wiring, but not `Field`'s error/`aria-describedby` pairing. Its single page-level `role="alert"` is adequate for three fields; consolidating is worth doing when a fourth arrives | P3 |
 
+### Deployed, 2026-09-05
+
+`cpanel-deploy dist kokolettbeauty.com --keep cgi-bin --keep .well-known --go`.
+No `--with-htaccess`: nothing in this change touches `index.html` or `.htaccess`, and
+the live file was diffed against the repo's beforehand and found identical. The CSP
+script hash was asserted locally with CI's own script before shipping
+(`sha256-2sS670w3y+a111IgzoyiIyJ5ha3SL6VCrwVNnqtH1oM=`).
+
+Dry run first: 65 deletions, every one inside `assets/` and every one a superseded
+hashed chunk. Nothing outside `assets/` was removed.
+
+Verified live rather than by exit code:
+
+- the hashed entry chunk served at `https://www.kokolettbeauty.com/` matches
+  `dist/index.html`, and comes back as `text/javascript` rather than falling through
+  to the SPA's `text/html`;
+- the new stylesheet hash returns 200, so the CSS actually shipped;
+- `/`, `/book`, `/contact`, `/services`, `/gallery`, `/privacy` and `/accessibility`
+  all return 200, as do `sw.js`, `manifest.webmanifest` and `sitemap.xml`;
+- the Content-Security-Policy header is still served;
+- direct-to-origin still returns **403**, so the Cloudflare origin lock survived;
+- `ls ~/kokolettbeauty.com/assets/*.map` returns 0. No sourcemaps published.
+- **axe over the live site**, all 17 public routes in both colour schemes: clean.
+
+The owner dashboard was not re-checked against production after the deploy; its
+pre-deploy axe run was against the identical build under `vite preview`.
+
 ### Route and state coverage
 
 Every route in `src/lib/routes.ts` and `src/App.tsx`, including the redirects and the

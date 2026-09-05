@@ -79,3 +79,48 @@ describe('isOffline / offlineError', (): void => {
     });
   });
 });
+
+/**
+ * The public funnel's codes, added 2026-09-05. Every one of these is raised by
+ * an RPC an anonymous customer can reach, and every one of them used to fall
+ * through to "Something went wrong. Please try again." The rate limits are the
+ * ones that mattered: retrying is the action being refused.
+ */
+describe('toAppError: the public funnel', (): void => {
+  const PUBLIC_CODES = [
+    'EMAIL_INVALID',
+    'INVALID_EMAIL',
+    'INVALID_NAME',
+    'NAME_REQUIRED',
+    'NAME_TOO_LONG',
+    'NOTE_TOO_LONG',
+    'TOO_MANY_BOOKINGS',
+    'TOO_MANY_REQUESTS',
+    'TOO_MANY_SIGNUPS',
+    'INVALID_SESSION',
+    'INVALID_TOKEN',
+    'NOT_CANCELLABLE',
+    'EARLIER_REQUEST_WAITING',
+    'REQUEST_CLOSED',
+  ] as const;
+
+  it.each(PUBLIC_CODES)('maps %s to its own copy, not the generic message', (code) => {
+    const result = toAppError(new Error(`${code}`));
+    expect(result.code).toBe(code);
+    expect(result.message).not.toBe('Something went wrong. Please try again.');
+    expect(result.message.length).toBeGreaterThan(10);
+  });
+
+  it('never tells a rate-limited caller to try again', (): void => {
+    for (const code of ['TOO_MANY_BOOKINGS', 'TOO_MANY_REQUESTS', 'TOO_MANY_MESSAGES']) {
+      expect(toAppError(new Error(code)).message.toLowerCase()).not.toContain(
+        'try again',
+      );
+    }
+  });
+
+  it('does not confuse EMAIL_INVALID with INVALID_EMAIL', (): void => {
+    expect(toAppError(new Error('EMAIL_INVALID')).code).toBe('EMAIL_INVALID');
+    expect(toAppError(new Error('INVALID_EMAIL')).code).toBe('INVALID_EMAIL');
+  });
+});

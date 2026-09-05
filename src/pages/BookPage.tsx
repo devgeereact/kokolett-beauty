@@ -237,6 +237,22 @@ export function BookPage(): JSX.Element {
           />
         )}
 
+        {/* The booking error has to live OUTSIDE the `{slot && …}` block below.
+            On SLOT_TAKEN the catch sets the message and then clears the slot in
+            the same batch, so an alert rendered inside that block is unmounted
+            on the very render that was supposed to show it: the form vanished,
+            the grid came back one time short, and the customer was told
+            nothing at all about why. This copy renders only while the form is
+            gone, so the two are never on screen together. */}
+        {error && !slot && (
+          <div
+            role="alert"
+            className="mb-6 rounded-lg border border-destructive bg-card p-4 text-sm font-medium text-destructive"
+          >
+            {error}
+          </div>
+        )}
+
         {isEmpty && (
           <EmptyState
             title="No times open at the moment"

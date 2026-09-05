@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(64);
+select plan(66);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -668,6 +668,109 @@ select isnt(
   (select unsubscribed_at from public.subscribers where email = 'optout@rls.test'),
   null,
   'and the unsubscribe survives it');
+
+-- ---------------------------------------------------------------------------
+-- 8. Every owner-gated RPC actually refuses a signed-in non-owner.
+--
+-- Until 2026-09-05 this suite tested table-level RLS and exactly two RPCs, and
+-- asserted the `is_owner()` guard on none of the ~33 owner-gated SECURITY
+-- DEFINER functions. All of them are granted to `authenticated`, and §3's own
+-- header states the threat: "Anyone can obtain a valid JWT; it must buy them
+-- nothing." A `create or replace` that dropped the `if not public.is_owner()`
+-- prologue from `erase_customer_as_owner`, `set_appointment_status` or
+-- `export_customer_data` would have left CI green while any signed-in account
+-- could erase a customer or read the whole appointment book.
+--
+-- The set is derived, not listed. Anything SECURITY DEFINER and executable by
+-- `authenticated` must deny a non-owner, EXCEPT the public booking surface and
+-- the five session-token customer RPCs, which are named below. That direction
+-- matters: a new owner RPC is covered automatically the day it is written,
+-- while making something public is a deliberate edit to this allowlist that a
+-- reviewer will see.
+--
+-- Arguments are synthesised by type. The values are deliberately meaningless:
+-- the guard is the first statement in every one of these functions, so it
+-- fires long before anything looks at them. A function that got as far as
+-- validating its input would report a different SQLSTATE and fail here, which
+-- is exactly the signal wanted.
+-- ---------------------------------------------------------------------------
+
+create temp table owner_guard_probe (fn text, sqlstate_out text) on commit drop;
+
+do $guards$
+declare
+  r record;
+  st text;
+begin
+  for r in
+    select p.oid,
+           p.proname,
+           coalesce((
+             select string_agg(l.lit, ', ' order by u.ord)
+               from unnest(p.proargtypes) with ordinality as u(t, ord),
+               lateral (select case format_type(u.t, null)
+                 when 'uuid'                     then '''00000000-0000-0000-0000-0000000000ff''::uuid'
+                 when 'text'                     then '''rls-guard-probe'''
+                 when 'date'                     then 'current_date'
+                 when 'integer'                  then '1'
+                 when 'smallint'                 then '1::smallint'
+                 when 'boolean'                  then 'false'
+                 when 'timestamp with time zone' then 'now()'
+                 when 'time without time zone[]' then 'array[]::time[]'
+                 when 'appointment_status'       then '''confirmed''::public.appointment_status'
+                 else 'null'
+               end as lit) l
+           ), '') as args
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.prosecdef
+       and p.prorettype <> 'pg_catalog.trigger'::regtype
+       and has_function_privilege('authenticated', p.oid, 'EXECUTE')
+       -- The public booking surface and the session-token customer RPCs. Each
+       -- one is anon-callable by design and carries its own guard: input
+       -- validation and a rate limit for the public writes, and
+       -- `customer_from_session()` for the five `customer_*` functions.
+       -- `is_owner()` itself is here because it is the check, and it returns
+       -- false rather than raising.
+       and p.proname not in (
+         'available_slots','book_appointment','customer_appointments',
+         'customer_cancel_appointment','customer_communication_preferences',
+         'customer_reschedule_appointment','customer_set_marketing_consent',
+         'hair_appointment','public_reviews','public_service_menu',
+         'redeem_access_token','submit_contact_message','subscribe_to_updates',
+         'track_product_event','unsubscribe_via_link','is_owner')
+     order by p.proname
+  loop
+    -- Same shape as the write probe in §6: role is switched inside the block
+    -- and reset before anything is asserted, because pgTAP's plan counter
+    -- lives in temp objects owned by the session role.
+    begin
+      set local role authenticated;
+      perform set_config('request.jwt.claims',
+                         json_build_object('sub','22222222-2222-2222-2222-222222222222',
+                                           'role','authenticated')::text, true);
+      execute format('select public.%I(%s)', r.proname, r.args);
+      reset role;
+      st := 'NONE';
+    exception when others then
+      st := SQLSTATE;
+      reset role;
+    end;
+    insert into owner_guard_probe values (r.proname, st);
+  end loop;
+end
+$guards$;
+
+-- A floor, not an exact count, so adding an owner RPC does not break the suite
+-- while deleting the guards wholesale still would. It was 33 when written.
+select cmp_ok((select count(*) from owner_guard_probe), '>=', 30::bigint,
+              'the owner-gated RPC surface is still there to be tested');
+
+select is_empty(
+  $$select fn || ' returned ' || coalesce(sqlstate_out, 'null')
+      from owner_guard_probe where sqlstate_out is distinct from '42501'$$,
+  'every owner-gated RPC raises 42501 for a signed-in non-owner');
 
 select * from finish();
 

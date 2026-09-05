@@ -334,4 +334,8 @@ export type BookingErrorCode =
   | 'INVALID_TOKEN'
   | 'NOT_CANCELLABLE'
   | 'EARLIER_REQUEST_WAITING'
-  | 'REQUEST_CLOSED';
+  | 'REQUEST_CLOSED'
+  /* Added with migration 0077's ceilings on the availability-request form and
+     the product-event payload. */
+  | 'INVALID_RANGE'
+  | 'INVALID_METADATA';

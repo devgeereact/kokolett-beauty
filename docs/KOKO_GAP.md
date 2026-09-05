@@ -956,13 +956,28 @@ and the PRD's booking-link handoff that no code mints.
   `is_owner()` guard on any of the ~35 owner-gated definer functions, and never
   exercises `book_appointment()`. The race-protection claim in §2 is true of the
   code and has no test behind it in the pgTAP suite.
-- The remaining P2 and P3 findings from all five tracks: `availability_requests` is
-  an unbounded anonymous write whose owner-only columns the submitter can set;
-  `product_events` accepts unbounded jsonb with no retention job; twenty-two RLS
-  policies call `is_owner()` per row; `available_slots` runs a non-sargable
-  correlated count per candidate slot; notification read state is `localStorage`
-  only; the Toast live region mounts with its content already in it; twelve
-  rich-text toolbar buttons have no accessible name.
+- ~~`rls_test.sql` asserts table-level RLS and two RPCs and never checks the
+  owner guards.~~ **Closed 2026-09-05** (`supabase/tests/rls_test.sql` §8). The set
+  is derived rather than listed: anything SECURITY DEFINER and executable by
+  `authenticated` must deny a non-owner with `42501`, except a named allowlist of
+  the public booking surface and the five session-token customer RPCs. A new owner
+  RPC is covered the day it is written; making something public is a deliberate
+  edit a reviewer sees. Run against the live schema when it was written, **all 33
+  owner-gated functions denied correctly**, so the guards were real and simply had
+  nothing asserting them.
+- ~~`availability_requests` is an unbounded anonymous write whose owner-only columns
+  the submitter can set; `product_events` accepts unbounded jsonb with no retention;
+  `0071`'s global signup cap is a self-inflicted outage.~~ **Closed by `0077`**,
+  applied and behaviour-tested in a rolled-back transaction first: attacker-supplied
+  `owner_response`/`owner_note` come back NULL, a 2500-character note raises
+  `NOTE_TOO_LONG`, forty preferred dates raise `INVALID_RANGE`, a 4KB event payload
+  raises `INVALID_METADATA`, an ordinary event still succeeds, and the purge job
+  reports the new `product_events_deleted` key.
+- Still open, all P2 or P3: twenty-two RLS policies call `is_owner()` per row;
+  `available_slots` runs a non-sargable correlated count per candidate slot;
+  notification read state is `localStorage` only; the Toast live region mounts with
+  its content already in it; twelve rich-text toolbar buttons have no accessible
+  name; `RequestDetailPanel.tsx` is 515 lines against a 500-line limit.
 
 ### Gates, all green after the pass
 

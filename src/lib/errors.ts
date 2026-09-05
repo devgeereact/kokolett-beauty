@@ -71,6 +71,12 @@ const MESSAGES: Record<BookingErrorCode, string> = {
   EARLIER_REQUEST_WAITING:
     'Someone asked for that time before you did, so it goes to them first.',
   REQUEST_CLOSED: 'That request has already been answered.',
+  /* Migration 0077 bounds what the availability-request form accepts. Both of
+     these are reachable from the public form, so both need copy rather than
+     the generic fallback. */
+  INVALID_RANGE:
+    'That is more dates than we can take in one go. Pick the ones that suit you best and we will work from those.',
+  INVALID_METADATA: 'Something in that request was too large to record.',
 };
 
 const CODES = Object.keys(MESSAGES) as BookingErrorCode[];

@@ -165,6 +165,7 @@ export function WeeklyScheduleCard({
                               )
                             }
                             title="Remove from the weekly default"
+                            aria-label={`Remove ${t} from the weekly default`}
                             className={cn(
                               'rounded-md border border-border bg-card px-2 py-1 font-mono text-sm text-foreground',
                               'hover:border-destructive hover:text-destructive',

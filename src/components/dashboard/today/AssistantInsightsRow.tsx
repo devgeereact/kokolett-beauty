@@ -99,9 +99,22 @@ export function AssistantInsightsRow({
           });
         }
 
+        /* Sorted on a copy: `sort` mutates in place, and `openDays` is a view
+           over `dayTrend`, which is used again below. (`toSorted` would be
+           tidier but the tsconfig lib target predates it.)
+
+           The guard is the real fix though. With no bookings yet every open day
+           has `count === 0`, so this picked whichever day happened to sort
+           first and told the owner "Mondays have the fewest bookings", which is
+           a claim about data that does not exist. It fired in the window
+           between publishing hours and taking the first booking, which is
+           exactly when a new owner is most likely to believe it. It now needs a
+           day that is genuinely quieter than the busiest one. */
         const openDays = dayTrend.filter((d) => d.templateOpen);
-        const quietest = openDays.sort((a, b) => a.count - b.count)[0];
-        if (quietest) {
+        const byCount = [...openDays].sort((a, b) => a.count - b.count);
+        const quietest = byCount[0];
+        const busiest = byCount[byCount.length - 1];
+        if (quietest && busiest && busiest.count > quietest.count) {
           built.push({
             key: 'quiet-day',
             icon: TrendingDown,

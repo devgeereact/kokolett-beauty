@@ -38,9 +38,13 @@ function ToastCard({
 
   return (
     <div
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
+      data-testid="toast"
+      // NOT a live region. This element mounts at the same moment its text
+      // does, and assistive technology only reliably announces mutations to a
+      // region that was already in the DOM, so every "Booking cancelled",
+      // "Email sent" and "Saved" was silent, including the Undo affordance
+      // that then times out at 8s unannounced. `ToastStack` renders one
+      // always-present live region instead and writes the text into it.
       // Pausing on hover/focus, not just cancelling outright, is what "unless
       // the owner interacts with it" means here: move the pointer or tab away
       // and the countdown picks back up rather than staying dismissed forever.
@@ -103,25 +107,37 @@ export function ToastStack({
 }: {
   toasts: ToastItem[];
   onDismiss: (id: string) => void;
-}): JSX.Element | null {
-  if (toasts.length === 0) return null;
-
+}): JSX.Element {
   return (
-    <div
-      className={cn(
-        // z-toast (100), the top of the stack: QuickActionLauncher's portal
-        // is z-modal, and when its panel is open the toast stack must render
-        // above it (e.g. an error toast fired by a launcher action) —
-        // otherwise it's painted behind the launcher's backdrop and invisible.
-        // Mobile 16px inset, desktop 24px right/bottom — global overlay
-        // rules §31.
-        'pointer-events-none fixed inset-x-4 bottom-4 z-toast flex flex-col gap-2',
-        'md:inset-x-auto md:bottom-6 md:right-6',
+    <>
+      {/* Always mounted, including when there are no toasts. This is the whole
+          point: a live region has to exist BEFORE its content changes for the
+          change to be announced. It carries the text only, never the markup,
+          so the visible card stays free to be laid out however it likes. */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {toasts.map((t) => (
+          <p key={t.id}>{t.message}</p>
+        ))}
+      </div>
+
+      {toasts.length > 0 && (
+        <div
+          className={cn(
+            // z-toast (100), the top of the stack: QuickActionLauncher's portal
+            // is z-modal, and when its panel is open the toast stack must render
+            // above it (e.g. an error toast fired by a launcher action) —
+            // otherwise it's painted behind the launcher's backdrop and invisible.
+            // Mobile 16px inset, desktop 24px right/bottom — global overlay
+            // rules §31.
+            'pointer-events-none fixed inset-x-4 bottom-4 z-toast flex flex-col gap-2',
+            'md:inset-x-auto md:bottom-6 md:right-6',
+          )}
+        >
+          {toasts.map((toast) => (
+            <ToastCard key={toast.id} toast={toast} onDismiss={onDismiss} />
+          ))}
+        </div>
       )}
-    >
-      {toasts.map((toast) => (
-        <ToastCard key={toast.id} toast={toast} onDismiss={onDismiss} />
-      ))}
-    </div>
+    </>
   );
 }

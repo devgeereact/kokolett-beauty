@@ -3,7 +3,7 @@ import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
-import { LoadingState } from '@/components/ui/States';
+import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { errorMessage } from '@/lib/errors';
 
@@ -24,7 +24,7 @@ function instagramProblem(url: string): string | null {
 
 /** Address/phone/Instagram — shown in the website footer and every customer email. */
 export function SalonDetailsCard(): JSX.Element {
-  const { settings, loading, update } = useBusinessSettings();
+  const { settings, loading, update, error: loadError, refresh } = useBusinessSettings();
   const [form, setForm] = useState<SalonForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -40,10 +40,29 @@ export function SalonDetailsCard(): JSX.Element {
     });
   }, [settings]);
 
-  if (loading || !form) {
+  if (loading) {
     return (
       <Card className="flex h-full items-center justify-center p-5">
         <LoadingState />
+      </Card>
+    );
+  }
+
+  /* Not folded into the `loading` guard above. `useBusinessSettings` uses
+     `.maybeSingle()`, and its catch sets `loading: false` while leaving
+     `settings` null, so a missing row or a failed read both land here with
+     nothing in flight. Treating that as "still loading" left the card
+     spinning forever, with no error and no way to retry. */
+  if (!form) {
+    return (
+      <Card className="p-5">
+        <ErrorState
+          error={
+            loadError ??
+            'The salon settings could not be read, so there is nothing to edit here yet.'
+          }
+          onRetry={() => void refresh()}
+        />
       </Card>
     );
   }

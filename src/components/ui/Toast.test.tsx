@@ -29,18 +29,42 @@ describe('Toast / ToastProvider', () => {
     vi.useRealTimers();
   });
 
-  it('shows nothing until a toast is fired', () => {
+  it('shows no toast card until one is fired', () => {
     renderWithProvider(<Harness />);
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
   });
 
-  it('shows a toast with its message, announced via role="status"', async () => {
+  /* The live region is the fix, so it gets its own assertion. It has to be in
+     the DOM BEFORE the message arrives: assistive technology announces
+     mutations to a region it was already watching, and a region that mounts
+     carrying its text is not reliably announced at all. Every dashboard
+     confirmation goes through here, including the Undo affordance that then
+     times out after 8s. */
+  it('keeps an empty live region mounted before any toast exists', () => {
+    renderWithProvider(<Harness />);
+    const live = screen.getByRole('status');
+    expect(live).toBeInTheDocument();
+    expect(live).toBeEmptyDOMElement();
+  });
+
+  it('writes the message into that same region rather than mounting a new one', async () => {
+    const user = userEvent.setup();
+    renderWithProvider(<Harness message="Booking cancelled." />);
+
+    const live = screen.getByRole('status');
+    await user.click(screen.getByRole('button', { name: 'Fire toast' }));
+
+    expect(screen.getByRole('status')).toBe(live);
+    expect(live).toHaveTextContent('Booking cancelled.');
+  });
+
+  it('shows a toast card with its message', async () => {
     const user = userEvent.setup();
     renderWithProvider(<Harness message="Booking cancelled." />);
 
     await user.click(screen.getByRole('button', { name: 'Fire toast' }));
 
-    expect(screen.getByRole('status')).toHaveTextContent('Booking cancelled.');
+    expect(screen.getByTestId('toast')).toHaveTextContent('Booking cancelled.');
   });
 
   it('auto-dismisses after the default 8s duration', () => {
@@ -48,17 +72,17 @@ describe('Toast / ToastProvider', () => {
     renderWithProvider(<Harness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Fire toast' }));
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByTestId('toast')).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(7999);
     });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByTestId('toast')).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
   });
 
   it('respects a custom duration', () => {
@@ -70,7 +94,7 @@ describe('Toast / ToastProvider', () => {
     act(() => {
       vi.advanceTimersByTime(2000);
     });
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
   });
 
   it('dismisses immediately via the manual dismiss control', async () => {
@@ -78,10 +102,10 @@ describe('Toast / ToastProvider', () => {
     renderWithProvider(<Harness />);
 
     await user.click(screen.getByRole('button', { name: 'Fire toast' }));
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByTestId('toast')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
   });
 
   it('fires the action callback and dismisses when the action button is clicked', async () => {
@@ -93,7 +117,7 @@ describe('Toast / ToastProvider', () => {
     await user.click(screen.getByRole('button', { name: 'Undo' }));
 
     expect(onClick).toHaveBeenCalledOnce();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
   });
 
   it('pauses auto-dismiss while hovered, and resumes once the pointer leaves', () => {
@@ -101,20 +125,20 @@ describe('Toast / ToastProvider', () => {
     renderWithProvider(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Fire toast' }));
 
-    const toast = screen.getByRole('status');
+    const toast = screen.getByTestId('toast');
     fireEvent.mouseEnter(toast);
 
     // Well past the 8s default — still present because the pointer is over it.
     act(() => {
       vi.advanceTimersByTime(20_000);
     });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByTestId('toast')).toBeInTheDocument();
 
     fireEvent.mouseLeave(toast);
     act(() => {
       vi.advanceTimersByTime(8000);
     });
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
   });
 
   it('pauses auto-dismiss while a control inside it has keyboard focus, and resumes on blur', () => {
@@ -135,13 +159,13 @@ describe('Toast / ToastProvider', () => {
     act(() => {
       vi.advanceTimersByTime(20_000);
     });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByTestId('toast')).toBeInTheDocument();
 
     dismissButton.blur();
     act(() => {
       vi.advanceTimersByTime(8000);
     });
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
   });
 
   it('stacks multiple toasts instead of one replacing the other', async () => {
@@ -156,9 +180,15 @@ describe('Toast / ToastProvider', () => {
     await user.click(screen.getAllByRole('button', { name: 'Fire toast' })[0]!);
     await user.click(screen.getAllByRole('button', { name: 'Fire toast' })[1]!);
 
-    await waitFor(() => expect(screen.getAllByRole('status')).toHaveLength(2));
-    expect(screen.getByText('First.')).toBeInTheDocument();
-    expect(screen.getByText('Second.')).toBeInTheDocument();
+    // Two cards, but still exactly ONE live region: the region is the
+    // announcer and both messages are written into it, rather than each toast
+    // mounting a region of its own.
+    await waitFor(() => expect(screen.getAllByTestId('toast')).toHaveLength(2));
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.getByRole('status')).toHaveTextContent('First.');
+    expect(screen.getByRole('status')).toHaveTextContent('Second.');
+    expect(screen.getAllByText('First.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Second.').length).toBeGreaterThan(0);
   });
 
   it('throws a clear error when useToast is used outside a ToastProvider', () => {

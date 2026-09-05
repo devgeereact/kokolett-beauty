@@ -294,59 +294,75 @@ export function ReportsPage(): JSX.Element {
             <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
               Insights
             </h2>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="flex items-start gap-3">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-in-service text-status-in-service">
-                  <TrendingUp aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Revenue{' '}
-                    {overview.totals.revenuePence === overview.previous.revenuePence
-                      ? 'is unchanged'
-                      : overview.totals.revenuePence > overview.previous.revenuePence
-                        ? 'is up'
-                        : 'is down'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    You earned {formatMoney(overview.totals.revenuePence)} this period,
-                    compared to {formatMoney(overview.previous.revenuePence)} last period.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-completed text-status-completed">
-                  <UserPlus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    New customer growth
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    You gained {overview.totals.newCustomers} new customer
-                    {overview.totals.newCustomers === 1 ? '' : 's'} this period.
-                  </p>
-                </div>
-              </div>
-              {overview.busiestDay && (
+            {/* Nothing booked in either period means there is nothing to say,
+                and saying it anyway is worse than silence. On a salon with no
+                history this block read "Revenue is unchanged. You earned £0.00
+                this period, compared to £0.00 last period" and "You gained 0
+                new customers", which is three confident sentences about an
+                empty database. */}
+            {overview.totals.revenuePence === 0 &&
+            overview.previous.revenuePence === 0 &&
+            overview.totals.newCustomers === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nothing to compare yet. Once there are completed appointments in this
+                period and the one before it, this is where the trends appear.
+              </p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="flex items-start gap-3">
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-pending text-status-pending">
-                    <CalendarCheck
-                      aria-hidden="true"
-                      className="h-4 w-4"
-                      strokeWidth={2}
-                    />
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-in-service text-status-in-service">
+                    <TrendingUp aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-foreground">Peak day</p>
+                    <p className="text-sm font-medium text-foreground">
+                      Revenue{' '}
+                      {overview.totals.revenuePence === overview.previous.revenuePence
+                        ? 'is unchanged'
+                        : overview.totals.revenuePence > overview.previous.revenuePence
+                          ? 'is up'
+                          : 'is down'}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {overview.busiestDay.name} is your busiest day, with{' '}
-                      {overview.busiestDay.count} appointments.
+                      You earned {formatMoney(overview.totals.revenuePence)} this period,
+                      compared to {formatMoney(overview.previous.revenuePence)} last
+                      period.
                     </p>
                   </div>
                 </div>
-              )}
-            </div>
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-completed text-status-completed">
+                    <UserPlus aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      New customer growth
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      You gained {overview.totals.newCustomers} new customer
+                      {overview.totals.newCustomers === 1 ? '' : 's'} this period.
+                    </p>
+                  </div>
+                </div>
+                {overview.busiestDay && (
+                  <div className="flex items-start gap-3">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-pending text-status-pending">
+                      <CalendarCheck
+                        aria-hidden="true"
+                        className="h-4 w-4"
+                        strokeWidth={2}
+                      />
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Peak day</p>
+                      <p className="text-xs text-muted-foreground">
+                        {overview.busiestDay.name} is your busiest day, with{' '}
+                        {overview.busiestDay.count} appointments.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
 
           {legacy && (

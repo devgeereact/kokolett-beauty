@@ -6,9 +6,19 @@ import type { Tone } from '@/lib/tone';
 import { TONE_BG, TONE_TEXT } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 
-/** `null` when the previous period had nothing to compare against — shown as "—", never a fake 0%. */
+/**
+ * `null` when the previous period had nothing to compare against, shown as an
+ * em dash rather than a number.
+ *
+ * `previous === 0` means there is no baseline, and that is true whether or not
+ * this period also happens to be zero. The old `current === 0 ? 0 : null` made
+ * an exception for zero-to-zero and returned a real 0%, so on a salon with no
+ * history yet every tile read "0% vs previous period" as though a genuine
+ * comparison had been made against a real figure. A percentage nobody computed
+ * is worse than no percentage.
+ */
 function percentChange(current: number, previous: number): number | null {
-  if (previous === 0) return current === 0 ? 0 : null;
+  if (previous === 0) return null;
   return Math.round(((current - previous) / previous) * 1000) / 10;
 }
 

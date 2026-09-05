@@ -218,13 +218,23 @@ function createRequestClient(authHeader: string) {
 
 type RequestClient = ReturnType<typeof createRequestClient>;
 
+/** A model-supplied number, bounded. Non-numbers fall back to the default. */
+function clamp(value: unknown, fallback: number, min: number, max: number): number {
+  const n = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return Math.min(Math.max(Math.trunc(n), min), max);
+}
+
 async function runTool(
   supabase: RequestClient,
   name: string,
   input: Record<string, unknown>,
 ): Promise<unknown> {
   if (name === 'get_top_customers') {
-    const limit = typeof input.limit === 'number' ? input.limit : 5;
+    // Clamped, like the sibling get_upcoming_appointments already is. A
+    // negative value silently truncates the result from the wrong end, and
+    // these arguments are chosen by the model, which reads customer-supplied
+    // text in earlier tool results.
+    const limit = clamp(input.limit, 5, 1, 50);
     const { data, error } = await supabase
       .from('appointments_detailed')
       .select('customer_id, customer_name, price_pence, starts_at, status')
@@ -248,7 +258,10 @@ async function runTool(
   }
 
   if (name === 'get_revenue_summary') {
-    const days = typeof input.days === 'number' ? input.days : 28;
+    // Unbounded, this builds a window of `2 * days`, so `days: 36500` scanned
+    // the whole table. A year of history is past anything the assistant is
+    // asked about.
+    const days = clamp(input.days, 28, 1, 365);
     const now = new Date();
     const from = new Date(now.getTime() - days * 86_400_000);
     const prevFrom = new Date(now.getTime() - days * 2 * 86_400_000);
@@ -409,6 +422,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
   } = await supabase.auth.getUser();
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401, headers: CORS });
+  }
+
+  /* Owner only, matching `draft-copy` and `email-diagnostics`.
+   *
+   * The tools read through the caller's own RLS, so a non-owner has always
+   * read nothing here, and that is the design. What they could still do is
+   * spend: up to MAX_TOOL_ROUNDS model calls per request with no per-caller
+   * limit, on the salon's OpenRouter key. That was bounded only by
+   * `enable_signup = false` leaving exactly one auth user, which is a setting
+   * in a dashboard rather than a check in this function. */
+  const { data: isOwner, error: ownerError } = await supabase.rpc('is_owner');
+  if (ownerError || !isOwner) {
+    return Response.json({ error: 'NOT_AUTHORISED' }, { status: 403, headers: CORS });
   }
 
   let body: { messages?: ChatMessage[] };

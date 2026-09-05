@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="grid min-h-screen place-items-center bg-background p-6 text-center">
+      <div className="grid min-h-screen-app place-items-center bg-background p-6 text-center">
         <div className="max-w-md">
           <h1 className="mb-2 font-serif text-2xl text-foreground">
             Something went wrong

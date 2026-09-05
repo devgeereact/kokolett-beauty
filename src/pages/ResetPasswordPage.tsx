@@ -151,14 +151,14 @@ export function ResetPasswordPage(): JSX.Element {
 
   if (phase === 'checking') {
     return (
-      <main className="grid min-h-screen place-items-center bg-background">
+      <main className="grid min-h-screen-app place-items-center bg-background">
         <Spinner className="h-8 w-8" />
       </main>
     );
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-background px-4 py-10">
+    <main className="grid min-h-screen-app place-items-center bg-background px-4 py-10">
       <Card className="w-full max-w-md p-6">
         <h1 className="mb-1 font-serif text-2xl font-semibold text-foreground">
           {phase === 'done' ? 'Password changed' : 'Choose a new password'}

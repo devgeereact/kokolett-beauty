@@ -34,7 +34,7 @@ export function UnsubscribePage(): JSX.Element {
   };
 
   return (
-    <main className="grid min-h-screen place-items-center px-6 text-center">
+    <main className="grid min-h-screen-app place-items-center px-6 text-center">
       <div>
         <p className="font-serif text-2xl font-semibold text-foreground">
           {done ? "You're unsubscribed" : 'Unsubscribe from our mailing list?'}

@@ -3,14 +3,12 @@ import {
   Calendar,
   Clock,
   History,
-  Mail,
   MessageSquareQuote,
-  Phone,
   Plus,
   Scissors,
   X,
 } from 'lucide-react';
-import { Avatar } from '@/components/ui/Avatar';
+import { RequestContactHeader } from '@/components/dashboard/requests/RequestContactHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -22,8 +20,6 @@ import { suggestSlotsForRequest, type SuggestedSlot } from '@/lib/requestSlots';
 import {
   PRIORITY_LABELS,
   PRIORITY_TONE,
-  REQUEST_STATUS_LABELS,
-  REQUEST_STATUS_TONE,
   laneForStatus,
   priorityFromWaitingHours,
 } from '@/lib/requestStatus';
@@ -176,41 +172,7 @@ export function RequestDetailPanel({
 
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <div className="flex items-start gap-3">
-        <Avatar name={request.full_name} size="lg" />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-serif text-base font-semibold text-foreground">
-              {request.full_name}
-            </p>
-            <Badge tone={REQUEST_STATUS_TONE[request.status]}>
-              {REQUEST_STATUS_LABELS[request.status]}
-            </Badge>
-          </div>
-          <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
-            <p className="flex items-center gap-2">
-              <Mail aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
-              <a
-                href={`mailto:${request.email}`}
-                className="truncate text-foreground hover:underline hover:underline-offset-4"
-              >
-                {request.email}
-              </a>
-            </p>
-            {request.mobile && (
-              <p className="flex items-center gap-2">
-                <Phone aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <a
-                  href={`tel:${request.mobile.replace(/\s/g, '')}`}
-                  className="truncate text-foreground hover:underline hover:underline-offset-4"
-                >
-                  {request.mobile}
-                </a>
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      <RequestContactHeader request={request} />
 
       {(isOpen || returning !== null) && (
         <div className="flex flex-wrap items-center gap-2">

@@ -287,7 +287,7 @@ select is((select visible from rls_probe where tbl='google_place_snapshot' and a
 select is((select visible from rls_probe where tbl='email_templates' and as_role='anon'),
           0::bigint, 'anon cannot read email_templates even when granted — RLS denies it');
 select is((select visible from rls_probe where tbl='contact_messages' and as_role='anon'),
-          0, 'anon cannot read contact messages');
+          0::bigint, 'anon cannot read contact messages');
 
 select is((select visible from rls_probe where tbl='audit_events' and as_role='anon'),
           0::bigint, 'anon cannot read audit_events');
@@ -323,7 +323,7 @@ select is((select visible from rls_probe where tbl='calendar_feeds' and as_role=
 select is((select visible from rls_probe where tbl='availability_requests' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read availability_requests');
 select is((select visible from rls_probe where tbl='contact_messages' and as_role='authenticated'),
-          0, 'a signed-in non-owner cannot read contact messages either');
+          0::bigint, 'a signed-in non-owner cannot read contact messages either');
 
 select is((select visible from rls_probe where tbl='audit_events' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read audit_events');

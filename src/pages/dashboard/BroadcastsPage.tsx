@@ -27,10 +27,21 @@ export function BroadcastsPage(): JSX.Element {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
+  /* `null` means "not known", and it has to stay distinguishable from zero.
+     The catch used to set it back to null, which is the same value the initial
+     state uses, so a failed fetch left "Loading recipient count..." on screen
+     for good with no error and no retry. */
+  const [countError, setCountError] = useState(false);
   useEffect(() => {
     listSubscribers()
-      .then((rows) => setRecipientCount(rows.filter((r) => r.confirmed).length))
-      .catch(() => setRecipientCount(null));
+      .then((rows) => {
+        setRecipientCount(rows.filter((r) => r.confirmed).length);
+        setCountError(false);
+      })
+      .catch(() => {
+        setRecipientCount(null);
+        setCountError(true);
+      });
   }, []);
 
   const polish = (): void => {
@@ -59,8 +70,15 @@ export function BroadcastsPage(): JSX.Element {
       .finally(() => setSending(false));
   };
 
+  /* `> 0`, not `!== null`. Zero passed the old check, so Send was enabled while
+     the page itself read "Will send to 0 subscriber(s)" and the confirm dialog
+     offered an irreversible action with no recipients. */
   const canSend =
-    !sending && recipientCount !== null && subject.trim() !== '' && body.trim() !== '';
+    !sending &&
+    recipientCount !== null &&
+    recipientCount > 0 &&
+    subject.trim() !== '' &&
+    body.trim() !== '';
 
   return (
     <DashboardLayout
@@ -112,9 +130,13 @@ export function BroadcastsPage(): JSX.Element {
             )}
           </Field>
           <p className="mb-3 text-sm text-muted-foreground">
-            {recipientCount === null
-              ? 'Loading recipient count…'
-              : `Will send to ${recipientCount} subscriber(s).`}
+            {countError
+              ? 'The subscriber list could not be read, so this cannot be sent yet.'
+              : recipientCount === null
+                ? 'Loading recipient count…'
+                : recipientCount === 0
+                  ? 'Nobody has confirmed their subscription yet, so there is no one to send to.'
+                  : `Will send to ${recipientCount} subscriber${recipientCount === 1 ? '' : 's'}.`}
           </p>
           <Button disabled={!canSend} onClick={() => setConfirmOpen(true)}>
             Send broadcast

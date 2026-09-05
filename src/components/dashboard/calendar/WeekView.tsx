@@ -151,6 +151,17 @@ export function WeekView({
           </button>
         </p>
       )}
+      {/* `drag.busy` was returned by the hook and rendered by nobody. On
+          release the ghost disappears and the block snaps back to where it
+          started until the reschedule round trip and the refetch complete, so
+          on salon wifi a successful drag looks like one that did not take, and
+          the natural response is to drag it again: a second reschedule of the
+          same appointment. */}
+      {drag.busy && (
+        <p role="status" className="mb-3 text-sm font-medium text-muted-foreground">
+          Moving the appointment...
+        </p>
+      )}
       <div
         className={cn(
           'flex flex-col overflow-hidden rounded-md border border-border/60 bg-card',

@@ -96,7 +96,7 @@ export function BookingRulesCard(): JSX.Element {
   return (
     <Card id="booking-rules" className="scroll-mt-6 p-5">
       <div className="mb-2 flex items-center gap-2">
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
           <CalendarCheck aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
         </span>
         <h2 className="font-serif text-base font-semibold text-foreground">

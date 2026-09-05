@@ -800,6 +800,38 @@ None failed a build, a lint, a type check or an axe run. `npm run lint:classes`
 fails on any of the three, plus on undeclared breakpoint variants (`sm:` was
 resolving at v4's own 640px in seven files) and bare numeric `z-` values.
 
+### The dashboard, opened for the first time (added later the same day)
+
+The owner signed the audit into a real dashboard session against the production
+database, which is what made the next finding possible: **the twenty dashboard
+screens had never had an accessibility check of any kind**, because they sit behind
+the secret sign-in gate and no automated run had ever reached them. axe, driven
+through that session against the built `dist/` under the real CSP, failed **every
+screen**: roughly fifty violations, six distinct causes, 8 present on all twenty
+because they are chrome.
+
+Two mistakes, repeated. An opacity modifier on a foreground token
+(`text-sidebar-foreground/60` at 3.31:1, twenty-one instances; the calendar's
+outside-month days at 2.15:1, the worst ratio in the app). And status text tuned
+against `--card` while also being used on its own tint, failing in both themes in
+opposite directions. Full detail and the numbers are in `docs/DESIGN.md` §2.4a.
+
+All twenty screens are now clean **in both colour schemes**, re-measured in the
+browser after the fix. One `select` on the Customers page also had no accessible
+name; it now has one.
+
+The `--status-*` tokens moved in both blocks, so this changes colour on the
+calendar, the status chips and the appointment lists. Hue and saturation are
+unchanged in every case; only lightness moved, by the smallest step that clears the
+threshold.
+
+**One thing this pass could not fix, because it is data rather than code:** the
+dashboard greets the owner as **Koko**. `TodayPage` reads `profiles.full_name` for
+the staff row, and the live value's first word is "Koko". The 2026-08-31 sweep that
+corrected the AI prompt and two email templates did not reach this row, so the owner
+is still greeted by the wrong name on her own dashboard every morning. It is a
+one-row update and it needs the owner to say what the value should be.
+
 ### Fixed in this pass
 
 Frontend:

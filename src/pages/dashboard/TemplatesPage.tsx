@@ -150,7 +150,7 @@ export function TemplatesPage(): JSX.Element {
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="h-fit p-5">
             <div className="mb-3 flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
                 <selected.icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
               </span>
               <div>
@@ -228,7 +228,7 @@ export function TemplatesPage(): JSX.Element {
             className={cn(
               'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium',
               lane === l
-                ? 'border-primary text-primary'
+                ? 'border-primary text-brand-ink'
                 : 'border-transparent text-muted-foreground hover:text-foreground',
             )}
           >
@@ -237,7 +237,7 @@ export function TemplatesPage(): JSX.Element {
               className={cn(
                 'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
                 lane === l
-                  ? 'bg-tint-brand text-primary'
+                  ? 'bg-tint-brand text-brand-ink'
                   : 'bg-muted text-muted-foreground',
               )}
             >
@@ -274,7 +274,7 @@ export function TemplatesPage(): JSX.Element {
                 className="cursor-pointer p-5 transition-colors hover:border-foreground/20"
                 onClick={() => setSelectedKey(t.key)}
               >
-                <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-tint-brand text-primary">
+                <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
                   <t.icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
                 </span>
                 <h3 className="mb-1 font-serif text-base font-semibold text-foreground">

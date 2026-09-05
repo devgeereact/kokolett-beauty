@@ -4,7 +4,7 @@ import { Bell, Calendar, ChevronRight, Scissors, Settings2 } from 'lucide-react'
 import { Card } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
 
-const ICON_TONE = 'bg-tint-brand text-primary';
+const ICON_TONE = 'bg-tint-brand text-brand-ink';
 
 /**
  * `BookingRulesCard` (which owns `#booking-rules`) stays in its own loading

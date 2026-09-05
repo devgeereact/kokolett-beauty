@@ -45,7 +45,7 @@ export function CalendarShell({ view, onViewChange }: CalendarShellProps): JSX.E
             'inline-flex min-h-touch items-center rounded-md px-3.5 text-sm font-medium',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             view === v.key
-              ? 'bg-tint-brand text-primary'
+              ? 'bg-tint-brand text-brand-ink'
               : 'text-muted-foreground hover:text-foreground',
           )}
         >

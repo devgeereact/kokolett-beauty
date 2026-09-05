@@ -31,7 +31,7 @@ export function AdvisorySection({
         className="flex w-full items-center justify-between gap-3 text-left"
       >
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-primary">
+          <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
             <Sparkles aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
           </span>
           <div>

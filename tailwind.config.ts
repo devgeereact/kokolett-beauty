@@ -101,6 +101,7 @@ const config: Config = {
       sidebar: {
         DEFAULT: rgb('--sidebar'),
         foreground: rgb('--sidebar-foreground'),
+        muted: rgb('--sidebar-muted'),
         primary: rgb('--sidebar-primary'),
         'primary-foreground': rgb('--sidebar-primary-foreground'),
         accent: rgb('--sidebar-accent'),

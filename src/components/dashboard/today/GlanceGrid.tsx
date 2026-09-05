@@ -129,7 +129,7 @@ export function GlanceGrid({
                 to={stat.to}
                 className="group rounded-lg bg-muted/60 p-3.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-tint-brand text-primary">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-tint-brand text-brand-ink">
                   <Icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                 </span>
                 {/* font-serif matches "Bookings overview"'s own stat numbers

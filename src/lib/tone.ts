@@ -41,7 +41,10 @@ export const TONE_TEXT: Record<Tone, string> = {
   in_service: 'text-status-in-service',
   completed: 'text-status-completed',
   cancelled: 'text-status-cancelled',
-  primary: 'text-primary',
+  // `brand-ink`, not `primary`: this text sits on `--tint-brand` at 12px, and
+  // `--primary` measures 4.15:1 there. Eleven Badge instances on the Services
+  // screen alone were failing WCAG 1.4.3 on that pairing.
+  primary: 'text-brand-ink',
   neutral: 'text-muted-foreground',
   urgent: 'text-status-no-show',
 };

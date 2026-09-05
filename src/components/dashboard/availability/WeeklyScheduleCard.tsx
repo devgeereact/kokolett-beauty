@@ -86,7 +86,7 @@ export function WeeklyScheduleCard({
         <button
           type="button"
           onClick={() => onShowAdvancedChange(true)}
-          className="font-medium text-primary hover:underline"
+          className="font-medium text-brand-ink hover:underline"
         >
           Show advanced options
         </button>{' '}

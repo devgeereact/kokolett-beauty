@@ -330,6 +330,7 @@ export function CustomersPage(): JSX.Element {
           />
         </div>
         <select
+          aria-label="Filter customers by status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
           className="h-11 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

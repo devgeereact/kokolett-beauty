@@ -112,6 +112,35 @@ in light mode before, which is how a second failure went unnoticed: the dark
 colour on `--input`, where it measured 3.91:1. It is now `#b4b4b4`, 4.76:1 on the worst
 surface and still clearly below `--foreground`.
 
+### 2.4a The dashboard, measured for the first time
+
+The twenty dashboard screens had never had an accessibility check of any kind: they
+sit behind the secret sign-in gate, so no automated run had ever reached them. Driven
+through a real signed-in browser on 2026-09-05, **every one of them failed**, roughly
+fifty violations from six causes, all of them the same two mistakes repeated:
+
+**An opacity modifier on a foreground token.** `text-sidebar-foreground/60` on the
+nav section headings is 60% of `#333333` over `#dddfe2`, which is `#777879` and
+3.31:1 at 12px. Twenty-one instances, on every screen, because it is chrome. This is
+the third time this exact trap has bitten (the hero stat labels and the dark
+placeholders were the first two), so it is now a real token, `--sidebar-muted`, that
+an opacity modifier cannot silently re-tint. The calendar's outside-month days were
+the same shape: `--muted-foreground` at `opacity-50` composites to `#adb1b8`, 2.15:1,
+the worst ratio anywhere in the app.
+
+**Status text that was tuned against `--card` but is used on its own tint.** Every
+`--status-*` token is documented as clearing 4.5:1 "on card and on its tint". They
+cleared it on card and missed on the tint, in both themes and in opposite directions:
+in light, pending 4.25, confirmed 4.37, cancelled 4.16 and no-show 4.01; in dark,
+no-show 3.66, in-service 3.63, cancelled 3.78 and confirmed 3.81. Reducing
+`--tint-mix` does not fix it (at 6% the worst light pairing is still 4.45:1 and the
+tint has stopped reading as a tint), so the text moved instead: darker in light,
+lighter in dark, hue and saturation unchanged. `TONE_TEXT.primary` in `src/lib/tone.ts`
+also moved from `primary` to `brand-ink`, since it renders on `--tint-brand`.
+
+All twenty screens are now clean in both themes. This is browser evidence against the
+built `dist/` under the real CSP, not a static read.
+
 ### 2.5 The scale is enforced by a gate, not by Tailwind
 
 `tailwind.config.ts` declares `colors`, `screens`, `fontSize`, `borderRadius`,

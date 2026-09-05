@@ -21,6 +21,7 @@ import {
   Activity,
   ListChecks,
   Megaphone,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export type NavIconLabel =
   | 'Appointments'
   | 'Approvals'
   | 'Availability Requests'
+  | 'Messages'
   | 'Customers'
   | 'Services'
   | 'Availability'
@@ -50,6 +52,7 @@ export const NAV_ICONS: Record<NavIconLabel, LucideIcon> = {
   Appointments: ClipboardList,
   Approvals: CheckCircle2,
   'Availability Requests': CalendarClock,
+  Messages: MessageSquare,
   Customers: Users,
   Services: Scissors,
   Availability: Clock,

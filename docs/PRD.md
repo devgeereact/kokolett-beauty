@@ -152,8 +152,9 @@ converted / declined states, filtering, priority indicators, one-click "offer th
 slot".
 
 **Owner dashboard** — today's schedule, calendar (day / week / month / agenda) with
-drag-to-reschedule and conflict detection, a combined Inbox (approvals and availability
-requests as tabs, not separate destinations), appointments, customers, services,
+drag-to-reschedule and conflict detection, a combined Inbox (approvals, availability
+requests and Contact-page messages as tabs, not separate destinations, each with its
+own sidebar row and unread badge), appointments, customers, services,
 the weekly default (the repeating week that generates days), reports, the chat
 assistant, daily close, broadcasts, email outbox and templates, audit trail, system
 health, settings. Twenty screens in all.

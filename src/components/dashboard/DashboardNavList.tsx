@@ -50,10 +50,31 @@ export function DashboardNavList({
         )}
       >
         <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2} />
-        {!rail && <span className="flex-1 truncate">{entry.label}</span>}
+        {rail ? (
+          /* A real accessible name, not just `title`. Collapsed, the row was
+             an icon plus a `title` attribute — which browsers do expose as a
+             name, but only after a hover delay and never on keyboard focus,
+             so the rail read as a column of unlabelled links to anyone not
+             using a mouse. The badge count goes in the same string because
+             its rail rendering is a bare dot with no number in it.
+
+             A visible tooltip is NOT used here: the rail's own scroll
+             container computes `overflow-x` to `auto`, so a label wide
+             enough to be worth showing would be clipped by the 72px column.
+             Recorded in docs/KOKO_GAP.md rather than shipped clipped. */
+          <span className="sr-only">
+            {entry.label}
+            {entry.badge ? `, ${entry.badge} waiting` : ''}
+          </span>
+        ) : (
+          <span className="flex-1 truncate">{entry.label}</span>
+        )}
         {entry.badge ? (
           rail ? (
-            <span className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-primary" />
+            <span
+              aria-hidden="true"
+              className="absolute right-1 top-1 inline-flex h-2 w-2 rounded-full bg-primary"
+            />
           ) : (
             <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
               {entry.badge}

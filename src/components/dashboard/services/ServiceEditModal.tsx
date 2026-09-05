@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { Scissors, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/Card';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import { Switch } from '@/components/ui/Switch';
@@ -57,7 +57,7 @@ export function ServiceEditModal({
       ariaLabel={isNew ? 'New service' : 'Edit service'}
       className="max-w-modal-md"
     >
-      <Card className="max-h-[85vh] overflow-y-auto p-5">
+      <Card pad="standard" className="max-h-[85vh] overflow-y-auto">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {selected ? (
@@ -67,9 +67,7 @@ export function ServiceEditModal({
                 <Scissors aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
               </span>
             )}
-            <h2 className="font-serif text-lg font-semibold text-foreground">
-              {isNew ? 'New service' : draft.name || 'Service'}
-            </h2>
+            <CardTitle>{isNew ? 'New service' : draft.name || 'Service'}</CardTitle>
           </div>
           <button
             type="button"

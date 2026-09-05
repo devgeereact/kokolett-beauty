@@ -1,20 +1,19 @@
 import { type JSX } from 'react';
 import { CalendarClock, MapPin, Users } from 'lucide-react';
 import { ShareLink } from '@/components/dashboard/ShareLink';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
 import { SITE_ORIGIN } from '@/lib/business';
 
 /** The links the owner pastes into Instagram, WhatsApp, or hands to a customer directly. */
 export function LinksToShareCard(): JSX.Element {
   return (
-    <Card className="p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Links to Share
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Share these links on Instagram, WhatsApp or with customers.
-      </p>
+    <Card pad="standard">
+      <CardHeading
+        size="compact"
+        title="Links to Share"
+        description="Share these links on Instagram, WhatsApp or with customers."
+      />
       <ShareLink
         icon={MapPin}
         label="Book an appointment"

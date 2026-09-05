@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarClock } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
 import type { BookingSettings } from '@/types';
 
@@ -37,10 +37,8 @@ export function BookingRulesCard({
   ];
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-        Booking rules
-      </h2>
+    <Card pad="standard">
+      <CardHeading size="compact" title="Booking rules" />
       <dl className="space-y-1.5">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between gap-3 text-sm">
@@ -58,7 +56,7 @@ export function BookingRulesCard({
       </dl>
       <Link
         to={routes.owner.settings}
-        className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        className="mt-2 flex items-center gap-1.5 text-sm font-medium text-brand-ink hover:underline"
       >
         Edit booking settings
         <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />

@@ -107,8 +107,19 @@ export function PhotoCard({
           {tag}
         </span>
       )}
-      <h3 className="font-serif text-lg font-semibold text-hero-fg">{title}</h3>
-      {description && <p className="mt-1 text-sm text-hero-fg/80">{description}</p>}
+      {/* Clamped, not truncated at a character: the card's height is fixed
+          by its 3/4 aspect ratio and the text block is anchored to the
+          bottom, so a long title or a long description grew UPWARD and was
+          cut by the card's own `overflow-hidden` — mid-line, with no ellipsis
+          to say so. At 200% zoom that happened to ordinary-length copy too.
+          Two lines each keeps the band inside the darkest part of the scrim,
+          which is also where it stays readable over a bright photograph. */}
+      <h3 className="line-clamp-2 font-serif text-lg font-semibold text-hero-fg">
+        {title}
+      </h3>
+      {description && (
+        <p className="mt-1 line-clamp-2 text-sm text-hero-fg/80">{description}</p>
+      )}
       {ctaLabel && ctaHref && (
         <Link
           to={ctaHref}

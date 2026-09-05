@@ -19,9 +19,9 @@ export interface NavEntry {
   activePaths?: string[];
   /**
    * For entries that deep-link into Inbox's `?tab=` param (Approvals,
-   * Availability Requests) rather than owning a distinct route.
+   * Availability Requests, Messages) rather than owning a distinct route.
    */
-  matchTab?: 'approvals' | 'requests';
+  matchTab?: 'approvals' | 'requests' | 'messages';
 }
 
 export interface NavGroup {
@@ -32,6 +32,8 @@ export interface NavGroup {
 export interface DashboardNavBadges {
   approvals?: number;
   requests?: number;
+  /** Unread Contact-page enquiries (migration 0080). */
+  messages?: number;
   notifications?: number;
 }
 
@@ -93,6 +95,17 @@ export function buildNavGroups(badges?: DashboardNavBadges): NavGroup[] {
           icon: NAV_ICONS['Availability Requests'],
           matchTab: 'requests',
           badge: badges?.requests,
+        },
+        /* Added 2026-09-05. The Messages queue shipped inside Inbox with no
+           nav row, and Inbox's own switch is `md:hidden`, so on desktop the
+           only way to reach a Contact-page enquiry was to type the query
+           string. */
+        {
+          to: `${routes.owner.inbox}?tab=messages`,
+          label: 'Messages',
+          icon: NAV_ICONS.Messages,
+          matchTab: 'messages',
+          badge: badges?.messages,
         },
       ],
     },

@@ -3,6 +3,8 @@ import { Stars } from '@/components/public/Reviews';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import type { PublicReview } from '@/services/reviewService';
+import { publicButton } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 function Avatar({ review }: { review: PublicReview }): JSX.Element {
   const [broken, setBroken] = useState(false);
@@ -62,12 +64,15 @@ export function TestimonialsGrid({
             onClick={() => setOpen(review)}
             className="text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            <Card className="flex h-full flex-col p-5 transition-colors hover:border-brand">
+            <Card
+              pad="standard"
+              className="flex h-full flex-col transition-colors hover:border-brand"
+            >
               <Stars rating={review.rating} className="mb-3" />
               <blockquote className="line-clamp-4 flex-1 text-sm leading-relaxed text-foreground">
                 {review.body}
               </blockquote>
-              <span className="mt-2 text-xs font-medium text-primary">
+              <span className="mt-2 text-xs font-medium text-brand-ink">
                 Read full review
               </span>
               <footer className="mt-4 flex items-center gap-3 border-t border-border pt-3">
@@ -94,7 +99,10 @@ export function TestimonialsGrid({
             rel="noopener noreferrer"
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            <Card className="flex h-full flex-col items-center justify-center gap-3 p-5 text-center transition-colors hover:border-brand">
+            <Card
+              pad="standard"
+              className="flex h-full flex-col items-center justify-center gap-3 text-center transition-colors hover:border-brand"
+            >
               <span className="grid h-10 w-10 place-items-center rounded-full bg-tint-brand text-brand-ink">
                 <svg
                   viewBox="0 0 24 24"
@@ -128,7 +136,7 @@ export function TestimonialsGrid({
             href={reviewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-12 min-h-touch items-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={cn(publicButton(), 'h-12 px-8 text-base')}
           >
             Leave a review
           </a>
@@ -141,7 +149,7 @@ export function TestimonialsGrid({
         ariaLabel={open ? `Review from ${open.author_name}` : 'Review'}
       >
         {open && (
-          <Card className="p-6">
+          <Card pad="roomy">
             <Stars rating={open.rating} className="mb-3" />
             <blockquote className="whitespace-pre-line text-sm leading-relaxed text-foreground">
               {open.body}

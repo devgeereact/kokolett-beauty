@@ -1,7 +1,7 @@
 import { type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Calendar, ChevronRight, Scissors, Settings2 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
 
 const ICON_TONE = 'bg-tint-brand text-brand-ink';
@@ -64,13 +64,12 @@ export function BusinessSettingsNavCard(): JSX.Element {
   const navigate = useNavigate();
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Business Settings
-      </h2>
-      <p className="mb-3 text-sm text-muted-foreground">
-        Configure how your salon operates.
-      </p>
+    <Card pad="standard">
+      <CardHeading
+        size="compact"
+        title="Business Settings"
+        description="Configure how your salon operates."
+      />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <NavTile
           icon={Scissors}

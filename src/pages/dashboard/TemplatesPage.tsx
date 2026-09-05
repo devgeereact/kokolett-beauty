@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { TemplatePreviewFrame } from '@/components/dashboard/templates/TemplatePreviewFrame';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading, CardTitle } from '@/components/ui/Card';
 import { LoadingState, ErrorState } from '@/components/ui/States';
 import {
   getTemplateUsage,
@@ -22,6 +22,12 @@ import { formatDateTime, formatRelative } from '@/lib/format';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
+import {
+  filterBar,
+  filterCount,
+  filterTab,
+  toolbarControl,
+} from '@/components/ui/controlClasses';
 
 type Lane = 'all' | TemplateCategory;
 const LANES: Lane[] = [
@@ -133,7 +139,7 @@ export function TemplatesPage(): JSX.Element {
           <button
             type="button"
             onClick={() => setSelectedKey(null)}
-            className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            className="flex items-center gap-1.5 text-sm font-medium text-brand-ink hover:underline"
           >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             Back to templates
@@ -148,15 +154,13 @@ export function TemplatesPage(): JSX.Element {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="h-fit p-5">
+          <Card pad="standard" className="h-fit">
             <div className="mb-3 flex items-center gap-3">
               <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
                 <selected.icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
               </span>
               <div>
-                <h2 className="font-serif text-lg font-semibold text-foreground">
-                  {selected.label}
-                </h2>
+                <CardTitle>{selected.label}</CardTitle>
                 <Badge tone="primary">Email</Badge>
               </div>
             </div>
@@ -181,10 +185,12 @@ export function TemplatesPage(): JSX.Element {
             </dl>
           </Card>
 
-          <Card className="p-5 lg:col-span-2">
-            <h3 className="mb-4 font-serif text-base font-semibold text-foreground">
-              {example ? 'Most recent example' : 'Preview'}
-            </h3>
+          <Card pad="standard" className="lg:col-span-2">
+            <CardHeading
+              as="h3"
+              size="compact"
+              title={example ? 'Most recent example' : 'Preview'}
+            />
             {!example ? (
               <p className="text-sm text-muted-foreground">
                 This template hasn't sent yet, so there's no real example to show.
@@ -219,30 +225,17 @@ export function TemplatesPage(): JSX.Element {
       title="Templates"
       subtitle="The wording behind every automated message."
     >
-      <div className="mb-6 flex flex-wrap items-center gap-1 border-b border-border">
+      <div role="group" aria-label="Filter templates" className={cn(filterBar, 'mb-6')}>
         {LANES.map((l) => (
           <button
             key={l}
             type="button"
             onClick={() => setLane(l)}
-            className={cn(
-              'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium',
-              lane === l
-                ? 'border-primary text-brand-ink'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
+            aria-pressed={lane === l}
+            className={filterTab(lane === l)}
           >
             {l === 'all' ? 'All templates' : l}
-            <span
-              className={cn(
-                'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                lane === l
-                  ? 'bg-tint-brand text-brand-ink'
-                  : 'bg-muted text-muted-foreground',
-              )}
-            >
-              {laneCounts[l]}
-            </span>
+            <span className={filterCount(lane === l)}>{laneCounts[l]}</span>
           </button>
         ))}
       </div>
@@ -258,7 +251,7 @@ export function TemplatesPage(): JSX.Element {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search templates…"
-          className="h-11 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={cn(toolbarControl, 'w-full pl-9')}
         />
       </div>
 
@@ -270,8 +263,9 @@ export function TemplatesPage(): JSX.Element {
             const u = usage.get(t.key);
             return (
               <Card
+                pad="standard"
                 key={t.key}
-                className="cursor-pointer p-5 transition-colors hover:border-foreground/20"
+                className="cursor-pointer transition-colors hover:border-foreground/20"
                 onClick={() => setSelectedKey(t.key)}
               >
                 <span className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">

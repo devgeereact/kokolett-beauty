@@ -335,7 +335,13 @@ export function CalendarPage(): JSX.Element {
             // inside the rail rather than the whole page. Unconstrained on
             // mobile, where the rail stacks full-width below the grid and
             // should just show everything via normal page scroll.
-            'lg:h-[calc(100vh-16rem)] lg:min-h-[480px] lg:overflow-y-auto',
+            /* `dvh`, not `vh`: on iPad Safari `100vh` counts the browser chrome
+               that is not actually on screen, so the calendar was taller than
+               the space it had and its last hour row sat under the toolbar.
+               The 16rem subtracts this page's own header + view switcher; the
+               Appointments table subtracts a different number because it has a
+               filter bar as well. Both floor at a usable minimum. */
+            'lg:h-[calc(100dvh-16rem)] lg:min-h-[480px] lg:overflow-y-auto',
           )}
         >
           <AppointmentDetailPanel

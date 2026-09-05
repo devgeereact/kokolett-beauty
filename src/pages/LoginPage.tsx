@@ -144,7 +144,7 @@ export function LoginPage(): JSX.Element {
 
   return (
     <main className="grid min-h-screen-app place-items-center bg-background px-4 py-10">
-      <Card className="w-full max-w-md p-6">
+      <Card pad="roomy" className="w-full max-w-md">
         <h1 className="mb-1 font-serif text-2xl font-semibold text-foreground">
           Kokolett Beauty
         </h1>
@@ -228,7 +228,7 @@ export function LoginPage(): JSX.Element {
                     reach. */}
                 <button
                   type="button"
-                  className="mb-4 -mt-2 text-sm font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="mb-4 -mt-2 text-sm font-medium text-brand-ink underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={() => void requestReset()}
                   disabled={busy}
                 >

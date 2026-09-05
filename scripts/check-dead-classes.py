@@ -74,6 +74,7 @@ NON_SCREEN_VARIANTS = frozenset(
     backdrop dark motion-safe motion-reduce contrast-more contrast-less
     print portrait landscape rtl ltr forced-colors aria-expanded aria-selected
     aria-checked aria-disabled aria-pressed supports has not where is
+    pointer-fine pointer-coarse pointer-none any-pointer-fine any-pointer-coarse
     """.split()
 )
 

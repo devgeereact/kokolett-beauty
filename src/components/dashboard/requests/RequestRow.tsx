@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { Calendar, CalendarCheck, Clock, MoreHorizontal } from 'lucide-react';
+import { Calendar, CalendarCheck, Clock, Eye } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
@@ -15,6 +15,7 @@ import {
 import { TONE_TEXT } from '@/lib/tone';
 import { cn } from '@/lib/utils';
 import type { QueuedRequest } from '@/services/requestService';
+import { iconButtonClass } from '@/components/ui/controlClasses';
 
 const FLEXIBILITY_LABELS: Record<string, string> = {
   any: 'Any time',
@@ -39,8 +40,9 @@ export function RequestRow({
 
   return (
     <Card
+      pad="standard"
       className={cn(
-        'cursor-pointer p-5 transition-colors',
+        'cursor-pointer transition-colors',
         selected ? 'border-primary ring-1 ring-primary' : 'hover:border-foreground/20',
       )}
       onClick={onSelect}
@@ -161,16 +163,18 @@ export function RequestRow({
           </p>
         </div>
 
+        {/* Opens the request's detail panel — not a menu, so not an
+            ellipsis. Matches `CustomerCard` and `AppointmentsTable`. */}
         <button
           type="button"
-          aria-label="More options"
+          aria-label={`View ${request.full_name}'s request`}
           onClick={(e) => {
             e.stopPropagation();
             onSelect();
           }}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={iconButtonClass}
         >
-          <MoreHorizontal aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+          <Eye aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
     </Card>

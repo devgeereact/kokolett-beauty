@@ -154,7 +154,7 @@ export function RequestDetailPanel({
 
   if (!request) {
     return (
-      <Card className="p-5">
+      <Card pad="standard">
         <p className="text-sm text-muted-foreground">
           Select a request to see its details here.
         </p>
@@ -171,7 +171,7 @@ export function RequestDetailPanel({
   };
 
   return (
-    <Card className="flex flex-col gap-4 p-5">
+    <Card pad="standard" className="flex flex-col gap-4">
       <RequestContactHeader request={request} />
 
       {(isOpen || returning !== null) && (

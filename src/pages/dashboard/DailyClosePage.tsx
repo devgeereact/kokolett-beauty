@@ -114,7 +114,10 @@ export function DailyClosePage(): JSX.Element {
       ) : (
         <div className="space-y-6">
           {closedToday && lastClose && (
-            <Card className="flex items-center gap-2 p-4 text-sm text-foreground">
+            <Card
+              pad="compact"
+              className="flex items-center gap-2 text-sm text-foreground"
+            >
               <CheckCircle2
                 aria-hidden="true"
                 className="h-4 w-4 shrink-0 text-status-confirmed"
@@ -125,7 +128,7 @@ export function DailyClosePage(): JSX.Element {
             </Card>
           )}
 
-          <Card className="grid grid-cols-2 gap-2 p-0 md:grid-cols-4">
+          <Card className="grid grid-cols-2 gap-2 md:grid-cols-4">
             <Stat label="Scheduled" value={summary.scheduled_count} />
             <Stat label="Completed" value={summary.completed_count} />
             <Stat label="Cancelled / no-show" value={summary.cancelled_count} />

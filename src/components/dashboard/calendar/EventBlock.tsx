@@ -72,7 +72,7 @@ function EventBlockImpl({
           className={cn(
             'truncate opacity-0 transition-opacity duration-150',
             'group-hover:opacity-100 group-focus-visible:opacity-100',
-            onClick ? 'text-primary' : 'text-muted-foreground',
+            onClick ? 'text-brand-ink' : 'text-muted-foreground',
           )}
         >
           {label}

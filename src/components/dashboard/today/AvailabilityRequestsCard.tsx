@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, Clock, Inbox, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { listAllRequests, listQueuedRequests } from '@/services/requestService';
 import { routes } from '@/lib/routes';
@@ -91,18 +91,19 @@ export function AvailabilityRequestsCard({
     : [];
 
   return (
-    <Card className={cn('flex h-full flex-col p-4', className)}>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          Availability requests
-        </h2>
-        <Link
-          to={requestsHref}
-          className="text-xs font-medium text-primary hover:underline"
-        >
-          View all
-        </Link>
-      </div>
+    <Card pad="compact" className={cn('flex h-full flex-col', className)}>
+      <CardHeading
+        size="compact"
+        title="Availability requests"
+        actions={
+          <Link
+            to={requestsHref}
+            className="text-xs font-medium text-brand-ink hover:underline"
+          >
+            View all
+          </Link>
+        }
+      />
 
       {!counts && (
         <div className="flex justify-center py-6">

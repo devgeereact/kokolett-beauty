@@ -7,6 +7,7 @@ import { StatusChip } from '@/components/ui/StatusChip';
 import { AppointmentRowMenu } from '@/components/dashboard/appointments/AppointmentRowMenu';
 import { formatDateLong, formatDuration, formatTime } from '@/lib/format';
 import type { AppointmentDetailed } from '@/types';
+import { iconButtonClass } from '@/components/ui/controlClasses';
 
 export interface AppointmentTableGroup {
   date: string;
@@ -120,7 +121,7 @@ export function AppointmentsTable({
             type="button"
             aria-label={`View ${a.customer_name ?? 'appointment'}'s details`}
             onClick={() => onView(a)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={iconButtonClass}
           >
             <Eye aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
           </button>

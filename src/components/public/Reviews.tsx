@@ -192,7 +192,10 @@ export function Reviews({
           >
             {visible.map((review) => {
               const card = (
-                <Card className="flex h-full flex-col p-4 transition-colors hover:border-brand">
+                <Card
+                  pad="compact"
+                  className="flex h-full flex-col transition-colors hover:border-brand"
+                >
                   <Stars rating={review.rating} className="mb-2" />
                   {review.body && (
                     <blockquote className="flex-1 text-sm leading-snug text-foreground">
@@ -252,7 +255,7 @@ export function Reviews({
                 href={reviewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-primary underline underline-offset-4 hover:brightness-110"
+                className="font-medium text-brand-ink underline underline-offset-4 hover:brightness-110"
               >
                 Leave a review
               </a>

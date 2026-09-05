@@ -92,7 +92,7 @@ export function TemplateContentCard({
   };
 
   return (
-    <Card className="p-5">
+    <Card pad="standard">
       <div className="mb-4 flex flex-wrap items-end gap-4">
         <Field label="Template name" className="mb-0 flex-1 min-w-[12rem]">
           {({ id }) => <Input id={id} value={templateLabel} disabled />}
@@ -259,7 +259,7 @@ export function TemplateContentCard({
           tabIndex={0}
           suppressContentEditableWarning
           onInput={(e) => onBodyChange(e.currentTarget.innerHTML)}
-          className="min-h-[280px] max-w-none p-4 text-sm text-foreground focus-visible:outline-none [&_p]:mb-3 [&_a]:text-primary [&_a]:underline"
+          className="min-h-[280px] max-w-none p-4 text-sm text-foreground focus-visible:outline-none [&_p]:mb-3 [&_a]:text-brand-ink [&_a]:underline"
         />
 
         <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">

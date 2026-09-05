@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Input, Select } from '@/components/ui/Field';
 import type { TemplateDay } from '@/services/availabilityService';
 import { DAYS_OF_WEEK, formatDateLong } from '@/lib/format';
@@ -72,14 +72,12 @@ export function WeeklyScheduleCard({
   onAdjustSingleDay,
 }: WeeklyScheduleCardProps): JSX.Element {
   return (
-    <Card className="p-5">
-      <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-        Weekly schedule
-      </h2>
-      <p className="mb-2 text-sm text-muted-foreground">
-        Set the times you normally work. A day with no times is a day you are normally
-        closed.
-      </p>
+    <Card pad="standard">
+      <CardHeading
+        size="standard"
+        title="Weekly schedule"
+        description="Set the times you normally work. A day with no times is a day you are normally closed."
+      />
       <p className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
         This is your repeating pattern only. Changes here don&rsquo;t reach the calendar
         on their own.{' '}
@@ -143,7 +141,7 @@ export function WeeklyScheduleCard({
                 <span className="flex items-center gap-3 text-xs text-muted-foreground">
                   {open &&
                     `${times.length} time${times.length === 1 ? '' : 's'} · up to ${settings?.max_appointments_per_day ?? '—'} per day`}
-                  <span className="font-medium text-primary">
+                  <span className="font-medium text-brand-ink">
                     {isEditing ? 'Close' : 'Edit'}
                   </span>
                 </span>
@@ -243,7 +241,7 @@ export function WeeklyScheduleCard({
       <button
         type="button"
         onClick={() => onShowAdvancedChange(!showAdvanced)}
-        className="mt-3 rounded border-t border-border pt-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="mt-3 rounded border-t border-border pt-2 text-sm font-medium text-brand-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {showAdvanced ? 'Hide advanced options' : 'Show advanced options'}
       </button>

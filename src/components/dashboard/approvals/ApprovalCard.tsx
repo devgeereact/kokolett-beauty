@@ -34,8 +34,9 @@ export function ApprovalCard({
 }): JSX.Element {
   return (
     <Card
+      pad="standard"
       className={cn(
-        'cursor-pointer p-5 transition-colors',
+        'cursor-pointer transition-colors',
         selected ? 'border-primary ring-1 ring-primary' : 'hover:border-foreground/20',
       )}
       onClick={onSelect}

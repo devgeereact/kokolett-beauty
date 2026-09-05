@@ -1,7 +1,7 @@
 import { type JSX, useEffect, useState } from 'react';
 import { Key, Link2, ShieldCheck, UserRoundCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field, Input } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
@@ -204,12 +204,11 @@ export function AccountSecuritySection(): JSX.Element {
 
   return (
     <div>
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Account &amp; Security
-      </h2>
-      <p className="mb-3 text-sm text-muted-foreground">
-        Protect your account and manage sign-in access.
-      </p>
+      <CardHeading
+        size="compact"
+        title="Account &amp; Security"
+        description="Protect your account and manage sign-in access."
+      />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <NavTile
@@ -259,14 +258,12 @@ export function AccountSecuritySection(): JSX.Element {
         onClose={cancelEnroll}
         ariaLabel="Set up two-factor authentication"
       >
-        <Card className="p-5">
-          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-            Set up two-factor authentication
-          </h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Scan this with an authenticator app (Google Authenticator, 1Password, Authy),
-            then enter the 6-digit code it shows.
-          </p>
+        <Card pad="standard">
+          <CardHeading
+            size="standard"
+            title="Set up two-factor authentication"
+            description="Scan this with an authenticator app (Google Authenticator, 1Password, Authy), then enter the 6-digit code it shows."
+          />
           {/* Supabase-generated inline SVG QR code, not user input. */}
           {qrSvg && (
             <div
@@ -320,15 +317,12 @@ export function AccountSecuritySection(): JSX.Element {
         onClose={() => setEditingSlug(false)}
         ariaLabel="Change your sign-in link"
       >
-        <Card className="p-5">
-          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-            Change your sign-in link
-          </h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            This is the only way into your dashboard, and it isn&rsquo;t linked anywhere
-            on the website. Changing it stops the old link from working immediately, so
-            save the new one somewhere safe before you close this.
-          </p>
+        <Card pad="standard">
+          <CardHeading
+            size="standard"
+            title="Change your sign-in link"
+            description="This is the only way into your dashboard, and it isn&rsquo;t linked anywhere on the website. Changing it stops the old link from working immediately, so save the new one somewhere safe before you close this."
+          />
           <Field
             label="Sign-in link"
             hint="Lowercase letters, numbers and hyphens, 8 to 40 characters. Longer is better: this is the only thing standing between a stranger and the sign-in form."
@@ -368,7 +362,7 @@ export function AccountSecuritySection(): JSX.Element {
         onClose={() => setChangingPassword(false)}
         ariaLabel="Change password"
       >
-        <Card className="p-5">
+        <Card pad="standard">
           <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
             Change password
           </h2>
@@ -423,7 +417,7 @@ export function AccountSecuritySection(): JSX.Element {
         onClose={() => setActivityOpen(false)}
         ariaLabel="Login activity"
       >
-        <Card className="p-5">
+        <Card pad="standard">
           <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
             Login activity
           </h2>

@@ -31,22 +31,51 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }): JSX.
   );
 }
 
+/**
+ * `size="compact"` is for an empty state INSIDE a card rather than in place
+ * of a page's content. The single 56px-tall padding was written for a
+ * full-width page and, dropped into one of Today's `p-4` overview cards, the
+ * dashed box was taller than the card's own content and read as the main
+ * event rather than as "nothing here yet".
+ */
 export function EmptyState({
   title,
   description,
   action,
+  size = 'standard',
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  size?: 'standard' | 'compact';
 }): JSX.Element {
+  const compact = size === 'compact';
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border px-6 py-14 text-center">
-      <p className="font-serif text-lg font-semibold text-foreground">{title}</p>
-      {description && (
-        <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border text-center',
+        compact ? 'px-4 py-6' : 'px-6 py-12',
       )}
-      {action && <div className="mt-3">{action}</div>}
+    >
+      <p
+        className={cn(
+          'font-serif font-semibold text-foreground',
+          compact ? 'text-base' : 'text-lg',
+        )}
+      >
+        {title}
+      </p>
+      {description && (
+        <p
+          className={cn(
+            'text-muted-foreground',
+            compact ? 'max-w-xs text-xs' : 'max-w-sm text-sm',
+          )}
+        >
+          {description}
+        </p>
+      )}
+      {action && <div className={compact ? 'mt-2' : 'mt-3'}>{action}</div>}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { type JSX, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useAvailability } from '@/hooks/useAvailability';
@@ -38,21 +38,22 @@ export function BookingPageStatusCard(): JSX.Element {
   const open = openDates.length;
 
   return (
-    <Card className="p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          Booking page status
-        </h2>
-        {loading ? (
-          <Badge tone="pending">Checking</Badge>
-        ) : error ? (
-          <Badge tone="cancelled">Unknown</Badge>
-        ) : open > 0 ? (
-          <Badge tone="completed">Live</Badge>
-        ) : (
-          <Badge tone="pending">Nothing open</Badge>
-        )}
-      </div>
+    <Card pad="standard">
+      <CardHeading
+        size="compact"
+        title="Booking page status"
+        actions={
+          loading ? (
+            <Badge tone="pending">Checking</Badge>
+          ) : error ? (
+            <Badge tone="cancelled">Unknown</Badge>
+          ) : open > 0 ? (
+            <Badge tone="completed">Live</Badge>
+          ) : (
+            <Badge tone="pending">Nothing open</Badge>
+          )
+        }
+      />
 
       {loading ? (
         <p className="mb-2 text-sm text-muted-foreground">

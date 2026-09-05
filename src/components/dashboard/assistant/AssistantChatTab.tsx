@@ -1,4 +1,4 @@
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useId, useRef, useState } from 'react';
 import {
   Clock,
   FileEdit,
@@ -13,7 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { AssistantProposalCard } from '@/components/dashboard/assistant/AssistantProposalCard';
 import { useAssistantConversations } from '@/hooks/useAssistantConversations';
@@ -88,6 +88,7 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
   } = useAssistantConversations(firstName);
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const composerId = useId();
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -103,29 +104,36 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
 
   return (
     <div>
+      {/* `h2`, not `h1`: `DashboardLayout` already renders the page's one
+          `h1` ("AI Assistant") in the header above this. Two `h1`s on a page
+          leaves a screen-reader user with no way to tell which is the page
+          and which is a section of it. The size is unchanged — heading level
+          is structure, not typography (docs/DESIGN.md §16.2). */}
       <div className="mb-2">
-        <h1 className="font-serif text-2xl font-semibold text-foreground">
+        <h2 className="font-serif text-2xl font-semibold text-foreground">
           Hi {firstName} 👋
-        </h1>
+        </h2>
         <p className="text-sm text-muted-foreground">
           Your AI assistant is here to help you manage your business, create content, and
           get things done faster.
         </p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      {/* One column at phone width, and no `truncate`. Two columns of these
+          at 320-375px cut every title and every description after about a
+          word and a half, so the row said nothing at the width where a
+          summary matters most. */}
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
         {CATEGORY_CARDS.map((c) => (
-          <Card key={c.title} className="flex items-center gap-3 p-4">
+          <Card pad="compact" key={c.title} className="flex items-center gap-3">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
               <c.icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-foreground">
+              <span className="block text-sm font-semibold text-foreground">
                 {c.title}
               </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {c.description}
-              </span>
+              <span className="block text-xs text-muted-foreground">{c.description}</span>
             </span>
           </Card>
         ))}
@@ -133,7 +141,10 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Card className="flex h-[640px] flex-col p-0">
+          {/* `h-chat-panel` clamps to the viewport (`--chat-panel-height`)
+              rather than a flat 640px, which on a short laptop or a phone in
+              landscape pushed the composer below the fold. */}
+          <Card className="flex h-chat-panel flex-col">
             <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-5">
               {messages.map((m, i) => (
                 <div
@@ -216,12 +227,22 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
                 className="ml-2 h-4 w-4 shrink-0 text-muted-foreground"
                 strokeWidth={2}
               />
+              {/* A placeholder is not a label: it disappears the moment
+                  anything is typed, and a screen reader announcing "edit,
+                  blank" is all a keyboard user got. `min-w-0` because an
+                  `<input>` has an intrinsic width that `flex-1` alone does
+                  not override, so the send button was pushed off a 320px
+                  screen. */}
+              <label htmlFor={composerId} className="sr-only">
+                Ask the assistant
+              </label>
               <input
+                id={composerId}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me anything… (e.g. 'Create a social media post' or 'Show me tomorrow's schedule')"
-                className="h-11 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none"
+                placeholder="Ask me anything… (e.g. 'Create a social media post')"
+                className="h-11 min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none"
               />
               <button
                 type="submit"
@@ -240,20 +261,22 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
         </div>
 
         <div className="space-y-6">
-          <Card className="p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-serif text-base font-semibold text-foreground">
-                Quick actions
-              </h2>
-              <button
-                type="button"
-                onClick={startNewConversation}
-                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-              >
-                <Plus aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-                New chat
-              </button>
-            </div>
+          <Card pad="standard">
+            <CardHeading
+              as="h3"
+              size="compact"
+              title="Quick actions"
+              actions={
+                <button
+                  type="button"
+                  onClick={startNewConversation}
+                  className="flex items-center gap-1 text-xs font-medium text-brand-ink hover:underline"
+                >
+                  <Plus aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                  New chat
+                </button>
+              }
+            />
             <div className="grid grid-cols-2 gap-2">
               {QUICK_ACTIONS.map((a) => (
                 <button
@@ -273,10 +296,8 @@ export function AssistantChatTab({ firstName }: { firstName: string }): JSX.Elem
             </div>
           </Card>
 
-          <Card className="p-5">
-            <h2 className="mb-3 font-serif text-base font-semibold text-foreground">
-              Recent conversations
-            </h2>
+          <Card pad="standard">
+            <CardHeading as="h3" size="compact" title="Recent conversations" />
             {conversations.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Nothing yet. Ask something to start one.

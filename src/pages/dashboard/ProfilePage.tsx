@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type JSX } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { LoadingState } from '@/components/ui/States';
@@ -92,10 +92,8 @@ export function ProfilePage(): JSX.Element {
   return (
     <DashboardLayout title="Profile" subtitle="Your identity and how the dashboard looks">
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="h-fit p-5">
-          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-            Identity
-          </h2>
+        <Card pad="standard" className="h-fit">
+          <CardHeading size="standard" title="Identity" />
           <p className="mb-4 text-sm text-muted-foreground">{user.email}</p>
 
           <Field label="Name" hint="Shown nowhere a customer sees. This is for you.">
@@ -129,25 +127,21 @@ export function ProfilePage(): JSX.Element {
           </div>
         </Card>
 
-        <Card className="h-fit p-5">
-          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-            Appearance
-          </h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            The dashboard follows your system by default. Pick light or dark to override
-            it on this device.
-          </p>
+        <Card pad="standard" className="h-fit">
+          <CardHeading
+            size="standard"
+            title="Appearance"
+            description="The dashboard follows your system by default. Pick light or dark to override it on this device."
+          />
           <ThemeToggle />
         </Card>
 
-        <Card className="h-fit p-5 lg:col-span-2">
-          <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-            Change password
-          </h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            At least {MIN_PASSWORD_LENGTH} characters. A short phrase you will remember
-            beats a short jumble you will not.
-          </p>
+        <Card pad="standard" className="h-fit lg:col-span-2">
+          <CardHeading
+            size="standard"
+            title="Change password"
+            description={`At least ${MIN_PASSWORD_LENGTH} characters. A short phrase you will remember beats a short jumble you will not.`}
+          />
 
           <form onSubmit={(e) => void changePassword(e)} noValidate className="max-w-sm">
             <Field label="New password" required>

@@ -1,7 +1,7 @@
 import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { addDays, DAYS_OF_WEEK, formatDateShort, toSalonDate } from '@/lib/format';
@@ -51,10 +51,8 @@ export function NextWeeksGlanceCard({
   });
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-        Next 4 weeks at a glance
-      </h2>
+    <Card pad="standard">
+      <CardHeading size="compact" title="Next 4 weeks at a glance" />
 
       {!summary ? (
         <div className="flex justify-center py-6">
@@ -105,7 +103,7 @@ export function NextWeeksGlanceCard({
 
       <Link
         to={routes.owner.calendar}
-        className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        className="mt-2 flex items-center gap-1.5 text-sm font-medium text-brand-ink hover:underline"
       >
         View full calendar
         <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />

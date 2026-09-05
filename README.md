@@ -185,8 +185,15 @@ The server has **no Node** — build locally, ship only the artifacts.
 | `npm run test:coverage`| Vitest with V8 coverage                           |
 | `npm run test:hooks`   | Verifies the tracked hookify safety rules         |
 | `npm run lint:copy`    | No em or en dashes in copy (CI gate — fails the build) |
+| `npm run lint:classes` | Fails on a Tailwind class that produces no CSS (CI gate; needs a build first) |
 | `npm run test:e2e`     | Playwright, against a real Supabase project      |
 | `npm run test:e2e:ui`  | Playwright in UI mode                            |
+
+> `npm run test:e2e` runs everything in `e2e/`, and `e2e/booking-race.spec.ts`
+> **writes to whatever Supabase project `.env` points at** — it books a slot, races a
+> second booking against it, and cleans up as the owner. Run the read-only specs on
+> their own with `npx playwright test e2e/marketing-site.spec.ts e2e/consent.spec.ts`
+> unless you mean to write.
 
 ---
 

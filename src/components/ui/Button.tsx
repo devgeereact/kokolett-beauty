@@ -11,9 +11,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /**
- * Hover uses `brightness`, not an opacity modifier. The palette resolves to
- * `var(--token)` values (docs/DESIGN.md §8), and Tailwind cannot compute
- * `bg-primary/90` against a var — the class silently produces nothing.
+ * Hover uses `brightness`, not an opacity modifier.
+ *
+ * The comment here used to say an opacity modifier "silently produces
+ * nothing" against a `var()` colour. That stopped being true when the
+ * palette moved to space-separated channels wrapped as
+ * `rgb(var(--token) / <alpha-value>)` (docs/DESIGN.md §2.1) — `bg-primary/90`
+ * resolves fine now. `brightness` stays because it is the right effect, not
+ * because it is the only one that works: fading a fill towards its parent
+ * lightens a button on a light card and darkens the same button on a dark
+ * one, so one hover rule would read as two different gestures across themes.
  */
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-primary text-primary-foreground hover:brightness-110',

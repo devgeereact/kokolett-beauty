@@ -221,7 +221,16 @@ export function DashboardLayout({
               mobile must still be able to grow past it rather than clip —
               flexbox gives `<main>` exactly what's left either way. */}
           <header className="z-sticky flex min-h-header shrink-0 items-center border-b border-border bg-background px-4 py-3 md:px-6 lg:px-8">
-            <div className="flex w-full flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2">
+            {/* The shell honours the 1440px content cap it has always
+                declared (`--content-max-width`, docs/DESIGN.md §5.2/§15.2)
+                and never applied: on a 1920px monitor the Reports cards
+                stretched to 1680px, so a two-word empty state sat alone in a
+                780px box. The same cap and the same centring are on `<main>`
+                below, so the header controls stay flush with the content
+                under them. Nothing opts out today; a page that genuinely
+                needs the full width renders its own full-width wrapper
+                inside `<main>` rather than removing this. */}
+            <div className="mx-auto flex w-full max-w-content flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2">
               <div className="flex min-w-0 items-center gap-3">
                 <Button
                   variant="ghost"
@@ -232,21 +241,25 @@ export function DashboardLayout({
                 >
                   Menu
                 </Button>
+                {/* The page name and its instruction WRAP; they used to
+                    `truncate`, which on a phone turned "Availability
+                    requests" into "Availabili…" and cut the subtitle — the
+                    sentence that says what the screen is for — mid-word.
+                    `min-h-header` on the header already allows it to grow,
+                    so nothing below moves. */}
                 <div className="min-w-0 flex-1">
-                  <h1 className="flex min-w-0 items-center gap-2 font-serif text-2xl font-semibold text-foreground">
+                  <h1 className="flex min-w-0 items-start gap-2 font-serif text-2xl font-semibold text-foreground">
                     {HeaderIcon && (
                       <HeaderIcon
                         aria-hidden="true"
-                        className="h-6 w-6 shrink-0 text-primary"
+                        className="mt-1 h-6 w-6 shrink-0 text-primary"
                         strokeWidth={2}
                       />
                     )}
-                    <span className="truncate">{title}</span>
+                    <span className="min-w-0 break-words">{title}</span>
                   </h1>
                   {subtitle && (
-                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                      {subtitle}
-                    </p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
                   )}
                 </div>
               </div>
@@ -267,7 +280,7 @@ export function DashboardLayout({
             id="main-content"
             className="koko-scroll scroll-bottom-gap px-4 pt-6 md:px-6 lg:px-8"
           >
-            {children}
+            <div className="mx-auto w-full max-w-content">{children}</div>
           </main>
         </div>
       </div>

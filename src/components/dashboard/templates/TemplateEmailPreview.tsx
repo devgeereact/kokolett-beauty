@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import DOMPurify from 'dompurify';
 import { Globe, MessageCircle, Share2 } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/Card';
 import { Tabs } from '@/components/ui/Tabs';
 import { cn } from '@/lib/utils';
 import { OWNER_NAME, SITE_ORIGIN } from '@/lib/business';
@@ -76,9 +76,9 @@ export function TemplateEmailPreview({
   onPreviewModeChange,
 }: TemplateEmailPreviewProps): JSX.Element {
   return (
-    <Card className="h-fit p-5">
+    <Card pad="standard" className="h-fit">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-serif text-base font-semibold text-foreground">Preview</h2>
+        <CardTitle size="compact">Preview</CardTitle>
       </div>
       <Tabs
         className="mb-4"

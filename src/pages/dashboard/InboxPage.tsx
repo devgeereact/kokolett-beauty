@@ -11,7 +11,10 @@ import {
   RequestsQueue,
   type RequestsQueueHandle,
 } from '@/components/dashboard/requests/RequestsQueue';
-import { ContactMessagesQueue } from '@/components/dashboard/requests/ContactMessagesQueue';
+import {
+  ContactMessagesQueue,
+  type ContactMessagesQueueHandle,
+} from '@/components/dashboard/requests/ContactMessagesQueue';
 import { countNewContactMessages } from '@/services/contactService';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -28,10 +31,22 @@ import {
 } from '@/services/appointmentService';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
-import { cn } from '@/lib/utils';
 import type { AppointmentDetailed } from '@/types';
+import { CardTitle } from '@/components/ui/Card';
+import {
+  segmentedBadge,
+  segmentedItem,
+  segmentedTray,
+} from '@/components/ui/controlClasses';
 
 type Tab = 'approvals' | 'requests' | 'messages';
+
+/** The three lanes, in the order the sidebar lists them. */
+const QUEUES: { key: Tab; label: string }[] = [
+  { key: 'approvals', label: 'Approvals' },
+  { key: 'requests', label: 'Requests' },
+  { key: 'messages', label: 'Messages' },
+];
 
 /**
  * Everything the owner needs to answer sits in one queue with two lanes.
@@ -93,9 +108,22 @@ export function InboxPage(): JSX.Element {
   }, [summary, defaultTab]);
   const tab: Tab = explicitTab ?? defaultTab ?? 'approvals';
 
-  const goToTab = (next: Tab): void => {
-    void navigate(`${routes.owner.inbox}?tab=${next}`);
-  };
+  const goToTab = useCallback(
+    (next: Tab, replace = false): void => {
+      void navigate(`${routes.owner.inbox}?tab=${next}`, { replace });
+    },
+    [navigate],
+  );
+
+  /* Put the resolved tab in the URL the moment it is known.
+     `isEntryActive` matches a sidebar row on `?tab=`, so a bare
+     `/dashboard/inbox` — the redirect target of nothing, but a perfectly
+     reachable bookmark — highlighted no nav row and gave the header no icon,
+     while the page itself clearly WAS on a queue. Replacing rather than
+     pushing keeps Back going where the owner came from. */
+  useEffect(() => {
+    if (explicitTab === null && defaultTab !== null) goToTab(defaultTab, true);
+  }, [explicitTab, defaultTab, goToTab]);
 
   // Approvals queue — moved from the former ApprovalsPage.
   const [rows, setRows] = useState<AppointmentDetailed[]>([]);
@@ -211,8 +239,11 @@ export function InboxPage(): JSX.Element {
     [refreshSummary],
   );
 
+  const messagesRef = useRef<ContactMessagesQueueHandle>(null);
+
   const refreshActive = (): void => {
     if (tab === 'requests') void requestsRef.current?.reload();
+    else if (tab === 'messages') void messagesRef.current?.reload();
     else void loadApprovals();
   };
 
@@ -248,96 +279,48 @@ export function InboxPage(): JSX.Element {
             ? "Respond to customer requests when your calendar doesn't have a suitable slot."
             : 'Enquiries sent from the Contact page.'
       }
-      badges={{ approvals: effectiveApprovalsCount, requests: effectiveRequestsCount }}
+      badges={{
+        approvals: effectiveApprovalsCount,
+        requests: effectiveRequestsCount,
+        messages: unreadMessages,
+      }}
       actions={
         <>
           {/* The sidebar already carries separate Approvals / Availability Requests
               rows (DashboardLayout's grouped nav), so this pill is redundant on
               desktop — it only earns its keep below `md:`, where the sidebar is
               hidden behind the Menu button. */}
+          {/* The sidebar carries a row for each of the three queues, so this
+              switch only earns its keep below `md:`, where the sidebar is
+              hidden behind the Menu button. Same segmented treatment as the
+              calendar's view switcher (`components/ui/Segmented.tsx`) — it
+              used to be a third, bordered variant with a solid primary
+              selected fill. */}
           <div
             role="group"
             aria-label="Inbox queue"
-            className="inline-flex rounded-lg border border-border p-0.5 md:hidden"
+            className={`${segmentedTray} md:hidden`}
           >
-            <button
-              type="button"
-              aria-pressed={tab === 'approvals'}
-              onClick={() => goToTab('approvals')}
-              className={cn(
-                'flex items-center rounded-md px-3 py-1.5 text-sm font-medium',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                tab === 'approvals'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              Approvals
-              {effectiveApprovalsCount > 0 && (
-                <span
-                  className={cn(
-                    'ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                    tab === 'approvals'
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-primary text-primary-foreground',
-                  )}
+            {QUEUES.map((queue) => {
+              const count =
+                queue.key === 'approvals'
+                  ? effectiveApprovalsCount
+                  : queue.key === 'requests'
+                    ? effectiveRequestsCount
+                    : unreadMessages;
+              return (
+                <button
+                  key={queue.key}
+                  type="button"
+                  aria-pressed={tab === queue.key}
+                  onClick={() => goToTab(queue.key)}
+                  className={segmentedItem(tab === queue.key)}
                 >
-                  {effectiveApprovalsCount}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              aria-pressed={tab === 'requests'}
-              onClick={() => goToTab('requests')}
-              className={cn(
-                'flex items-center rounded-md px-3 py-1.5 text-sm font-medium',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                tab === 'requests'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              Requests
-              {effectiveRequestsCount > 0 && (
-                <span
-                  className={cn(
-                    'ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                    tab === 'requests'
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-primary text-primary-foreground',
-                  )}
-                >
-                  {effectiveRequestsCount}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              aria-pressed={tab === 'messages'}
-              onClick={() => goToTab('messages')}
-              className={cn(
-                'flex items-center rounded-md px-3 py-1.5 text-sm font-medium',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                tab === 'messages'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              Messages
-              {unreadMessages > 0 && (
-                <span
-                  className={cn(
-                    'ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                    tab === 'messages'
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-primary text-primary-foreground',
-                  )}
-                >
-                  {unreadMessages}
-                </span>
-              )}
-            </button>
+                  {queue.label}
+                  {count > 0 && <span className={segmentedBadge()}>{count}</span>}
+                </button>
+              );
+            })}
           </div>
           <Button variant="ghost" size="sm" onClick={refreshActive}>
             Refresh
@@ -391,12 +374,10 @@ export function InboxPage(): JSX.Element {
                 />
               ) : (
                 <>
-                  <h2 className="font-serif text-lg font-semibold text-foreground">
-                    Pending approvals ({rows.length})
-                  </h2>
+                  <CardTitle>Pending approvals ({rows.length})</CardTitle>
 
                   <div className="grid gap-6 lg:grid-cols-3">
-                    <div className="space-y-4 lg:col-span-2">
+                    <div className="space-y-3 lg:col-span-2">
                       {rows.map((row) => (
                         <ApprovalCard
                           key={row.id}
@@ -439,7 +420,7 @@ export function InboxPage(): JSX.Element {
       ) : tab === 'requests' ? (
         <RequestsQueue ref={requestsRef} onCountChange={handleRequestsCountChange} />
       ) : (
-        <ContactMessagesQueue onCountChange={setUnreadMessages} />
+        <ContactMessagesQueue ref={messagesRef} onCountChange={setUnreadMessages} />
       )}
 
       <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="Take a booking">

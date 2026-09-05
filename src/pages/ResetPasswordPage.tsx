@@ -159,7 +159,7 @@ export function ResetPasswordPage(): JSX.Element {
 
   return (
     <main className="grid min-h-screen-app place-items-center bg-background px-4 py-10">
-      <Card className="w-full max-w-md p-6">
+      <Card pad="roomy" className="w-full max-w-md">
         <h1 className="mb-1 font-serif text-2xl font-semibold text-foreground">
           {phase === 'done' ? 'Password changed' : 'Choose a new password'}
         </h1>

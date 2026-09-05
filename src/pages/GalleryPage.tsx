@@ -107,7 +107,7 @@ export function GalleryPage(): JSX.Element {
         {!loading && items.length === 0 ? (
           <p className="text-center text-muted-foreground">
             Nothing here yet, so{' '}
-            <Link to={routes.public.services} className="text-primary hover:underline">
+            <Link to={routes.public.services} className="text-brand-ink hover:underline">
               see the full menu
             </Link>{' '}
             instead.

@@ -1,7 +1,7 @@
 import { type JSX, useCallback, useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { LoadingState } from '@/components/ui/States';
 import { useToast } from '@/context/ToastContext';
@@ -64,13 +64,12 @@ export function MailingListCard(): JSX.Element {
   };
 
   return (
-    <Card className="flex h-full flex-col p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Mailing List
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Customers who have subscribed through your mailing-list link.
-      </p>
+    <Card pad="standard" className="flex h-full flex-col">
+      <CardHeading
+        size="compact"
+        title="Mailing List"
+        description="Customers who have subscribed through your mailing-list link."
+      />
 
       <div className="flex flex-1 flex-col justify-center">
         {subscribers === null ? (

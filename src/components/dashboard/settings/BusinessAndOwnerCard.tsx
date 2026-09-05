@@ -1,7 +1,7 @@
 import { type JSX, useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -74,23 +74,20 @@ export function BusinessAndOwnerCard(): JSX.Element {
   };
 
   return (
-    <Card className="flex h-full flex-col justify-center p-5">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h2 className="font-serif text-base font-semibold text-foreground">
-            Business &amp; Owner
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Manage your salon and owner information.
-          </p>
-        </div>
-        {!editing && (
-          <Button variant="ghost" size="sm" onClick={startEditing}>
-            <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-            Edit
-          </Button>
-        )}
-      </div>
+    <Card pad="standard" className="flex h-full flex-col justify-center">
+      <CardHeading
+        size="compact"
+        title="Business &amp; Owner"
+        description="Manage your salon and owner information."
+        actions={
+          !editing && (
+            <Button variant="ghost" size="sm" onClick={startEditing}>
+              <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+              Edit
+            </Button>
+          )
+        }
+      />
 
       {editing ? (
         <>

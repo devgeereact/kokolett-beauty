@@ -1,4 +1,11 @@
-import { type JSX, useCallback, useEffect, useState } from 'react';
+import {
+  type JSX,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import { Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -28,11 +35,15 @@ import { formatDateTime } from '@/lib/format';
  * mean a second place for that conversation to live. `mailto:` opens the thread
  * where the rest of it already is.
  */
-export function ContactMessagesQueue({
-  onCountChange,
-}: {
-  onCountChange?: (unread: number) => void;
-}): JSX.Element {
+export interface ContactMessagesQueueHandle {
+  /** Lets Inbox's shared Refresh button reload whichever queue is showing. */
+  reload: () => Promise<void>;
+}
+
+export const ContactMessagesQueue = forwardRef<
+  ContactMessagesQueueHandle,
+  { onCountChange?: (unread: number) => void }
+>(function ContactMessagesQueue({ onCountChange }, ref): JSX.Element {
   const { showToast } = useToast();
   const [rows, setRows] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +68,8 @@ export function ContactMessagesQueue({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useImperativeHandle(ref, () => ({ reload: load }), [load]);
 
   const setStatus = async (
     id: string,
@@ -96,7 +109,7 @@ export function ContactMessagesQueue({
       ) : (
         <div className="space-y-3">
           {rows.map((m) => (
-            <Card key={m.id} className="p-4">
+            <Card pad="standard" key={m.id}>
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-serif text-base font-semibold text-foreground">
@@ -160,4 +173,4 @@ export function ContactMessagesQueue({
       )}
     </div>
   );
-}
+});

@@ -5,6 +5,8 @@ import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { buildImageKitUrl } from '@/lib/imagekit';
 import { routes } from '@/lib/routes';
+import { publicButton } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 /** Shown until the owner uploads her own photo from Settings. */
 const FALLBACK_PHOTO_PATH = '/kokolett/marketing/about-christy-portrait.jpg';
@@ -86,7 +88,7 @@ export function AboutPage(): JSX.Element {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to={routes.public.book}
-                className="inline-flex h-12 min-h-touch items-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground"
+                className={cn(publicButton(), 'h-12 px-8 text-base')}
               >
                 Book with Christy
               </Link>

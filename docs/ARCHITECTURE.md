@@ -92,10 +92,15 @@ and `context`. Nothing in `lib` imports from `pages`/`components` (no cycles).
 ## 3. Information architecture & routing
 
 Single-page app; React Router. Deep links work because `.htaccess` rewrites unknown
-paths to `index.html`, and Workbox's `navigateFallback` does the same offline. Nearly
-every path is declared once in `src/lib/routes.ts` — two exceptions, `/login` and
-`/access/:token`, are hard-coded string literals in `App.tsx`/`ProtectedRoute.tsx`/
-`SiteShell.tsx` rather than routed through the `routes` constant.
+paths to `index.html`, and Workbox's `navigateFallback` does the same offline. Every
+path is declared once in `src/lib/routes.ts`.
+
+This paragraph used to name two exceptions, `/login` and `/access/:token`. Both were
+wrong: `/access/:token` is declared (`routes.customer.access`), and there is no
+`/login` route at all. `LoginPage` renders only from `SecretGate`, which is the
+`/:maybeSecretSlug` catch-all, so a request for `/login` falls through to the 404
+like any other unknown path. `login` is in `RESERVED_SLUGS` precisely so the owner
+cannot claim it as her sign-in slug.
 
 **Public (anonymous)**
 

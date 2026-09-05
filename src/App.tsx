@@ -37,7 +37,7 @@ import { routes } from '@/lib/routes';
  * reason a stranger opens this site, and a spinner on the booking page to save
  * bytes the browser then has to fetch anyway is a bad trade.
  *
- * The owner dashboard is the opposite. It is seventeen screens — the calendar
+ * The owner dashboard is the opposite. It is twenty screens — the calendar
  * grid, the reports charts, the email template editor, the AI assistant — and
  * exactly one person ever signs in to it. Statically imported, all of it sat in
  * the same entry chunk as the booking form, so every customer downloaded the

@@ -734,3 +734,223 @@ All local gates re-run clean against this exact commit before deploying:
 `typecheck` · `lint` · `format:check` · `lint:copy` · `test` (**321 passed**,
 up from 301 — the legal/consent commit's own new tests) · `build`.
 
+
+## 11. Five-track independent audit, 2026-09-05
+
+A full re-audit, run as five parallel read-only tracks (frontend/UX/a11y,
+backend/Edge Functions, database/RLS, security/privacy, and a new-user journey
+trace), plus a lead pass that ran the app in a real browser. It was deliberately
+briefed to treat §8's and §9's conclusions as claims to test rather than as
+ground truth, and to report only what those passes missed.
+
+It found 92 findings across the five tracks, of which 2 are P0, 11 P1, 34 P2 and
+the rest P3. That is not a contradiction of §9's "READY FOR PRODUCTION": both P0s
+are properties of a **fresh install**, not of the live salon, and most of the rest
+are the kind of thing only a differently-framed pass surfaces. §9 was accurate
+about what it looked at.
+
+### The two P0s, both fresh-install only
+
+Neither affects the running production database, where a `staff` row and a
+published diary have existed since launch. Both would stop a new deployment dead,
+and both are documentation gaps rather than code defects.
+
+| # | Finding | Evidence | Disposition |
+|---|---|---|---|
+| P0-1 | **A fresh install has no reachable owner sign-in.** No migration inserts into `public.staff`; `0051:21`'s `update ... where login_slug is null` therefore updates zero rows; `resolve_owner_slug()` never matches NULL; `SecretGate` 404s every URL. The password-reset escape hatch is triggered from inside the form you cannot reach. | `0051:21`, `0001:83`, `SecretGate.tsx:62` | **FIXED in docs.** The bootstrap SQL in `README.md` and `docs/SCHEMA.md` §6 now sets `login_slug` in the same statement, with a `gen_random_bytes` variant, and says why. |
+| P0-2 | **A fresh install can never take a booking, and the dashboard says the opposite.** `available_slots()` reads `availability_slots`, which no migration seeds; the nightly generator returns early while `weekly_template` is empty. Meanwhile `BookingPageStatusCard` rendered a hard-coded `Live` badge and "Your booking page is active and accepting bookings" while reading no data at all. | `0045:50`, `0022:208`, `BookingPageStatusCard.tsx:25` | **FIXED.** The card now calls `available_slots()` through `useAvailability`, the same question the customer's browser asks, and says "Nothing open" with a link to publish hours when the answer is zero. The bootstrap docs say to publish hours before expecting a booking. |
+
+### Accessibility: nine real WCAG failures, all fixed
+
+§8 recorded accessibility as a "structural pass"; §9 added axe coverage and then
+annotated seven routes with `test.fail()` for a brand-accent contrast gap,
+deferring it as "a visual-identity call for the owner". That framing was wrong,
+and the annotation is now gone.
+
+Every failing element was `docs/DESIGN.md`'s own rule being broken, not a palette
+needing a new decision: `--brand` is documented as display type at 24px and up, and
+six marketing eyebrow labels used it at 12px. The fix is a new `--brand-ink` token
+in the same hue (`docs/DESIGN.md` §2.4); `--brand` and `--primary` are untouched.
+
+A second, unrelated failure surfaced at the same time because the axe sweep had
+only ever run in light mode: dark `--muted-foreground` was tuned against `--card`
+but is also every field placeholder's colour on `--input`, where it measured
+3.91:1. The suite now runs under both colour schemes.
+
+**Every public route is axe-clean in both themes**, verified against the built
+`dist/` served with the real CSP header.
+
+### Three Tailwind classes that produced no CSS
+
+Found by measuring the compiled stylesheet, not by reading the config. The theme
+scale replaces Tailwind's default for `colors`, `fontSize` and `boxShadow`, so a
+name outside the scale is dropped in silence:
+
+- `text-7xl` on the 404 numeral: the scale stops at `6xl`, so a 72px display
+  numeral rendered at the inherited 16px. That is also what put it under the
+  contrast threshold.
+- `from-black/70` on the Contact page photo scrim: no `black` in the closed
+  palette, so every gradient stop resolved to `rgba(0,0,0,0)` and the white
+  caption sat directly on the photograph. Verified in the browser:
+  `linear-gradient(..., rgba(0,0,0,0) 0%, ...)`.
+- `shadow-sm` on the template preview's selected segment.
+
+None failed a build, a lint, a type check or an axe run. `npm run lint:classes`
+(`scripts/check-dead-classes.py`) is now a CI step that runs after the build and
+fails on any of the three, plus on undeclared breakpoint variants (`sm:` was
+resolving at v4's own 640px in seven files) and bare numeric `z-` values.
+
+### Fixed in this pass
+
+Frontend:
+- **Booking error swallowed.** On `SLOT_TAKEN`, `BookPage` set the message and
+  cleared the slot in the same batch, unmounting the alert that was meant to show
+  it. The customer's form vanished, the grid came back one time short, and nothing
+  said why. The alert now renders outside the `{slot && …}` block.
+- **Six public error codes had no copy**, so `EMAIL_INVALID`, `NAME_TOO_LONG`,
+  `NOTE_TOO_LONG`, `TOO_MANY_BOOKINGS`, `NAME_REQUIRED` and `TOO_MANY_REQUESTS` all
+  reached the customer as "Something went wrong. Please try again." For the rate
+  limits, trying again is the blocked action. Fourteen codes now have copy, with
+  tests asserting none of the rate limits says "try again".
+- **Two auto-advancing carousels with no pause control** (WCAG 2.2.2, Level A).
+  Honouring `prefers-reduced-motion` is the 2.3.3 exemption, not a 2.2.2
+  mechanism. Both now have a visible toggle and pause on hover or focus. The
+  hero's `role="tablist"`/`role="tab"` (controlling `aria-hidden` slides, so a
+  contract no screen reader could follow) is now plain buttons with
+  `aria-current`, and the dots carry a 24px touch target.
+- **`useAvailability` had no request-sequence guard**, unlike every other fetch
+  hook here, and it has two triggers (an effect and a realtime subscription). A
+  slower first response could overwrite a newer slot list, so the customer picks a
+  time that is already gone.
+- **Three window listeners with no unmount path** in `useAppointmentDrag`: a
+  CalendarPage unmounted mid-gesture left them bound, and the next `pointerup`
+  anywhere in the app would call `rescheduleAppointmentAsOwner` from a component
+  that no longer existed.
+- **Two debounced searches with no ordering guard** (`CustomersPage`,
+  `RebookSearchStep`), where the sibling `ComposeContentStep` already had one.
+
+Backend and Edge Functions:
+- **A message stranded in `sending` had no recovery path**, and the System Health
+  page counted only `queued` and `failed`, so it was invisible. `send-emails` now
+  sweeps anything stranded for over fifteen minutes back to `queued`, and `0075`
+  reports the count.
+- **No third-party call had a timeout.** All four (OpenRouter twice, Google Places,
+  Cloudflare DoH) now carry `AbortSignal.timeout`.
+- **The SMTP client was closed on the success path only**, leaking up to 25 open
+  authenticated TLS connections per run against a refusing relay.
+- **A partial Google Places response deleted the reviews it omitted**, permanently,
+  with `last_error` cleared because the call succeeded. Pruning now requires a full
+  five-review response.
+- **The prompt-injection fence was not escaped out of the data it fenced.** A
+  customer could book under a name containing `RECORDS>>>` and close the fence.
+- **`List-Unsubscribe-Post: One-Click` was a promise this deployment cannot keep**:
+  the URL is a client-side route, the page deliberately waits for a human click,
+  and the SPA rewrite answers Gmail's POST with `200` and HTML. Gmail recorded the
+  unsubscribe as honoured while the subscriber stayed on the list. Header removed;
+  the plain `List-Unsubscribe` URL stays.
+
+Security and privacy:
+- **The brute-force lockout keyed on the FIRST `X-Forwarded-For` entry**, which the
+  caller controls, so a random header per request bought a fresh bucket and the
+  5-in-15-minutes lockout on the owner's sign-in never fired. `clientIp()` in
+  `_shared/auth.ts` now reads the last entry, prefers `cf-connecting-ip`, and
+  discards anything that is not an IP literal.
+- **Sentry redaction covered the customer magic link only.** The owner's
+  `?token_hash=` recovery credential and the implicit-flow `#access_token` fragment
+  both reached Sentry intact, inside the session replay that
+  `replaysOnErrorSampleRate: 1` attaches to any error during recovery.
+- **CSP `connect-src` omitted `upload.imagekit.io`**, so the owner's About-photo
+  upload had never worked once behind the enforced policy, failing as a generic
+  message with no report endpoint to record it.
+- **Contact-form personal data was outside the erasure path** (`0073`). This is the
+  "a table added after `0044` was never added to the erasure path" shape:
+  `submit_contact_message` puts the enquirer's name, address and message into
+  `email_messages.payload` with `to_email` set to the OWNER, so neither of
+  `erase_customer_as_owner`'s two clauses matched.
+- **An anonymous booking could rewrite an existing customer** (`0072`): overwrite
+  their name and mobile, and OR marketing consent back on for someone who had
+  opted out on `/my`. Same defect class as the unsubscribe resurrection `0071`
+  fixed for `subscribers`.
+- **"Revoke all sessions" left unredeemed magic links alive** (`0073`).
+- **The reserved-slug list in SQL had drifted from `routes.ts`** by four entries,
+  all real public paths (`0076`), and a four-character slug was permitted.
+
+Database:
+- **Un-cancelling could raise a raw `23P01` at the owner** (`0074`): a cancelled
+  row is outside the exclusion constraint and re-enters it, and this was the only
+  write path against `appointments` with no `SLOT_TAKEN` handler.
+- **Three superseded slot functions were still granted to `authenticated`**
+  (`0074`). `clear_day_slots` deletes published slots with no `booked_times_on()`
+  union, so calling it on a day with a live booking leaves the owner's day panel
+  showing nothing at that hour.
+
+### Documentation reconciled
+
+Sixteen contradictions were found with file:line evidence on both sides. The ones
+that would actively mislead someone writing code are corrected: `book_appointment`
+documented with seven arguments against the shipped six; validation step 5
+described in terms of the pre-`0011` `availability_rules` engine; the
+`customer_access_tokens.purpose` enum omitting `session`, the value the entire
+customer session rests on; `email_messages.status` omitting `cancelled`; a
+`/login` route ARCHITECTURE describes and `App.tsx` does not route; "every
+transition is owner-initiated" contradicting self-service cancel three sections
+later in the same file; `docs/RULES.md` naming two AI surfaces where three ship;
+and the PRD's booking-link handoff that no code mints.
+
+### Open, with owner or environment dependencies
+
+- **The live `staff.login_slug` needs checking.** `0051:21` seeds it to `christy`,
+  the owner's first name as published on the About page, in a **public** repository.
+  Deliberately NOT rotated by a migration: `get_own_login_slug()` needs a session,
+  a session needs the form, and the form is only at the slug, so changing it out
+  from under a signed-out owner locks her out. Change it from Settings, Security,
+  while signed in.
+- **`.env.example` is missing `IMAGEKIT_PUBLIC_KEY`**, which
+  `owner-photo-upload/index.ts:89` reads. Not fixed here: the audit session could
+  not read or write files matching `.env*`.
+- **Migrations `0072` to `0076` are written and NOT applied.** They have not been
+  run against any database. CI's `supabase db start` job applies every migration
+  from scratch and then runs the pgTAP suite, so a syntax error or a broken
+  function cannot reach production unnoticed, but that job has not run yet.
+- The `0071` subscriber rate limit is global, so twenty requests take `/subscribe`
+  offline for an hour. Reported and not changed: `0071` is already applied, and the
+  right shape (per-address plus a higher global backstop) is a decision about the
+  salon's actual sign-up volume.
+- `rls_test.sql` asserts table-level RLS and two RPCs. It never asserts the
+  `is_owner()` guard on any of the ~35 owner-gated definer functions, and never
+  exercises `book_appointment()`. The race-protection claim in §2 is true of the
+  code and has no test behind it in the pgTAP suite.
+- The remaining P2 and P3 findings from all five tracks: `availability_requests` is
+  an unbounded anonymous write whose owner-only columns the submitter can set;
+  `product_events` accepts unbounded jsonb with no retention job; twenty-two RLS
+  policies call `is_owner()` per row; `available_slots` runs a non-sargable
+  correlated count per candidate slot; notification read state is `localStorage`
+  only; the Toast live region mounts with its content already in it; twelve
+  rich-text toolbar buttons have no accessible name.
+
+### Gates, all green after the pass
+
+`typecheck` · `lint` · `format:check` · `lint:copy` · `lint:classes` (new) ·
+`test:hooks` · `test` (**343 passed**, up from 321) · `build` · the CSP
+script-hash assertion · the PWA artefact assertion · Deno typecheck of all eleven
+Edge Functions · `deno test` (15 passed) · `playwright test` (**65 passed, 0
+failed**, across both colour schemes).
+
+### Not verified
+
+- **No migration was applied and no SQL was run against any database.** Docker is
+  not installed on the audit machine, so `supabase db start` and the pgTAP suite
+  could not run locally. `0072` to `0076` are source-reviewed only.
+- **The owner dashboard was never opened in a browser.** No approved test account
+  was provided, and signing into the live dashboard was out of scope. Every
+  dashboard finding is source inspection.
+- **Nothing about the live deployment.** `supabase/config.toml` is CLI-local,
+  `.htaccess` only ships with `--with-htaccess`, and the live slug cannot be read
+  from the repo.
+- **`npm run test:e2e` writes to the live database.** `playwright.config.ts` loads
+  `.env`, which supplies `KOKO_OWNER_EMAIL`/`KOKO_DEV_PASSWORD`, so
+  `booking-race.spec.ts`'s `canRun` guard passes and the test books, cancels,
+  deletes and erases against production on every run. It cleans up after itself and
+  uses RFC 2606 addresses, so no mail leaves the building, but it is a live write
+  and worth knowing before running the suite. It is now pinned to one Playwright
+  project so the new dark-mode project does not double it.

@@ -154,12 +154,22 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
 
 ### 9.6 AI
 
-- AI output is advisory. Two separate things wear the word "assistant" — the
-  deterministic client-side insights module (`src/lib/insights.ts`) and the LLM chat
-  (`supabase/functions/ai-assistant-chat`). Neither writes business data; see
-  `docs/ARCHITECTURE.md` §6b. (The unused `ai_recommendations` table this note used
-  to warn against was dropped, `0057`, 2026-08-30 — nothing to avoid building
-  against any more.)
+- AI output is advisory. **Three** separate things wear the word "assistant", and
+  this rule binds all of them: the deterministic client-side insights module
+  (`src/lib/insights.ts`), the LLM chat (`supabase/functions/ai-assistant-chat`), and
+  the drafting-only "Polish with AI" generator (`supabase/functions/draft-copy`,
+  behind `src/services/draftCopyService.ts`). None writes business data; see
+  `docs/ARCHITECTURE.md` §6b. `draft-copy` was listed in CLAUDE.md, the PRD and
+  ARCHITECTURE but not here, which is the one document `AGENTS.md` names as binding
+  on AI edits. It is a distinct governance case: it makes no RLS-gated read, so it
+  carries its own explicit `is_owner()` check rather than relying on the caller's
+  row-level access to return nothing. (The unused `ai_recommendations` table this
+  note used to warn against was dropped, `0057`, 2026-08-30, so there is nothing to
+  avoid building against any more.)
+- Untrusted text that reaches a model must be fenced AND the fence must be escaped
+  out of the text it fences. `ai-assistant-chat` puts tool results between
+  `<<<RECORDS`/`RECORDS>>>` markers; until 2026-09-05 it did not remove those markers
+  from the payload, so a customer could close the fence from inside a booking name.
 - No AI code path may write to `appointments`, `customers`, or `availability_*`. The
   chat can _propose_ a booking or a one-off email; the write happens client-side under
   the owner's own session only when she clicks Confirm.

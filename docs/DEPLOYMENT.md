@@ -31,16 +31,50 @@ leaks.
 
 ---
 
+## 0a. Migrations written but not yet applied
+
+**`0072` through `0076` are in the repository and have not been run against any
+database** (written 2026-09-05, see `docs/KOKO_GAP.md` §11). None was validated
+locally: the machine that wrote them has no Docker, so `supabase db start` and the
+pgTAP suite could not run. Before pushing them:
+
+1. Let CI run first. The `database` job applies every migration from scratch against
+   a fresh Postgres and then runs `supabase test db`. That is the cheapest place for
+   a syntax error or a broken function body to surface.
+2. Then dry-run against the live database in a rolled-back transaction:
+   concatenate `begin;` + the five files + `rollback;` and run it with
+   `supabase db query --linked --file`. This needs no Docker and persists nothing.
+3. Only then `supabase db push --linked`.
+
+What they change, in one line each:
+
+| Migration | Change |
+| --- | --- |
+| `0072` | An anonymous booking fills a blank field on an existing customer but never overwrites one, and never raises marketing consent. |
+| `0073` | Erasure reaches contact-form enquiries; revoking sessions also cancels unredeemed magic links. |
+| `0074` | Un-cancelling re-raises an exclusion violation as `SLOT_TAKEN`; drops three orphaned 0008 slot functions. |
+| `0075` | System Health reports the `sending` and `cancelled` outbox counts, and no longer returns a bare NULL for reviews. |
+| `0076` | Sign-in slug: 8-character floor, reserved list resynced with `routes.ts`, attack alert fires on a band rather than an exact count, plus the index its hourly count needs. |
+
+`0075` pairs with a frontend change (the "Mid-send" row on System Health), which
+degrades cleanly on an older database: the count is optional in the type and the row
+is hidden when absent. The `send-emails` recovery sweep is function-only and can be
+deployed independently.
+
 ## 0. Before the first deploy
 
-- [ ] All migrations applied, in filename order (`0001_init.sql` through `0046_*`).
+- [ ] All migrations applied, in filename order (`0001_init.sql` through `0076_*`).
       `supabase db push --linked`.
 - [ ] `0027_payment_log.sql` pushed (`supabase db push --linked`) before or together with
       any build that reads `today_collected_pence` — otherwise the Today page's
       "Collected today" stat renders `£0.00` instead of a real figure until the
       migration is pushed.
 - [ ] `btree_gist` extension present; the `appointments_no_overlap` constraint exists.
-- [ ] Owner row inserted into `public.staff`.
+- [ ] Owner row inserted into `public.staff`, **with a `login_slug`**. No migration
+      creates that row, and a NULL slug means `resolve_owner_slug()` matches nothing,
+      so `SecretGate` 404s every URL and the sign-in form is unreachable. The
+      password reset is no way round it: it is triggered from inside that form. The
+      statement is in `README.md` and `docs/SCHEMA.md` §6.
 - [ ] `booking_settings` reviewed — lead time, horizon, daily cap, `approve_first_time`,
       `approval_window_h`, and the Google review URL.
 - [ ] Opening hours published. `availability_rules` was dropped in

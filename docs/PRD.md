@@ -74,8 +74,18 @@ evening), and notes.
 
 On submit: the request is stored, the owner is emailed and sees it in the Availability
 Requests inbox, and the customer receives an acknowledgement. The owner can open extra
-availability, offer alternative dates, or decline. An accepted request produces a
-secure single-use booking link that completes the reservation.
+availability, offer a slot, or decline.
+
+**Offering a slot books it outright.** `offer_slot_to_request()` inserts the
+appointment as `confirmed` and marks the request `converted`; the customer is told by
+the ordinary `booking_confirmed` email. There is no customer acceptance step. This
+paragraph used to describe "a secure single-use booking link that completes the
+reservation", and the `booking_offer` token purpose and the `offer_sent` status both
+exist in the schema for it, but nothing has ever minted one. The practical difference
+matters to the customer: they asked for Saturday, and what arrives is a confirmation
+for the Tuesday the owner picked, which they then have to cancel if it does not suit.
+Whether to build the acceptance step or to change the email to say "the salon has put
+you in at ..." is an open product decision, not a bug to fix quietly.
 
 ## 5. Appointment lifecycle
 
@@ -88,8 +98,13 @@ pending_approval ──approve──► confirmed ──► checked_in ──►
      rejected
 ```
 
-Every transition is owner-initiated except `pending_approval → rejected` on timeout,
-and every transition emits an event that drives the appropriate email.
+Every transition emits an event that drives the appropriate email. Most are
+owner-initiated, with three that are not: `pending_approval -> rejected` on timeout
+(`expire_pending_approvals`, hourly), and cancel and reschedule by the customer
+themselves from `/my` (`customer_cancel_appointment` and
+`customer_reschedule_appointment`, both granted to `anon` and gated by a session
+token). The line used to say every transition was owner-initiated, which contradicted
+"self-service cancel and reschedule" three sections further down this same file.
 
 ## 6. Passwordless identity
 
@@ -139,8 +154,12 @@ slot".
 **Owner dashboard** — today's schedule, calendar (day / week / month / agenda) with
 drag-to-reschedule and conflict detection, a combined Inbox (approvals and availability
 requests as tabs, not separate destinations), appointments, customers, services,
-availability rules, reports, the chat assistant, daily close, broadcasts, email outbox
-and templates, audit trail, system health, settings.
+the weekly default (the repeating week that generates days), reports, the chat
+assistant, daily close, broadcasts, email outbox and templates, audit trail, system
+health, settings. Twenty screens in all.
+
+"Availability rules" was the name of the pre-`0011` model, and the `availability_rules`
+table was dropped with it. The screen is `/dashboard/weekly`.
 
 **Customer management** — automatic creation, visit history, average spend, favourite
 services, private notes, marketing consent, email history.

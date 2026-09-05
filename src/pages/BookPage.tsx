@@ -17,6 +17,8 @@ import { formatDateLong } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { BookingResult, TimeSlot } from '@/types';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { publicButton } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 interface Details {
   fullName: string;
@@ -200,7 +202,7 @@ export function BookPage(): JSX.Element {
 
               <Link
                 to={routes.public.home}
-                className="mt-6 flex h-11 w-full items-center justify-center rounded-lg border border-border font-semibold text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={cn(publicButton('ghost'), 'mt-6 w-full')}
               >
                 Back to the salon
               </Link>
@@ -259,7 +261,7 @@ export function BookPage(): JSX.Element {
             description="Rather than leave you stuck, tell us when suits and the salon will come back to you as soon as something frees up."
             action={
               <Link
-                className="inline-flex h-11 items-center rounded-lg bg-primary px-5 font-semibold text-primary-foreground"
+                className={cn(publicButton(), 'px-5')}
                 to={routes.public.requestAvailability}
               >
                 Ask for a time
@@ -269,7 +271,7 @@ export function BookPage(): JSX.Element {
         )}
 
         {!loading && openDates.length > 0 && !slot && (
-          <Card className="mb-8 overflow-hidden p-0">
+          <Card className="mb-8 overflow-hidden">
             <div className="grid md:grid-cols-2">
               <div className="border-b border-border md:border-b-0 md:border-r">
                 <Calendar
@@ -321,7 +323,7 @@ export function BookPage(): JSX.Element {
 
         {slot && (
           <div className="mx-auto max-w-xl">
-            <Card className="mb-6 p-4">
+            <Card pad="compact" className="mb-6">
               <p className="font-medium text-foreground">
                 {formatDateLong(slot.startsAt, timezone)} at {slot.label}
               </p>

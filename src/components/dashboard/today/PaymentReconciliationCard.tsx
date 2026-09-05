@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CreditCard } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState, Spinner } from '@/components/ui/States';
 import { AppointmentDetailModal } from '@/components/dashboard/AppointmentDetailModal';
@@ -61,18 +61,19 @@ export function PaymentReconciliationCard({
   const preview = rows?.slice(0, PREVIEW_COUNT) ?? [];
 
   return (
-    <Card className={cn('flex h-full flex-col p-4', className)}>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          Payments to record
-        </h2>
-        <Link
-          to={routes.owner.appointments}
-          className="text-xs font-medium text-primary hover:underline"
-        >
-          View all
-        </Link>
-      </div>
+    <Card pad="compact" className={cn('flex h-full flex-col', className)}>
+      <CardHeading
+        size="compact"
+        title="Payments to record"
+        actions={
+          <Link
+            to={routes.owner.appointments}
+            className="text-xs font-medium text-brand-ink hover:underline"
+          >
+            View all
+          </Link>
+        }
+      />
 
       {rows === null && (
         <div className="flex justify-center py-6">
@@ -82,6 +83,7 @@ export function PaymentReconciliationCard({
 
       {rows !== null && rows.length === 0 && (
         <EmptyState
+          size="compact"
           title="All caught up"
           description="Every completed appointment in the last 30 days has a payment logged."
         />
@@ -109,7 +111,7 @@ export function PaymentReconciliationCard({
             <button
               type="button"
               onClick={() => setSelected(row)}
-              className="flex shrink-0 items-center gap-1 rounded-lg bg-tint-brand px-2.5 py-1.5 text-xs font-semibold text-primary hover:brightness-95"
+              className="flex shrink-0 items-center gap-1 rounded-lg bg-tint-brand px-2.5 py-1.5 text-xs font-semibold text-brand-ink hover:brightness-95"
             >
               <CreditCard aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
               Record
@@ -126,7 +128,7 @@ export function PaymentReconciliationCard({
           </span>
           <Link
             to={routes.owner.appointments}
-            className="text-xs font-medium text-primary hover:underline"
+            className="text-xs font-medium text-brand-ink hover:underline"
           >
             View all
           </Link>

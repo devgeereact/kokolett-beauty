@@ -1,4 +1,4 @@
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useId, useRef, useState } from 'react';
 import { Calendar } from '@/components/ui/Calendar';
 import { formatLocalDate, parseLocalDate } from '@/lib/localDate';
 import { cn } from '@/lib/utils';
@@ -50,6 +50,9 @@ export function DatePicker({
 }: DatePickerProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
   const selected = parseLocalDate(value);
   const minDate = parseLocalDate(min ?? '');
   const maxDate = parseLocalDate(max ?? '');
@@ -82,6 +85,9 @@ export function DatePicker({
       // so this reliably wins the race no matter which mounted first.
       e.stopPropagation();
       setOpen(false);
+      /* Escape must not strand focus on a panel that has just been removed
+         from the document — put it back on the field it belongs to. */
+      triggerRef.current?.focus();
     };
 
     document.addEventListener('pointerdown', onPointerDown);
@@ -95,17 +101,25 @@ export function DatePicker({
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={triggerRef}
         id={id}
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
         {...aria}
         className={cn(
-          'flex w-full items-center justify-between gap-2 rounded-md border border-border bg-input px-3 py-2.5 text-left text-foreground',
+          /* Same shape and same invalid treatment as `Field`'s `CONTROL`:
+             this IS a form field, and it was the one control in the owner
+             console on an 8px radius with no error styling at all, so an
+             invalid date looked valid while the text input beside it went
+             red (docs/DESIGN.md §16.5). */
+          'flex w-full items-center justify-between gap-2 rounded-sm border border-border bg-input px-3 py-2.5 text-left text-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           'disabled:cursor-not-allowed disabled:opacity-60',
+          'aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive',
           className,
         )}
       >
@@ -126,7 +140,19 @@ export function DatePicker({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-dropdown mt-1 rounded-xl border border-border bg-popover shadow-popover">
+        /* `aria-haspopup="dialog"` on the trigger is a promise; this is the
+           dialog it promised. `react-day-picker` renders a real `<table>`
+           with its own roving focus and arrow-key handling, so the grid
+           semantics are already correct — what was missing was the labelled
+           container around it and a name to announce on open. */
+        <div
+          ref={panelRef}
+          id={panelId}
+          role="dialog"
+          aria-modal="false"
+          aria-label={aria['aria-label'] ?? 'Choose a date'}
+          className="absolute left-0 top-full z-dropdown mt-1 rounded-xl border border-border bg-popover shadow-popover"
+        >
           <Calendar
             mode="single"
             selected={selected}

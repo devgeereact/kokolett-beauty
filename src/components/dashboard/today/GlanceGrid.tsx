@@ -2,7 +2,7 @@ import { type JSX, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, PoundSterling, TrendingUp, UserPlus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { listDaySlots } from '@/services/availabilityService';
 import { formatMoney, toSalonDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
@@ -106,10 +106,8 @@ export function GlanceGrid({
   ];
 
   return (
-    <Card className={cn('flex h-full flex-col p-4', className)}>
-      <h2 className="mb-3 font-serif text-base font-semibold text-foreground">
-        Today at a glance
-      </h2>
+    <Card pad="compact" className={cn('flex h-full flex-col', className)}>
+      <CardHeading size="compact" title="Today at a glance" />
       {/* Vertically centred in the leftover height (this card matches "Next
           up"'s taller natural height) so any slack lands as balanced margin
           top and bottom, not a dead zone stuck under the grid. */}
@@ -140,7 +138,7 @@ export function GlanceGrid({
                   {stat.value}
                 </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className="mt-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
+                <p className="mt-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-brand-ink">
                   {stat.linkLabel}
                 </p>
               </Link>

@@ -44,7 +44,7 @@ export function AgendaList({
               'flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-sm',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               entry.variant === 'booked' && entry.status && STATUS_PILL_BG[entry.status],
-              entry.onClick ? 'hover:text-primary' : 'cursor-not-allowed opacity-50',
+              entry.onClick ? 'hover:text-brand-ink' : 'cursor-not-allowed opacity-50',
             )}
           >
             <span

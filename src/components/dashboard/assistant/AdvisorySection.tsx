@@ -1,6 +1,6 @@
 import { type JSX, useState } from 'react';
 import { ChevronDown, Sparkles } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/Card';
 import { cn } from '@/lib/utils';
 
 /**
@@ -23,7 +23,7 @@ export function AdvisorySection({
   const [open, setOpen] = useState(false);
 
   return (
-    <Card className="mt-6 p-5">
+    <Card pad="standard" className="mt-6">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -35,9 +35,7 @@ export function AdvisorySection({
             <Sparkles aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
           </span>
           <div>
-            <h2 className="font-serif text-base font-semibold text-foreground">
-              {title}
-            </h2>
+            <CardTitle size="compact">{title}</CardTitle>
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>

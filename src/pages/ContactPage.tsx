@@ -12,6 +12,7 @@ import { buildImageKitUrl } from '@/lib/imagekit';
 import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { CONTACT_EMAIL, buildMapUrl } from '@/lib/business';
+import { publicButton, publicField } from '@/components/ui/controlClasses';
 
 type FormState = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -165,7 +166,7 @@ export function ContactPage(): JSX.Element {
         </div>
 
         <div className="grid items-stretch gap-10 lg:grid-cols-[1.1fr_.9fr]">
-          <Card className="flex flex-col p-6">
+          <Card pad="roomy" className="flex flex-col">
             <h2 className="font-serif text-xl font-semibold text-foreground">
               Send a message
             </h2>
@@ -204,7 +205,7 @@ export function ContactPage(): JSX.Element {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-border bg-input px-3.5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={cn(publicField, 'h-11')}
                   />
                 </div>
                 <div>
@@ -239,7 +240,7 @@ export function ContactPage(): JSX.Element {
                     rows={4}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-input px-3.5 py-2.5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={cn(publicField, 'resize-y py-2.5')}
                   />
                 </div>
 
@@ -253,10 +254,7 @@ export function ContactPage(): JSX.Element {
                 <button
                   type="submit"
                   disabled={state === 'sending'}
-                  className={cn(
-                    'inline-flex h-12 min-h-touch w-full items-center justify-center rounded-lg bg-primary text-base font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    state === 'sending' && 'pointer-events-none opacity-60',
-                  )}
+                  className={cn(publicButton(), 'h-12 w-full text-base')}
                 >
                   {state === 'sending' ? 'Sending…' : 'Send message'}
                 </button>

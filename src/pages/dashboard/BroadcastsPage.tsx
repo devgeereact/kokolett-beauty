@@ -86,7 +86,7 @@ export function BroadcastsPage(): JSX.Element {
       subtitle="A newsletter or ad to your mailing list, drafted with AI, reviewed by you, sent to no one else."
     >
       <div className="max-w-2xl space-y-6">
-        <Card className="p-5">
+        <Card pad="standard">
           <Field label="What do you want to say?">
             {({ id }) => (
               <Textarea
@@ -109,7 +109,7 @@ export function BroadcastsPage(): JSX.Element {
           {draftError && <p className="mt-2 text-sm text-status-no-show">{draftError}</p>}
         </Card>
 
-        <Card className="p-5">
+        <Card pad="standard">
           <Field label="Subject">
             {({ id }) => (
               <Input

@@ -1,6 +1,6 @@
 import { type JSX, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -31,7 +31,7 @@ export function GoogleReviewsCard(): JSX.Element {
 
   if (loading) {
     return (
-      <Card className="flex h-full items-center justify-center p-5">
+      <Card pad="standard" className="flex h-full items-center justify-center">
         <LoadingState />
       </Card>
     );
@@ -61,14 +61,12 @@ export function GoogleReviewsCard(): JSX.Element {
   };
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Google Reviews
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Send customers to your review page and connect your Google Place ID so reviews can
-        appear on your website.
-      </p>
+    <Card pad="standard">
+      <CardHeading
+        size="compact"
+        title="Google Reviews"
+        description="Send customers to your review page and connect your Google Place ID so reviews can appear on your website."
+      />
       <Field
         label="Google review link"
         hint="Sent automatically after an appointment is completed."

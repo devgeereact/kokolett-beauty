@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, Lightbulb, MessageSquare, TrendingDown, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import {
   getDayOfWeekTrend,
@@ -179,15 +179,16 @@ export function AssistantInsightsRow({
   }, [timezone]);
 
   return (
-    <Card className={cn('flex h-full flex-col p-4', className)}>
-      <div className="mb-3 flex items-center gap-2">
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          AI assistant
-        </h2>
-        <span className="rounded-full bg-tint-no-show px-2 py-0.5 text-xs font-medium text-status-no-show">
-          Beta
-        </span>
-      </div>
+    <Card pad="compact" className={cn('flex h-full flex-col', className)}>
+      <CardHeading
+        size="compact"
+        title="AI assistant"
+        actions={
+          <span className="rounded-full bg-tint-no-show px-2 py-0.5 text-xs font-medium text-status-no-show">
+            Beta
+          </span>
+        }
+      />
 
       {!cards && (
         <div className="flex justify-center py-6">

@@ -1,6 +1,6 @@
 import { type JSX, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { createAppointmentAsOwner } from '@/services/appointmentService';
@@ -134,21 +134,17 @@ export function NewBookingPanel({
   };
 
   return (
-    <Card className="mb-6 p-5">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h2 className="font-serif text-lg font-semibold text-foreground">
-            Take a booking
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Confirmed straight away, and they get the same confirmation email as a web
-            booking, with a link to change or cancel it themselves.
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </div>
+    <Card pad="standard" className="mb-6">
+      <CardHeading
+        size="standard"
+        title="Take a booking"
+        description="Confirmed straight away, and they get the same confirmation email as a web booking, with a link to change or cancel it themselves."
+        actions={
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Close
+          </Button>
+        }
+      />
 
       <div className="grid gap-x-4 md:grid-cols-3">
         <Field label="Date" required>

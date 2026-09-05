@@ -152,7 +152,7 @@ export function CommunicationAssistancePanel({
         ))}
       </div>
 
-      <Card className="h-fit p-5">
+      <Card pad="standard" className="h-fit">
         {!selected ? (
           <p className="text-sm text-muted-foreground">
             Choose a message on the left to draft a reply.

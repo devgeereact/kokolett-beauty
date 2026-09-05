@@ -5,9 +5,10 @@ import { Card } from '@/components/ui/Card';
 import { useServiceMenu } from '@/hooks/useServiceMenu';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { formatDuration } from '@/lib/format';
-import { jsonLd } from '@/lib/utils';
+import { cn, jsonLd } from '@/lib/utils';
 import { routes } from '@/lib/routes';
 import { SALON_SCHEMA_ID } from '@/lib/business';
+import { publicButton } from '@/components/ui/controlClasses';
 
 /**
  * The full live service menu — duration only, never a price (2026-08-25
@@ -97,8 +98,9 @@ export function ServicesPage(): JSX.Element {
               <div className="grid gap-3 md:grid-cols-2">
                 {group.items.map((item) => (
                   <Card
+                    pad="compact"
                     key={item.name}
-                    className="flex items-start justify-between gap-4 p-4"
+                    className="flex items-start justify-between gap-4"
                   >
                     <div>
                       <p className="font-medium text-foreground">{item.name}</p>
@@ -119,7 +121,7 @@ export function ServicesPage(): JSX.Element {
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link
             to={routes.public.book}
-            className="inline-flex h-12 items-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground"
+            className={cn(publicButton(), 'h-12 px-8 text-base')}
           >
             Book an appointment
           </Link>

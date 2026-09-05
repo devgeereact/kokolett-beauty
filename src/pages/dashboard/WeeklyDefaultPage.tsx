@@ -205,8 +205,8 @@ export function WeeklyDefaultPage(): JSX.Element {
     >
       {error && <ErrorState error={error} onRetry={() => void load()} />}
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        <div className="space-y-3 lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           <WeeklyScheduleCard
             days={days}
             settings={settings}
@@ -247,7 +247,7 @@ export function WeeklyDefaultPage(): JSX.Element {
           />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <OpeningHoursSummaryCard days={days} />
           <NextWeeksGlanceCard timezone={timezone} days={days} />
           <BookingRulesCard settings={settings} />

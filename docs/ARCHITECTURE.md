@@ -37,6 +37,9 @@ src/
 ├── assets/        # images/svgs imported by code
 ├── components/    # presentational + wiring components
 │   └── ui/        # design-system primitives (Button, Card…)
+│       ├── Card.tsx           # Card + CardTitle/CardHeading/CardHeader/CardBody
+│       └── controlClasses.ts  # shared class strings, not components:
+│                              #   segmented control, icon button, public form shape
 ├── context/       # AuthProvider, ThemeProvider (React Context)
 ├── hooks/         # reusable logic (see docs/HOOKS.md)
 ├── lib/           # third-party SDK clients + env access
@@ -89,6 +92,15 @@ src/
 **Dependency direction:** `pages → services → lib`. Components consume `hooks`
 and `context`. Nothing in `lib` imports from `pages`/`components` (no cycles).
 
+**`components/ui/controlClasses.ts` is a `.ts`, not a `.tsx`, and that is the
+point.** It holds class strings for looks that several call sites must share while
+keeping their own, different, correct semantics: a route `NavLink` and an
+`aria-pressed` toggle rendering the same segmented control; an icon-only `<button>`
+that is not a `Button` variant; the public marketing form shape, which is a
+deliberately different family from the console's (docs/DESIGN.md §16.5). A component
+would have to choose one set of semantics for all of them. It is also where the
+`react-refresh/only-export-components` lint rule pushes non-component exports.
+
 ## 3. Information architecture & routing
 
 Single-page app; React Router. Deep links work because `.htaccess` rewrites unknown
@@ -139,7 +151,7 @@ this section used to describe.
 | `/dashboard/calendar`      | Workspace      | Day / week / month, drag-to-reschedule                            |
 | `/dashboard/appointments`  | Workspace      | Searchable list                                                   |
 | `/dashboard/daily-close`   | Workspace      | End-of-day snapshot (`0054`/`0055`)                               |
-| `/dashboard/inbox`         | Bookings       | Approvals + Requests, tabbed (`?tab=approvals` / `?tab=requests`) |
+| `/dashboard/inbox`         | Bookings       | Approvals + Requests + Messages, tabbed (`?tab=approvals` / `?tab=requests` / `?tab=messages`) |
 | `/dashboard/customers`     | Customers      | CRM                                                               |
 | `/dashboard/services`      | Salon          | Service-menu content (descriptive, not priced or bookable)        |
 | `/dashboard/weekly`        | Salon          | The repeating week that generates calendar days                   |
@@ -164,6 +176,18 @@ Reports and AI Assistant demoted to a secondary tier. That nav was never built;
 `/dashboard/approvals` and `/dashboard/requests` render nothing themselves — both are kept
 mounted purely as redirects (`/dashboard/inbox?tab=approvals` / `?tab=requests`) so old
 links and bookmarks still land somewhere real (see `src/App.tsx`).
+
+**All three Inbox lanes have a sidebar row** (`Approvals`, `Availability Requests`,
+`Messages`), each matching on its own `?tab=` via `NavEntry.matchTab`. Messages shipped
+with the contact-message work on 2026-09-05 and had none: the only in-page switch
+between the lanes is `md:hidden`, so on a desktop the sole way to reach a Contact-page
+enquiry was to type the query string.
+
+**A bare `/dashboard/inbox` rewrites itself to an explicit `?tab=`.** The page picks a
+default lane from the pending-approval count and then replaces the URL with it, because
+`isEntryActive` matches a lane on the query parameter: without the rewrite the page was
+plainly on a queue while no sidebar row was highlighted and the header showed no icon.
+It is a `replace`, so Back still goes where the owner came from.
 
 Every route that must not be indexed sets `noindex` **and no `path`**, so it neither
 enters the index nor inherits `index.html`'s canonical: the 404, `SecretGate`,

@@ -47,7 +47,7 @@ export function StatTrendTile({
   const negative = change !== null && (invert ? change > 0 : change < 0);
 
   return (
-    <Card className="p-4">
+    <Card pad="compact">
       <div className="mb-3 flex items-start justify-between gap-2">
         <p className="min-w-0 flex-1 text-sm text-muted-foreground">{label}</p>
         <span

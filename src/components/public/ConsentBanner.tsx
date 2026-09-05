@@ -1,6 +1,7 @@
-import type { JSX } from 'react';
+import { useRef, type JSX } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
+import { useBottomNotice } from '@/hooks/useBottomNotice';
 import { useConsent } from '@/hooks/useConsent';
 import { routes } from '@/lib/routes';
 
@@ -22,14 +23,21 @@ import { routes } from '@/lib/routes';
  */
 export function ConsentBanner(): JSX.Element | null {
   const { decided, accept, reject } = useConsent();
+  const ref = useRef<HTMLDivElement>(null);
+  /* The bottom-most layer: everything else in the stack measures itself
+     against this one's real height, which is what a fixed `bottom-20`
+     guess got wrong on a narrow screen where this wraps to five lines. */
+  const bottom = useBottomNotice('consent', ref, !decided);
 
   if (decided) return null;
 
   return (
     <div
+      ref={ref}
       role="region"
       aria-label="Cookies and storage"
-      className="fixed inset-x-0 bottom-0 z-toast border-t border-border bg-card p-4 shadow-modal md:p-6"
+      style={{ bottom }}
+      className="fixed inset-x-0 z-toast border-t border-border bg-card p-4 shadow-modal md:p-6"
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="text-sm leading-relaxed text-muted-foreground">

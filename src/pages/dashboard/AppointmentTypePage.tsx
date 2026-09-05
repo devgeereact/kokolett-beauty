@@ -111,7 +111,7 @@ export function AppointmentTypePage(): JSX.Element {
       <CalendarCapacityTabs />
 
       <div className="max-w-xl">
-        <Card className="p-5">
+        <Card pad="standard">
           <Field label="What it is called" required>
             {({ id, describedBy }) => (
               <Input

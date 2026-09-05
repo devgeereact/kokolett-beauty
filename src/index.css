@@ -156,6 +156,12 @@
     --page-gutter: 24px;
     --content-max-width: 1440px;
     --content-bottom-gap: 24px;
+    /* The assistant's chat panel. It was a hard `h-[640px]` arbitrary value,
+       which is the right height on a desktop monitor and taller than the
+       whole viewport on a short laptop or a phone in landscape — the
+       composer, the one control on the screen, ended up below the fold.
+       `clamp` keeps 640px wherever there is room for it. */
+    --chat-panel-height: clamp(20rem, calc(100dvh - 18rem), 40rem);
   }
 
   .dark {
@@ -405,6 +411,25 @@
     .scroll-bottom-gap {
       padding-bottom: 2rem;
     }
+  }
+
+  /* ---- Safe areas ------------------------------------------------------
+     `index.html` asks for `viewport-fit=cover`, which is what lets the site
+     paint under a notch and the home indicator — and until 2026-09-05
+     nothing under `src/` ever accounted for the inset that opens up.
+
+     One class carrying BOTH the base padding and the inset, rather than a
+     `pt-safe` utility next to a `p-5`: Tailwind emits `padding` before
+     `padding-top`, so a side-specific safe-area utility would replace the
+     20px instead of adding to it. The inset is zero on every device that
+     does not have one, so this reads as plain `p-5` on a laptop.
+
+     Fixed bottom notices do not use this — they are positioned, not padded,
+     and add the inset to their own `bottom` offset (`useBottomNotice`). */
+  .overlay-pad-safe {
+    padding: 1.25rem;
+    padding-top: calc(1.25rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* ---- Marketing-only (2026-08 rebrand) --------------------------------

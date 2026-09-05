@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Checkbox, Field, Input } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
@@ -14,6 +14,8 @@ import { errorMessage } from '@/lib/errors';
 import { formatDateLong, formatTime } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { publicButton } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 /**
  * The customer's own bookings, reached by magic link.
@@ -93,7 +95,7 @@ export function MyBookingsPage(): JSX.Element {
     return (
       <SiteShell>
         <div className="mx-auto max-w-md px-4 py-16 md:px-6">
-          <Card className="p-6">
+          <Card pad="roomy">
             <h1 className="font-serif text-2xl font-semibold text-foreground">
               Your bookings
             </h1>
@@ -248,10 +250,7 @@ export function MyBookingsPage(): JSX.Element {
             title="Nothing booked yet"
             description="When you book, it will show up here."
             action={
-              <Link
-                to={routes.public.book}
-                className="inline-flex h-11 items-center rounded-lg bg-primary px-5 font-semibold text-primary-foreground"
-              >
+              <Link to={routes.public.book} className={cn(publicButton(), 'px-5')}>
                 Book an appointment
               </Link>
             }
@@ -274,12 +273,10 @@ export function MyBookingsPage(): JSX.Element {
 
         {upcoming.length > 0 && (
           <section className="mb-10">
-            <h2 className="mb-3 font-serif text-lg font-semibold text-foreground">
-              Coming up
-            </h2>
+            <CardHeading size="standard" title="Coming up" />
             <div className="space-y-3">
               {upcoming.map((a) => (
-                <Card key={a.id} className="p-4">
+                <Card pad="compact" key={a.id}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-medium text-foreground">{a.service_name}</p>
@@ -354,9 +351,7 @@ export function MyBookingsPage(): JSX.Element {
 
         {past.length > 0 && (
           <section>
-            <h2 className="mb-3 font-serif text-lg font-semibold text-foreground">
-              Previously
-            </h2>
+            <CardHeading size="standard" title="Previously" />
             <div className="space-y-2">
               {past.map((a) => (
                 <div
@@ -381,10 +376,8 @@ export function MyBookingsPage(): JSX.Element {
 
         {!loading && hasSession && marketingConsent !== null && (
           <section className="mt-10">
-            <h2 className="mb-3 font-serif text-lg font-semibold text-foreground">
-              Communication preferences
-            </h2>
-            <Card className="p-4">
+            <CardHeading size="standard" title="Communication preferences" />
+            <Card pad="compact">
               <Checkbox
                 label="Send me occasional offers and updates by email"
                 checked={marketingConsent}

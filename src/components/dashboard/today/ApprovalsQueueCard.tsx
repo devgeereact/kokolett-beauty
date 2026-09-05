@@ -1,7 +1,7 @@
 import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar } from '@/components/ui/Avatar';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { EmptyState, Spinner } from '@/components/ui/States';
 import { listPendingApprovals } from '@/services/appointmentService';
 import { formatCountdown } from '@/lib/format';
@@ -31,18 +31,19 @@ export function ApprovalsQueueCard({ className }: { className?: string }): JSX.E
   const approvalsHref = `${routes.owner.inbox}?tab=approvals`;
 
   return (
-    <Card className={cn('flex h-full flex-col p-4', className)}>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          Approvals queue
-        </h2>
-        <Link
-          to={approvalsHref}
-          className="text-xs font-medium text-primary hover:underline"
-        >
-          View all
-        </Link>
-      </div>
+    <Card pad="compact" className={cn('flex h-full flex-col', className)}>
+      <CardHeading
+        size="compact"
+        title="Approvals queue"
+        actions={
+          <Link
+            to={approvalsHref}
+            className="text-xs font-medium text-brand-ink hover:underline"
+          >
+            View all
+          </Link>
+        }
+      />
 
       {rows === null && (
         <div className="flex justify-center py-6">
@@ -52,6 +53,7 @@ export function ApprovalsQueueCard({ className }: { className?: string }): JSX.E
 
       {rows !== null && rows.length === 0 && (
         <EmptyState
+          size="compact"
           title="Nothing waiting"
           description="Your published hours book instantly, so nothing needs a decision right now."
         />

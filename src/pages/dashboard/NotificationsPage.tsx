@@ -2,7 +2,7 @@ import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Bell, CheckCheck, Mail, PartyPopper, Smartphone, Tag } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Pagination } from '@/components/ui/Pagination';
 import { Switch } from '@/components/ui/Switch';
 import { ErrorState, LoadingState, EmptyState } from '@/components/ui/States';
@@ -20,6 +20,7 @@ import {
 import { TONE_BG, TONE_TEXT } from '@/lib/tone';
 import { formatDateTime, formatRelative, toSalonDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { filterBar, filterCount, filterTab } from '@/components/ui/controlClasses';
 
 type Lane = 'all' | 'unread' | 'archived';
 const PAGE_SIZE = 8;
@@ -180,7 +181,7 @@ export function NotificationsPage(): JSX.Element {
         <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
           <div>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-1 border-b border-border">
+              <div role="group" aria-label="Filter notifications" className={filterBar}>
                 {(
                   [
                     [
@@ -203,24 +204,11 @@ export function NotificationsPage(): JSX.Element {
                       setLane(key);
                       setPage(1);
                     }}
-                    className={cn(
-                      'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium',
-                      lane === key
-                        ? 'border-primary text-brand-ink'
-                        : 'border-transparent text-muted-foreground hover:text-foreground',
-                    )}
+                    aria-pressed={lane === key}
+                    className={filterTab(lane === key)}
                   >
                     {label}
-                    <span
-                      className={cn(
-                        'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                        lane === key
-                          ? 'bg-tint-brand text-brand-ink'
-                          : 'bg-muted text-muted-foreground',
-                      )}
-                    >
-                      {count}
-                    </span>
+                    <span className={filterCount(lane === key)}>{count}</span>
                   </button>
                 ))}
               </div>
@@ -242,7 +230,7 @@ export function NotificationsPage(): JSX.Element {
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {label}
                     </p>
-                    <Card className="divide-y divide-border p-0">
+                    <Card className="divide-y divide-border">
                       {items.map(({ event, meta }) => {
                         const read = isRead(event.id);
                         return (
@@ -326,10 +314,8 @@ export function NotificationsPage(): JSX.Element {
           </div>
 
           <div className="space-y-6">
-            <Card className="p-5">
-              <h2 className="mb-3 font-serif text-base font-semibold text-foreground">
-                Filter notifications
-              </h2>
+            <Card pad="standard">
+              <CardHeading size="compact" title="Filter notifications" />
               <div className="space-y-1">
                 <button
                   type="button"
@@ -363,13 +349,12 @@ export function NotificationsPage(): JSX.Element {
               </div>
             </Card>
 
-            <Card className="p-5">
-              <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-                Notification preferences
-              </h2>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Choose how you want to be notified.
-              </p>
+            <Card pad="standard">
+              <CardHeading
+                size="compact"
+                title="Notification preferences"
+                description="Choose how you want to be notified."
+              />
               <div className="space-y-4">
                 {[
                   {
@@ -419,7 +404,7 @@ export function NotificationsPage(): JSX.Element {
               </div>
             </Card>
 
-            <Card className="bg-tint-pending p-5">
+            <Card pad="standard" className="bg-tint-pending">
               <p className="mb-1 flex items-center gap-1.5 font-serif text-base font-semibold text-foreground">
                 {unreadCount === 0 ? (
                   <>

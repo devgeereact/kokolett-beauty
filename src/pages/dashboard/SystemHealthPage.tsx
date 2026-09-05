@@ -2,7 +2,7 @@ import { type JSX, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, HelpCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeader, CardHeading, CardTitle } from '@/components/ui/Card';
 import { ErrorState, LoadingState, Spinner } from '@/components/ui/States';
 import {
   getEmailDiagnostics,
@@ -144,7 +144,10 @@ export function SystemHealthPage(): JSX.Element {
         <LoadingState label="Checking…" />
       ) : (
         <div className="space-y-6">
-          <Card className="flex items-center justify-between p-4 text-xs text-muted-foreground">
+          <Card
+            pad="compact"
+            className="flex items-center justify-between text-xs text-muted-foreground"
+          >
             <span>
               Build <span className="font-mono text-foreground">{__APP_VERSION__}</span>
             </span>
@@ -152,18 +155,21 @@ export function SystemHealthPage(): JSX.Element {
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="p-0">
-              <h2 className="border-b border-border p-4 text-base font-semibold text-foreground">
-                Scheduled jobs
-              </h2>
+            {/* The one card in the app whose body is a divided list with its
+                own row edges, so its title needs the bordered band above it
+                rather than `CardHeading`'s inline block. */}
+            <Card>
+              <CardHeader className="px-4 py-3">
+                <CardTitle size="compact">Scheduled jobs</CardTitle>
+              </CardHeader>
               {health.jobs.map((job) => (
                 <JobRow key={job.name} job={job} timezone={timezone} />
               ))}
             </Card>
 
             <div className="space-y-6">
-              <Card className="p-4">
-                <h2 className="mb-3 text-base font-semibold text-foreground">Email</h2>
+              <Card pad="compact">
+                <CardHeading size="compact" title="Email" />
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <dt className="text-muted-foreground">Queued</dt>
                   <dd className="text-foreground">{health.email.queued_count}</dd>
@@ -203,16 +209,14 @@ export function SystemHealthPage(): JSX.Element {
                 </dl>
                 <Link
                   to={routes.owner.email}
-                  className="mt-3 inline-block text-xs font-medium text-primary hover:underline"
+                  className="mt-3 inline-block text-xs font-medium text-brand-ink hover:underline"
                 >
                   View the outbox
                 </Link>
               </Card>
 
-              <Card className="p-4">
-                <h2 className="mb-3 text-base font-semibold text-foreground">
-                  Email authentication
-                </h2>
+              <Card pad="compact">
+                <CardHeading size="compact" title="Email authentication" />
                 {emailAuth ? (
                   <div className="divide-y divide-border text-sm">
                     <AuthCheckRow label="SPF" check={emailAuth.spf} />
@@ -247,10 +251,8 @@ export function SystemHealthPage(): JSX.Element {
                 </p>
               </Card>
 
-              <Card className="p-4">
-                <h2 className="mb-3 text-base font-semibold text-foreground">
-                  Google reviews
-                </h2>
+              <Card pad="compact">
+                <CardHeading size="compact" title="Google reviews" />
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <dt className="text-muted-foreground">Last synced</dt>
                   <dd className="text-foreground">

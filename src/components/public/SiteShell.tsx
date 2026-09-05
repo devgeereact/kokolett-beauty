@@ -12,11 +12,12 @@ import { cn } from '@/lib/utils';
 import { SiteFooter } from '@/components/public/SiteFooter';
 import { ConsentBanner } from '@/components/public/ConsentBanner';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useFocusTrap, FOCUSABLE_SELECTOR } from '@/hooks/useFocusTrap';
 import { useUsualHours } from '@/hooks/useUsualHours';
 import { toWhatsAppLink } from '@/lib/whatsapp';
 import { splitAddressLines } from '@/lib/format';
 import { INSTAGRAM_URL, buildGoogleProfileUrl, buildMapUrl } from '@/lib/business';
+import { publicButton } from '@/components/ui/controlClasses';
 
 /** The site's real pages, in nav order — reinstated 2026-08-25 (marketing
     rebrand). `My bookings` stays separate: it's a customer utility, not a
@@ -72,7 +73,13 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
 
   /* Return focus to the trigger, and stop the page behind scrolling under the
      overlay: on iOS a scroll gesture over a `fixed` overlay scrolls the body,
-     so closing the menu landed the customer somewhere they had not chosen. */
+     so closing the menu landed the customer somewhere they had not chosen.
+
+     Opening focus is placed inside the panel for the same reason
+     `DashboardLayout` does it: `aria-modal` is a promise to a screen reader,
+     and `useFocusTrap` only wraps Tab once focus is ALREADY inside. Without
+     this, focus stayed on the Menu button behind the overlay and the first
+     Tab went on into the obscured page. */
   useEffect(() => {
     if (!menuOpen) return undefined;
     /* Captured now rather than read in the cleanup: by the time the cleanup
@@ -80,6 +87,8 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
     const trigger = menuButtonRef.current;
     const { overflow } = document.body.style;
     document.body.style.overflow = 'hidden';
+    const panel = menuPanelRef.current;
+    (panel?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ?? panel)?.focus();
     return () => {
       document.body.style.overflow = overflow;
       trigger?.focus();
@@ -154,7 +163,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                     'inline-flex min-h-touch items-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     isActive
-                      ? 'text-primary'
+                      ? 'text-brand-ink'
                       : 'text-muted-foreground hover:text-foreground',
                   )
                 }
@@ -172,7 +181,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
                   'hidden min-h-touch items-center whitespace-nowrap rounded-md px-2 py-2 text-sm font-medium md:inline-flex md:px-3',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isActive
-                    ? 'text-primary'
+                    ? 'text-brand-ink'
                     : 'text-muted-foreground hover:text-foreground',
                 )
               }
@@ -181,7 +190,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
             </NavLink>
             <Link
               to={routes.public.book}
-              className="ml-1 inline-flex min-h-touch items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(publicButton(), 'ml-1 px-4 text-sm')}
             >
               Book
             </Link>
@@ -216,7 +225,14 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
           role="dialog"
           aria-modal="true"
           aria-label="Site menu"
-          className="fixed inset-0 z-drawer flex flex-col bg-background p-5 lg:hidden"
+          tabIndex={-1}
+          /* `overflow-y-auto` and the safe-area padding are both about the
+             short viewport: in landscape on a phone the six links plus the
+             booking button are taller than the screen, and with no scroll of
+             its own the Book button — the whole point of the menu — was
+             unreachable. The inset padding keeps the close button clear of a
+             notch and the CTA clear of the home indicator. */
+          className="overlay-pad-safe fixed inset-0 z-drawer flex flex-col overflow-y-auto overscroll-contain bg-background lg:hidden"
         >
           <div className="flex justify-end">
             <button
@@ -237,29 +253,46 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
               </svg>
             </button>
           </div>
+          {/* `NavLink`, not `Link`: the desktop bar has always marked the
+              current page and the mobile menu never did, so on a phone the
+              menu could not tell you where you were — no `aria-current` for a
+              screen reader and no visible cue for anyone else. */}
           <nav aria-label="Main" className="mt-6 flex flex-col gap-1">
             {PAGES.map((link) => (
-              <Link
+              <NavLink
                 key={link.to}
                 to={link.to}
+                end={link.to === routes.public.home}
                 onClick={closeMenu}
-                className="border-b border-border py-3.5 font-serif text-2xl font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={({ isActive }) =>
+                  cn(
+                    'border-b border-border py-3.5 font-serif text-2xl font-semibold',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    isActive ? 'text-brand-ink' : 'text-foreground',
+                  )
+                }
               >
                 {link.label}
-              </Link>
+              </NavLink>
             ))}
-            <Link
+            <NavLink
               to={routes.customer.home}
               onClick={closeMenu}
-              className="py-3.5 text-sm font-medium text-muted-foreground"
+              className={({ isActive }) =>
+                cn(
+                  'py-3.5 text-sm font-medium',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  isActive ? 'text-brand-ink' : 'text-muted-foreground',
+                )
+              }
             >
               My bookings
-            </Link>
+            </NavLink>
           </nav>
           <Link
             to={routes.public.book}
             onClick={closeMenu}
-            className="mt-6 inline-flex h-12 items-center justify-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground"
+            className={cn(publicButton(), 'mt-6 h-12 px-8 text-base')}
           >
             Book an appointment
           </Link>

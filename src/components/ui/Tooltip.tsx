@@ -1,4 +1,11 @@
-import { type JSX, type ReactElement, cloneElement, useId, useState } from 'react';
+import {
+  type JSX,
+  type ReactElement,
+  cloneElement,
+  useEffect,
+  useId,
+  useState,
+} from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -12,6 +19,15 @@ import { cn } from '@/lib/utils';
  * Wraps its single child rather than rendering its own trigger element, so
  * it can attach to any existing button/icon without changing that
  * element's semantics.
+ *
+ * Two WCAG 1.4.13 details, both added 2026-09-05:
+ *
+ *  - **The child's own `aria-describedby` is preserved.** It used to be
+ *    overwritten, so wrapping a control that already pointed at a hint
+ *    silently deleted the hint.
+ *  - **Escape dismisses it** without moving focus, which 1.4.13 requires of
+ *    any content that appears on hover or focus — a tooltip covering the
+ *    thing underneath it must be dismissable without leaving the control.
  */
 export function Tooltip({
   label,
@@ -28,6 +44,20 @@ export function Tooltip({
   const show = (): void => setVisible(true);
   const hide = (): void => setVisible(false);
 
+  useEffect(() => {
+    if (!visible) return undefined;
+    const onKeyDown = (e: globalThis.KeyboardEvent): void => {
+      /* Not `preventDefault`: Escape may also mean something to a dialog
+         further up, and dismissing a tooltip should not swallow that. */
+      if (e.key === 'Escape') setVisible(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [visible]);
+
+  const existing = children.props['aria-describedby'];
+  const describedBy = visible ? [existing, id].filter(Boolean).join(' ') : existing;
+
   return (
     <span
       className="relative inline-flex"
@@ -36,7 +66,7 @@ export function Tooltip({
       onFocus={show}
       onBlur={hide}
     >
-      {cloneElement(children, { 'aria-describedby': visible ? id : undefined })}
+      {cloneElement(children, { 'aria-describedby': describedBy })}
       {visible && (
         <span
           role="tooltip"

@@ -42,9 +42,17 @@ Warm, calm, unfussy. A terracotta accent against cool neutral greys — the warm
 salon's personality, the greys keep the owner's dashboard legible during a twelve-hour day.
 Content sits on white cards floating just above a soft grey ground.
 
-The marketing site leans editorial: generous whitespace, serif headings, large photography.
-The dashboard leans utilitarian: dense, scannable, sans throughout. Same tokens, different
-rhythm.
+The marketing site leans editorial: generous whitespace, large photography, roomier
+controls. The dashboard leans utilitarian: dense, scannable, compact controls. Same
+tokens, different rhythm.
+
+**Both use Source Serif 4 for headings and Inter for everything else.** This paragraph
+said "the dashboard leans utilitarian: dense, scannable, sans throughout" until
+2026-09-05 and directly contradicted §15.5, which has said "Source Serif 4 for headings
+and for display numerals" since 2026-08-31. §15.5 is the one that matched the code: 55
+of the dashboard's 62 card headings were already serif when the two were written. What
+actually differs between the two experiences is density and control size, not the
+typeface.
 
 ---
 
@@ -319,7 +327,9 @@ for marketing hero headlines only — never the booking flow, never dashboard ch
 Tailwind's default 4px scale, unmodified: `4 8 12 16 20 24 32 40 48 64 80 96`.
 
 - Marketing section rhythm: `py-16` mobile, `py-24` desktop.
-- Dashboard density: `p-4` cards, `gap-3` lists.
+- Dashboard density: see §16.3 and §16.4. ("`p-4` cards, `gap-3` lists" was written
+  here as a single answer and never was one — the real values in use were four
+  paddings and four gaps, chosen per file. §16 names the roles instead.)
 - Every primary scroll region carries `.scroll-bottom-gap` (24px, 32px ≥1024px) so the last
   row never sits flush to the viewport edge. Applied once at `DashboardLayout`'s `<main>`.
 
@@ -356,8 +366,14 @@ Four visible steps: `--radius-sm 4px`, `--radius-md 8px`, `--radius-lg 12px`,
 `xl`; `rounded-3xl` no longer resolves. `rounded-full` is the plain 9999px pill.
 
 - Cards, modals, popovers → `rounded-xl`
-- Buttons and most controls → `rounded-md` / `rounded-lg`
+- Owner-console controls (`Button`, `Field`, `DatePicker`) → `rounded-sm`
+- Public marketing controls (`publicField`, `publicButton`, slot buttons) → `rounded-lg`
 - Badge, StatusPill, StatusChip → `rounded-full`
+
+The two control families are deliberate and are described in §16.5. The line above used
+to say "buttons and most controls → `rounded-md` / `rounded-lg`", which named the one
+value nothing actually used: `Button` and `Field` were `rounded-sm`, `DatePicker` was
+`rounded-md`, and the public forms were `rounded-lg`.
 
 ### 6.2 Elevation
 
@@ -768,3 +784,221 @@ relationship that only holds if both use the same face.
 Both share the same colours, borders, spacing scale, interaction states, accessibility
 rules, radius language and motion language — that is how two different experiences come from
 one product instead of two.
+
+---
+
+## 16. Composition roles (2026-09-05)
+
+§1 to §13 say what the values are. This section says which value a given piece of the
+interface uses, which is the half that had drifted: every card, heading, gap and icon
+button chose for itself, and 119 cards had settled on four different paddings for the
+same job.
+
+Everything here reuses existing tokens. Nothing in §3 to §6 changed to make it fit.
+
+### 16.1 Card padding
+
+One prop, `pad`, on the shared `Card` (`components/ui/Card.tsx`) rather than a `p-*`
+class at each call site.
+
+| Role       | Value | Use                                                             |
+| ---------- | ----- | --------------------------------------------------------------- |
+| `none`     | —     | The card lays out its own interior: a table frame, a divided list, the assistant's chat panel with its own composer footer. |
+| `record`   | 12px  | A compact record card in a grid — `CustomerCard`.               |
+| `compact`  | 16px  | A dense overview or chart card — everything on Today, `StatTile`, `BookingFunnelCard`. |
+| `standard` | 20px  | The default dashboard card: settings, availability, reports, detail panels, queue rows. |
+| `roomy`    | 24px  | Public form and content cards — Contact, Login, Subscribe, Request availability, Reset password, Testimonials, and Today's clock card. |
+
+**RULE** — Do not put a `p-*` class on a `Card`. Pick the role. A card that genuinely
+needs different horizontal and vertical padding is a `pad="none"` card that owns its
+own interior, not a fifth number.
+
+### 16.2 Card titles
+
+Two named sizes, both Source Serif 4 semibold, both from `CardTitle`:
+
+| Role       | Size | Use                                                                |
+| ---------- | ---- | ------------------------------------------------------------------ |
+| `standard` | 18px | The page's primary working surface, a multi-field form, or a dialog. |
+| `compact`  | 16px | A dense overview, chart or support card.                            |
+
+The dashboard page title stays where it has always been: Source Serif 4, 24px,
+semibold, owned by `DashboardLayout` and rendered once per page.
+
+**RULE** — Heading LEVEL is structure and is set separately, via `CardTitle`'s `as`.
+A compact card nested under an `<h2>` needs an `<h3>` and must not change size to say
+so. `AssistantChatTab`'s greeting was an `<h1>` under the shell's own `<h1>` until
+2026-09-05 for exactly this reason: it wanted the 24px size, and the only way it knew
+to ask for one was to pick a heading level.
+
+### 16.3 The heading block
+
+`CardHeading` renders title, optional supporting copy and an optional trailing action,
+and owns the spacing between them:
+
+- title to description: 4px
+- block to first content: 12px (`compact`), 16px (`standard`)
+- trailing action: top-aligned with the title, `shrink-0`, 8px from the text block and
+  8px between actions
+
+The action is `shrink-0` and the text block is `min-w-0`, so when the two cannot fit
+the heading wraps and the action keeps its size. In a 200px sidebar column — the
+assistant's "Quick actions" card is the narrowest case in the app — the heading does
+take two lines beside its "New chat" link. That is the intended outcome rather than a
+defect: nothing is clipped and nothing shrinks below its own text (§16.11).
+
+Written by hand this was `mb-1` + `mb-3`, `mb-1` + `mb-4`, `mb-2.5`, `mb-3`, `mb-4` or
+nothing, depending on the file — so a row of cards started its content at four
+different heights. Use `CardTitle` alone (no wrapper, no margin) where the card's own
+layout already supplies the gap, e.g. a `flex flex-col gap-4` card.
+
+### 16.4 Gaps
+
+| Role                 | Value | Use                                                       |
+| -------------------- | ----- | --------------------------------------------------------- |
+| Section / card grid  | 24px  | `gap-6` / `space-y-6`. The default between page sections and between cards in a grid. |
+| Dense overview grid  | 16px  | `gap-4`. Today's grid, and metric groupings like it.       |
+| Record list          | 12px  | `gap-3` / `space-y-3`. Repeating cards in a queue or a card grid of records. |
+| Local control gaps   | 8/12px| `gap-2` / `gap-3` inside a row: icon to label, button to button. Not section spacing. |
+
+Reconciled 2026-09-05: Customers was `gap-2`, Availability `gap-3`, Today `gap-4` and
+Settings/Profile `gap-6`, all for grids of cards. Today keeps 16px because its cards
+are a dense overview; the rest are section grids and are now 24px. Customers is a
+record grid and is now 12px.
+
+### 16.5 Two control families
+
+The owner console and the marketing site size and shape their controls differently, on
+purpose, and that is not the same thing as being inconsistent:
+
+|                | Owner console                             | Public site                        |
+| -------------- | ----------------------------------------- | ---------------------------------- |
+| Radius         | `rounded-sm` (4px)                        | `rounded-lg` (12px)                |
+| Height         | 36 / 40 / 44px control tokens             | 44px minimum (`min-h-touch`)       |
+| Shared by      | `Button`, `Field`/`Input`/`Select`/`Textarea`, `DatePicker` | `publicField`, `publicButton` (`components/ui/controlClasses.ts`) |
+
+The reasoning is §10's: a public control is met once, in a hurry, on a phone, by
+someone who has never seen the interface; a console control is used all day by a
+practised user, and density is what makes that workable.
+
+What was wrong was not the two families. It was that `DatePicker` sat between them at
+8px with no invalid styling at all, and that the public shape was retyped at thirteen
+call sites and had already drifted to 40, 44 and 48px. Both are fixed;
+`controlClasses.ts` is the one home for the public shape.
+
+**Icon-only buttons** (`iconButtonClass`, same file) are one square: 36px,
+`rounded-md`, muted until hover. They were 28, 32 and 36px with two radii, side by
+side in the same rows.
+
+The one documented exception is `TemplateContentCard`'s rich-text toolbar, which keeps
+its own 32px cluster — bold, italic, link, list, and a transparent paragraph-style
+select, all the same size as each other. It is a formatting toolbar attached to an
+editing surface, not a row of page actions, and every control in it already agrees
+with every other.
+
+**Toolbar controls** (`toolbarControl`, same file) are the search and filter row above
+a queue, a table or a list: 36px, 4px radius, `aria-label` rather than a visible label.
+They are not `Field` controls and were hand-rolled sixteen times, at `h-9` on
+Appointments and Requests, `h-10` on Email and Audit and `h-11` on Customers and
+Templates. 36px is both the majority and `--control-height-sm`, which is what the
+`Button size="sm"` standing beside them in the same row already is.
+
+**`Select` does not use `appearance-none`.** It carried it with nothing drawn in its
+place, so a select was visually a text input that happened to do nothing when you
+typed. Letting the platform draw its own indicator is the fix that stays consistent:
+the nine bare `<select>`s elsewhere in the dashboard are plain elements with no
+wrapper to hang an absolutely-positioned chevron on, and one custom indicator in
+`Field` beside nine platform ones would be the same inconsistency in a new place.
+
+The hero's two CTAs on the home page are the one documented exception: a filled pill
+and an outlined-on-photo pill, both `rounded-full`, sized as a pair against the
+photograph behind them. Every other public CTA is `publicButton`.
+
+### 16.6 Segmented controls
+
+Three switchers share one look and keep three different, correct semantics:
+`CalendarCapacityTabs` is real routes (`NavLink`), `CalendarShell` is a view toggle
+(`aria-pressed`), Inbox's queue switch changes the URL's `?tab=`. The look lives in
+`segmentedTray` / `segmentedItem` / `segmentedBadge`; the semantics stay at each call
+site. A tab that changes the URL is a link and never gets `role="tab"`.
+
+Items are 44px tall — these are the controls the owner taps most on the salon tablet,
+and `CalendarShell` had already been raised to 44 for that reason before the other two
+picked it up.
+
+### 16.7 Filter bars
+
+The underline bar above a list — All / Upcoming / Today, All / New / Answered — is
+`filterBar` + `filterTab` + `filterCount`. Five of these were hand-built, four of them
+character-identical and one (Appointments) drifted to a wider gap, a different
+padding, a bolder selected weight and a count pill that stayed grey when selected.
+
+**A filter is not a tab, and this is deliberately not `Tabs`.** A tab switches between
+panels and owes the user arrow-key navigation and a panel relationship; these narrow
+one list that stays exactly where it is. They are plain buttons carrying
+`aria-pressed`, inside a labelled `role="group"` — the same reasoning `CalendarShell`
+uses for its view toggle. What they share with `Tabs` is the underline, which is the
+point: one selected treatment across the app, three honest sets of semantics under it.
+
+### 16.8 Tabs and menus
+
+`Tabs` implements what `role="tablist"` promises: a roving tab stop (only the selected
+tab is tabbable), arrow / Home / End with wrapping, automatic activation, and
+`aria-controls` pointing at the `TabPanel` that renders the matching id. Automatic
+activation is correct here because every consumer switches between data it already
+has; a tab that triggers a load would need manual activation, which is a prop this
+component does not have yet.
+
+`Dropdown` implements what `role="menu"` promises: opening focus on the first enabled
+item, arrow / Home / End skipping disabled items, Escape and selection both returning
+focus to the trigger, and Tab dismissing rather than trapping — it is a row menu, not
+a dialog.
+
+### 16.9 The bottom-notice stack
+
+Four things can claim the bottom edge, and all four used to do it independently:
+consent and the offline banner both at `bottom-0`, the install prompt at a hard-coded
+`bottom-20`, toasts at `bottom-4`/`bottom-6`. Any two at once overlapped.
+
+`useBottomNotice` (docs/HOOKS.md) measures each notice and stacks them, bottom-most
+first: **consent, offline, install, toast**. Consent holds the edge because it is the
+most persistent and must be answered; toasts sit on top because they are the most
+urgent and the shortest-lived. The offset is applied as an inline `bottom`, which is
+the dynamic-geometry exception `AGENTS.md` §3 allows, and includes
+`env(safe-area-inset-bottom)`.
+
+### 16.10 Safe areas
+
+`index.html` has asked for `viewport-fit=cover` since the PWA work, and until
+2026-09-05 nothing under `src/` accounted for the inset that opens up. Two rules:
+
+- `.overlay-pad-safe` — a full-screen overlay's padding, base 20px plus the top and
+  bottom insets in one declaration. One class rather than a `pt-safe` utility beside a
+  `p-5`, because Tailwind emits `padding` before `padding-top`, so a side-specific
+  safe-area utility would replace the 20px instead of adding to it.
+- Fixed bottom notices add the inset to their own `bottom` (§16.9), not to their
+  padding.
+
+### 16.11 What wraps and what truncates
+
+**RULE** — A page name, a section heading, an instruction and the heading of a thing
+you have opened all WRAP. Truncation is for a record summary in a list, where the full
+value is one click away.
+
+`DashboardLayout` truncated both its title and its subtitle, so at phone width
+"Availability requests" read as "Availabili…" and the sentence explaining the screen
+was cut mid-word. `EmailPage`'s message detail truncated the subject line of the email
+you had just opened. Both wrap now. `PhotoCard` is the one deliberate clamp: its height
+is fixed by a 3/4 aspect ratio and its text is anchored to the bottom, so long copy
+grew upward into the card's own `overflow-hidden` — two clamped lines each, which also
+keeps the text inside the darkest band of the scrim.
+
+### 16.12 Verification
+
+Every claim in this section was checked against rendered pages, not source: 40 route
+states (18 public, 22 owner) at 320, 375, 414, 768, 1024 and 1440px in both colour
+schemes, plus 1920px for the content cap, keyboard walkthroughs of the changed
+controls, and an axe-core run over 39 routes in both schemes. The paired before/after
+baseline covers 375, 768, 1024 and 1440; 320 and 414 were added later and are
+after-only. What was not verified — real devices, Firefox, WebKit, populated owner
+queues — is recorded in docs/KOKO_GAP.md §13 rather than assumed.

@@ -5,6 +5,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { routes } from '@/lib/routes';
 import type { AppointmentDetailed } from '@/types';
+import { iconButtonClass } from '@/components/ui/controlClasses';
 
 /** Statuses that already mean "this is over" — deleting one of these is
  * pure housekeeping. Anything else (confirmed, in service, completed, …)
@@ -38,7 +39,7 @@ export function AppointmentRowMenu({
             aria-haspopup="menu"
             aria-expanded={open}
             onClick={toggle}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={iconButtonClass}
           >
             <MoreHorizontal aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
           </button>

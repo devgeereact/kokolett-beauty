@@ -19,7 +19,7 @@ export function StatTile({
   className?: string;
 }): JSX.Element {
   return (
-    <Card className={cn('flex items-center gap-3 p-4', className)}>
+    <Card pad="compact" className={cn('flex items-center gap-3', className)}>
       <span
         className={cn(
           'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',

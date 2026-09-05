@@ -128,13 +128,20 @@ const { InboxPage } = await import('@/pages/dashboard/InboxPage');
  * inactive one doesn't. Reading this off the rendered DOM (rather than
  * asserting on component internals) is what makes this a true regression
  * test for what the owner actually sees. */
+/**
+ * Reads the selected queue from `aria-pressed`, not from the class list.
+ * It used to look for `bg-primary text-primary-foreground`, which meant a
+ * purely visual change to the segmented control (2026-09-05, when the three
+ * switchers were unified on one treatment) failed a test about tab STATE.
+ * `aria-pressed` is what the control actually promises and what a screen
+ * reader reads.
+ */
 function activeTabLabel(): string | null {
-  const buttons = screen.getAllByRole('button', { name: /Approvals|Requests/ });
+  const buttons = screen.getAllByRole('button', {
+    name: /Approvals|Requests|Messages/,
+  });
   for (const btn of buttons) {
-    if (
-      btn.className.includes('bg-primary') &&
-      btn.className.includes('text-primary-foreground')
-    ) {
+    if (btn.getAttribute('aria-pressed') === 'true') {
       return btn.textContent?.replace(/\d+$/, '').trim() ?? null;
     }
   }

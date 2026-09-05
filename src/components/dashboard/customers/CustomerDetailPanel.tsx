@@ -1,8 +1,9 @@
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useEffect, useId, useState } from 'react';
 import { Mail, MoreHorizontal, Phone } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { iconButtonClass } from '@/components/ui/controlClasses';
 import { Card } from '@/components/ui/Card';
 import { CommunicationAssistancePanel } from '@/components/dashboard/assistant/CommunicationAssistancePanel';
 import { CustomerTimeline } from '@/components/dashboard/customers/CustomerTimeline';
@@ -10,7 +11,7 @@ import { Dropdown } from '@/components/ui/Dropdown';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Switch } from '@/components/ui/Switch';
-import { Tabs } from '@/components/ui/Tabs';
+import { TabPanel, Tabs } from '@/components/ui/Tabs';
 import { formatDateShort, formatDateTime } from '@/lib/format';
 import {
   setCustomerMarketingConsent,
@@ -95,6 +96,7 @@ export function CustomerDetailPanel({
   onConsentChange: (consent: boolean) => void;
 }): JSX.Element {
   const [tab, setTab] = useState<Tab>('overview');
+  const tabsId = useId();
   const [consent, setConsent] = useState(customer.marketing_consent);
   const [consentBusy, setConsentBusy] = useState(false);
   const [emails, setEmails] = useState<EmailMessage[]>([]);
@@ -130,7 +132,7 @@ export function CustomerDetailPanel({
   const inactive = isInactive(customer);
 
   return (
-    <Card className="flex h-fit flex-col gap-4 p-5">
+    <Card pad="standard" className="flex h-fit flex-col gap-4">
       {editingContact ? (
         <div className="border-b border-border pb-4">
           <Field label="Full name">
@@ -230,7 +232,7 @@ export function CustomerDetailPanel({
                   type="button"
                   aria-label="More options"
                   onClick={toggle}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={iconButtonClass}
                 >
                   <MoreHorizontal
                     aria-hidden="true"
@@ -276,172 +278,184 @@ export function CustomerDetailPanel({
             />
           </div>
 
-          <Tabs tabs={TABS} active={tab} onChange={setTab} />
+          <Tabs
+            tabs={TABS}
+            active={tab}
+            onChange={setTab}
+            label="Customer details"
+            idBase={tabsId}
+          />
 
-          {tab === 'overview' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: 'Total visits', value: String(customer.completed_count) },
-                  {
-                    label: 'Last visit',
-                    value: customer.last_visit_at
-                      ? formatDateShort(customer.last_visit_at, timezone)
-                      : '—',
-                  },
-                  { label: 'No-shows', value: String(customer.no_show_count) },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-lg border border-border p-3">
-                    <p className="font-serif text-xl font-semibold text-foreground">
-                      {stat.value}
+          {/* One panel element, holding whichever tab is open. The five
+              branches below are mutually exclusive, so a panel per tab
+              would be four empty divs and four dangling `aria-controls`
+              targets. */}
+          <TabPanel idBase={tabsId} tabKey={tab} className="space-y-4">
+            {tab === 'overview' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: 'Total visits', value: String(customer.completed_count) },
+                    {
+                      label: 'Last visit',
+                      value: customer.last_visit_at
+                        ? formatDateShort(customer.last_visit_at, timezone)
+                        : '—',
+                    },
+                    { label: 'No-shows', value: String(customer.no_show_count) },
+                  ].map((stat) => (
+                    <div key={stat.label} className="rounded-lg border border-border p-3">
+                      <p className="font-serif text-xl font-semibold text-foreground">
+                        {stat.value}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {customer.favourite_services.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Favourite services
                     </p>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {customer.favourite_services.map((s) => (
+                        <Badge key={s} tone="neutral">
+                          {s}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
 
-              {customer.favourite_services.length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Favourite services
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {customer.favourite_services.map((s) => (
-                      <Badge key={s} tone="neutral">
-                        {s}
-                      </Badge>
-                    ))}
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Visit history
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setTab('history')}
+                      className="text-xs font-medium text-brand-ink hover:underline"
+                    >
+                      View all
+                    </button>
                   </div>
+                  {history.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No appointments yet.</p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {history.slice(0, 3).map((a) => (
+                        <li
+                          key={a.id}
+                          className="flex items-center justify-between gap-2 text-sm"
+                        >
+                          <span className="truncate text-foreground">
+                            {formatDateShort(a.starts_at, timezone)} · {a.service_name}
+                          </span>
+                          <StatusChip status={a.status} className="shrink-0" />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              )}
 
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Visit history
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setTab('history')}
-                    className="text-xs font-medium text-primary hover:underline"
-                  >
-                    View all
-                  </button>
-                </div>
-                {history.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No appointments yet.</p>
-                ) : (
-                  <ul className="space-y-1.5">
-                    {history.slice(0, 3).map((a) => (
-                      <li
-                        key={a.id}
-                        className="flex items-center justify-between gap-2 text-sm"
+                {note && (
+                  <div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Private notes
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setTab('notes')}
+                        className="text-xs font-medium text-brand-ink hover:underline"
                       >
-                        <span className="truncate text-foreground">
-                          {formatDateShort(a.starts_at, timezone)} · {a.service_name}
-                        </span>
-                        <StatusChip status={a.status} className="shrink-0" />
+                        Edit
+                      </button>
+                    </div>
+                    <p className="rounded-md bg-tint-pending p-3 text-sm text-foreground">
+                      {note}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab === 'history' && (
+              <CustomerTimeline history={history} timezone={timezone} />
+            )}
+
+            {tab === 'notes' && (
+              <div>
+                <Field
+                  label="Private note"
+                  hint="Only you see this. Never shown to the customer."
+                >
+                  {({ id, describedBy }) => (
+                    <Textarea
+                      id={id}
+                      aria-describedby={describedBy}
+                      value={note}
+                      onChange={(e) => onNoteChange(e.target.value)}
+                      placeholder="Prefers a quiet appointment. Allergic to ammonia."
+                    />
+                  )}
+                </Field>
+                <Button size="sm" loading={savingNote} onClick={onSaveNote}>
+                  Save note
+                </Button>
+              </div>
+            )}
+
+            {tab === 'message' && (
+              <CommunicationAssistancePanel
+                timezone={timezone}
+                customerEmail={customer.email}
+              />
+            )}
+
+            {tab === 'email' && (
+              <div>
+                {!emailsLoaded ? (
+                  <p className="text-sm text-muted-foreground">Loading…</p>
+                ) : emails.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No emails sent yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {emails.map((e) => (
+                      <li
+                        key={e.id}
+                        className="border-b border-border pb-2 text-sm last:border-0"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate font-medium text-foreground">
+                            {e.subject}
+                          </span>
+                          <Badge
+                            tone={
+                              e.status === 'sent'
+                                ? 'completed'
+                                : e.status === 'failed'
+                                  ? 'cancelled'
+                                  : 'pending'
+                            }
+                          >
+                            {e.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {e.sent_at
+                            ? formatDateTime(e.sent_at, timezone)
+                            : formatDateTime(e.created_at, timezone)}
+                        </p>
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
-
-              {note && (
-                <div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Private notes
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setTab('notes')}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                  <p className="rounded-md bg-tint-pending p-3 text-sm text-foreground">
-                    {note}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === 'history' && (
-            <CustomerTimeline history={history} timezone={timezone} />
-          )}
-
-          {tab === 'notes' && (
-            <div>
-              <Field
-                label="Private note"
-                hint="Only you see this. Never shown to the customer."
-              >
-                {({ id, describedBy }) => (
-                  <Textarea
-                    id={id}
-                    aria-describedby={describedBy}
-                    value={note}
-                    onChange={(e) => onNoteChange(e.target.value)}
-                    placeholder="Prefers a quiet appointment. Allergic to ammonia."
-                  />
-                )}
-              </Field>
-              <Button size="sm" loading={savingNote} onClick={onSaveNote}>
-                Save note
-              </Button>
-            </div>
-          )}
-
-          {tab === 'message' && (
-            <CommunicationAssistancePanel
-              timezone={timezone}
-              customerEmail={customer.email}
-            />
-          )}
-
-          {tab === 'email' && (
-            <div>
-              {!emailsLoaded ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-              ) : emails.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No emails sent yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {emails.map((e) => (
-                    <li
-                      key={e.id}
-                      className="border-b border-border pb-2 text-sm last:border-0"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate font-medium text-foreground">
-                          {e.subject}
-                        </span>
-                        <Badge
-                          tone={
-                            e.status === 'sent'
-                              ? 'completed'
-                              : e.status === 'failed'
-                                ? 'cancelled'
-                                : 'pending'
-                          }
-                        >
-                          {e.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {e.sent_at
-                          ? formatDateTime(e.sent_at, timezone)
-                          : formatDateTime(e.created_at, timezone)}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
+            )}
+          </TabPanel>
 
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
             <Button

@@ -1,5 +1,5 @@
 import { type JSX, useEffect, useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { getBookingFunnel, type BookingFunnel } from '@/services/reportsService';
 import { cn } from '@/lib/utils';
@@ -31,11 +31,12 @@ export function BookingFunnelCard(): JSX.Element {
   const top = funnel?.book_page_viewed ?? 0;
 
   return (
-    <Card className="p-4">
-      <h2 className="mb-1 text-base font-semibold text-foreground">Booking funnel</h2>
-      <p className="mb-3 text-xs text-muted-foreground">
-        Last 30 days, tracked on the public booking page only.
-      </p>
+    <Card pad="compact">
+      <CardHeading
+        size="compact"
+        title="Booking funnel"
+        description="Last 30 days, tracked on the public booking page only."
+      />
 
       {error && (
         <p className="text-xs text-muted-foreground">

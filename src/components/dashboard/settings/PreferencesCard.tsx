@@ -1,6 +1,6 @@
 import { type JSX, useState } from 'react';
 import { Clock, Globe, SunMoon } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Field';
 import { useTheme } from '@/context/ThemeContext';
 import {
@@ -79,13 +79,12 @@ export function PreferencesCard(): JSX.Element {
   };
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Preferences
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Choose how Kokolett works for you.
-      </p>
+    <Card pad="standard">
+      <CardHeading
+        size="compact"
+        title="Preferences"
+        description="Choose how Kokolett works for you."
+      />
 
       <div className="space-y-5">
         <div>

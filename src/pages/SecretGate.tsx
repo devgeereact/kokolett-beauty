@@ -67,5 +67,5 @@ export function SecretGate(): JSX.Element {
   // affordance would signal something is happening here that isn't
   // happening on a truly dead path; briefly showing the 404 itself would
   // flash the wrong content at the owner on every legitimate sign-in.
-  return <div className="min-h-screen bg-background" />;
+  return <div className="min-h-screen-app bg-background" />;
 }

@@ -38,7 +38,7 @@ export function ProtectedRoute({ children }: { children?: ReactNode }): JSX.Elem
 
   if (loading || (user && ownerLoading)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-background">
+      <div className="grid min-h-screen-app place-items-center bg-background">
         <Spinner className="h-8 w-8" />
       </div>
     );
@@ -54,7 +54,7 @@ export function ProtectedRoute({ children }: { children?: ReactNode }): JSX.Elem
   // recover. Offer the retry instead.
   if (failed) {
     return (
-      <main className="grid min-h-screen place-items-center bg-background px-4">
+      <main className="grid min-h-screen-app place-items-center bg-background px-4">
         <div className="max-w-md text-center">
           <h1 className="mb-2 font-serif text-2xl font-semibold text-foreground">
             Cannot reach the salon right now
@@ -76,7 +76,7 @@ export function ProtectedRoute({ children }: { children?: ReactNode }): JSX.Elem
 
   if (!isOwner) {
     return (
-      <main className="grid min-h-screen place-items-center bg-background px-4">
+      <main className="grid min-h-screen-app place-items-center bg-background px-4">
         <div className="max-w-md text-center">
           <h1 className="mb-2 font-serif text-2xl font-semibold text-foreground">
             No access

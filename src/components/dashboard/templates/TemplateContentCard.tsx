@@ -173,14 +173,15 @@ export function TemplateContentCard({
           </select>
           <span className="mx-1 h-5 w-px bg-border" />
           {[
-            { icon: Bold, cmd: 'bold' },
-            { icon: Italic, cmd: 'italic' },
-            { icon: Underline, cmd: 'underline' },
-            { icon: Strikethrough, cmd: 'strikeThrough' },
+            { icon: Bold, cmd: 'bold', label: 'Bold' },
+            { icon: Italic, cmd: 'italic', label: 'Italic' },
+            { icon: Underline, cmd: 'underline', label: 'Underline' },
+            { icon: Strikethrough, cmd: 'strikeThrough', label: 'Strikethrough' },
           ].map((b) => (
             <button
               key={b.cmd}
               type="button"
+              aria-label={b.label}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => execCmd(b.cmd)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-muted"
@@ -190,12 +191,13 @@ export function TemplateContentCard({
           ))}
           <span className="mx-1 h-5 w-px bg-border" />
           {[
-            { icon: List, cmd: 'insertUnorderedList' },
-            { icon: ListOrdered, cmd: 'insertOrderedList' },
+            { icon: List, cmd: 'insertUnorderedList', label: 'Bulleted list' },
+            { icon: ListOrdered, cmd: 'insertOrderedList', label: 'Numbered list' },
           ].map((b) => (
             <button
               key={b.cmd}
               type="button"
+              aria-label={b.label}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => execCmd(b.cmd)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-muted"
@@ -205,13 +207,14 @@ export function TemplateContentCard({
           ))}
           <span className="mx-1 h-5 w-px bg-border" />
           {[
-            { icon: AlignLeft, cmd: 'justifyLeft' },
-            { icon: AlignCenter, cmd: 'justifyCenter' },
-            { icon: AlignRight, cmd: 'justifyRight' },
+            { icon: AlignLeft, cmd: 'justifyLeft', label: 'Align left' },
+            { icon: AlignCenter, cmd: 'justifyCenter', label: 'Align centre' },
+            { icon: AlignRight, cmd: 'justifyRight', label: 'Align right' },
           ].map((b) => (
             <button
               key={b.cmd}
               type="button"
+              aria-label={b.label}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => execCmd(b.cmd)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-foreground hover:bg-muted"
@@ -222,6 +225,7 @@ export function TemplateContentCard({
           <span className="mx-1 h-5 w-px bg-border" />
           <button
             type="button"
+            aria-label="Insert a link"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               const url = window.prompt('Link URL');
@@ -234,6 +238,7 @@ export function TemplateContentCard({
           <button
             type="button"
             disabled
+            aria-label="Insert an image (not available yet)"
             title="Image upload isn't wired up yet"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground opacity-50"
           >
@@ -241,9 +246,17 @@ export function TemplateContentCard({
           </button>
         </div>
 
+        {/* A bare contentEditable is announced as an unlabelled edit region with
+            no relationship to any label, and this is the only field for the
+            salon's email copy. `role="textbox"` plus `aria-multiline` is what
+            makes it a recognisable control (WCAG 1.3.1, 4.1.2). */}
         <div
           ref={editorRef}
           contentEditable
+          role="textbox"
+          aria-multiline="true"
+          aria-label="Email body"
+          tabIndex={0}
           suppressContentEditableWarning
           onInput={(e) => onBodyChange(e.currentTarget.innerHTML)}
           className="min-h-[280px] max-w-none p-4 text-sm text-foreground focus-visible:outline-none [&_p]:mb-3 [&_a]:text-primary [&_a]:underline"

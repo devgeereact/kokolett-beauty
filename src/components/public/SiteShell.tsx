@@ -112,7 +112,7 @@ export function SiteShell({ children }: { children: ReactNode }): JSX.Element {
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen-app flex-col bg-background">
       {/*
         Skip link, matching the dashboard's, so a keyboard user lands past the
         header nav instead of tabbing through it on every page. Visually hidden

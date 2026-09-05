@@ -162,7 +162,10 @@ export function Checkbox({
       <input
         id={id}
         type="checkbox"
-        className="mt-1 h-5 w-5 shrink-0 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        /* 24px, not 20px: WCAG 2.2 2.5.8 sets that floor for a target whose size
+           the author controls, and this is the marketing-consent box on the public
+           booking form. */
+        className="mt-1 h-6 w-6 shrink-0 rounded border-border text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         {...props}
       />
       <label htmlFor={id} className="text-sm text-foreground">

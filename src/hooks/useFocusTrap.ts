@@ -21,6 +21,12 @@ const FOCUSABLE_SELECTOR =
  * afterwards, because those differ (Modal returns focus to its trigger,
  * ConfirmDialog focuses Cancel first). Only the trapping is shared.
  */
+/**
+ * Open focus traps, innermost last. Module-level on purpose: the whole point
+ * is that separate `useFocusTrap` instances can see each other.
+ */
+const trapStack: object[] = [];
+
 export function useFocusTrap(
   open: boolean,
   panelRef: RefObject<HTMLElement | null>,
@@ -29,13 +35,31 @@ export function useFocusTrap(
   useEffect(() => {
     if (!open) return undefined;
 
+    // Register on the shared stack the moment this trap opens, so the layer
+    // that opened LAST is the one Escape closes.
+    //
+    // Every trap binds its own listener to `document`, and Escape is not
+    // stopped, so before this both listeners fired: pressing Escape on a
+    // ConfirmDialog opened from inside a Modal closed the confirm AND the
+    // modal behind it. On the appointment editor that meant changing your mind
+    // about a delete also threw away the note you had just typed.
+    //
+    // A stack rather than `stopImmediatePropagation()` because these are
+    // sibling listeners on the same node: dispatch order there is registration
+    // order, and an ancestor that opened first always registers first, so it
+    // would win regardless of what the inner one calls.
+    const token = {};
+    trapStack.push(token);
+
     const onKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
+        if (trapStack[trapStack.length - 1] !== token) return;
         e.preventDefault();
         onEscape();
         return;
       }
       if (e.key !== 'Tab') return;
+      if (trapStack[trapStack.length - 1] !== token) return;
 
       const panel = panelRef.current;
       if (!panel) return;
@@ -57,7 +81,11 @@ export function useFocusTrap(
     };
 
     document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      const at = trapStack.indexOf(token);
+      if (at !== -1) trapStack.splice(at, 1);
+    };
   }, [open, panelRef, onEscape]);
 }
 

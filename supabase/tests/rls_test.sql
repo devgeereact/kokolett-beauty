@@ -27,7 +27,7 @@ create extension if not exists pgtap with schema extensions;
 -- below can be called unqualified.
 set local search_path = extensions, public;
 
-select plan(66);
+select plan(71);
 
 -- --------------------------------------------------------------------------
 -- Grants. This is what makes the suite a test of RLS rather than of luck.
@@ -192,7 +192,7 @@ begin
       'google_place_snapshot','day_decided','profiles','app_settings',
       'availability_requests','services','service_categories','service_menu',
       'booking_settings','availability_slots','weekly_template','google_reviews',
-      'audit_events','email_template_revisions','product_events'
+      'audit_events','email_template_revisions','product_events','contact_messages'
     ] loop
       begin
         if r.subject_id is null then
@@ -247,6 +247,11 @@ select is(
   'every table in public has row level security enabled'
 );
 
+-- A contact-page enquiry (0080). Seeded for the same reason everything else
+-- here is: a count of zero on an empty table proves nothing.
+insert into public.contact_messages (full_name, email, message)
+values ('Enquirer Under Test', 'enquiry@rls.test', 'Do you do knotless braids?');
+
 -- --------------------------------------------------------------------------
 -- 2. An anonymous visitor — which is what the shipped browser bundle is —
 --    cannot read anything private. These are the tables that would matter in
@@ -281,6 +286,9 @@ select is((select visible from rls_probe where tbl='google_place_snapshot' and a
           0::bigint, 'anon cannot read google_place_snapshot — public read revoked in 0038');
 select is((select visible from rls_probe where tbl='email_templates' and as_role='anon'),
           0::bigint, 'anon cannot read email_templates even when granted — RLS denies it');
+select is((select visible from rls_probe where tbl='contact_messages' and as_role='anon'),
+          0::bigint, 'anon cannot read contact messages');
+
 select is((select visible from rls_probe where tbl='audit_events' and as_role='anon'),
           0::bigint, 'anon cannot read audit_events');
 select is((select visible from rls_probe where tbl='email_template_revisions' and as_role='anon'),
@@ -314,6 +322,9 @@ select is((select visible from rls_probe where tbl='calendar_feeds' and as_role=
           0::bigint, 'a signed-in non-owner cannot read calendar_feeds');
 select is((select visible from rls_probe where tbl='availability_requests' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read availability_requests');
+select is((select visible from rls_probe where tbl='contact_messages' and as_role='authenticated'),
+          0::bigint, 'a signed-in non-owner cannot read contact messages either');
+
 select is((select visible from rls_probe where tbl='audit_events' and as_role='authenticated'),
           0::bigint, 'a signed-in non-owner cannot read audit_events');
 select is((select visible from rls_probe where tbl='email_template_revisions' and as_role='authenticated'),
@@ -404,7 +415,7 @@ create temp table write_probe (
 ) on commit drop;
 
 do $writes$
-declare st text; updated int; removed int;
+declare st text; updated int; removed int; contact_removed int;
 begin
   begin
     set local role anon;
@@ -423,6 +434,23 @@ begin
   end;
   insert into write_probe values ('insert', st, null);
 
+  -- contact_messages has no anon policy at all: the public path is
+  -- submit_contact_message(), which is SECURITY DEFINER. That design only
+  -- holds if the table itself refuses anon directly, so assert it rather
+  -- than trusting the absence of a policy to mean what it looks like.
+  begin
+    set local role anon;
+    set local request.jwt.claims = '{"role":"anon"}';
+    insert into public.contact_messages (full_name, email, message)
+    values ('Attacker', 'attacker@rls.test', 'Written straight into the table');
+    reset role;
+    st := 'NONE';
+  exception when others then
+    st := SQLSTATE;
+    reset role;
+  end;
+  insert into write_probe values ('contact_insert', st, null);
+
   set local role anon;
   set local request.jwt.claims = '{"role":"anon"}';
 
@@ -434,9 +462,13 @@ begin
   delete from public.appointments where reference = 'KB-RLST01';
   get diagnostics removed = ROW_COUNT;
 
+  delete from public.contact_messages where email = 'enquiry@rls.test';
+  get diagnostics contact_removed = ROW_COUNT;
+
   reset role;
 
-  insert into write_probe values ('update', null, updated), ('delete', null, removed);
+  insert into write_probe values ('update', null, updated), ('delete', null, removed),
+                                 ('contact_delete', null, contact_removed);
 end
 $writes$;
 
@@ -455,6 +487,15 @@ select is((select rows_affected from write_probe where op = 'delete'),
 select is((select count(*) from public.appointments
             where reference = 'KB-RLST01'),
           1::bigint, 'and that appointment is still there');
+
+select is((select sqlstate_out from write_probe where op = 'contact_insert'),
+          '42501',
+          'anon cannot insert a contact message — submit_contact_message() is the only path');
+
+select is((select rows_affected from write_probe where op = 'contact_delete'),
+          0, 'an anon DELETE cannot clear the enquiry list');
+select is((select count(*) from public.contact_messages),
+          1::bigint, 'and the seeded enquiry is still there');
 
 -- --------------------------------------------------------------------------
 -- 6b. audit_events is immutable even for the owner (0052) — the log has no

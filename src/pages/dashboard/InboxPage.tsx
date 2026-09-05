@@ -11,6 +11,8 @@ import {
   RequestsQueue,
   type RequestsQueueHandle,
 } from '@/components/dashboard/requests/RequestsQueue';
+import { ContactMessagesQueue } from '@/components/dashboard/requests/ContactMessagesQueue';
+import { countNewContactMessages } from '@/services/contactService';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
@@ -29,7 +31,7 @@ import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed } from '@/types';
 
-type Tab = 'approvals' | 'requests';
+type Tab = 'approvals' | 'requests' | 'messages';
 
 /**
  * Everything the owner needs to answer sits in one queue with two lanes.
@@ -61,7 +63,13 @@ export function InboxPage(): JSX.Element {
 
   const tabParam = new URLSearchParams(location.search).get('tab');
   const explicitTab: Tab | null =
-    tabParam === 'requests' ? 'requests' : tabParam === 'approvals' ? 'approvals' : null;
+    tabParam === 'requests'
+      ? 'requests'
+      : tabParam === 'approvals'
+        ? 'approvals'
+        : tabParam === 'messages'
+          ? 'messages'
+          : null;
   // Under the current policy Approvals is structurally always empty (see
   // `isDemo` below), so a bare `/dashboard/inbox` — no `?tab=` — should
   // land the owner on the queue she actually answers day to day. An explicit
@@ -184,6 +192,16 @@ export function InboxPage(): JSX.Element {
   const [requestsLoaded, setRequestsLoaded] = useState(false);
   const requestsRef = useRef<RequestsQueueHandle>(null);
 
+  /* Contact-page enquiries. The count is fetched here rather than taken from
+     `owner_dashboard_summary()` so the badge is right before the tab has ever
+     been opened; `ContactMessagesQueue` then keeps it in step once it is. */
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  useEffect(() => {
+    countNewContactMessages()
+      .then(setUnreadMessages)
+      .catch(() => setUnreadMessages(0));
+  }, []);
+
   const handleRequestsCountChange = useCallback(
     (n: number): void => {
       setRequestsCount(n);
@@ -216,11 +234,19 @@ export function InboxPage(): JSX.Element {
 
   return (
     <DashboardLayout
-      title={tab === 'approvals' ? 'Approvals' : 'Availability requests'}
+      title={
+        tab === 'approvals'
+          ? 'Approvals'
+          : tab === 'requests'
+            ? 'Availability requests'
+            : 'Messages'
+      }
       subtitle={
         tab === 'approvals'
           ? `Review and approve first-time bookings within the ${settings?.approval_window_h ?? 12}-hour window.`
-          : "Respond to customer requests when your calendar doesn't have a suitable slot."
+          : tab === 'requests'
+            ? "Respond to customer requests when your calendar doesn't have a suitable slot."
+            : 'Enquiries sent from the Contact page.'
       }
       badges={{ approvals: effectiveApprovalsCount, requests: effectiveRequestsCount }}
       actions={
@@ -283,6 +309,32 @@ export function InboxPage(): JSX.Element {
                   )}
                 >
                   {effectiveRequestsCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              aria-pressed={tab === 'messages'}
+              onClick={() => goToTab('messages')}
+              className={cn(
+                'flex items-center rounded-md px-3 py-1.5 text-sm font-medium',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                tab === 'messages'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Messages
+              {unreadMessages > 0 && (
+                <span
+                  className={cn(
+                    'ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
+                    tab === 'messages'
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-primary text-primary-foreground',
+                  )}
+                >
+                  {unreadMessages}
                 </span>
               )}
             </button>
@@ -384,8 +436,10 @@ export function InboxPage(): JSX.Element {
             </>
           )}
         </div>
-      ) : (
+      ) : tab === 'requests' ? (
         <RequestsQueue ref={requestsRef} onCountChange={handleRequestsCountChange} />
+      ) : (
+        <ContactMessagesQueue onCountChange={setUnreadMessages} />
       )}
 
       <Modal open={booking} onClose={() => setBooking(false)} ariaLabel="Take a booking">

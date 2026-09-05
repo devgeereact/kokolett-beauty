@@ -11,7 +11,34 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { cn } from '@/lib/utils';
 import type { AuditEvent } from '@/types';
 
-type Lane = 'all' | AuditEvent['action'];
+/**
+ * The lanes this screen offers, declared here rather than derived from
+ * `AuditEvent['action']`.
+ *
+ * That derivation stopped working when the generated types widened `action` to
+ * `string`: the CHECK constraint on `audit_events.action` has been dropped and
+ * recreated by 0054, 0056, 0058 and 0062, and the generator no longer narrows
+ * it to a literal union. `Lane` therefore collapsed to `string`, which turned
+ * the counts record into an index signature.
+ *
+ * Declaring it is also the better shape. Which actions deserve their own filter
+ * is a decision about this screen, not a mirror of everything the database
+ * happens to permit, and an action added by a future migration should show up
+ * under "All actions" rather than silently adding an empty lane.
+ */
+type Lane =
+  | 'all'
+  | 'appointment.created'
+  | 'appointment.status_changed'
+  | 'appointment.rescheduled'
+  | 'appointment.deleted'
+  | 'customer.erased'
+  | 'payment.recorded'
+  | 'settings.login_slug_changed'
+  | 'day.closed'
+  | 'customer.data_exported'
+  | 'broadcast.sent'
+  | 'customer.sessions_revoked';
 
 const LANES: { key: Lane; label: string }[] = [
   { key: 'all', label: 'All actions' },
@@ -67,9 +94,16 @@ export function AuditPage(): JSX.Element {
       'broadcast.sent': 0,
       'customer.sessions_revoked': 0,
     };
+    /* `action` is a plain string, not the literal union it used to be: the
+       generated types stopped narrowing it once the CHECK constraint on
+       `audit_events.action` had been dropped and recreated by 0054, 0056,
+       0058 and 0062. That is the honest shape, because the constraint really
+       can gain a value without this file changing. An unrecognised action
+       still counts toward `all` and simply has no lane of its own, rather
+       than incrementing `undefined`. */
     for (const e of events ?? []) {
       c.all += 1;
-      c[e.action] += 1;
+      if (e.action in c) c[e.action as Lane] += 1;
     }
     return c;
   }, [events]);

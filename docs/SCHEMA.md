@@ -1,6 +1,6 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0076`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0080`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
 redid the fix properly.)
@@ -282,6 +282,26 @@ the value the entire 30-day customer session rests on and which
 `customer_from_session()` reads. `booking_offer` is in the CHECK constraint and is
 written by nothing: `offer_slot_to_request()` books the appointment directly, so
 no offer token is ever minted (see the PRD note in §11).
+
+### `contact_messages`
+
+Enquiries from the public Contact page (`0080`). `full_name`, `email` (citext),
+`message`, and `status` (`new` | `read` | `archived`). Owner-only RLS, no anon
+policy: the public path is `submit_contact_message()`, which validates and rate
+limits before writing, and an insert policy would be a second unguarded door
+into the same table.
+
+**This is the record; the outbox row is a delivery log.** Before `0080` the RPC
+queued one email to the owner and stored nothing, so a bounced send lost the
+enquiry, clearing the Email page destroyed the history, and an installation with
+no `staff` row discarded every message while still returning success to the
+sender. The RPC now writes the row first and queues the email second.
+
+Both of `0049`'s rate limits count from this table rather than from
+`email_messages`, so they can no longer be reset by the owner deleting outbox
+rows, and they work before the owner is bootstrapped. Reached by
+`erase_customer_as_owner()` on the sender's address, and dropped by
+`purge_expired_personal_data()` two years after archiving.
 
 ### `email_messages`
 

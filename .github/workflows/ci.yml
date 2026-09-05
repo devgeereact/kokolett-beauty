@@ -135,6 +135,17 @@ jobs:
           print(f'CSP script hash matches: {want}')
           PYEOF
 
+      # Must run AFTER the build: it compares the classes written in src/
+      # against the CSS Tailwind actually emitted, and the built stylesheet is
+      # the only honest answer to "did this class produce anything". The theme
+      # scale replaces Tailwind's default rather than extending it, so a name
+      # outside the scale is dropped in silence: `text-7xl` rendered the 404
+      # numeral at 16px instead of 72px, and `from-black/70` left the Contact
+      # page's photo caption sitting on the photograph with no scrim. Neither
+      # failed a build, a lint, a type check or an axe run.
+      - name: Assert every Tailwind class in src/ produces CSS
+        run: npm run lint:classes
+
       - name: Assert PWA artefacts exist
         run: |
           test -f dist/sw.js || { echo "::error::dist/sw.js missing — the PWA would work online and silently fail offline"; exit 1; }

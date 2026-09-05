@@ -54,10 +54,13 @@ export function TemplatePreviewFrame({
             type="button"
             onClick={() => setViewport(v.key)}
             aria-pressed={viewport === v.key}
+            /* `shadow-card`, not `shadow-sm`: the boxShadow scale is closed
+               (none, card, popover, modal) and `shadow-sm` emitted nothing,
+               so the selected segment had no lift at all. */
             className={cn(
               'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
               viewport === v.key
-                ? 'bg-card text-primary shadow-sm'
+                ? 'bg-card text-primary shadow-card'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >

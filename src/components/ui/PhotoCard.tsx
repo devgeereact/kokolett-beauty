@@ -40,7 +40,7 @@ const MAX_TILT_DEG = 7;
  * Unlike HeroCarousel's full-bleed `SCRIM`, this stays light over most of
  * the card so the photography itself still reads full-bleed above the text.
  */
-const PHOTO_SCRIM =
+export const PHOTO_SCRIM =
   'linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.62) 35%, rgba(0,0,0,.4) 55%, rgba(0,0,0,.14) 100%)';
 
 /**

@@ -158,3 +158,33 @@ Deno.test('owner_broadcast omits the unsubscribe link if no subscriber_id is giv
   const out = render('owner_broadcast', { custom_body: 'Hello' });
   assert(!out.html.includes('/unsubscribe/'));
 });
+
+Deno.test('owner_broadcast uses its own subject as the headline', () => {
+  const out = render('owner_broadcast', {
+    custom_body: 'Hello',
+    broadcast_subject: 'New Saturday slots this month',
+  });
+
+  // The headline is what `layout` puts in the <title> and the heading, and it
+  // used to be the salon name — which the masthead already says immediately
+  // above it. Every other template opens with a real headline.
+  assertStringIncludes(out.html, 'New Saturday slots this month');
+});
+
+Deno.test('owner_broadcast falls back to the salon name when queued before 0081', () => {
+  const out = render('owner_broadcast', { custom_body: 'Hello' });
+  assertStringIncludes(out.html, 'Kokolett Beauty UK');
+});
+
+Deno.test('owner_broadcast carries the same plain-text footer as every other email', () => {
+  const out = render('owner_broadcast', {
+    custom_body: 'Hello',
+    salon_address: 'Redbourne Dr, London SE28 8RX',
+    instagram_url: 'https://www.instagram.com/kokolettbeautyuk/',
+  });
+
+  assertStringIncludes(out.text, 'Kokolett Beauty UK');
+  assertStringIncludes(out.text, 'Redbourne Dr, London SE28 8RX');
+  assertStringIncludes(out.text, 'booking@kokolettbeauty.com');
+  assertStringIncludes(out.text, 'mailing list');
+});

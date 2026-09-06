@@ -52,6 +52,8 @@ export interface TemplatePayload {
   custom_body?: string;
   /** The subscriber this broadcast is addressed to, for the unsubscribe link (`owner_broadcast` only). */
   subscriber_id?: string;
+  /** The broadcast's own subject, so it can be the headline rather than the salon name (`owner_broadcast` only). */
+  broadcast_subject?: string;
   /** Injected by the sender, never stored. */
   manage_url?: string;
   /** Owner password-recovery link. Injected by the sender, never stored. */
@@ -973,17 +975,31 @@ export function render(
             `<a href="${esc(unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline">Unsubscribe</a> from these emails.`,
           )
         : '';
+      /* The headline was the salon name, which every other template already
+         puts in the masthead directly above it — so a broadcast opened as
+         "Kokolett Beauty UK / Kokolett Beauty UK" while a confirmation opens
+         as "You are booked in". The subject the owner wrote is the headline
+         this message actually has; it reaches the payload from
+         `send_broadcast_as_owner` (migration 0081), since `render()` only
+         ever sees the payload and the subject lives on
+         `email_messages.subject`. Rows queued before 0081 keep the old
+         heading rather than rendering an empty one. */
+      const headline = p.broadcast_subject?.trim() || SALON;
       return {
         html: layout(
-          SALON,
+          headline,
           `A message from ${SALON}`,
           line(`Hello ${name},`) + bodyHtml + unsubscribeHtml,
           p,
           'You are receiving this because you subscribed to the Kokolett Beauty UK mailing list.',
         ),
-        text:
+        text: plainShell(
           `Hello ${p.full_name ?? 'there'},\n\n${p.custom_body ?? ''}` +
-          (unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ''),
+            (unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ''),
+          p,
+          'You are receiving this because you subscribed to the Kokolett Beauty UK mailing list.',
+          true,
+        ),
       };
     }
 

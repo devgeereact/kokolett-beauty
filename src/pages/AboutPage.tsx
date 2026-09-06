@@ -36,7 +36,12 @@ export function AboutPage(): JSX.Element {
                 width: 680,
                 quality: 85,
               })}
-              alt="A portrait representing the warmth of a Kokolett Beauty appointment"
+              /* Named, because it is now Christy rather than the stock stand-in
+                 the fallback path still points at. A screen reader announcing
+                 "a portrait representing the warmth of an appointment" next to
+                 a heading about her tells somebody nothing about who they are
+                 looking at. */
+              alt="Christy, who owns and runs Kokolett Beauty UK"
               className="absolute inset-0 h-full w-full object-cover"
               loading="lazy"
               decoding="async"

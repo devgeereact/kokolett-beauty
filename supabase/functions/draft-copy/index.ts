@@ -196,23 +196,59 @@ Deno.serve(async (req: Request) => {
        2026-09-05. A model provider that is degraded rather than down leaves
        the owner staring at a spinner until the platform kills the isolate,
        with no error and nothing logged. 20s is generous for a single
-       completion and finite, which is the point; the 502 branch below already
-       handles the AbortError this raises. */
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      signal: AbortSignal.timeout(20_000),
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: OPENROUTER_MODEL,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPTS[body.kind] },
-          { role: 'user', content: buildUserPrompt(body) },
-        ],
-      }),
-    });
+       completion and finite, which is the point.
+
+       This comment used to claim the 502 branch below handled the abort. It
+       does not: `AbortSignal.timeout` REJECTS the fetch with a DOMException,
+       so it never reaches a response at all and fell through to the generic
+       catch, which told the owner "Something went wrong. Please try again."
+       and logged it as an unhandled error. The explicit branch below now
+       names it. */
+    let response: Response;
+    try {
+      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        signal: AbortSignal.timeout(20_000),
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: OPENROUTER_MODEL,
+          // Both of these are mandatory for this model, and their absence is
+          // what made every "Polish with AI" press fail: gpt-5-nano has
+          // *mandatory* reasoning (OpenRouter's model card:
+          // reasoning.mandatory=true, default_effort="medium"), so with no
+          // effort set it reasons at medium before emitting a single visible
+          // token and blew the 20s abort above — 2 of 2 calls on 2026-09-06
+          // died as `TimeoutError: Signal timed out`, with nothing logged
+          // provider-side. `ai-assistant-chat` calls the identical model
+          // through the identical 20s signal and has never timed out, and
+          // these two lines are the whole difference. Polishing a paragraph
+          // is a quick-turnaround writing task, not a deep-reasoning one.
+          reasoning_effort: 'low',
+          max_tokens: 2048,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPTS[body.kind] },
+            { role: 'user', content: buildUserPrompt(body) },
+          ],
+        }),
+      });
+    } catch (e) {
+      // `AbortSignal.timeout` raises TimeoutError; an aborted fetch raises
+      // AbortError. Either way the provider is too slow rather than broken,
+      // and "try again" is honest advice, so it gets its own status and its
+      // own sentence instead of the catch-all 500.
+      const name = e instanceof Error ? e.name : '';
+      if (name === 'TimeoutError' || name === 'AbortError') {
+        console.error('[draft-copy] OpenRouter timed out after 20s');
+        return new Response(
+          JSON.stringify({ error: 'The drafting service took too long. Please try again.' }),
+          { status: 504, headers: { ...CORS, 'Content-Type': 'application/json' } },
+        );
+      }
+      throw e;
+    }
 
     if (!response.ok) {
       const detail = await response.text();

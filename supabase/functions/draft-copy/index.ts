@@ -59,10 +59,17 @@ const SYSTEM_PROMPTS: Record<Kind, string> = {
     'British English. Never mention or invent a price; pricing is agreed in the chair. ' +
     'Use no em dashes and no en dashes: this prompt contains none either, because a ' +
     'model copies what it is shown before it follows what it is told. ' +
+    'Do NOT write a greeting, do NOT open by addressing the reader by name, and do ' +
+    'NOT write a sign-off. The email template puts "Hello <name>," above your text ' +
+    'and the salon\'s signature below it, so a greeting of your own arrives as a ' +
+    'second one ("Hello there," followed by "Hello lovelies,"), an opening like ' +
+    '"Great news Ada," repeats the name she has just read, and a sign-off arrives ' +
+    'above another. Start with the first real sentence of the message and stop at ' +
+    'the last one. ' +
     'Write a genuinely detailed, well-crafted message that reads as if the owner wrote ' +
     'it herself: specific and warm rather than generic marketing copy, with a real ' +
-    'opening, a developed middle explaining what\'s on offer or new and why it matters ' +
-    'to the reader, and a natural closing invitation to book or get in touch. Aim for ' +
+    'opening sentence, a developed middle explaining what\'s on offer or new and why it ' +
+    'matters to the reader, and a natural closing invitation to book or get in touch. Aim for ' +
     '3-5 well-formed paragraphs, not a single terse blurb, but every sentence should ' +
     'earn its place; don\'t pad for length. Respond with exactly two lines: the first ' +
     'starting "SUBJECT: " with a specific, inviting subject line (never generic like ' +
@@ -72,8 +79,12 @@ const SYSTEM_PROMPTS: Record<Kind, string> = {
     'You draft a one-off email from the owner of Kokolett Beauty UK (a women\'s hair ' +
     'salon) to a named customer. British English. Never mention or invent a price, and ' +
     'use no em or en dashes. ' +
-    'Write a genuinely detailed, well-crafted, personal message. Address the customer ' +
-    'by name naturally, and if a rough idea or their own message is given, respond to ' +
+    'Do NOT write a greeting or a sign-off, and do not open by addressing her by ' +
+    'name: the template already puts "Hello <name>," above your text and the ' +
+    'salon\'s signature below it. Start with the first real sentence. ' +
+    'Write a genuinely detailed, well-crafted, personal message. Her name may appear ' +
+    'later in the message where it reads naturally, but never as the first words. ' +
+    'If a rough idea or their own message is given, respond to ' +
     'it specifically rather than generically. Write with warmth and enough substance to ' +
     'feel like a real, considered message rather than a one-liner, while staying ' +
     'focused, and do not pad for length. Respond with exactly two lines: "SUBJECT: " with ' +
@@ -81,7 +92,9 @@ const SYSTEM_PROMPTS: Record<Kind, string> = {
   reply:
     'You draft a short reply from the owner of Kokolett Beauty UK to a customer\'s ' +
     'message. British English. Never mention or invent a price, and use no em or en ' +
-    'dashes. Respond with exactly ' +
+    'dashes. Do NOT write a greeting or a sign-off and do not open by addressing her ' +
+    'by name: the template adds "Hello <name>," above your text and the salon\'s ' +
+    'signature below it. Start with the first real sentence. Respond with exactly ' +
     'one line starting "BODY: " (may contain \\n). No subject.',
 };
 
@@ -124,9 +137,51 @@ function parseCompletion(text: string): { subject?: string; body: string } {
   // once, before this reaches any consumer (the compose/broadcast/reply
   // textareas, and the `owner_broadcast`/`owner_custom_message` templates,
   // which split on a real newline to lay out paragraphs).
-  const body = (bodyMatch?.[1] ?? text).trim().replace(/\\n/g, '\n');
+  const body = stripGreetingAndSignOff(
+    (bodyMatch?.[1] ?? text).trim().replace(/\\n/g, '\n'),
+  );
   const subject = subjectMatch?.[1]?.trim();
   return subject ? { subject, body } : { body };
+}
+
+/**
+ * Removes a greeting the model wrote anyway, and a sign-off it added under it.
+ *
+ * Every template that carries owner-authored copy (`owner_broadcast`,
+ * `owner_custom_message`) renders "Hello <name>," above the body and the
+ * salon's signature below it. The prompts now say not to write either, but a
+ * prompt is a request, not a guarantee, and the failure is visible to the
+ * customer: a broadcast arrived reading "Hello there," immediately followed by
+ * "Hello Lovely,". Stripping it here rather than at send time means the owner
+ * reviews and edits exactly what will go out.
+ *
+ * Deliberately conservative. It only removes a first line that is a greeting
+ * and nothing else, and trailing lines that are a bare sign-off followed by at
+ * most two short lines of name. A first line that greets and then continues
+ * ("Hello, we have news") is left alone, because cutting it would lose the
+ * sentence.
+ */
+function stripGreetingAndSignOff(body: string): string {
+  const lines = body.split('\n');
+
+  const GREETING = /^(hello|hi|hey|dear|good (morning|afternoon|evening))\b[^.!?]{0,40}[,!]?$/i;
+  while (lines.length > 0 && (lines[0].trim() === '' || GREETING.test(lines[0].trim()))) {
+    const wasGreeting = GREETING.test(lines[0].trim());
+    lines.shift();
+    if (wasGreeting) break;
+  }
+
+  const SIGN_OFF =
+    /^(warm(ly| wishes| regards)?|kind regards|best wishes|best|regards|love|lots of love|see you soon|yours( truly| sincerely)?|thank you|thanks|with love|speak soon)\b[^.!?]{0,30}[,!]?$/i;
+  for (let i = lines.length - 1; i >= 0 && i >= lines.length - 4; i -= 1) {
+    if (lines[i].trim() === '') continue;
+    if (SIGN_OFF.test(lines[i].trim())) {
+      lines.length = i;
+      break;
+    }
+  }
+
+  return lines.join('\n').trim();
 }
 
 /** The three prompts this function knows. Anything else is a bad request. */

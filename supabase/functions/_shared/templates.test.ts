@@ -188,3 +188,39 @@ Deno.test('owner_broadcast carries the same plain-text footer as every other ema
   assertStringIncludes(out.text, 'booking@kokolettbeauty.com');
   assertStringIncludes(out.text, 'mailing list');
 });
+
+/**
+ * The `=20` that reached delivered mail. A conditional resolving to '' leaves a
+ * line holding only its indentation, and quoted-printable is required to encode
+ * a line-ending space as `=20` (RFC 2045 section 6.7, rule 3).
+ */
+Deno.test('no rendered line ends in whitespace, however sparse the payload', () => {
+  const templates = [
+    'booking_confirmed',
+    'contact_message_received',
+    'owner_broadcast',
+    'owner_new_booking',
+    'reminder_24h',
+  ];
+
+  for (const t of templates) {
+    // The sparse case is the one that used to fail: no address, no phone, no
+    // socials, so three separate conditionals collapse to bare indentation.
+    const out = render(t, { full_name: 'Ada', custom_body: 'Hi', reference: 'KB-1234' });
+
+    for (const part of [out.html, out.text]) {
+      const offenders = part.split('\n').filter((l) => /[ \t]$/.test(l));
+      assertEquals(offenders.length, 0, `${t}: ${offenders.length} line(s) end in whitespace`);
+    }
+  }
+});
+
+Deno.test('a customer email is signed and an owner email is not', () => {
+  const customer = render('booking_confirmed', { customer_name: 'Ada', starts_at: '2026-09-12T10:00:00Z' });
+  const owner = render('owner_new_booking', { customer_name: 'Ada', starts_at: '2026-09-12T10:00:00Z' });
+
+  assertStringIncludes(customer.html, 'Warm wishes');
+  assertStringIncludes(customer.html, 'Christy');
+  assert(!owner.html.includes('Warm wishes'));
+});
+

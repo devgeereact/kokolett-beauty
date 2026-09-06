@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import { env } from '@/lib/env';
+import { DisplayableError } from '@/lib/errors';
 
 /**
  * Singleton Supabase client, typed against the generated Database schema.
@@ -53,7 +54,7 @@ export async function invokeFunction<T>(
         // the owner reads.
       }
     }
-    if (fromFunction) throw new Error(fromFunction);
+    if (fromFunction) throw new DisplayableError(fromFunction);
     throw new Error(
       result.error.message ?? `The ${name} function is unavailable right now.`,
     );

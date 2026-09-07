@@ -6,6 +6,7 @@ import { useServices } from '@/hooks/useServices';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { formatDateLong } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { CardHeading } from '@/components/ui/Card';
 
 /**
  * Choosing a new time for an existing booking.
@@ -42,12 +43,12 @@ export function ReschedulePicker({
 
   return (
     <div className="mt-4 border-t border-border pt-4">
-      <h3 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Pick a new time
-      </h3>
-      <p className="mb-4 text-sm text-muted-foreground">
-        You keep your current appointment until you choose one of these.
-      </p>
+      <CardHeading
+        as="h3"
+        size="compact"
+        title="Pick a new time"
+        description="You keep your current appointment until you choose one of these."
+      />
 
       {loading && <LoadingState label="Finding open times…" />}
 

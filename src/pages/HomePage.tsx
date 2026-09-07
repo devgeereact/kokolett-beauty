@@ -13,6 +13,8 @@ import { formatDateLong } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { BUSINESS_NAME, LOCALITY, buildGoogleProfileUrl } from '@/lib/business';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { publicButton } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 /**
  * The salon's front page.
@@ -265,7 +267,7 @@ export function HomePage(): JSX.Element {
             </p>
             <div className="grid gap-4 md:grid-cols-3">
               {nextDays.map((date) => (
-                <Card key={date} className="p-5 text-center">
+                <Card pad="standard" key={date} className="text-center">
                   <p className="font-medium text-foreground">
                     {formatDateLong(`${date}T12:00:00Z`, 'UTC')}
                   </p>
@@ -288,10 +290,7 @@ export function HomePage(): JSX.Element {
               ))}
             </div>
             <p className="mt-8 text-center">
-              <Link
-                to={routes.public.book}
-                className="inline-flex h-11 items-center rounded-lg bg-primary px-6 font-semibold text-primary-foreground"
-              >
+              <Link to={routes.public.book} className={cn(publicButton(), 'px-6')}>
                 See all open times
               </Link>
             </p>
@@ -382,7 +381,7 @@ export function HomePage(): JSX.Element {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
             to={routes.public.book}
-            className="inline-flex h-12 items-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground"
+            className={cn(publicButton(), 'h-12 px-8 text-base')}
           >
             Book an appointment
           </Link>

@@ -1,6 +1,6 @@
 import { type JSX, useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/Card';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Spinner } from '@/components/ui/States';
 import { listDaySlots, type OwnerDaySlot } from '@/services/availabilityService';
@@ -69,11 +69,11 @@ export function MoveAppointmentPanel({
   };
 
   return (
-    <Card className="p-5">
+    <Card pad="standard">
       <div className="mb-3 flex items-start justify-between gap-2">
-        <h3 className="font-serif text-base font-semibold text-foreground">
+        <CardTitle as="h3" size="compact">
           Move {appointment.customer_name ?? 'this appointment'}&rsquo;s time
-        </h3>
+        </CardTitle>
         <Button variant="ghost" size="sm" onClick={onClose}>
           Cancel
         </Button>

@@ -3,9 +3,24 @@ import { useEffect, type RefObject } from 'react';
 /**
  * Selector for what a browser will actually stop on with Tab. Deliberately
  * excludes `[tabindex="-1"]`, which is focusable by script but not by keyboard.
+ *
+ * `:not(:disabled)` and `:not([hidden])` were added 2026-09-05. Without them
+ * a dialog whose first or last control is disabled — a Save that is not
+ * valid yet, a Confirm mid-request — wrapped Tab onto an element the browser
+ * refuses to focus, so focus fell to `<body>` and the trap silently stopped
+ * trapping. It is the confirmation dialogs, where the primary action is
+ * disabled exactly while the user is deciding, that hit it most.
  */
-const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE_SELECTOR = [
+  'button:not(:disabled)',
+  '[href]',
+  'input:not(:disabled)',
+  'select:not(:disabled)',
+  'textarea:not(:disabled)',
+  '[tabindex]:not([tabindex="-1"])',
+]
+  .map((s) => `${s}:not([hidden]):not([aria-hidden='true'])`)
+  .join(', ');
 
 /**
  * Keeps Tab inside an open overlay and closes it on Escape.
@@ -71,10 +86,21 @@ export function useFocusTrap(
       const last = focusable[focusable.length - 1];
       if (!first || !last) return;
 
-      if (e.shiftKey && document.activeElement === first) {
+      const active = document.activeElement;
+      /* Focus can be outside the panel entirely: the caller placed it there,
+         or the element that had it was removed by a re-render. Wrapping
+         first/last only helps once focus is already inside, so pull it back
+         in rather than letting Tab walk into the page behind the overlay. */
+      if (!(active instanceof HTMLElement) || !panel.contains(active)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
+
+      if (e.shiftKey && active === first) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!e.shiftKey && active === last) {
         e.preventDefault();
         first.focus();
       }

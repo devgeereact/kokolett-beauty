@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/Card';
 import { Checkbox } from '@/components/ui/Field';
 import {
   STATUS_CATEGORIES,
@@ -26,8 +26,8 @@ export function CalendarFiltersCard({
   onToggleShowCancelled: (value: boolean) => void;
 }): JSX.Element {
   return (
-    <Card className="flex flex-col gap-4 p-5">
-      <h2 className="font-serif text-base font-semibold text-foreground">Filters</h2>
+    <Card pad="standard" className="flex flex-col gap-4">
+      <CardTitle size="compact">Filters</CardTitle>
 
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

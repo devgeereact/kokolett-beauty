@@ -56,7 +56,7 @@ export function ShareLink({
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="min-w-0 flex-1 truncate text-sm text-primary hover:underline"
+            className="min-w-0 flex-1 truncate text-sm text-brand-ink hover:underline"
           >
             {url}
           </a>

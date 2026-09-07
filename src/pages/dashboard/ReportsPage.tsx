@@ -16,7 +16,7 @@ import { StatTrendTile } from '@/components/dashboard/reports/StatTrendTile';
 import { TrendLineChart } from '@/components/dashboard/reports/TrendLineChart';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -35,6 +35,8 @@ import {
   toSalonDate,
 } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import { toolbarControl } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 /**
  * Reports, rebuilt onto `docs/design/reports.png`'s Overview tab — real
@@ -117,7 +119,7 @@ export function ReportsPage(): JSX.Element {
                 aria-label="Report period"
                 value={rangeDays}
                 onChange={(e) => setRangeDays(Number(e.target.value))}
-                className="h-9 rounded-sm border border-border bg-input py-2 pl-9 pr-8 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={cn(toolbarControl, 'pl-9')}
               >
                 {RANGE_OPTIONS.map((o) => (
                   <option key={o.days} value={o.days}>
@@ -213,10 +215,8 @@ export function ReportsPage(): JSX.Element {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="p-5 lg:col-span-2">
-              <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-                Recent bookings
-              </h2>
+            <Card pad="standard" className="lg:col-span-2">
+              <CardHeading size="compact" title="Recent bookings" />
               {overview.recentBookings.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Nothing booked in this period yet.
@@ -264,10 +264,8 @@ export function ReportsPage(): JSX.Element {
               )}
             </Card>
 
-            <Card className="p-5">
-              <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-                Top customers by visits
-              </h2>
+            <Card pad="standard">
+              <CardHeading size="compact" title="Top customers by visits" />
               {overview.topCustomers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Nobody has a completed visit yet.
@@ -290,10 +288,8 @@ export function ReportsPage(): JSX.Element {
             </Card>
           </div>
 
-          <Card className="p-5">
-            <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-              Insights
-            </h2>
+          <Card pad="standard">
+            <CardHeading size="compact" title="Insights" />
             {/* Nothing booked in either period means there is nothing to say,
                 and saying it anyway is worse than silence. On a salon with no
                 history this block read "Revenue is unchanged. You earned £0.00
@@ -367,17 +363,13 @@ export function ReportsPage(): JSX.Element {
 
           {legacy && (
             <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="p-5">
-                <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">
-                  Bookings by day of week
-                </h2>
+              <Card pad="standard">
+                <CardHeading size="standard" title="Bookings by day of week" />
                 <DayOfWeekChart trend={legacy.dayOfWeek} />
               </Card>
 
-              <Card className="p-5">
-                <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">
-                  Bookings by hour of day
-                </h2>
+              <Card pad="standard">
+                <CardHeading size="standard" title="Bookings by hour of day" />
                 <HourOfDayChart trend={legacy.hourOfDay} />
               </Card>
             </div>
@@ -385,10 +377,8 @@ export function ReportsPage(): JSX.Element {
 
           <BookingFunnelCard />
 
-          <Card className="p-5">
-            <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-              Google reviews
-            </h2>
+          <Card pad="standard">
+            <CardHeading size="standard" title="Google reviews" />
             {reviewsConfigured ? (
               <p className="text-sm text-foreground">
                 Reviews are set up. A request goes out automatically a couple of hours
@@ -400,7 +390,7 @@ export function ReportsPage(): JSX.Element {
                       href={settings.google_review_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium text-brand-ink hover:underline"
                     >
                       View your review link
                     </a>

@@ -60,7 +60,7 @@ export function TemplatePreviewFrame({
             className={cn(
               'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
               viewport === v.key
-                ? 'bg-card text-primary shadow-card'
+                ? 'bg-card text-brand-ink shadow-card'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >

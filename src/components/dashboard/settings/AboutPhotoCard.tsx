@@ -1,7 +1,7 @@
 import { type JSX, useRef, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { uploadOwnerPhoto } from '@/services/ownerPhotoUploadService';
 import { buildImageKitUrl } from '@/lib/imagekit';
@@ -59,13 +59,12 @@ export function AboutPhotoCard(): JSX.Element {
   };
 
   return (
-    <Card className="flex h-full flex-col justify-center p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        About Photo
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Shown in the &ldquo;About Christy&rdquo; section of the public About page.
-      </p>
+    <Card pad="standard" className="flex h-full flex-col justify-center">
+      <CardHeading
+        size="compact"
+        title="About Photo"
+        description="Shown in the &ldquo;About Christy&rdquo; section of the public About page."
+      />
 
       {/* Same aspect ratio as the crop on the live About page
           (`AboutPage.tsx`'s `aspect-[4/5]`), so what's previewed here is

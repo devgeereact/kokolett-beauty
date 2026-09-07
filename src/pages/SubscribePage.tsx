@@ -8,6 +8,8 @@ import { subscribeToUpdates } from '@/services/subscriberService';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { publicButton } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 /**
  * The mailing list.
@@ -54,7 +56,7 @@ export function SubscribePage(): JSX.Element {
     <SiteShell>
       <div className="mx-auto max-w-lg px-4 py-16 md:px-6">
         {done ? (
-          <Card className="p-6 text-center">
+          <Card pad="roomy" className="text-center">
             <h1 className="font-serif text-2xl font-semibold text-foreground">
               You are on the list
             </h1>
@@ -62,10 +64,7 @@ export function SubscribePage(): JSX.Element {
               We will email you when there is something worth knowing about. Not often,
               and never to anyone else.
             </p>
-            <Link
-              to={routes.public.book}
-              className="mt-6 inline-flex h-11 items-center rounded-lg bg-primary px-6 font-semibold text-primary-foreground"
-            >
+            <Link to={routes.public.book} className={cn(publicButton(), 'mt-6 px-6')}>
               Book an appointment
             </Link>
           </Card>
@@ -79,7 +78,7 @@ export function SubscribePage(): JSX.Element {
               advice. A few emails a year, not a few a week.
             </p>
 
-            <Card className="p-6">
+            <Card pad="roomy">
               <Field label="Your name" hint="Optional, but it makes the emails less odd.">
                 {({ id, describedBy }) => (
                   <Input

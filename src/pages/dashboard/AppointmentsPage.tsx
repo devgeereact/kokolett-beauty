@@ -32,6 +32,13 @@ import {
   type StatusCategory,
 } from '@/lib/status';
 import type { AppointmentDetailed, Service } from '@/types';
+import {
+  filterBar,
+  filterCount,
+  filterTab,
+  toolbarControl,
+} from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 type Tab =
   'all' | 'upcoming' | 'today' | 'in_service' | 'completed' | 'cancelled_no_show';
@@ -312,22 +319,25 @@ export function AppointmentsPage(): JSX.Element {
         </div>
       )}
 
-      <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-border">
+      {/* The same filter bar as Requests, Templates, Services and
+          Notifications, which this one had drifted away from: a wider gap, a
+          different padding, a bolder selected weight and a count pill that
+          stayed grey when selected. */}
+      <div
+        role="group"
+        aria-label="Filter appointments"
+        className={cn(filterBar, 'mb-6')}
+      >
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => applyTab(t.key)}
-            className={
-              tab === t.key
-                ? 'border-b-2 border-primary px-3 pb-3 text-sm font-semibold text-brand-ink'
-                : 'border-b-2 border-transparent px-3 pb-3 text-sm font-medium text-muted-foreground hover:text-foreground'
-            }
+            aria-pressed={tab === t.key}
+            className={filterTab(tab === t.key)}
           >
-            {t.label}{' '}
-            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-              {tabCounts[t.key]}
-            </span>
+            {t.label}
+            <span className={filterCount(tab === t.key)}>{tabCounts[t.key]}</span>
           </button>
         ))}
       </div>
@@ -345,7 +355,7 @@ export function AppointmentsPage(): JSX.Element {
             placeholder="Search appointments, clients, reference…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={cn(toolbarControl, 'w-full pl-9')}
           />
         </div>
         <div className="relative">
@@ -358,7 +368,7 @@ export function AppointmentsPage(): JSX.Element {
             aria-label="Date range"
             value={dateMode}
             onChange={(e) => setDateMode(e.target.value as DateMode)}
-            className="h-9 rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={cn(toolbarControl, 'pl-9')}
           >
             <option value="today">Today</option>
             <option value="week">This week</option>
@@ -372,7 +382,7 @@ export function AppointmentsPage(): JSX.Element {
           aria-label="Service"
           value={serviceId}
           onChange={(e) => setServiceId(e.target.value)}
-          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={toolbarControl}
         >
           <option value="all">All services</option>
           {services.map((s) => (
@@ -387,7 +397,7 @@ export function AppointmentsPage(): JSX.Element {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-6 lg:h-[calc(100vh-21rem)] lg:min-h-[420px] lg:flex-row lg:items-stretch">
+      <div className="flex flex-col gap-6 lg:h-[calc(100dvh-21rem)] lg:min-h-[420px] lg:flex-row lg:items-stretch">
         <div className="min-w-0 flex-1">
           {loading && <LoadingState label="Loading appointments…" />}
           {error && <ErrorState error={error} onRetry={() => void refresh()} />}

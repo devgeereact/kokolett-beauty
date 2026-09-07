@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Field';
 import { formatDateLong } from '@/lib/format';
 
@@ -33,23 +33,20 @@ export function ApplyPatternSection({
 }: ApplyPatternSectionProps): JSX.Element {
   return (
     <>
-      <Card className="p-5">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-              Put it on the calendar
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              The pattern does nothing on its own. This is what writes it into real days.
-            </p>
-          </div>
-          <div className="flex items-baseline gap-2 rounded-md border border-border bg-muted px-3 py-2">
-            <span className="text-xs text-muted-foreground">Times set this week</span>
-            <span className="font-mono text-sm font-semibold text-foreground">
-              {totalTimes}
-            </span>
-          </div>
-        </div>
+      <Card pad="standard">
+        <CardHeading
+          size="standard"
+          title="Put it on the calendar"
+          description="The pattern does nothing on its own. This is what writes it into real days."
+          actions={
+            <div className="flex items-baseline gap-2 rounded-md border border-border bg-muted px-3 py-2">
+              <span className="text-xs text-muted-foreground">Times set this week</span>
+              <span className="font-mono text-sm font-semibold text-foreground">
+                {totalTimes}
+              </span>
+            </div>
+          }
+        />
 
         <div className="flex flex-wrap items-end gap-4 rounded-md border border-border p-3">
           <div>
@@ -123,10 +120,8 @@ export function ApplyPatternSection({
         )}
       </Card>
 
-      <Card className="p-5">
-        <h3 className="mb-4 font-serif text-base font-semibold text-foreground">
-          How this behaves
-        </h3>
+      <Card pad="standard">
+        <CardHeading as="h3" size="compact" title="How this behaves" />
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-border bg-muted p-3">
             <p className="mb-1 text-sm font-medium text-foreground">Fill empty days</p>

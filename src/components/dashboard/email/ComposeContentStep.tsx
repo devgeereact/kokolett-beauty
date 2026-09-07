@@ -9,6 +9,8 @@ import { draftCopy } from '@/services/draftCopyService';
 import { errorMessage } from '@/lib/errors';
 import { cn } from '@/lib/utils';
 import type { Customer } from '@/types';
+import { CardTitle } from '@/components/ui/Card';
+import { toolbarControl } from '@/components/ui/controlClasses';
 
 const MAX_RESULTS = 8;
 
@@ -114,7 +116,7 @@ export function ComposeContentStep({
           >
             ← Back to templates
           </button>
-          <h2 className="font-serif text-lg font-semibold text-foreground">Compose</h2>
+          <CardTitle>Compose</CardTitle>
           <p className="text-sm text-muted-foreground">
             Choose who it&rsquo;s for, then send.
           </p>
@@ -151,7 +153,7 @@ export function ComposeContentStep({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search customers by name, email or mobile…"
-              className="h-10 w-full rounded-sm border border-border bg-input px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(toolbarControl, 'w-full')}
             />
             <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-border">
               {searching ? (

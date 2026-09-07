@@ -1,5 +1,5 @@
 import { type JSX, useEffect, useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { listAppointments } from '@/services/appointmentService';
 import { analyzeWeekBookings, percentChange, summarizeBusiness } from '@/lib/insights';
@@ -122,21 +122,22 @@ export function BookingsOverviewChart({
   const axisTicks = [0, axisMax / 4, axisMax / 2, (axisMax * 3) / 4, axisMax];
 
   return (
-    <Card className={cn('flex h-full flex-col p-4', className)}>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          Bookings overview
-        </h2>
-        <select
-          aria-label="Week"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value as WeekPeriod)}
-          className="rounded-sm border border-transparent bg-transparent text-xs text-muted-foreground hover:border-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="current">This week</option>
-          <option value="previous">Last week</option>
-        </select>
-      </div>
+    <Card pad="compact" className={cn('flex h-full flex-col', className)}>
+      <CardHeading
+        size="compact"
+        title="Bookings overview"
+        actions={
+          <select
+            aria-label="Week"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as WeekPeriod)}
+            className="rounded-sm border border-transparent bg-transparent text-xs text-muted-foreground hover:border-border hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="current">This week</option>
+            <option value="previous">Last week</option>
+          </select>
+        }
+      />
 
       {!metrics && (
         <div className="flex justify-center py-10">

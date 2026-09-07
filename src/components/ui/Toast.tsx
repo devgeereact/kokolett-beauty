@@ -1,5 +1,6 @@
 import { type JSX, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
+import { useBottomNotice } from '@/hooks/useBottomNotice';
 import { cn } from '@/lib/utils';
 import type { ToastItem } from '@/types';
 
@@ -108,6 +109,12 @@ export function ToastStack({
   toasts: ToastItem[];
   onDismiss: (id: string) => void;
 }): JSX.Element {
+  const stackRef = useRef<HTMLDivElement>(null);
+  /* Topmost layer of the shared bottom stack: a toast must never be the
+     thing hidden behind a consent or offline banner, since it is the most
+     urgent and the shortest-lived of the four. */
+  const bottom = useBottomNotice('toast', stackRef, toasts.length > 0);
+
   return (
     <>
       {/* Always mounted, including when there are no toasts. This is the whole
@@ -122,6 +129,8 @@ export function ToastStack({
 
       {toasts.length > 0 && (
         <div
+          ref={stackRef}
+          style={{ bottom: `calc(${bottom} + 1rem)` }}
           className={cn(
             // z-toast (100), the top of the stack: QuickActionLauncher's portal
             // is z-modal, and when its panel is open the toast stack must render
@@ -129,8 +138,8 @@ export function ToastStack({
             // otherwise it's painted behind the launcher's backdrop and invisible.
             // Mobile 16px inset, desktop 24px right/bottom — global overlay
             // rules §31.
-            'pointer-events-none fixed inset-x-4 bottom-4 z-toast flex flex-col gap-2',
-            'md:inset-x-auto md:bottom-6 md:right-6',
+            'pointer-events-none fixed inset-x-4 z-toast flex flex-col gap-2',
+            'md:inset-x-auto md:right-6',
           )}
         >
           {toasts.map((toast) => (

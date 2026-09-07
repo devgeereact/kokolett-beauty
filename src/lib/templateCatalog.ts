@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Key,
   Mail,
-  Star,
   UserPlus,
   type LucideIcon,
 } from 'lucide-react';
@@ -133,33 +132,19 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
   {
     key: 'reminder_2h',
     label: '2-hour reminder',
-    description: 'Sent two hours ahead of an upcoming appointment.',
-    category: 'Reminders',
-    icon: Bell,
-    variables: BOOKING_VARS,
-  },
-  {
-    key: 'reminder_1h',
-    label: '1-hour reminder',
-    description: 'Sent an hour ahead of an upcoming appointment.',
+    description:
+      'Sent two hours ahead of an upcoming appointment. The last reminder before the day.',
     category: 'Reminders',
     icon: Bell,
     variables: BOOKING_VARS,
   },
   {
     key: 'appointment_completed',
-    label: 'Appointment completed',
-    description: 'Sent once an appointment is marked complete.',
+    label: 'Thank you and review request',
+    description:
+      'Sent two hours after an appointment is marked complete. Carries the Google review link when one is set in Settings.',
     category: 'Reviews',
     icon: CheckCircle2,
-    variables: ['customer_name', 'appointment_date', 'service_name', 'google_review_url'],
-  },
-  {
-    key: 'review_request',
-    label: 'Review request',
-    description: 'Sent a couple of hours after completion, asking for a Google review.',
-    category: 'Reviews',
-    icon: Star,
     variables: ['customer_name', 'appointment_date', 'service_name', 'google_review_url'],
   },
   {

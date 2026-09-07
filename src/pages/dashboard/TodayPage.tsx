@@ -17,7 +17,7 @@ import {
   NewBookingPanel,
   type PrefilledCustomer,
 } from '@/components/dashboard/NewBookingPanel';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
@@ -303,27 +303,29 @@ export function TodayPage(): JSX.Element {
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch">
-        <Card className="flex h-full min-h-0 flex-col p-4 lg:col-span-3 lg:row-span-2">
-          <div className="mb-3 flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-serif text-base font-semibold text-foreground">
-                Today&rsquo;s schedule
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {formatDateLong(start, timezone)}
-              </p>
-            </div>
-            {/* Same plain-text header link every other card uses (View all /
-                View list / …) — the bordered button this used to be sat
-                heavier than its siblings and squeezed the title onto two
-                lines in this narrower column. */}
-            <Link
-              to={routes.owner.calendar}
-              className="shrink-0 text-xs font-medium text-primary hover:underline"
-            >
-              View calendar
-            </Link>
-          </div>
+        <Card
+          pad="compact"
+          className="flex h-full min-h-0 flex-col lg:col-span-3 lg:row-span-2"
+        >
+          <CardHeading
+            size="compact"
+            title="Today&rsquo;s schedule"
+            description={
+              <span className="text-xs">{formatDateLong(start, timezone)}</span>
+            }
+            /* Same plain-text header link every other card uses (View all /
+               View list / …) — the bordered button this used to be sat
+               heavier than its siblings and squeezed the title onto two
+               lines in this narrower column. */
+            actions={
+              <Link
+                to={routes.owner.calendar}
+                className="shrink-0 text-xs font-medium text-brand-ink hover:underline"
+              >
+                View calendar
+              </Link>
+            }
+          />
 
           {loading && <LoadingState label="Loading today's appointments…" />}
           {error && <ErrorState error={error} onRetry={() => void refresh()} />}
@@ -386,7 +388,7 @@ export function TodayPage(): JSX.Element {
               </span>
               <Link
                 to={routes.owner.appointments}
-                className="text-xs font-medium text-primary hover:underline"
+                className="text-xs font-medium text-brand-ink hover:underline"
               >
                 View full day
               </Link>

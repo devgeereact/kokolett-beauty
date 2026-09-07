@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { Receipt } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 
 /**
  * Honest empty state: this is a single-owner instance with no subscription
@@ -12,11 +12,12 @@ import { Card } from '@/components/ui/Card';
  */
 export function BillingCard(): JSX.Element {
   return (
-    <Card className="flex h-full flex-col p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Billing</h2>
-      <p className="mb-3 text-sm text-muted-foreground">
-        Subscription and payment details.
-      </p>
+    <Card pad="standard" className="flex h-full flex-col">
+      <CardHeading
+        size="compact"
+        title="Billing"
+        description="Subscription and payment details."
+      />
       <div className="flex flex-1 flex-col items-center justify-center py-4 text-center">
         <span className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
           <Receipt aria-hidden="true" className="h-6 w-6" strokeWidth={2} />

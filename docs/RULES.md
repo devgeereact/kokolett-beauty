@@ -55,6 +55,20 @@ do not merge.
   Tailwind's defaults rather than extending them, so any other prefix emits nothing
   at all. Four ranges result: base, `md`, `lg`, `wide`.
 - Compose conditional classes with `cn()` (never string-concatenate classes).
+- **A `Card` takes a `pad` role, never a `p-*` class.** `none` / `record` / `compact` /
+  `standard` / `roomy` — docs/DESIGN.md §16.1. The role is the decision; the number is
+  the design system's.
+- **A card title comes from `CardTitle` or `CardHeading`**, at `size="standard"` or
+  `size="compact"`, with the heading LEVEL set separately via `as`. Do not hand-write
+  `font-serif text-lg font-semibold text-foreground` again (§16.2).
+- **Section gaps are 24px, dense overview grids 16px, record lists 12px** (§16.4).
+  8px and smaller are gaps inside a control row, not between sections.
+- **Shared class strings live in `components/ui/controlClasses.ts`** — the segmented
+  control, the filter bar, the 36px icon button, the 36px toolbar control, the public
+  form shape.
+  Reach for one before retyping a look that already exists somewhere else.
+- **A page heading, a section heading, an instruction and the heading of an opened
+  record all wrap.** `truncate` is for a record summary in a list (§16.10).
 
 ## 5. Data & security
 
@@ -191,7 +205,18 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
 
 - The booking flow must be completable by keyboard alone.
 - Status is never communicated by colour alone; always pair with a text label.
-- Touch targets ≥ 44×44px, which sets the minimum time-slot button size.
+- Touch targets ≥ 44×44px on public surfaces, which sets the minimum time-slot button
+  size. The owner console runs at 36–40px by design (docs/DESIGN.md §10) — say which
+  surface you are on before quoting a number.
+- **Screen width is not pointer type.** A tablet is 768–834px CSS wide and entirely
+  touch-operated, so `md:` must never be used to mean "there is a mouse here". Use the
+  `pointer-fine` variant, which asks the actual question.
+- **Do not claim an ARIA role you have not implemented.** `role="tablist"` promises
+  arrow keys and a roving tab stop; `role="menu"` promises opening focus and arrow
+  keys; `aria-haspopup="dialog"` promises a named dialog. Either implement the
+  contract or describe what the control really does — `CalendarShell` uses
+  `aria-pressed` because it is a toggle group, and that is the right answer, not a
+  compromise.
 - Do not remove the global `:focus-visible` ring.
 
 ### 9.9 Business identity has one home, and copy carries no dashes

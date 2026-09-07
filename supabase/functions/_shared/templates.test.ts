@@ -158,3 +158,69 @@ Deno.test('owner_broadcast omits the unsubscribe link if no subscriber_id is giv
   const out = render('owner_broadcast', { custom_body: 'Hello' });
   assert(!out.html.includes('/unsubscribe/'));
 });
+
+Deno.test('owner_broadcast uses its own subject as the headline', () => {
+  const out = render('owner_broadcast', {
+    custom_body: 'Hello',
+    broadcast_subject: 'New Saturday slots this month',
+  });
+
+  // The headline is what `layout` puts in the <title> and the heading, and it
+  // used to be the salon name — which the masthead already says immediately
+  // above it. Every other template opens with a real headline.
+  assertStringIncludes(out.html, 'New Saturday slots this month');
+});
+
+Deno.test('owner_broadcast falls back to the salon name when queued before 0081', () => {
+  const out = render('owner_broadcast', { custom_body: 'Hello' });
+  assertStringIncludes(out.html, 'Kokolett Beauty UK');
+});
+
+Deno.test('owner_broadcast carries the same plain-text footer as every other email', () => {
+  const out = render('owner_broadcast', {
+    custom_body: 'Hello',
+    salon_address: 'Redbourne Dr, London SE28 8RX',
+    instagram_url: 'https://www.instagram.com/kokolettbeautyuk/',
+  });
+
+  assertStringIncludes(out.text, 'Kokolett Beauty UK');
+  assertStringIncludes(out.text, 'Redbourne Dr, London SE28 8RX');
+  assertStringIncludes(out.text, 'booking@kokolettbeauty.com');
+  assertStringIncludes(out.text, 'mailing list');
+});
+
+/**
+ * The `=20` that reached delivered mail. A conditional resolving to '' leaves a
+ * line holding only its indentation, and quoted-printable is required to encode
+ * a line-ending space as `=20` (RFC 2045 section 6.7, rule 3).
+ */
+Deno.test('no rendered line ends in whitespace, however sparse the payload', () => {
+  const templates = [
+    'booking_confirmed',
+    'contact_message_received',
+    'owner_broadcast',
+    'owner_new_booking',
+    'reminder_24h',
+  ];
+
+  for (const t of templates) {
+    // The sparse case is the one that used to fail: no address, no phone, no
+    // socials, so three separate conditionals collapse to bare indentation.
+    const out = render(t, { full_name: 'Ada', custom_body: 'Hi', reference: 'KB-1234' });
+
+    for (const part of [out.html, out.text]) {
+      const offenders = part.split('\n').filter((l) => /[ \t]$/.test(l));
+      assertEquals(offenders.length, 0, `${t}: ${offenders.length} line(s) end in whitespace`);
+    }
+  }
+});
+
+Deno.test('a customer email is signed and an owner email is not', () => {
+  const customer = render('booking_confirmed', { customer_name: 'Ada', starts_at: '2026-09-12T10:00:00Z' });
+  const owner = render('owner_new_booking', { customer_name: 'Ada', starts_at: '2026-09-12T10:00:00Z' });
+
+  assertStringIncludes(customer.html, 'Warm wishes');
+  assertStringIncludes(customer.html, 'Christy');
+  assert(!owner.html.includes('Warm wishes'));
+});
+

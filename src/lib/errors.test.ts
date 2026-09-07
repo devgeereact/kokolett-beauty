@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isOffline, offlineError, toAppError } from '@/lib/errors';
+import { DisplayableError, isOffline, offlineError, toAppError } from '@/lib/errors';
 
 /**
  * A dropped connection used to be indistinguishable from a server fault: both
@@ -122,5 +122,37 @@ describe('toAppError: the public funnel', (): void => {
   it('does not confuse EMAIL_INVALID with INVALID_EMAIL', (): void => {
     expect(toAppError(new Error('EMAIL_INVALID')).code).toBe('EMAIL_INVALID');
     expect(toAppError(new Error('INVALID_EMAIL')).code).toBe('INVALID_EMAIL');
+  });
+});
+
+/**
+ * An Edge Function's `{ error }` body is copy somebody wrote for the owner to
+ * read. It used to be flattened to the generic message, which is how "Photo
+ * upload is not configured yet." — a missing Supabase secret, fixable in one
+ * command — reached the About photo card as "Something went wrong. Please try
+ * again."
+ */
+describe('DisplayableError', () => {
+  it('passes an Edge Function message through untouched', () => {
+    const result = toAppError(
+      new DisplayableError('Photo upload is not configured yet.'),
+    );
+
+    expect(result.message).toBe('Photo upload is not configured yet.');
+    expect(result.message).not.toBe('Something went wrong. Please try again.');
+  });
+
+  it('still reports a plain Error with no known code as the generic message', () => {
+    const result = toAppError(new Error('some raw postgres string'));
+
+    expect(result.message).toBe('Something went wrong. Please try again.');
+  });
+
+  it('does not let a displayable message outrank the offline check', () => {
+    // A dropped connection has to stay OFFLINE: telling somebody on a train
+    // what the server said is worse than telling them the connection went.
+    const result = toAppError(new TypeError('Failed to fetch'));
+
+    expect(result.code).toBe('OFFLINE');
   });
 });

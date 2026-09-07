@@ -86,7 +86,7 @@ export function AppointmentDetailModal({
     : `This appointment is still ${appointment.status.replace('_', ' ')}. Deleting it removes the record entirely and, unlike Cancel, does not notify the customer. There is no undo.`;
 
   return (
-    <Card className="flex flex-col gap-5 p-5">
+    <Card pad="standard" className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <Avatar name={appointment.customer_name ?? 'Customer'} size="lg" />

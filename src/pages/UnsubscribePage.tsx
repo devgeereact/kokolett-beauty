@@ -2,6 +2,8 @@ import { type JSX, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { publicButton } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 /**
  * Public, no session, no `DashboardLayout`. Requires an explicit click before
@@ -49,7 +51,7 @@ export function UnsubscribePage(): JSX.Element {
             type="button"
             onClick={confirm}
             disabled={confirming}
-            className="mt-6 inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:brightness-95 disabled:pointer-events-none disabled:opacity-50"
+            className={cn(publicButton(), 'mt-6 px-5 text-sm')}
           >
             {confirming ? 'Unsubscribing…' : 'Unsubscribe'}
           </button>

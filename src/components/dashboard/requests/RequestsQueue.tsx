@@ -34,6 +34,12 @@ import {
 } from '@/lib/requestStatus';
 import { cn } from '@/lib/utils';
 import type { Service } from '@/types';
+import {
+  filterBar,
+  filterCount,
+  filterTab,
+  toolbarControl,
+} from '@/components/ui/controlClasses';
 
 export interface RequestsQueueHandle {
   reload: () => Promise<void>;
@@ -252,30 +258,17 @@ export const RequestsQueue = forwardRef<
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-1 border-b border-border">
+      <div role="group" aria-label="Filter requests" className={filterBar}>
         {LANES.map((l) => (
           <button
             key={l}
             type="button"
             onClick={() => setLane(l)}
-            className={cn(
-              'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium',
-              lane === l
-                ? 'border-primary text-brand-ink'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
+            aria-pressed={lane === l}
+            className={filterTab(lane === l)}
           >
             {l === 'all' ? 'All' : REQUEST_LANE_LABELS[l]}
-            <span
-              className={cn(
-                'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                lane === l
-                  ? 'bg-tint-brand text-brand-ink'
-                  : 'bg-muted text-muted-foreground',
-              )}
-            >
-              {laneCounts[l]}
-            </span>
+            <span className={filterCount(lane === l)}>{laneCounts[l]}</span>
           </button>
         ))}
       </div>
@@ -292,14 +285,14 @@ export const RequestsQueue = forwardRef<
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search requests, clients, notes…"
-            className="h-9 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={cn(toolbarControl, 'w-full pl-9')}
           />
         </div>
         <select
           aria-label="Sort by date"
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={toolbarControl}
         >
           <option value="newest">Date: Newest</option>
           <option value="oldest">Date: Oldest</option>
@@ -308,7 +301,7 @@ export const RequestsQueue = forwardRef<
           aria-label="Service"
           value={serviceId}
           onChange={(e) => setServiceId(e.target.value)}
-          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={toolbarControl}
         >
           <option value="all">All services</option>
           {services.map((s) => (
@@ -321,7 +314,7 @@ export const RequestsQueue = forwardRef<
           aria-label="Priority"
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value as PriorityFilter)}
-          className="h-9 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={toolbarControl}
         >
           <option value="all">Priority: All</option>
           <option value="high">High priority</option>
@@ -373,7 +366,7 @@ export const RequestsQueue = forwardRef<
         />
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
+          <div className="space-y-3 lg:col-span-2">
             {pageRows.map((r) => (
               <RequestRow
                 key={r.id}

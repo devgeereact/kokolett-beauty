@@ -35,11 +35,17 @@ export function Pagination({
   const start = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalItems);
 
-  // 44px touch target on mobile (global overlay/pagination rules §13),
-  // stepping down to a denser 32px once there's a pointer to rely on.
+  // 44px touch target, stepping down to the dashboard's 36px only where the
+  // device actually has a fine pointer.
+  //
+  // It used to step down at `md:`, which is a WIDTH: a salon tablet in
+  // portrait is 768-834px CSS wide and entirely touch-operated, so the one
+  // device this dashboard is designed around got the 32px mouse-sized
+  // targets. `pointer-fine` asks the question the code was trying to ask.
   const buttonClass = (active: boolean): string =>
     cn(
-      'inline-flex h-11 min-w-11 items-center justify-center rounded-md px-2 text-sm font-medium md:h-8 md:min-w-8',
+      'inline-flex h-control-lg min-w-control-lg items-center justify-center rounded-md px-2 text-sm font-medium',
+      'pointer-fine:h-control-sm pointer-fine:min-w-control-sm',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       active ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted',
     );

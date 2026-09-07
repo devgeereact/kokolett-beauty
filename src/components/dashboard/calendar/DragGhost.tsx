@@ -21,7 +21,7 @@ export function DragGhost({
         // are CSS custom properties, and `bg-primary/10` fails against those.
         backgroundColor: 'color-mix(in srgb, var(--primary) 10%, transparent)',
       }}
-      className="pointer-events-none absolute inset-x-1 overflow-hidden rounded-md border-2 border-dashed border-primary px-2 py-1 text-xs text-primary"
+      className="pointer-events-none absolute inset-x-1 overflow-hidden rounded-md border-2 border-dashed border-primary px-2 py-1 text-xs text-brand-ink"
     >
       <span className="block truncate font-medium">{label}</span>
     </div>

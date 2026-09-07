@@ -38,7 +38,7 @@ export function NotFoundPage(): JSX.Element {
             the inherited 16px. At that size the brand accent also fell under
             the 4.5:1 AA threshold. `text-6xl` is the real top of the scale
             and puts it back into large-text territory. */}
-        <p aria-hidden="true" className="font-serif text-6xl font-extrabold text-primary">
+        <p aria-hidden="true" className="font-serif text-6xl font-extrabold text-brand">
           404
         </p>
         <h1 className="mt-4 font-serif text-2xl font-semibold text-foreground">

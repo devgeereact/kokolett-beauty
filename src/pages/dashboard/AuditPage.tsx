@@ -10,6 +10,7 @@ import { formatDateTime } from '@/lib/format';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { cn } from '@/lib/utils';
 import type { AuditEvent } from '@/types';
+import { toolbarControl } from '@/components/ui/controlClasses';
 
 /**
  * The lanes this screen offers, declared here rather than derived from
@@ -178,7 +179,7 @@ export function AuditPage(): JSX.Element {
             ))}
           </div>
 
-          <Card className="flex flex-col p-0">
+          <Card className="flex flex-col">
             <div className="border-b border-border p-3">
               <div className="relative">
                 <Search
@@ -191,7 +192,7 @@ export function AuditPage(): JSX.Element {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search the log…"
-                  className="h-10 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(toolbarControl, 'w-full pl-9')}
                 />
               </div>
             </div>

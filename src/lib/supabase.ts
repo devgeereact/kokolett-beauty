@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import { env } from '@/lib/env';
+import { DisplayableError } from '@/lib/errors';
 
 /**
  * Singleton Supabase client, typed against the generated Database schema.
@@ -33,6 +34,27 @@ export async function invokeFunction<T>(
   };
 
   if (result.error) {
+    /* supabase-js reports every non-2xx as the same sentence, "Edge Function
+       returned a non-2xx status code", and hides the function's own message
+       on `error.context`, the raw Response. So the careful wording each
+       function returns — "That is too long to draft from.", "The drafting
+       service took too long." — never reached the owner, who saw only the
+       generic line. Read the JSON body when there is one and prefer it. */
+    const context = (result.error as { context?: unknown }).context;
+    let fromFunction: string | null = null;
+    if (context instanceof Response) {
+      try {
+        const payload = (await context.clone().json()) as { error?: unknown };
+        if (typeof payload.error === 'string' && payload.error.trim() !== '') {
+          fromFunction = payload.error;
+        }
+      } catch {
+        // Not JSON, or the body was already consumed. Fall through to the
+        // generic message rather than turning a parse failure into the error
+        // the owner reads.
+      }
+    }
+    if (fromFunction) throw new DisplayableError(fromFunction);
     throw new Error(
       result.error.message ?? `The ${name} function is unavailable right now.`,
     );

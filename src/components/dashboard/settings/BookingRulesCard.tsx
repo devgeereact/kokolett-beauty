@@ -1,7 +1,7 @@
 import { type JSX, useEffect, useState } from 'react';
 import { CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { Switch } from '@/components/ui/Switch';
@@ -47,7 +47,7 @@ export function BookingRulesCard(): JSX.Element {
 
   if (loading) {
     return (
-      <Card className="flex h-full items-center justify-center p-5">
+      <Card pad="standard" className="flex h-full items-center justify-center">
         <LoadingState />
       </Card>
     );
@@ -60,7 +60,7 @@ export function BookingRulesCard(): JSX.Element {
      spinning forever, with no error and no way to retry. */
   if (!form) {
     return (
-      <Card className="p-5">
+      <Card pad="standard">
         <ErrorState
           error={
             loadError ??
@@ -113,14 +113,12 @@ export function BookingRulesCard(): JSX.Element {
   };
 
   return (
-    <Card id="booking-rules" className="scroll-mt-6 p-5">
+    <Card pad="standard" id="booking-rules" className="scroll-mt-6">
       <div className="mb-2 flex items-center gap-2">
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
           <CalendarCheck aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
         </span>
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          Booking Rules
-        </h2>
+        <CardHeading size="compact" title="Booking Rules" />
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
         These rules are enforced by the booking system, including when a customer already

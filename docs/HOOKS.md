@@ -366,6 +366,18 @@ This loop was copied character for character into `Modal`, `ConfirmDialog` and
 `QuickActionLauncher`, each with its own `FOCUSABLE_SELECTOR`. A keyboard trap that
 behaves differently in three dialogs defeats the point of having one.
 
+Two additions, 2026-09-05, both about the trap silently stopping:
+
+- **`FOCUSABLE_SELECTOR` now excludes disabled and hidden controls.** A dialog whose
+  first or last control is disabled — a Save that is not valid yet, a Confirm mid
+  request — wrapped Tab onto an element the browser refuses to focus, so focus fell
+  to `<body>` and the page behind became reachable again. Confirmation dialogs hit it
+  most, because their primary action is disabled exactly while the user is deciding.
+- **Focus starting outside the panel is pulled back in** rather than left alone.
+  Wrapping first-to-last only helps once focus is already inside; if the caller never
+  placed it, or a re-render removed the element that had it, Tab walked into the
+  obscured page.
+
 ---
 
 ## 21. `useDocumentMeta`
@@ -529,6 +541,48 @@ There is exactly one optional category, the booking funnel. PECR regulation 6 is
 about storing information on a device, not about cookies specifically, so the
 `sessionStorage` id counts even though the site sets no cookies. Undecided,
 malformed, and an older `CONSENT_VERSION` all read as a refusal.
+
+---
+
+## 29. `useBottomNotice`
+
+```ts
+export type BottomLayer = 'consent' | 'offline' | 'install' | 'toast';
+export const BOTTOM_LAYERS: readonly BottomLayer[];
+
+export function useBottomNotice(
+  layer: BottomLayer,
+  ref: RefObject<HTMLElement | null>,
+  visible: boolean,
+): string;
+
+/** Test-only: forget every registered height. */
+export function resetBottomNotices(): void;
+```
+
+Shares the bottom edge of the viewport between the four fixed notices that can
+claim it. Registers `ref`'s measured height under `layer` while `visible`, and
+returns the CSS `bottom` value that layer should sit at: the summed height of the
+layers below it, plus `env(safe-area-inset-bottom)`.
+
+Consumers, bottom-most first: `ConsentBanner`, `OfflineBanner`, `InstallPrompt`,
+`ToastStack`. Consent holds the edge because it is the most persistent and must be
+answered; toasts sit on top because they are the most urgent and the shortest-lived.
+
+Two things about it are deliberate:
+
+- **The store is module-level, not context.** The four consumers live in three
+  different trees (`App`, `SiteShell`, `ToastProvider`), so there is no common
+  provider to hang a context on that would not also have to wrap the whole app for
+  one number.
+- **The return value is a `calc()` string for an inline `style`, not a class.** The
+  offset is a real runtime measurement, which is exactly the dynamic-geometry case
+  `AGENTS.md` §3 allows `style={{ }}` for.
+
+Heights are tracked with a `ResizeObserver`, so a banner that wraps to five lines on
+a 320px screen pushes the ones above it by the height it actually has. Where
+`ResizeObserver` is absent (jsdom, Safari before 13.1) the mount-time height is still
+registered and only live re-measurement is lost.
 
 ---
 

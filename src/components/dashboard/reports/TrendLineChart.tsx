@@ -1,5 +1,5 @@
 import { type JSX, useId } from 'react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { formatDateShort } from '@/lib/format';
 
 const WIDTH = 600;
@@ -42,8 +42,8 @@ export function TrendLineChart({
   const xTickEvery = Math.max(1, Math.ceil(points.length / 5));
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-3 font-serif text-base font-semibold text-foreground">{title}</h2>
+    <Card pad="standard">
+      <CardHeading size="compact" title={title} />
       {points.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">
           No data in this period.

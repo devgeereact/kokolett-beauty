@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 import { Calendar as CalendarIcon, Clock, Hash, Mail, Phone, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { iconButtonClass } from '@/components/ui/controlClasses';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { Avatar } from '@/components/ui/Avatar';
 import { formatDateLong, formatDuration, formatTime } from '@/lib/format';
@@ -48,27 +49,30 @@ export function AppointmentDetailPanel({
   className?: string;
 }): JSX.Element {
   return (
-    <Card className={cn('flex flex-col gap-4 p-5', className)}>
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <h2 className="font-serif text-base font-semibold text-foreground">
-            Appointment details
-          </h2>
-          {contextLabel && (
-            <p className="text-xs font-medium text-primary">{contextLabel}</p>
-          )}
-        </div>
-        {appointment && onClose && (
-          <button
-            type="button"
-            aria-label="Close appointment details"
-            onClick={onClose}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <X aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-          </button>
-        )}
-      </div>
+    <Card pad="standard" className={cn('flex flex-col gap-4', className)}>
+      <CardHeading
+        className="mb-0"
+        size="compact"
+        title="Appointment details"
+        description={
+          contextLabel ? (
+            <span className="text-xs font-medium text-brand-ink">{contextLabel}</span>
+          ) : null
+        }
+        actions={
+          appointment &&
+          onClose && (
+            <button
+              type="button"
+              aria-label="Close appointment details"
+              onClick={onClose}
+              className={iconButtonClass}
+            >
+              <X aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+            </button>
+          )
+        }
+      />
 
       {!appointment && (
         <p className="text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
 import { type JSX, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState, Spinner } from '@/components/ui/States';
@@ -74,7 +74,7 @@ export function TemplateHistoryPanel({
   };
 
   return (
-    <Card className="h-fit p-5">
+    <Card pad="standard" className="h-fit">
       <h2 className="mb-3 font-serif text-base font-semibold text-foreground">History</h2>
 
       {revisions === null && (
@@ -124,9 +124,7 @@ export function TemplateHistoryPanel({
       >
         {compareRevision && (
           <div className="p-5">
-            <h3 className="mb-1 font-serif text-lg font-semibold text-foreground">
-              Compare versions
-            </h3>
+            <CardHeading as="h3" size="standard" title="Compare versions" />
             <p className="mb-4 text-xs text-muted-foreground">
               {formatDateTime(compareRevision.created_at)} vs current
             </p>

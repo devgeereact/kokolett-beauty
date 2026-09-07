@@ -265,6 +265,14 @@ const config: Config = {
         'control-lg': 'var(--control-height-lg)',
         nav: 'var(--nav-item-height)',
         header: 'var(--header-height)',
+        /* The assistant's chat panel — see `--chat-panel-height`. */
+        'chat-panel': 'var(--chat-panel-height)',
+      },
+      maxHeight: {
+        /* The message-list pane, sharing the assistant panel's clamp so both
+           long internal scroll regions stop at the same viewport-relative
+           height instead of two different hard-coded pixel counts. */
+        'chat-panel': 'var(--chat-panel-height)',
       },
       minHeight: {
         touch: '44px',
@@ -272,11 +280,21 @@ const config: Config = {
         'screen-app': '100dvh',
       },
       /* Touch target floor — DESIGN.md §10. Sets the minimum time-slot button. */
-      minWidth: { touch: '44px' },
+      minWidth: {
+        touch: '44px',
+        control: 'var(--control-height)',
+        'control-sm': 'var(--control-height-sm)',
+        'control-lg': 'var(--control-height-lg)',
+      },
       width: {
         sidebar: 'var(--sidebar-width)',
         'sidebar-collapsed': 'var(--sidebar-collapsed-width)',
         drawer: 'var(--drawer-width)',
+        /* Square icon buttons; same tokens as the control heights so a
+           36px row action cannot drift from a 36px `Button size="sm"`. */
+        control: 'var(--control-height)',
+        'control-sm': 'var(--control-height-sm)',
+        'control-lg': 'var(--control-height-lg)',
       },
       borderWidth: {
         DEFAULT: '1px',

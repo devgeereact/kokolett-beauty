@@ -23,7 +23,11 @@ import { cn } from '@/lib/utils';
 // ARIA/text pairing Field renders below (docs/DESIGN.md §7) — this is
 // purely the visual half of that pairing.
 const CONTROL = cn(
-  // 8px radius — docs/DESIGN.md §5 ("Inputs: 8px"), same tier as Button.
+  // 4px radius (`rounded-sm`), the same tier as `Button` — the owner-console
+  // control family (docs/DESIGN.md §16.5). The comment here used to claim
+  // 8px and cite a section that says "Inputs: 8px"; neither the class nor
+  // any rendered field has ever been 8px. The public marketing form controls
+  // are a separate, larger family (`publicField` in controlClasses.ts).
   'w-full rounded-sm border border-border bg-input px-3 py-2.5 text-foreground',
   'placeholder:text-muted-foreground',
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -126,13 +130,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input';
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement>;
+/**
+ * No `appearance-none`.
+ *
+ * It used to carry it, with nothing drawn in its place, so a select was
+ * visually a text input that happened to do nothing when you typed. The fix
+ * is to let the platform draw its own indicator rather than to draw one
+ * here: the nine bare `<select>`s elsewhere in the dashboard are plain
+ * elements with no wrapper to hang an absolutely-positioned chevron on, and
+ * one custom indicator in `Field` beside nine platform ones would be the same
+ * inconsistency in a new place. `pr-8` keeps the label clear of whatever the
+ * browser draws.
+ */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, ...props }, ref) => (
-    <select
-      ref={ref}
-      className={cn(CONTROL, 'appearance-none pr-8', className)}
-      {...props}
-    />
+    <select ref={ref} className={cn(CONTROL, 'pr-8', className)} {...props} />
   ),
 );
 Select.displayName = 'Select';

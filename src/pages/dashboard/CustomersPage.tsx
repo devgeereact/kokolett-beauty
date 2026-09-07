@@ -28,6 +28,8 @@ import { downloadCsv } from '@/lib/csv';
 import { errorMessage } from '@/lib/errors';
 import { routes } from '@/lib/routes';
 import type { AppointmentDetailed } from '@/types';
+import { toolbarControl } from '@/components/ui/controlClasses';
+import { cn } from '@/lib/utils';
 
 type StatusFilter = 'all' | 'active' | 'inactive' | 'new';
 
@@ -326,14 +328,14 @@ export function CustomersPage(): JSX.Element {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search customers, email, phone…"
-            className="h-11 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className={cn(toolbarControl, 'w-full pl-9')}
           />
         </div>
         <select
           aria-label="Filter customers by status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="h-11 rounded-sm border border-border bg-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={toolbarControl}
         >
           <option value="all">All customers</option>
           <option value="active">Active</option>
@@ -358,7 +360,7 @@ export function CustomersPage(): JSX.Element {
 
       {!loading && !error && filtered.length > 0 && (
         <>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {pageCustomers.map((customer) => (
               <CustomerCard
                 key={customer.id}

@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { Clock } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { DAYS_OF_WEEK } from '@/lib/format';
 import type { TemplateDay } from '@/services/availabilityService';
 
@@ -52,10 +52,8 @@ export function OpeningHoursSummaryCard({ days }: { days: TemplateDay[] }): JSX.
   ];
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-        Opening hours summary
-      </h2>
+    <Card pad="standard">
+      <CardHeading size="compact" title="Opening hours summary" />
       <dl className="space-y-1.5">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between gap-3 text-sm">

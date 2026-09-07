@@ -31,6 +31,7 @@ import { errorMessage } from '@/lib/errors';
 import { toneForCategory } from '@/lib/serviceCategoryTone';
 import { cn } from '@/lib/utils';
 import type { ServiceMenuItem } from '@/types';
+import { filterCount, filterTab, toolbarControl } from '@/components/ui/controlClasses';
 
 type Lane = 'all' | 'active' | 'archived';
 
@@ -225,24 +226,11 @@ export const ServicesCatalogue = forwardRef<ServicesCatalogueHandle>(
                 key={l}
                 type="button"
                 onClick={() => setLane(l)}
-                className={cn(
-                  'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium capitalize',
-                  lane === l
-                    ? 'border-primary text-brand-ink'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                )}
+                aria-pressed={lane === l}
+                className={cn(filterTab(lane === l), 'capitalize')}
               >
                 {l === 'all' ? 'All services' : l}
-                <span
-                  className={cn(
-                    'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold',
-                    lane === l
-                      ? 'bg-tint-brand text-brand-ink'
-                      : 'bg-muted text-muted-foreground',
-                  )}
-                >
-                  {counts[l]}
-                </span>
+                <span className={filterCount(lane === l)}>{counts[l]}</span>
               </button>
             ))}
           </div>
@@ -258,7 +246,7 @@ export const ServicesCatalogue = forwardRef<ServicesCatalogueHandle>(
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search services…"
-              className="h-9 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(toolbarControl, 'w-full pl-9')}
             />
           </div>
         </div>

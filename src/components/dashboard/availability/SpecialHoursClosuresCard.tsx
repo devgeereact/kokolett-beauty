@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarOff, CalendarPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/States';
 import { addDays, formatDateLong, toSalonDate } from '@/lib/format';
 import {
@@ -87,13 +87,12 @@ export function SpecialHoursClosuresCard({
   const hiddenCount = allExceptions.length - exceptions.length;
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-1 font-serif text-lg font-semibold text-foreground">
-        Special hours &amp; closures
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Dates that differ from your normal week: a day off, or extra hours added.
-      </p>
+    <Card pad="standard">
+      <CardHeading
+        size="standard"
+        title="Special hours &amp; closures"
+        description="Dates that differ from your normal week: a day off, or extra hours added."
+      />
 
       {summary === null ? (
         <div className="flex justify-center py-4">
@@ -145,7 +144,7 @@ export function SpecialHoursClosuresCard({
       {hiddenCount > 0 && (
         <Link
           to={routes.owner.calendar}
-          className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          className="mt-2 flex items-center gap-1.5 text-sm font-medium text-brand-ink hover:underline"
         >
           +{hiddenCount} more, view full calendar
           <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />

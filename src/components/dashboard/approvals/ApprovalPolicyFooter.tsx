@@ -12,7 +12,7 @@ export function ApprovalPolicyFooter({
 }): JSX.Element {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card className="flex gap-3 p-5">
+      <Card pad="standard" className="flex gap-3">
         <CalendarClock
           aria-hidden="true"
           className="h-5 w-5 shrink-0 text-muted-foreground"
@@ -33,11 +33,22 @@ export function ApprovalPolicyFooter({
         </div>
       </Card>
 
-      <Card className="flex items-center justify-between gap-4 bg-tint-completed p-5">
+      {/* `variant="accent"` — the design system's own "highlighted callout"
+          surface (docs/DESIGN.md §6.2) — rather than `bg-tint-completed`. A
+          status tint belongs to an appointment status, and this is a
+          navigation prompt; more concretely, the status tints are tuned to
+          carry their own saturated status text, so the supporting line here
+          measured 4.43:1 in dark mode (axe, 2026-09-05) against a green it
+          was never paired with. */}
+      <Card
+        variant="accent"
+        pad="standard"
+        className="flex items-center justify-between gap-4"
+      >
         <div className="flex gap-3">
           <CalendarPlus
             aria-hidden="true"
-            className="h-5 w-5 shrink-0 text-status-completed"
+            className="h-5 w-5 shrink-0 text-brand-ink"
             strokeWidth={2}
           />
           <div>

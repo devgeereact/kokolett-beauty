@@ -69,7 +69,7 @@ export function RequestAvailabilityPage(): JSX.Element {
     return (
       <SiteShell>
         <div className="mx-auto max-w-2xl px-4 py-16 md:px-6">
-          <Card className="p-6 text-center">
+          <Card pad="roomy" className="text-center">
             <h1 className="font-serif text-2xl font-semibold text-foreground">
               Thank you, that is with the salon
             </h1>
@@ -103,7 +103,7 @@ export function RequestAvailabilityPage(): JSX.Element {
           open up.
         </p>
 
-        <Card className="p-6">
+        <Card pad="roomy">
           <Field label="Your name" required>
             {({ controlProps }) => (
               <Input

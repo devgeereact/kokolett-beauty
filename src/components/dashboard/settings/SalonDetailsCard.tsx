@@ -1,7 +1,7 @@
 import { type JSX, useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Field, Input } from '@/components/ui/Field';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -42,7 +42,7 @@ export function SalonDetailsCard(): JSX.Element {
 
   if (loading) {
     return (
-      <Card className="flex h-full items-center justify-center p-5">
+      <Card pad="standard" className="flex h-full items-center justify-center">
         <LoadingState />
       </Card>
     );
@@ -55,7 +55,7 @@ export function SalonDetailsCard(): JSX.Element {
      spinning forever, with no error and no way to retry. */
   if (!form) {
     return (
-      <Card className="p-5">
+      <Card pad="standard">
         <ErrorState
           error={
             loadError ??
@@ -92,14 +92,12 @@ export function SalonDetailsCard(): JSX.Element {
   };
 
   return (
-    <Card className="flex h-full flex-col justify-center p-5">
+    <Card pad="standard" className="flex h-full flex-col justify-center">
       <div className="mb-2 flex items-center gap-2">
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-tint-brand text-brand-ink">
           <MapPin aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
         </span>
-        <h2 className="font-serif text-base font-semibold text-foreground">
-          Salon Details
-        </h2>
+        <CardHeading size="compact" title="Salon Details" />
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
         Shown on your website footer and at the bottom of customer emails.

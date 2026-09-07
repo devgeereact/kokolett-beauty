@@ -14,9 +14,14 @@ import type { AppointmentStatus } from '@/types';
  *    a pale ground — `#d97706` on white is about 3.4:1. So the *dot* carries
  *    the hue and the label stays `text-foreground`, which always passes.
  *
- * No opacity modifiers anywhere: the palette resolves to `var(--token)` hex
- * values, and `bg-status-pending/10` silently produces nothing against those
- * (docs/DESIGN.md §8).
+ * No opacity modifiers on a status token — but not because they fail to
+ * compile. That claim was true of the old hex-valued custom properties and
+ * stopped being true when the palette moved to space-separated channels
+ * (docs/DESIGN.md §2.1): `bg-status-pending/10` resolves perfectly well now.
+ * The reason to avoid it is that a translucent fill composites against
+ * whatever surface it lands on, so the same chip is a different colour on a
+ * card, on `muted` and on a tinted row. `bg-tint-*` is opaque and therefore
+ * predictable, which is what §3.4 means by "tint vs alpha".
  *
  * `variant="pill"` is the filled treatment the Appointments table uses, where
  * the status is a column of its own and a row of grey dots would be harder to

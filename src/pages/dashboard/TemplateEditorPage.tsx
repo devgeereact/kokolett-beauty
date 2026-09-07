@@ -137,7 +137,7 @@ export function TemplateEditorPage(): JSX.Element {
       <button
         type="button"
         onClick={() => void navigate(routes.owner.templates)}
-        className="mb-4 flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        className="mb-4 flex items-center gap-1.5 text-sm font-medium text-brand-ink hover:underline"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
         Back to templates

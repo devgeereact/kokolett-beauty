@@ -5,6 +5,8 @@ import { LoadingState } from '@/components/ui/States';
 import type { TemplateUsage } from '@/services/emailService';
 import { TEMPLATE_CATALOG } from '@/lib/templateCatalog';
 import { cn } from '@/lib/utils';
+import { CardTitle } from '@/components/ui/Card';
+import { toolbarControl } from '@/components/ui/controlClasses';
 
 /**
  * Compose step 1 — pick a starting point. Lists the same fixed template
@@ -46,7 +48,7 @@ export function ComposeTemplateStep({
     <div>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-serif text-lg font-semibold text-foreground">Compose</h2>
+          <CardTitle>Compose</CardTitle>
           <p className="text-sm text-muted-foreground">
             Start from a template, or write from scratch.
           </p>
@@ -83,7 +85,7 @@ export function ComposeTemplateStep({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search templates…"
-        className="mb-3 h-10 w-full rounded-sm border border-border bg-input px-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className={cn(toolbarControl, 'mb-3 w-full')}
       />
 
       {usageError && (

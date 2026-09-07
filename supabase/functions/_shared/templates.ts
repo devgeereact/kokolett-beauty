@@ -52,8 +52,12 @@ export interface TemplatePayload {
   custom_body?: string;
   /** The subscriber this broadcast is addressed to, for the unsubscribe link (`owner_broadcast` only). */
   subscriber_id?: string;
+  /** The broadcast's own subject, so it can be the headline rather than the salon name (`owner_broadcast` only). */
+  broadcast_subject?: string;
   /** Injected by the sender, never stored. */
   manage_url?: string;
+  /** Who signs a customer-facing email. Defaults to Christy. */
+  owner_name?: string;
   /** Owner password-recovery link. Injected by the sender, never stored. */
   reset_url?: string;
   /** How long the recovery link stays valid, for the copy. */
@@ -72,6 +76,10 @@ const INK = '#333333';
 const MUTED = '#6b7280';
 const LINE = '#dcdfe2';
 const BRAND = '#e05d38';
+/* The terracotta that clears 4.5:1 on light backgrounds, for text at label and
+   reference sizes. `BRAND` itself does not, and a booking reference is exactly
+   the string somebody squints at. Matches --brand-ink in src/index.css. */
+const BRAND_INK = '#8a3a1f';
 const PAPER = '#e8ebed';
 
 function when(iso?: string, timeZone = 'Europe/London'): string {
@@ -327,6 +335,21 @@ function layout(
   bodyHtml: string,
   p: TemplatePayload,
   footerReason: string,
+  /**
+   * Off for the messages that go to the owner about her own salon. A
+   * signature reading "Warm wishes, Christy, Kokolett Beauty UK" under a
+   * message telling Christy she has a new booking is the salon writing to
+   * itself. Everything a customer receives is signed, which is what makes it
+   * read as a person rather than a system.
+   */
+  signOff = true,
+  /**
+   * A line that belongs under the signature rather than in the message: the
+   * broadcast's unsubscribe link. It used to sit in the body, so a broadcast
+   * read greeting, message, "Unsubscribe from these emails.", then "Warm
+   * wishes, Christy" - an opt-out interrupting the salon mid-sentence.
+   */
+  footerNote = '',
 ): string {
   const contact = [
     p.salon_address ? esc(p.salon_address) : null,
@@ -385,8 +408,19 @@ function layout(
 
       <!-- Body -->
       <tr><td style="padding:32px">
-        <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.25;font-weight:700;color:${INK}">${esc(heading)}</h1>
+        <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.25;font-weight:700;color:${INK}">${esc(heading)}</h1>
         ${bodyHtml}
+        ${
+          signOff
+            ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:28px 0 0;border-top:1px solid ${LINE}">
+          <tr><td style="padding:20px 0 0">
+            <p style="margin:0 0 4px;font-size:15px;line-height:1.6;color:${INK}">Warm wishes,</p>
+            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:17px;font-weight:700;color:${INK}">${esc(p.owner_name ?? 'Christy')}</p>
+            <p style="margin:2px 0 0;font-size:13px;color:${MUTED}">${SALON}</p>
+          </td></tr>
+        </table>`
+            : ''
+        }
       </td></tr>
 
       <!-- Footer -->
@@ -397,6 +431,7 @@ function layout(
           <a href="mailto:${EMAIL}" style="color:${MUTED};text-decoration:none">${EMAIL}</a>
         </p>
         <p style="margin:0 0 12px">${social}</p>
+        ${footerNote ? `<p style="margin:0 0 12px">${footerNote}</p>` : ''}
         <p style="margin:0;padding-top:10px;border-top:1px solid ${LINE};font-size:11px;color:${MUTED}">
           ${esc(footerReason)} This message was sent from ${EMAIL}. If it reached you by
           mistake, please ignore it and nothing further will happen.
@@ -420,14 +455,32 @@ function details(p: TemplatePayload, label = 'Your appointment'): string {
   if (!p.starts_at) return '';
   const tz = p.timezone ?? 'Europe/London';
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:20px 0;border:1px solid ${LINE};border-radius:10px;border-collapse:separate">
-    <tr><td style="padding:18px 20px">
-      <p style="margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:${MUTED}">${esc(label)}</p>
-      <p style="margin:0 0 2px;font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;color:${INK}">${esc(when(p.starts_at, tz))}</p>
-      <p style="margin:0 0 14px;font-size:17px;font-weight:600;color:${BRAND}">${esc(clock(p.starts_at, tz))}${p.ends_at ? ` &ndash; ${esc(clock(p.ends_at, tz))}` : ''}</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:13px;color:${MUTED};border-top:1px solid ${LINE}">
-        ${p.service_name ? `<tr><td style="padding:10px 0 0">${esc(p.service_name)}</td></tr>` : ''}
-        ${p.reference ? `<tr><td style="padding:4px 0 0">Booking reference <span style="font-family:'SFMono-Regular',Consolas,monospace;color:${INK};font-weight:600">${esc(p.reference)}</span></td></tr>` : ''}
+  /* Tinted and bordered rather than outlined on white, and every value inside
+     it bold. This panel is the one thing the reader opened the email to check,
+     and the reference is what she reads back over the phone; both used to sit
+     in muted 13px body colour where a skim slides straight past them. */
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0;background:#fbf7f5;border:1px solid ${LINE};border-left:4px solid ${BRAND};border-radius:10px;border-collapse:separate">
+    <tr><td style="padding:20px 22px">
+      <p style="margin:0 0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:${BRAND_INK}">${esc(label)}</p>
+      <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.3;font-weight:700;color:${INK}">${esc(when(p.starts_at, tz))}</p>
+      <p style="margin:0 0 16px;font-size:18px;font-weight:700;color:${INK}">${esc(clock(p.starts_at, tz))}${p.ends_at ? ` to ${esc(clock(p.ends_at, tz))}` : ''}</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:14px;color:${INK};border-top:1px solid ${LINE}">
+        ${
+          p.service_name
+            ? `<tr>
+          <td style="padding:12px 12px 0 0;font-size:13px;color:${MUTED};white-space:nowrap;vertical-align:top">Service</td>
+          <td style="padding:12px 0 0;font-weight:700;color:${INK};text-align:right">${esc(p.service_name)}</td>
+        </tr>`
+            : ''
+        }
+        ${
+          p.reference
+            ? `<tr>
+          <td style="padding:8px 12px 0 0;font-size:13px;color:${MUTED};white-space:nowrap;vertical-align:top">Booking reference</td>
+          <td style="padding:8px 0 0;text-align:right"><span style="font-family:'SFMono-Regular',Consolas,Menlo,monospace;font-size:16px;font-weight:700;letter-spacing:0.5px;color:${BRAND_INK}">${esc(p.reference)}</span></td>
+        </tr>`
+            : ''
+        }
       </table>
     </td></tr>
   </table>`;
@@ -515,7 +568,44 @@ function plainShell(
     .join('\n\n');
 }
 
+/**
+ * Renders a template, then strips trailing whitespace from every line.
+ *
+ * This is what put a stray `=20` in delivered mail, next to the footer's
+ * address. The templates are written as indented template literals, so a
+ * conditional that resolves to '' leaves a line holding nothing but its
+ * indentation - three such lines in the enquiry email, two even with every
+ * field present. Quoted-printable is *required* to encode a space that ends a
+ * line as `=20` (RFC 2045 section 6.7, rule 3), and denomailer encodes every
+ * body as quoted-printable, so those lines went down the wire as runs of
+ * `=20`. Anything that then decodes the part imperfectly shows them.
+ *
+ * Stripping here rather than reformatting every template literal means a new
+ * template cannot reintroduce it, and there is nothing to remember.
+ * `\n` inside the text part is meaningful, so only spaces and tabs before a
+ * line ending go.
+ */
 export function render(
+  template: string,
+  p: TemplatePayload,
+  override?: TemplateOverride,
+): RenderedEmail {
+  const out = renderTemplate(template, p, override);
+  return {
+    ...out,
+    html: stripTrailingWhitespace(out.html),
+    text: stripTrailingWhitespace(out.text),
+  };
+}
+
+function stripTrailingWhitespace(value: string): string {
+  return value
+    .split('\n')
+    .map((l) => l.replace(/[ \t]+$/, ''))
+    .join('\n');
+}
+
+function renderTemplate(
   template: string,
   p: TemplatePayload,
   override?: TemplateOverride,
@@ -809,6 +899,7 @@ export function render(
             ),
           p,
           'You are receiving this because a password reset was requested for the salon dashboard.',
+          false,
         ),
         text: plainShell(
           `Somebody asked to reset the password on your salon dashboard. This link works once and expires in ${p.reset_ttl_minutes ?? 60} minutes.\n\n${p.reset_url ?? ''}\n\nIf this was not you, ignore this email and nothing changes.`,
@@ -836,6 +927,7 @@ export function render(
             button(`${SITE}/dashboard/inbox?tab=approvals`, 'Open approvals'),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
+          false,
         ),
         text: `${p.customer_name} (first visit) has requested an appointment. The slot is held until you decide.\n\n${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\n${SITE}/dashboard/inbox?tab=approvals`,
       };
@@ -856,6 +948,7 @@ export function render(
             button(`${SITE}/dashboard/calendar`, 'Open the calendar'),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
+          false,
         ),
         text: `${p.customer_name} has changed their appointment.\n\nOld time: ${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\nThe new one is on your calendar: ${SITE}/dashboard/calendar`,
       };
@@ -876,6 +969,7 @@ export function render(
             button(`${SITE}/dashboard/calendar`, 'Open the calendar'),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
+          false,
         ),
         text: `${p.customer_name} has booked in.\n\n${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}\n\n${SITE}/dashboard/calendar`,
       };
@@ -896,6 +990,7 @@ export function render(
             button(`${SITE}/dashboard/calendar`, 'Open the calendar'),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
+          false,
         ),
         text: `${p.customer_name} has cancelled.\n\nFreed: ${full(p.starts_at, tz)}\n${p.customer_email}${p.customer_mobile ? ` · ${p.customer_mobile}` : ''}${p.reason ? `\n\nTheir reason: ${p.reason}` : ''}\n\n${SITE}/dashboard/calendar`,
       };
@@ -916,6 +1011,7 @@ export function render(
             button(`${SITE}/dashboard/inbox?tab=requests`, 'Open enquiries'),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
+          false,
         ),
         text: `${p.full_name} could not find a slot and has asked for a time.\n${p.email}${p.mobile ? ` · ${p.mobile}` : ''}\nPrefers: ${(p.preferred_dates ?? []).join(', ') || 'no date given'} · ${p.flexibility ?? 'any'}\n\n${SITE}/dashboard/inbox?tab=requests`,
       };
@@ -936,6 +1032,7 @@ export function render(
             ),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
+          false,
         ),
         text: `Someone has made ${p.recent_attempts ?? 'several'} failed attempts to guess your salon sign-in link in the last hour. Your real link still works and nothing has been accessed. Change it any time from Settings → Security if you would feel safer.`,
       };
@@ -955,8 +1052,20 @@ export function render(
             (p.notes ? aside(esc(p.notes)) : ''),
           p,
           'You are receiving this as the owner of Kokolett Beauty UK.',
+          false,
         ),
-        text: `${p.full_name} sent a message from the website.\n${p.email}\n\n${p.notes ?? ''}`,
+        text: plainShell(
+          [
+            `${p.full_name ?? 'Somebody'} sent a message from the website.`,
+            p.email ?? '',
+            p.notes ?? '',
+          ]
+            .filter((part) => part !== '')
+            .join('\n\n'),
+          p,
+          'You are receiving this as the owner of Kokolett Beauty UK.',
+          true,
+        ),
       };
 
     // The owner's broadcast to the mailing list — same freeform-body shape
@@ -969,21 +1078,35 @@ export function render(
         .join('');
       const unsubscribeUrl = p.subscriber_id ? `${SITE}/unsubscribe/${p.subscriber_id}` : null;
       const unsubscribeHtml = unsubscribeUrl
-        ? small(
-            `<a href="${esc(unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline">Unsubscribe</a> from these emails.`,
-          )
+        ? `<a href="${esc(unsubscribeUrl)}" style="color:${MUTED};text-decoration:underline">Unsubscribe</a> from these emails.`
         : '';
+      /* The headline was the salon name, which every other template already
+         puts in the masthead directly above it — so a broadcast opened as
+         "Kokolett Beauty UK / Kokolett Beauty UK" while a confirmation opens
+         as "You are booked in". The subject the owner wrote is the headline
+         this message actually has; it reaches the payload from
+         `send_broadcast_as_owner` (migration 0081), since `render()` only
+         ever sees the payload and the subject lives on
+         `email_messages.subject`. Rows queued before 0081 keep the old
+         heading rather than rendering an empty one. */
+      const headline = p.broadcast_subject?.trim() || SALON;
       return {
         html: layout(
-          SALON,
+          headline,
           `A message from ${SALON}`,
-          line(`Hello ${name},`) + bodyHtml + unsubscribeHtml,
+          line(`Hello ${name},`) + bodyHtml,
           p,
           'You are receiving this because you subscribed to the Kokolett Beauty UK mailing list.',
+          true,
+          unsubscribeHtml,
         ),
-        text:
+        text: plainShell(
           `Hello ${p.full_name ?? 'there'},\n\n${p.custom_body ?? ''}` +
-          (unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ''),
+            (unsubscribeUrl ? `\n\nUnsubscribe: ${unsubscribeUrl}` : ''),
+          p,
+          'You are receiving this because you subscribed to the Kokolett Beauty UK mailing list.',
+          true,
+        ),
       };
     }
 
@@ -1003,7 +1126,12 @@ export function render(
           p,
           'You are receiving this because you are a customer of Kokolett Beauty UK.',
         ),
-        text: `Hello ${p.customer_name ?? p.full_name ?? 'there'},\n\n${p.custom_body ?? ''}`,
+        text: plainShell(
+          `Hello ${p.customer_name ?? p.full_name ?? 'there'},\n\n${p.custom_body ?? ''}`,
+          p,
+          'You are receiving this because you are a customer of Kokolett Beauty UK.',
+          true,
+        ),
       };
     }
 

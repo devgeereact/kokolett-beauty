@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import { Button } from '@/components/ui/Button';
+import { CardTitle } from '@/components/ui/Card';
 
 /** Shared header for the three search steps: a way back without losing the
  * "onClose fully closes" contract the two booking steps use instead. */
@@ -24,7 +25,7 @@ export function StepHeader({
         >
           ← Back to quick actions
         </button>
-        <h2 className="font-serif text-lg font-semibold text-foreground">{title}</h2>
+        <CardTitle>{title}</CardTitle>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Button variant="ghost" size="sm" onClick={onClose}>

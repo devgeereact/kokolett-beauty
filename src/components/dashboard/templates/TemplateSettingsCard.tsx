@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { Switch } from '@/components/ui/Switch';
 
 interface TemplateSettingsCardProps {
@@ -45,10 +45,8 @@ export function TemplateSettingsCard({
   ];
 
   return (
-    <Card className="p-5">
-      <h2 className="mb-4 font-serif text-base font-semibold text-foreground">
-        Template settings
-      </h2>
+    <Card pad="standard">
+      <CardHeading size="compact" title="Template settings" />
       <div className="space-y-4">
         {rows.map((row) => (
           <div key={row.key} className="flex items-center justify-between gap-3">

@@ -29,10 +29,12 @@ export function TodayDateTimeCard({
   const [hours, minutes] = formatTime(now, timezone).split(':');
 
   return (
-    <Card className="flex items-center justify-between px-8 py-8">
+    <Card pad="roomy" className="flex items-center justify-between">
       {/* `4xl` is the top of this project's fontSize scale (tailwind.config.ts
-          caps it there deliberately) — the rest of the size comes from
-          padding, not an out-of-scale arbitrary value. `font-mono` matches
+          caps it there deliberately) — the rest of the presence comes from the
+          `roomy` padding role, not an out-of-scale arbitrary value. It was a
+          one-off 32px until 2026-09-05, the only card in the app on a padding
+          the matrix does not name. `font-mono` matches
           every other clock/time display in the app (DESIGN.md §4: "Numerals,
           references, times → JetBrains Mono"), including this same value in
           the page header. */}

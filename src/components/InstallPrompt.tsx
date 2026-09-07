@@ -1,7 +1,8 @@
-import { type JSX, useState } from 'react';
+import { type JSX, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/Button';
+import { useBottomNotice } from '@/hooks/useBottomNotice';
 
 /** Remembers a dismissal, so declining once is not asked again next visit. */
 const DISMISSED_KEY = 'kb.install-prompt-dismissed';
@@ -27,11 +28,15 @@ function wasDismissed(): boolean {
  * stacked on top of each other.
  *
  * It now sits above `OfflineBanner` rather than on it, and a dismissal is
- * remembered.
+ * remembered. The offset comes from `useBottomNotice`, which measures what is
+ * actually below it — it used to be a hard-coded `bottom-20`, which is right
+ * only while the notice underneath happens to be under 80px tall.
  */
 export function InstallPrompt(): JSX.Element | null {
   const { isInstallable, promptInstall } = usePWAInstall();
   const [dismissed, setDismissed] = useState(wasDismissed);
+  const ref = useRef<HTMLDivElement>(null);
+  const bottom = useBottomNotice('install', ref, isInstallable && !dismissed);
 
   if (!isInstallable || dismissed) return null;
 
@@ -53,7 +58,11 @@ export function InstallPrompt(): JSX.Element | null {
   };
 
   return (
-    <div className="fixed inset-x-4 bottom-20 z-toast mx-auto flex max-w-md animate-fade-up items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-popover">
+    <div
+      ref={ref}
+      style={{ bottom: `calc(${bottom} + 1rem)` }}
+      className="fixed inset-x-4 z-toast mx-auto flex max-w-md animate-fade-up items-center justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-popover"
+    >
       <div>
         <p className="font-semibold text-foreground">Install this app</p>
         <p className="text-sm text-muted-foreground">Faster, offline-ready, no store.</p>

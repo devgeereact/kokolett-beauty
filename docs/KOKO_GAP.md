@@ -1122,3 +1122,208 @@ The pull request is green, including the `database` job, which applies all 78
 migrations to a fresh Postgres and then runs the pgTAP suite. That is what
 validated the new owner-guard block in `rls_test.sql`, which could not be run
 locally because the audit machine has no Docker.
+
+---
+
+## 13. Consistency retouch, 2026-09-05
+
+A UI/UX consistency pass over the whole surface: 18 public routes and 22 owner route
+states, the two shells, and every shared control. Design unchanged — same brand,
+same terracotta, same greys, same Source Serif 4 and Inter, same photography, same
+page composition, same navigation structure, same booking model. What changed is
+that the roles those things are used in are now named and shared instead of chosen
+per file.
+
+The findings came from a source review (`KOKOLETT-FULL-CONSISTENCY-REVIEW.md`,
+outside this repo), which explicitly could not open a browser. Every one was
+re-checked against a rendered page before being acted on, and two of them turned
+out to be already correct.
+
+### What was actually wrong
+
+| Finding | Evidence | Fixed |
+|---|---|---|
+| `CardHeader`/`CardBody`/`CardTitle` existed with **no consumers**; all card spacing and typography was caller-owned. | 119 `<Card>` call sites carrying four different paddings for the same job. | `Card` takes a `pad` role; `CardTitle`/`CardHeading` own title typography and the title/description/action block. 110 `pad` roles, 59 `CardHeading`s, 14 `CardTitle`s and the first real `CardHeader` in the codebase. |
+| Title-to-content spacing was `mb-1`+`mb-3`, `mb-1`+`mb-4`, `mb-2.5`, `mb-3`, `mb-4` or nothing. | Cards in the same grid row started their content at different heights. | `CardHeading` owns it: 4px title-to-description, 12px (compact) / 16px (standard) below. |
+| `SystemHealthPage` (×4) and `BookingFunnelCard` headings were sans-serif while every other card heading was serif. | The Email card sat directly beside serif-headed siblings. | Both go through the shared title components now, so the typeface is not a per-file decision. `SystemHealthPage`'s Scheduled-jobs card is also the first real consumer of `CardHeader`, which is the one card in the app whose body is a divided list with its own row edges. |
+| Grids of cards used `gap-2` (Customers), `gap-3` (Availability), `gap-4` (Today) and `gap-6` (Settings/Profile). | Four answers to one question. | Roles: section 24px, dense overview 16px, record list 12px. Today keeps 16px because it is a dense overview; Customers is a record grid at 12px; Availability was a section grid and is now 24px. |
+| Three Inbox queues, three treatments: Approvals and Requests `p-5` with `space-y-4`, Messages `p-4` with `space-y-3`. | One page. | All three are `pad="standard"` in a 12px record list. |
+| `DatePicker` was the only owner-console control at 8px radius, with no invalid styling at all. | An invalid date looked valid beside a text input that had gone red. | `rounded-sm` and the same `aria-invalid` treatment as `Field`. |
+| The public form control shape was retyped at thirteen call sites and had drifted to 40, 44 and 48px. | `ContactPage`, `BookPage` ×2, `SiteShell` ×2, `HomePage` ×2, `AboutPage`, `ServicesPage`, `SubscribePage`, `MyBookingsPage`, `UnsubscribePage`, `TestimonialsGrid`. | `publicField` / `publicButton` in `controlClasses.ts`. The home hero's two pills stay `rounded-full` as a documented pair. |
+| The dashboard's filter and search toolbars were hand-rolled sixteen times at three heights. | `h-9` on Appointments and Requests, `h-10` on Email and Audit, `h-11` on Customers and Templates — all beside a 36px `Button size="sm"`. | One `toolbarControl`, 36px. |
+| `Field`'s `Select` removed the native arrow with `appearance-none` and drew nothing. | A select looked exactly like a text input. | `appearance-none` removed, so the platform draws its own indicator — the same one the eight bare toolbar `<select>`s already show. A custom chevron in `Field` alone would have been the same inconsistency in a new place. |
+| Icon-only buttons were 28, 32 and 36px squares with two radii, side by side in the same rows. | `CustomerCard`, `RequestRow`, `AppointmentsTable`, `AppointmentRowMenu`, `CustomerDetailPanel`. | One `iconButtonClass`, 36px, `rounded-md`. |
+| Five underline filter bars, four identical and one drifted (Appointments: wider gap, different padding, bolder selected weight, a count pill that stayed grey when selected). None carried `aria-pressed`, so a screen reader heard a row of buttons with no state. | Requests, Services, Templates, Notifications, Appointments. | `filterBar` / `filterTab` / `filterCount`, in a labelled `role="group"`, with `aria-pressed`. Deliberately not `Tabs`: a filter narrows one list rather than switching panels. |
+| Three segmented switchers: two trays, three item heights (30/44/30px), three selected treatments. | `CalendarCapacityTabs`, `CalendarShell`, Inbox's queue switch. | One tray, one 44px item, one selected treatment. Semantics unchanged: link, toggle, and route-changing button respectively. |
+| 29 uses of `text-primary` as small text, where `brand-ink` is the documented token. | `#c24d2c` at 14px on `--background` is 3.99:1. | Swept. Three of them were real 1.4.3 failures on public pages (`GalleryPage`, `TestimonialsPage`, `Reviews`). |
+| `DashboardLayout` truncated its own title AND subtitle. | At 375px, "Good morning, Christy" read "Good morning, Ch…" and the instruction was cut mid-word. | Both wrap. |
+| `AssistantChatTab` rendered a second `<h1>` under the shell's. | Two `h1`s, no way to tell page from section. | `h2`, same size; the support cards became `h3`. |
+| `Tabs` claimed `role="tablist"` with no arrow keys, no roving tab stop and no panel relationship. | Every tab in the Tab order; a screen reader announced "tab 2 of 4" over a row of buttons. | Full pattern, plus `TabPanel`. Covered by `Tabs.test.tsx`. |
+| `Dropdown` claimed `role="menu"` and opened with focus still on the trigger. | Arrow keys did nothing; the only way in was Tab, through the rest of the page. | Opening focus, arrows skipping disabled items, Escape and selection both returning focus. Covered by `Dropdown.test.tsx`. |
+| `Tooltip` overwrote the child's `aria-describedby` and had no dismissal. | Wrapping a described control silently deleted its description; WCAG 1.4.13 requires dismissal. | Both fixed, covered by `Tooltip.test.tsx`. |
+| `useFocusTrap` collected disabled controls and did nothing if focus started outside the panel. | A dialog whose primary action is disabled while you decide wrapped Tab onto an unfocusable element and focus fell to `<body>`. | Selector excludes disabled/hidden; focus outside is pulled back in. |
+| `Pagination` stepped down to 32px targets at `md:` — a width, not a pointer type. | A portrait salon tablet is 768–834px CSS wide and entirely touch-operated. | `pointer-fine:` variant, 44px otherwise. `scripts/check-dead-classes.py` now knows the `pointer-*` variants. |
+| Email's `lg:grid-cols-[12rem_20rem_1fr]` left ~160px for the message body at 1024px. | Rendered at 1024 with the sidebar expanded: the detail pane overflowed and the page scrolled sideways. | Three columns from `wide:`; lanes become a wrapping pill row below that. |
+| Consent and Offline were both `fixed bottom-0 z-toast`; Install was a hard-coded `bottom-20`; toasts `bottom-4`/`bottom-6`. | Any two at once overlapped. | `useBottomNotice` measures and stacks them. Covered by `useBottomNotice.test.tsx`. |
+| `viewport-fit=cover` since the PWA work, no safe-area rule anywhere under `src/`. | — | `.overlay-pad-safe` for full-screen overlays; the notice stack adds the inset to its own offset. |
+| The public mobile menu had no current-page state, no opening focus, and no scroll of its own. | In landscape the six links plus the booking CTA are taller than the screen and the CTA was unreachable. | `NavLink` with `aria-current`, opening focus into the panel, `overflow-y-auto`. |
+| The Messages queue had no sidebar row, and Inbox's own switch is `md:hidden`. | On a desktop the only way to a Contact-page enquiry was to type `?tab=messages`. Refresh also had no Messages branch. | Nav row with a badge, a reload handle on `ContactMessagesQueue`, and a bare `/dashboard/inbox` now rewrites itself to an explicit `?tab=` so the sidebar can highlight it. |
+| The shell never applied the 1440px content cap it declares. `max-w-page`, `max-w-content` and `.layout-grid` had zero consumers. | At 1920px the Reports cards stretched to 1680px and a two-word empty state sat alone in a 780px box. | Header and `<main>` both cap at `max-w-content` and centre. Verified at 1920. |
+| `CustomerCard` and `RequestRow` labelled their detail-opening button "More options" and drew an ellipsis. | An ellipsis promises a menu. `AppointmentsTable` already had the right pattern. | Both use `AppointmentsTable`'s: an eye icon and "View X's details". `CustomerDetailPanel`'s genuine ellipsis menu keeps its label. |
+| `PhotoCard`'s text is anchored to the bottom of a fixed 3/4-ratio card. | Long copy, or ordinary copy at 200% zoom, grew upward into the card's own `overflow-hidden` and was cut mid-line. | Two clamped lines each, which also keeps the text in the darkest band of the scrim. |
+| The Today overview cards used the full-page `EmptyState`. | A 56px-tall dashed box inside a `p-4` card was taller than the card's own content. | `EmptyState` gained `size="compact"`. |
+| One real WCAG 1.4.3 failure found by axe during this pass. | `ApprovalPolicyFooter`'s callout was a whole card on `bg-tint-completed` carrying `text-muted-foreground`: 4.43:1 in dark mode. | Moved to `Card variant="accent"`, the design system's own highlighted-callout surface. Status tints belong to appointment status. |
+
+### Two findings that were wrong
+
+- **"CustomerCard and RequestRow have no keyboard path to the detail panel."** They
+  both already had a real `<button>`. The problem was the label, not the keyboard.
+- **"`Modal`'s scroll lock unlocks prematurely when a nested overlay closes."**
+  Read end to end: `ConfirmDialog` never touches `body.style.overflow`, and `Modal`
+  captures and restores the previous value, so nesting is correct. Left alone.
+
+### Documentation
+
+`docs/DESIGN.md` gained §16 (composition roles) and had three contradictions
+resolved against the code rather than the other way round: §1 said the dashboard was
+"sans throughout" while §15.5 said serif headings (§15.5 was right, and had been
+since 2026-08-31); §5.1 gave "`p-4` cards, `gap-3` lists" as a single answer that was
+never one; §6.1 named `rounded-md`/`rounded-lg` for controls, which is the one value
+nothing used. Three stale code comments were corrected the same way — `Button` and
+`StatusChip` both claimed opacity modifiers "silently produce nothing", which stopped
+being true when the palette moved to channel triplets, and `Field` claimed an 8px
+radius it has never had.
+
+### Verification
+
+- **Rendered, not read.** 40 route states (18 public, 22 owner) from the production
+  build under `vite preview`, in both colour schemes. **Before** at 375, 768, 1024 and
+  1440px; **after** at 320, 375, 414, 768, 1024 and 1440px — 320 and 414 were added
+  once the narrow-width work started, so those two widths are after-only and have no
+  paired baseline. Owner screens through a real signed-in session, no writes. Two more
+  public routes (`/reset-password`, `/unsubscribe/:id`) captured after only, and
+  1920px before/after for the content-cap change.
+- **axe-core** over 39 routes in both colour schemes, 78 runs: **0 violations**. The
+  one it found during the pass is in the table above.
+- **Keyboard** walkthroughs of every changed control, encoded as 14 new tests in
+  `Tabs.test.tsx`, `Dropdown.test.tsx`, `Tooltip.test.tsx` and
+  `useBottomNotice.test.tsx`.
+- **Gates:** typecheck, lint (0 warnings), `format:check`, `TZ=UTC` Vitest (363
+  tests), `lint:copy`, `lint:classes`, production build — all green.
+
+### Not verified
+
+- **Real devices.** Everything above is Chromium, including the "mobile" widths. No
+  iOS, no Android, no installed PWA. The safe-area rules in particular are
+  **NOT TESTED** on a device that has an inset: they are correct by construction and
+  are a no-op everywhere they were measured.
+- **Firefox and WebKit.** Only Chromium is installed on this machine
+  (`~/Library/Caches/ms-playwright` has `chromium` and no others).
+- **Populated owner screens.** The live project's Customers, Approvals, Requests and
+  Messages queues are all empty, so `CustomerCard`, `RequestRow`, `ApprovalCard` and
+  `ContactMessagesQueue` were verified by source and by their shared components, not
+  by a screenshot of a populated list. Long-name and large-count behaviour is
+  therefore **NOT TESTED** at the rendered level.
+- **The collapsed rail's tooltips.** Rail nav rows now carry a real accessible name
+  (`sr-only`, including the badge count) instead of relying on `title`. A *visible*
+  tooltip is still missing, and deliberately: the rail's own scroll container computes
+  `overflow-x` to `auto`, so a side tooltip wide enough to be worth showing would be
+  clipped by the 72px column. Closing that needs a portal-positioned tooltip, which is
+  its own piece of work. **Open, P3.**
+- **`e2e/booking-race.spec.ts` was not run.** It writes to the live project; nothing
+  in this pass touches the booking RPCs.
+
+### Open after this pass
+
+| Item | Why it is still open | Priority |
+|---|---|---|
+| Visible tooltips for the collapsed sidebar rail | Needs a portal-positioned tooltip to escape the rail's scroll container | P3 |
+| Real-device and cross-browser verification | No devices and no Firefox/WebKit binaries available here | P2 |
+| Rendered verification of populated owner queues | The live project has no customers or queued items | P3 |
+| `ContactPage` still hand-rolls its label/input markup | It now shares the public control classes and has real `<label for>` wiring, but not `Field`'s error/`aria-describedby` pairing. Its single page-level `role="alert"` is adequate for three fields; consolidating is worth doing when a fourth arrives | P3 |
+
+### Deployed, 2026-09-05
+
+`cpanel-deploy dist kokolettbeauty.com --keep cgi-bin --keep .well-known --go`.
+No `--with-htaccess`: nothing in this change touches `index.html` or `.htaccess`, and
+the live file was diffed against the repo's beforehand and found identical. The CSP
+script hash was asserted locally with CI's own script before shipping
+(`sha256-2sS670w3y+a111IgzoyiIyJ5ha3SL6VCrwVNnqtH1oM=`).
+
+Dry run first: 65 deletions, every one inside `assets/` and every one a superseded
+hashed chunk. Nothing outside `assets/` was removed.
+
+Verified live rather than by exit code:
+
+- the hashed entry chunk served at `https://www.kokolettbeauty.com/` matches
+  `dist/index.html`, and comes back as `text/javascript` rather than falling through
+  to the SPA's `text/html`;
+- the new stylesheet hash returns 200, so the CSS actually shipped;
+- `/`, `/book`, `/contact`, `/services`, `/gallery`, `/privacy` and `/accessibility`
+  all return 200, as do `sw.js`, `manifest.webmanifest` and `sitemap.xml`;
+- the Content-Security-Policy header is still served;
+- direct-to-origin still returns **403**, so the Cloudflare origin lock survived;
+- `ls ~/kokolettbeauty.com/assets/*.map` returns 0. No sourcemaps published.
+- **axe over the live site**, all 17 public routes in both colour schemes: clean.
+
+The owner dashboard was not re-checked against production after the deploy; its
+pre-deploy axe run was against the identical build under `vite preview`.
+
+### Route and state coverage
+
+Every route in `src/lib/routes.ts` and `src/App.tsx`, including the redirects and the
+parameterised ones. "Captured" means a full-page screenshot in both colour schemes
+from the production build: after at 320/375/414/768/1024/1440px, before at
+375/768/1024/1440px.
+
+| Route | Changed | Verification |
+|---|---|---|
+| `/` | Public CTA classes, `PhotoCard` clamp, small-text token | Captured |
+| `/about` | CTA class | Captured |
+| `/gallery` | Inline link token, `PhotoCard` clamp | Captured |
+| `/services` | CTA class, card padding role | Captured |
+| `/testimonials` | CTA class, inline link token, card padding role | Captured |
+| `/faqs` | Shell only | Captured |
+| `/contact` | Field/CTA classes, card padding role | Captured; form submitted with empty fields — 0 RPC calls, real validation message |
+| `/book` | CTA classes, card padding roles | Captured; date → slot → form walked, 22-stop keyboard walk, empty submit blocked with no write |
+| `/request-availability` | Card padding roles, `DatePicker` | Captured; picker opened, Escape closed it and returned focus |
+| `/subscribe` | CTA class, card padding roles | Captured |
+| `/privacy` `/cookies` `/booking-policy` `/terms` `/accessibility` `/complaints` | Shell and footer only | Captured |
+| `/my` · `/my/appointments` | Card padding roles, CTA class | Captured (signed out state; a signed-in customer session was not created) |
+| `/access/:token` | None | **Blocked** — redeeming a real single-use token would consume it |
+| `/unsubscribe/:subscriberId` | CTA class | Captured with a non-existent id; the RPC fires only on an explicit click, which was not made |
+| `/reset-password` | Card padding role | Captured (no recovery token; renders its signed-out state) |
+| `/:maybeSecretSlug` → 404 | Display-token fix on the numeral | Captured |
+| `/:maybeSecretSlug` → `LoginPage` | Card padding role, inline link token | **Inspected by source only.** Rendering it means visiting the owner's secret sign-in slug, and this document does not record that slug |
+| `/dashboard` | Card roles, heading block, empty-state size, small-text tokens, clock card padding | Captured |
+| `/dashboard/calendar` | Segmented control, `dvh` height, detail-panel heading and close button | Captured; view switcher measured at 44px |
+| `/dashboard/appointments` | Filter bar, toolbar controls, `dvh` height, icon button, pagination targets | Captured |
+| `/dashboard/inbox` (bare) | Rewrites to an explicit `?tab=` | Captured |
+| `/dashboard/inbox?tab=approvals` | Section heading, record-list gap, callout surface | Captured; the one axe violation in this pass was found and fixed here |
+| `/dashboard/inbox?tab=requests` | Filter bar, toolbar controls, record-list gap, row icon button | Captured |
+| `/dashboard/inbox?tab=messages` | Nav row, badge, Refresh branch, card padding role | Captured; queue switch measured at 44px |
+| `/dashboard/approvals` · `/dashboard/requests` | None | Redirects; unchanged, exercised by the tab captures above |
+| `/dashboard/customers` | Record grid gap, card padding role, toolbar controls, accurate detail action | Captured **empty** — the live project has no customers, so the populated card and its detail tabs are source-verified only |
+| `/dashboard/appointment` | Segmented control, card padding role | Captured; capacity tabs measured at 44px |
+| `/dashboard/services` | Filter bar, toolbar control, card padding roles | Captured |
+| `/dashboard/weekly` | Section gaps 12 → 24px, heading blocks, small-text tokens | Captured |
+| `/dashboard/reports` | Heading roles, toolbar control, chart-card padding, link token | Captured; also at 1920px for the content cap |
+| `/dashboard/assistant` | `h1` → `h2`, composer label, category cards, panel height | Captured |
+| `/dashboard/settings` | Heading blocks across thirteen cards, card padding roles | Captured |
+| `/dashboard/notifications` | Filter bar, heading blocks, card padding roles | Captured |
+| `/dashboard/email` | Three-column grid at 1024, subject wrapping, toolbar control, list height token | Captured; the 1024px overflow is fixed and re-measured |
+| `/dashboard/templates` | Filter bar, toolbar control, heading roles, card padding roles | Captured |
+| `/dashboard/templates/:key/edit` | Preview segment token, back-link token | **Not captured** — needs a template key in the URL; source-verified |
+| `/dashboard/broadcasts` | Card padding roles | Captured |
+| `/dashboard/profile` | Heading blocks, card padding roles | Captured |
+| `/dashboard/audit` | Toolbar control, card padding role | Captured |
+| `/dashboard/system-health` | Four sans-serif headings, `CardHeader` adoption, link token | Captured |
+| `/dashboard/daily-close` | Card padding roles | Captured |
+
+**Overlays and states.** The public mobile menu was opened at 375×812 and 740×360:
+opening focus lands inside it, Escape closes it and returns focus to the trigger, and
+in landscape it scrolls (595px of content in 360px) so the booking CTA stays
+reachable. Consent and Offline were rendered together at 320px: 256px and 85px tall,
+edge to edge, no overlap. Modals, drawers and confirmation dialogs are covered by
+their own unit tests plus the focus-trap suite. Toast placement is covered by
+`useBottomNotice.test.tsx`.

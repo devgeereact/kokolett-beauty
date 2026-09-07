@@ -127,6 +127,28 @@ export function isOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
 
+/**
+ * An error whose message an Edge Function already wrote for the person
+ * reading it.
+ *
+ * `toAppError` below matches a raised Postgres exception name against a fixed
+ * vocabulary and turns anything unrecognised into "Something went wrong.
+ * Please try again." That is the right default for a raw Postgres string,
+ * which is unhelpful and a small information leak. It is the wrong default
+ * for an Edge Function's own `{ error }` body: those are British English
+ * sentences written for the owner, and flattening them is how "Photo upload
+ * is not configured yet." reached the About photo card as "Something went
+ * wrong", sending somebody looking for a fault in their file rather than at a
+ * missing key. Marking them as display-ready is what lets `toAppError` pass
+ * them through untouched.
+ */
+export class DisplayableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DisplayableError';
+  }
+}
+
 /** The offline error, for a caller that wants to refuse before it tries. */
 export function offlineError(): AppError {
   return { code: 'OFFLINE', message: OFFLINE_MESSAGE };
@@ -145,6 +167,13 @@ export function toAppError(error: unknown): AppError {
   // customer on a train nothing about why, or that waiting would fix it.
   if (isNetworkFailure(error, raw)) {
     return { code: 'OFFLINE', message: OFFLINE_MESSAGE, cause: error };
+  }
+
+  // After the network check, because a `DisplayableError` only exists once a
+  // response actually arrived, and before the code vocabulary, because its
+  // message is already the copy to show.
+  if (error instanceof DisplayableError) {
+    return { code: 'UNKNOWN', message: error.message, cause: error };
   }
 
   const matched = CODES.find((code) => raw.includes(code));

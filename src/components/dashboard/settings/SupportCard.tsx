@@ -1,15 +1,18 @@
 import type { JSX } from 'react';
 import { ChevronRight, HelpCircle, Mail, MessageSquareText } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { routes } from '@/lib/routes';
 import { CONTACT_EMAIL } from '@/lib/business';
 
 /** Real destinations only — a mailto to the salon's own inbox and the booking policy page. No fabricated help centre content. */
 export function SupportCard(): JSX.Element {
   return (
-    <Card className="flex h-full flex-col justify-center p-5">
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">Support</h2>
-      <p className="mb-3 text-sm text-muted-foreground">Get help or share feedback.</p>
+    <Card pad="standard" className="flex h-full flex-col justify-center">
+      <CardHeading
+        size="compact"
+        title="Support"
+        description="Get help or share feedback."
+      />
       <div className="divide-y divide-border">
         <a
           href={routes.public.bookingPolicy}

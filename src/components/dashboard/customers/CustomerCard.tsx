@@ -1,11 +1,12 @@
 import type { JSX } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { formatDateShort } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { CustomerWithStats } from '@/services/customerService';
+import { iconButtonClass } from '@/components/ui/controlClasses';
 
 function isNew(customer: CustomerWithStats): boolean {
   if (customer.completed_count > 1) return false;
@@ -37,8 +38,9 @@ export function CustomerCard({
 
   return (
     <Card
+      pad="record"
       className={cn(
-        'flex cursor-pointer flex-col gap-1.5 p-3 transition-colors',
+        'flex cursor-pointer flex-col gap-1.5 transition-colors',
         selected ? 'border-primary ring-1 ring-primary' : 'hover:border-foreground/20',
       )}
       onClick={onSelect}
@@ -59,16 +61,19 @@ export function CustomerCard({
             <p className="truncate text-sm text-muted-foreground">{customer.mobile}</p>
           )}
         </div>
+        {/* This opens the detail panel; it is not a menu. It said "More
+            options" and showed an ellipsis, which promises one. Same action,
+            same icon and the same wording as `AppointmentsTable`'s. */}
         <button
           type="button"
-          aria-label={`More options for ${customer.full_name}`}
+          aria-label={`View ${customer.full_name}'s details`}
           onClick={(e) => {
             e.stopPropagation();
             onSelect();
           }}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={iconButtonClass}
         >
-          <MoreHorizontal aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+          <Eye aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
 

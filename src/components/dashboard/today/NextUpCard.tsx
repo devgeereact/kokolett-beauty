@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { Clock, Star } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeading } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/States';
 import { StatusChip } from '@/components/ui/StatusChip';
 import { formatDuration, formatRelative, formatTime } from '@/lib/format';
@@ -33,7 +33,7 @@ function NextUpRow({
             <p className="truncate font-serif text-base font-semibold text-foreground">
               {appointment.customer_name}
             </p>
-            <span className="shrink-0 text-xs font-medium text-primary">
+            <span className="shrink-0 text-xs font-medium text-brand-ink">
               {capitalize(formatRelative(appointment.starts_at, now))}
             </span>
           </div>
@@ -70,7 +70,7 @@ function NextUpRow({
 
       {appointment.customer_note && (
         <div className="mt-3 rounded-lg bg-tint-brand p-3">
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-ink">
             <Star aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
             Client notes
           </p>
@@ -110,13 +110,12 @@ export function NextUpCard({
   className?: string;
 }): JSX.Element {
   return (
-    <Card className={cn('flex h-full flex-col p-4', className)}>
-      <h2 className="mb-2.5 font-serif text-base font-semibold text-foreground">
-        Next up
-      </h2>
+    <Card pad="compact" className={cn('flex h-full flex-col', className)}>
+      <CardHeading size="compact" title="Next up" />
 
       {appointments.length === 0 && (
         <EmptyState
+          size="compact"
           title="Nothing on the books"
           description="Once something's confirmed, it'll show up here."
         />

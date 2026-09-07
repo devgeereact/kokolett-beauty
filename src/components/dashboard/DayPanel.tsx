@@ -1,6 +1,6 @@
 import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardTitle } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Input, Select } from '@/components/ui/Field';
@@ -166,11 +166,9 @@ export function DayPanel({
   const freeCount = slots.filter((s) => !s.is_booked && !s.is_past).length;
 
   return (
-    <Card className="p-5">
+    <Card pad="standard">
       <div className="mb-1 flex items-start justify-between gap-2">
-        <h2 className="font-serif text-lg font-semibold text-foreground">
-          {formatDateLong(`${date}T12:00:00Z`, 'UTC')}
-        </h2>
+        <CardTitle>{formatDateLong(`${date}T12:00:00Z`, 'UTC')}</CardTitle>
         {loading && <Spinner className="h-4 w-4" />}
       </div>
       <p className="mb-4 text-sm text-muted-foreground">

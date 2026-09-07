@@ -57,7 +57,7 @@ export function ThemeToggle({ className }: { className?: string }): JSX.Element 
           'h-9 rounded-lg px-2 text-xs font-medium',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           theme === 'system'
-            ? 'text-primary'
+            ? 'text-brand-ink'
             : 'text-muted-foreground hover:text-foreground',
         )}
         aria-pressed={theme === 'system'}

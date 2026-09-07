@@ -35,6 +35,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useToast } from '@/context/ToastContext';
 import { cn } from '@/lib/utils';
 import type { EmailMessage } from '@/types';
+import { toolbarControl } from '@/components/ui/controlClasses';
 
 type Lane = 'inbox' | 'all' | EmailMessage['status'];
 
@@ -243,15 +244,22 @@ export function EmailPage(): JSX.Element {
           description="Booking confirmations, reminders and receipts will appear here as they go out."
         />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[12rem_20rem_1fr]">
-          <div className="space-y-1">
+        /* Three columns only from `wide:` (1440px), not from `lg:` (1024px).
+           Measured at 1024 with the sidebar expanded, the fixed 12rem and
+           20rem columns plus two 24px gaps and the 32px page gutters left
+           about 160px for the message body, so the detail pane overflowed the
+           viewport and the whole page scrolled sideways. Below `wide:` the
+           five lanes become a wrapping row of the same pills above the
+           master/detail pair, which is the part that needs the width. */
+        <div className="grid gap-6 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] wide:grid-cols-[12rem_20rem_minmax(0,1fr)]">
+          <div className="flex flex-wrap gap-1 lg:col-span-2 wide:col-span-1 wide:flex-col wide:flex-nowrap">
             {LANES.map((l) => (
               <button
                 key={l.key}
                 type="button"
                 onClick={() => setLane(l.key)}
                 className={cn(
-                  'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium',
+                  'flex min-h-touch flex-1 items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium wide:w-full wide:flex-none',
                   lane === l.key
                     ? 'bg-tint-brand text-brand-ink'
                     : 'text-foreground hover:bg-muted',
@@ -266,7 +274,7 @@ export function EmailPage(): JSX.Element {
             ))}
           </div>
 
-          <Card className="flex flex-col p-0">
+          <Card className="flex flex-col">
             <div className="border-b border-border p-3">
               <div className="relative">
                 <Search
@@ -279,11 +287,11 @@ export function EmailPage(): JSX.Element {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search emails…"
-                  className="h-10 w-full rounded-sm border border-border bg-input pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(toolbarControl, 'w-full pl-9')}
                 />
               </div>
             </div>
-            <div className="max-h-[640px] flex-1 divide-y divide-border overflow-y-auto">
+            <div className="max-h-chat-panel flex-1 divide-y divide-border overflow-y-auto">
               {filtered.length === 0 ? (
                 <p className="p-4 text-sm text-muted-foreground">No emails match.</p>
               ) : (
@@ -322,10 +330,14 @@ export function EmailPage(): JSX.Element {
           </Card>
 
           {selected ? (
-            <Card className="p-5">
+            <Card pad="standard">
               <div className="mb-4 flex items-start justify-between gap-3 border-b border-border pb-4">
                 <div className="min-w-0">
-                  <h2 className="mb-1 truncate font-serif text-lg font-semibold text-foreground">
+                  {/* Wraps rather than truncates: this is the heading of the
+                      thing you opened, not a row summary, and a subject line
+                      cut at "New booking: Corr…" is the one place the full
+                      text matters most. */}
+                  <h2 className="mb-1 break-words font-serif text-lg font-semibold text-foreground">
                     {selected.subject}
                   </h2>
                   <p className="text-sm text-muted-foreground">
@@ -336,7 +348,7 @@ export function EmailPage(): JSX.Element {
                   {selected.customer_id && (
                     <Link
                       to={`${routes.owner.customers}?customer=${selected.customer_id}`}
-                      className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                      className="flex items-center gap-1 text-sm font-medium text-brand-ink hover:underline"
                     >
                       View customer
                       <ArrowRight
@@ -417,7 +429,7 @@ export function EmailPage(): JSX.Element {
               </div>
             </Card>
           ) : (
-            <Card className="p-5">
+            <Card pad="standard">
               <p className="text-sm text-muted-foreground">
                 Select an email to see its details.
               </p>

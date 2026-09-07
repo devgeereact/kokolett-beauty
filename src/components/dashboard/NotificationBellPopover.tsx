@@ -88,7 +88,7 @@ export function NotificationBellPopover({
             <button
               type="button"
               onClick={() => markAllRead((events ?? []).map((e) => e.id))}
-              className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              className="flex items-center gap-1 text-xs font-medium text-brand-ink hover:underline"
             >
               <CheckCheck aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
               Mark all as read
@@ -152,7 +152,7 @@ export function NotificationBellPopover({
           <Link
             to={routes.owner.notifications}
             onClick={() => setOpen(false)}
-            className="block border-t border-border p-3 text-center text-sm font-medium text-primary hover:underline"
+            className="block border-t border-border p-3 text-center text-sm font-medium text-brand-ink hover:underline"
           >
             View all notifications
           </Link>

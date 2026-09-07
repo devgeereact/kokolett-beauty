@@ -13,6 +13,7 @@ import {
 import { errorMessage } from '@/lib/errors';
 import { formatDateTime } from '@/lib/format';
 import type { CalendarFeed } from '@/types';
+import { CardHeading } from '@/components/ui/Card';
 
 /**
  * Subscribe the owner's own calendar to the salon diary.
@@ -71,13 +72,11 @@ export function CalendarSubscription(): JSX.Element {
 
   return (
     <>
-      <h2 className="mb-1 font-serif text-base font-semibold text-foreground">
-        Your Calendar
-      </h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Subscribe to your salon diary so appointments appear alongside your personal
-        calendar.
-      </p>
+      <CardHeading
+        size="compact"
+        title="Your Calendar"
+        description="Subscribe to your salon diary so appointments appear alongside your personal calendar."
+      />
 
       <div>
         {fresh && (

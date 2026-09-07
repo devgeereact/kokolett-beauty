@@ -192,6 +192,21 @@ export interface BroadcastResult {
   recipient_count: number;
 }
 
+/**
+ * Shape returned by `public.broadcast_audience()` (migration 0081) — who a
+ * broadcast would reach, counted server-side by the same rule the send uses,
+ * so the number on the screen and the number that gets emailed cannot drift.
+ */
+export interface BroadcastAudience {
+  recipient_count: number;
+  /** On the list because they ticked marketing consent as a customer. */
+  from_consent: number;
+  /** On the list because they signed up at /subscribe. */
+  from_website: number;
+  /** Explicitly opted out. Counted so a missing recipient has an explanation. */
+  opted_out: number;
+}
+
 /** Shape returned by `public.export_customer_data()` — a GDPR subject-access package for one customer. */
 export interface CustomerDataExport {
   exported_at: string;

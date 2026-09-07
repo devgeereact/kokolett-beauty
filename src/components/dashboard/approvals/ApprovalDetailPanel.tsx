@@ -54,7 +54,7 @@ export function ApprovalDetailPanel({
   onDeclineCancel: () => void;
 }): JSX.Element {
   return (
-    <Card className="flex flex-col gap-4 p-5">
+    <Card pad="standard" className="flex flex-col gap-4">
       {!row && (
         <p className="text-sm text-muted-foreground">
           Select a pending approval to see its details here.

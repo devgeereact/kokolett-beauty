@@ -20,6 +20,7 @@ import { routes } from '@/lib/routes';
 import { FOCUSABLE_SELECTOR, useFocusTrap } from '@/hooks/useFocusTrap';
 import { cn } from '@/lib/utils';
 import type { AppointmentDetailed, Customer } from '@/types';
+import { CardHeading } from '@/components/ui/Card';
 
 /**
  * The cross-nav quick-action launcher.
@@ -367,19 +368,16 @@ export function QuickActionLauncher(): JSX.Element {
           >
             {step.kind === 'menu' && (
               <div>
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-serif text-lg font-semibold text-foreground">
-                      Quick actions
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Jump straight to the 4 things you do most.
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={close}>
-                    Close
-                  </Button>
-                </div>
+                <CardHeading
+                  size="standard"
+                  title="Quick actions"
+                  description="Jump straight to the 4 things you do most."
+                  actions={
+                    <Button variant="ghost" size="sm" onClick={close}>
+                      Close
+                    </Button>
+                  }
+                />
                 <div className="space-y-1.5">
                   {ACTIONS.map((action) => (
                     <button

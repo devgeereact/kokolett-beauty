@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 
 export function YourCalendarCard(): JSX.Element {
   return (
-    <Card className="p-5">
+    <Card pad="standard">
       <CalendarSubscription />
     </Card>
   );

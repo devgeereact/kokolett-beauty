@@ -184,6 +184,34 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
   }
 
+  /* The salon's own contact details, read once and merged into every payload
+     below.
+     
+     Each caller used to build its own payload, so the footer a customer saw
+     depended on which trigger queued the message: the booking mails carried
+     `salon_address`, `salon_phone`, `instagram_url` and `google_review_url`
+     and rendered a full footer, while `contact_message_received` and the
+     broadcasts carried none of them and rendered a footer with no address, no
+     WhatsApp link, no Instagram and no reviews link. Same shell, different
+     contents, from the same salon. Reading them here means one query per run
+     and one footer everywhere, and it cannot drift again when a new template
+     is added, because nothing has to remember to pass them. */
+  const { data: settingsRow } = await supabase
+    .from('booking_settings')
+    .select('address_line, phone, instagram_url, google_review_url, timezone, business_name')
+    .eq('id', true)
+    .maybeSingle();
+
+  const salonPayload: Record<string, unknown> = settingsRow
+    ? {
+        salon_address: settingsRow.address_line ?? undefined,
+        salon_phone: settingsRow.phone ?? undefined,
+        instagram_url: settingsRow.instagram_url ?? undefined,
+        google_review_url: settingsRow.google_review_url ?? undefined,
+        timezone: settingsRow.timezone ?? undefined,
+      }
+    : {};
+
   let sent = 0;
   let failed = 0;
 
@@ -215,7 +243,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
         },
       });
 
-      const body = render(row.template, row.payload ?? {}, overrides.get(row.template));
+      /* Payload last: a value the queueing function deliberately set for this
+         one message wins over the salon-wide default. Nothing currently
+         overrides these, but a per-message timezone is exactly the sort of
+         thing that would, and silently losing it would be hard to spot. */
+      const body = render(
+        row.template,
+        { ...salonPayload, ...(row.payload ?? {}) },
+        overrides.get(row.template),
+      );
 
       await client.send({
         from: `${headerSafe(fromName)} <${fromEmail}>`,

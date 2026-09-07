@@ -66,7 +66,7 @@ export function SiteFooter({
                   <span className="text-muted-foreground">Mobile: </span>
                   <a
                     href={`tel:${settings.phone.replace(/\s/g, '')}`}
-                    className="text-foreground hover:text-primary"
+                    className="text-foreground hover:text-brand-ink"
                   >
                     {settings.phone}
                   </a>
@@ -76,7 +76,7 @@ export function SiteFooter({
                 <span className="text-muted-foreground">Email: </span>
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
-                  className="text-foreground hover:text-primary"
+                  className="text-foreground hover:text-brand-ink"
                 >
                   {CONTACT_EMAIL}
                 </a>

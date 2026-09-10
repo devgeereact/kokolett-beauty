@@ -80,6 +80,11 @@ The build target is a **static** PWA on cPanel.
 - `src/lib/env.ts` is the only file that may read `import.meta.env`, and it must read
   **static** `import.meta.env.VITE_*` members. A dynamic `import.meta.env[key]` defeats
   Vite's replacement and inlines every variable into the public bundle.
+- The `VITE_` prefix is a **publication decision**. Never move a server-side secret
+  under it, even in a local `.env`: it is one `import.meta.env` read away from a public
+  bundle, and the Edge Functions look for the bare name, so the rename also breaks them.
+  `.env.example` says which name each variable takes. `npm run lint:secrets` checks a
+  build against the env file and names anything that should not be there.
 
 ## 5. Quality gates (a PR must pass all)
 - `npm run typecheck` — zero errors, no implicit `any`.

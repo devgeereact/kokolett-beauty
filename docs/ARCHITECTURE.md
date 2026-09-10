@@ -306,7 +306,7 @@ first column are descriptions, not event topics on a bus.
 | Outbound send                     | `drain-email-queue`, `pg_cron` every 5m | SMTP send with retry, backoff and logging                                              |
 | Stale holds                       | `expire-pending-approvals`, hourly      | `expire_pending_approvals()` releases them                                             |
 | The repeating week                | `extend-weekly-template`, nightly       | Fills undecided days forward to the booking horizon                                    |
-| Review cache                      | `sync-google-reviews`, hourly           | Refreshes `google_reviews` / `google_place_snapshot`                                   |
+| Review cache                      | `sync-google-reviews`, hourly           | Refreshes `google_reviews` / `google_place_snapshot`. The snapshot write is an `upsert`, because the singleton row went missing in production once and an `update` reported success while storing nothing (`docs/SCHEMA.md` §16) |
 | Spent tokens                      | `purge-access-tokens`, nightly          | Deletes used and expired `customer_access_tokens`                                      |
 | Retention                         | `purge-expired-personal-data`, weekly   | `0046`'s two-year sweep of `email_messages` and `availability_requests`                |
 | Sign-in attempts                  | `purge-secret-login-attempts`, `0051`   | Prunes the rate-limit table behind the owner's secret sign-in slug                     |

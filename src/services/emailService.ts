@@ -7,8 +7,10 @@ import type {
 } from '@/types';
 
 /**
- * `email_messages` — the delivery log and retry queue an Inngest worker
- * drains (`docs/SCHEMA.md` §10). Mostly read-only here: nothing on the
+ * `email_messages` — the delivery log and retry queue that a `pg_cron` job
+ * drains every five minutes through the `send-emails` Edge Function
+ * (`docs/SCHEMA.md` §10). There is no Inngest, despite an earlier design that
+ * assumed one. Mostly read-only here: nothing on the
  * dashboard composes or resends a *transactional* email directly, it only
  * shows what the automated sender already queued and its outcome.
  * `sendCustomEmailAsOwner` (migration 0036) is the one write — a one-off

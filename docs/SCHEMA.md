@@ -71,7 +71,7 @@ migration that created them as the authoritative source.
 | `email_templates`       | `0032`     | owner-editable overlay keyed by template `key`; `0037` added `include_in_automation`, default-off in practice                    |
 | `email_template_revisions` | `0061`  | append-only history of `email_templates`: `template_key`, `subject`, `html_body`, `created_at`. Written only by a trigger, never inserted directly; SELECT-only for the owner |
 | `google_reviews`        | `0017`     | synced review cache: `author_name`, `rating`, `body`, `published_at`, `fetched_at`                                               |
-| `google_place_snapshot` | `0017`     | single-row (`id boolean primary key`) aggregate: `rating`, `rating_count`, `last_error`. `0038` removed its public read          |
+| `google_place_snapshot` | `0017`     | single-row (`id boolean primary key`) aggregate: `rating`, `rating_count`, `last_error`. `0038` removed its public read. The row is seeded by `0017` and **must exist**: delete it and the hourly sync silently stops recording the rating (§16) |
 | `calendar_feeds`        | `0019`     | ICS feed tokens: `token_hash`, `label`, `fetch_count`, `revoked_at`. The raw token exists only in the URL                        |
 | `subscribers`           | `0017`     | mailing list: `email` (citext, unique), `source`, `confirmed`, `unsubscribed_at`                                                 |
 | `secret_login_attempts` | `0051`     | hashed-IP lockout counter for the secret owner login (`ip_hash`, `attempted_at`); no anon/authenticated policies, service-role only |
@@ -778,6 +778,18 @@ most recent reviews with text.
 
 `booking_settings` gains `google_place_id`, `instagram_url`, `address_line`,
 `phone` so the owner can configure her presence without a code change.
+
+**The snapshot row is load-bearing, and its absence is silent.**
+`google_place_snapshot` is a singleton keyed `id = true`, seeded once by this
+migration. Until 2026-09-10 `sync-reviews` wrote to it with
+`update(...).eq('id', true)`, which matches nothing and reports success when the
+row is missing. Production lost the row in the 2026-09-06 handover clear, so for
+three days every hourly sync stored the reviews and dropped the rating: the
+Testimonials page rendered reviews with no star line and no `AggregateRating`,
+and `last_error` had nowhere to land, so the failure could not even report
+itself. The row was restored and both writes in `sync-reviews/index.ts` are now
+`upsert`s, so a missing singleton heals itself on the next run. If you add
+another seeded singleton, write to it the same way.
 
 ## 17. Migration `0018` — service menu and mail
 

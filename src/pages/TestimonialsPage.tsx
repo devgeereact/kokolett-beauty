@@ -101,7 +101,10 @@ export function TestimonialsPage(): JSX.Element {
         {!loading && reviews.length === 0 && (
           <p className="text-center text-muted-foreground">
             No reviews are showing yet, so{' '}
-            <Link to={routes.public.book} className="text-brand-ink hover:underline">
+            <Link
+              to={routes.public.book}
+              className="text-brand-ink underline underline-offset-2"
+            >
               be one of the first to book
             </Link>
             .

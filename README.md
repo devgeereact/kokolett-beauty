@@ -186,6 +186,7 @@ The server has **no Node** — build locally, ship only the artifacts.
 | `npm run test:hooks`   | Verifies the tracked hookify safety rules         |
 | `npm run lint:copy`    | No em or en dashes in copy (CI gate — fails the build) |
 | `npm run lint:classes` | Fails on a Tailwind class that produces no CSS (CI gate; needs a build first) |
+| `npm run lint:secrets` | Fails if a non-publishable value from `.env` reached `dist/` (local only; needs a build first) |
 | `npm run test:e2e`     | Playwright, against a real Supabase project      |
 | `npm run test:e2e:ui`  | Playwright in UI mode                            |
 
@@ -194,6 +195,30 @@ The server has **no Node** — build locally, ship only the artifacts.
 > second booking against it, and cleans up as the owner. Run the read-only specs on
 > their own with `npx playwright test e2e/marketing-site.spec.ts e2e/consent.spec.ts`
 > unless you mean to write.
+
+### Testing a whole journey without touching the live site
+
+The site is live, so end-to-end work belongs on a local stack rather than the real
+project. `supabase start` gives you Postgres with every migration applied, plus
+auth and PostgREST; point a build at it and the whole app runs against data you
+own:
+
+```bash
+supabase start                       # if another project holds 54321-54327,
+                                     # change the ports and project_id in a worktree copy
+VITE_SUPABASE_URL=http://127.0.0.1:54321 \
+VITE_SUPABASE_ANON_KEY=<the anon key supabase start prints> \
+  npm run build && npm run preview
+```
+
+Seed an owner (an auth user, a `profiles` row, a `staff` row with a `login_slug`)
+and some `availability_slots` — **not** just `weekly_template`, since
+`available_slots()` reads published slots and the booking page is empty without
+them. Two things that will cost you an hour otherwise: supabase-js derives its
+storage key from the first label of the host, so a local session lives under
+`sb-127-auth-token`, and an Edge Function can be run on its own with
+`deno run --allow-net --allow-env supabase/functions/<name>/index.ts` when the
+CLI will not serve it.
 
 ---
 

@@ -88,7 +88,7 @@ export function AppointmentsTable({
     {
       key: 'service',
       header: 'Service',
-      className: 'max-w-[130px] truncate text-foreground',
+      className: 'max-w-48 truncate text-foreground',
       render: (a) => a.service_name,
     },
     {

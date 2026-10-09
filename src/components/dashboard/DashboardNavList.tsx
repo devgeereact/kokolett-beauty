@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { useEffect, useRef, type JSX } from 'react';
 import { Link } from 'react-router-dom';
 import { isEntryActive, type NavEntry, type NavGroup } from '@/lib/dashboardNav';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,20 @@ export function DashboardNavList({
   search,
   onNavigate,
 }: DashboardNavListProps): JSX.Element {
+  /*
+   * The nav list scrolls inside the sidebar once the six groups outgrow the
+   * viewport, and nothing was scrolling the current entry back into it. On a
+   * ~900px-tall screen that put Audit Log, System Health, Broadcasts and
+   * Settings below the fold, so arriving on one of those pages showed a
+   * sidebar with no highlighted item anywhere — the owner lost the only cue
+   * for where she was. `block: 'nearest'` moves the list by the minimum
+   * needed and leaves it alone when the entry is already visible.
+   */
+  const activeRef = useRef<HTMLAnchorElement | null>(null);
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [pathname, search, rail]);
+
   const renderEntry = (entry: NavEntry): JSX.Element => {
     const active = isEntryActive(entry, pathname, search);
     const Icon = entry.icon;
@@ -37,6 +51,7 @@ export function DashboardNavList({
       <Link
         key={entry.to}
         to={entry.to}
+        ref={active ? activeRef : undefined}
         onClick={onNavigate}
         aria-current={active ? 'page' : undefined}
         title={rail ? entry.label : undefined}

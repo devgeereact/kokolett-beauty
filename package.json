@@ -27,7 +27,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@sentry/react": "^11.4.0",
+    "@sentry/react": "^10.76.2",
     "@supabase/supabase-js": "^2.117.2",
     "clsx": "^2.1.1",
     "dompurify": "^3.4.14",

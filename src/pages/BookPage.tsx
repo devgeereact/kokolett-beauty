@@ -1,4 +1,4 @@
-import { type FormEvent, type JSX, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, type JSX, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SiteShell } from '@/components/public/SiteShell';
 import { Button } from '@/components/ui/Button';
@@ -75,6 +75,22 @@ export function BookPage(): JSX.Element {
   const [details, setDetails] = useState<Details>(EMPTY_DETAILS);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /*
+   * Field-level, not another line above the button. The three checks below
+   * all name the field they are about ("Please give your full name..."), but
+   * the message rendered at the bottom of the form, so on a phone the
+   * customer read a complaint about a control that was off the top of the
+   * screen and had to go looking for it. `Field`'s own `error` prop already
+   * does the `aria-invalid`/`aria-describedby` pairing; this just uses it,
+   * and moves the cursor to the field that needs fixing.
+   */
+  const [fieldError, setFieldError] = useState<{
+    field: 'fullName' | 'email' | 'mobile';
+    text: string;
+  } | null>(null);
+  const fullNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const mobileRef = useRef<HTMLInputElement>(null);
   const [result, setResult] = useState<BookingResult | null>(null);
 
   const activeDate = openDate ?? openDates[0] ?? null;
@@ -84,6 +100,16 @@ export function BookPage(): JSX.Element {
     trackEvent('book_page_viewed');
   }, []);
 
+  const rejectField = (
+    field: 'fullName' | 'email' | 'mobile',
+    control: HTMLInputElement | null,
+    text: string,
+  ): void => {
+    setFieldError({ field, text });
+    setError(null);
+    control?.focus();
+  };
+
   const book = async (e?: FormEvent): Promise<void> => {
     e?.preventDefault();
     if (!slot) return;
@@ -92,16 +118,27 @@ export function BookPage(): JSX.Element {
     // validation that only lives in the browser is a suggestion.
     const nameParts = details.fullName.trim().split(/\s+/).filter(Boolean);
     if (nameParts.length < 2) {
-      return setError('Please give your full name, first name and surname.');
+      return rejectField(
+        'fullName',
+        fullNameRef.current,
+        'Please give your full name, first name and surname.',
+      );
     }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(details.email.trim())) {
-      return setError(
+      return rejectField(
+        'email',
+        emailRef.current,
         'Please give a valid email address, because your confirmation goes there.',
       );
     }
     if (details.mobile.replace(/\D/g, '').length < 7) {
-      return setError('Please give a mobile number the salon can reach you on.');
+      return rejectField(
+        'mobile',
+        mobileRef.current,
+        'Please give a mobile number the salon can reach you on.',
+      );
     }
+    setFieldError(null);
 
     /* Refuse before trying, rather than after failing. `docs/PRD.md` §9 says an
        offline write is "blocked with an explanation rather than queued", and
@@ -348,10 +385,12 @@ export function BookPage(): JSX.Element {
                 label="Full name"
                 required
                 hint="First name and surname, for example Sarah Bennett."
+                error={fieldError?.field === 'fullName' ? fieldError.text : null}
               >
                 {({ controlProps }) => (
                   <Input
                     {...controlProps}
+                    ref={fullNameRef}
                     autoComplete="name"
                     placeholder="Sarah Bennett"
                     value={details.fullName}
@@ -364,10 +403,12 @@ export function BookPage(): JSX.Element {
                 label="Email"
                 required
                 hint="Your confirmation and booking reference go here."
+                error={fieldError?.field === 'email' ? fieldError.text : null}
               >
                 {({ controlProps }) => (
                   <Input
                     {...controlProps}
+                    ref={emailRef}
                     type="email"
                     autoComplete="email"
                     value={details.email}
@@ -380,10 +421,12 @@ export function BookPage(): JSX.Element {
                 label="Mobile number"
                 required
                 hint="So the salon can reach you if anything changes."
+                error={fieldError?.field === 'mobile' ? fieldError.text : null}
               >
                 {({ controlProps }) => (
                   <Input
                     {...controlProps}
+                    ref={mobileRef}
                     type="tel"
                     autoComplete="tel"
                     value={details.mobile}

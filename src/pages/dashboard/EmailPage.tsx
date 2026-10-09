@@ -193,7 +193,9 @@ export function EmailPage(): JSX.Element {
       'Created',
       'Sent',
       'Attempts',
-      'Last error',
+      /* Not "Last error": since 0084 a withdrawn row carries the reason it was
+         pulled in the same column, and that is not an error. */
+      'Outcome detail',
     ];
     const rows = filtered.map((m) => [
       m.to_email,
@@ -250,16 +252,33 @@ export function EmailPage(): JSX.Element {
            about 160px for the message body, so the detail pane overflowed the
            viewport and the whole page scrolled sideways. Below `wide:` the
            five lanes become a wrapping row of the same pills above the
-           master/detail pair, which is the part that needs the width. */
-        <div className="grid gap-6 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] wide:grid-cols-[12rem_20rem_minmax(0,1fr)]">
-          <div className="flex flex-wrap gap-1 lg:col-span-2 wide:col-span-1 wide:flex-col wide:flex-nowrap">
+           master/detail pair, which is the part that needs the width.
+
+           `grid-cols-1` (= `minmax(0, 1fr)`) at the base, not a bare `grid`:
+           an implicit `auto` track sizes to its widest item's min-content,
+           and the detail pane's is 500px, so on a 390px phone the single
+           column grew to 500px and every card in it hung off the right
+           edge with no way to scroll to it. */
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)] wide:grid-cols-[12rem_20rem_minmax(0,1fr)]">
+          {/* `min-w-0`: a grid item keeps `min-width: auto`, so this row sized
+              itself to its own min-content and overflowed the 358px column on
+              a phone, dragging the master/detail pair out with it. */}
+          <div className="flex min-w-0 flex-wrap gap-1 lg:col-span-2 wide:col-span-1 wide:flex-col wide:flex-nowrap">
             {LANES.map((l) => (
               <button
                 key={l.key}
                 type="button"
                 onClick={() => setLane(l.key)}
                 className={cn(
-                  'flex min-h-touch flex-1 items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium wide:w-full wide:flex-none',
+                  /* `basis-40`, not a bare `flex-1`: with `flex-basis: 0` every
+                     lane counts as zero-width when the row decides where to
+                     wrap, so all five stayed on one line, refused to shrink
+                     below their own min-content, and pushed the grid column
+                     to ~500px, clipping the whole master/detail pair off the
+                     right of a 390px phone. `grow` rather than `flex-1`
+                     because the `flex` shorthand resets the basis back to 0
+                     and puts the bug straight back. */
+                  'flex min-h-touch grow basis-40 items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium wide:w-full wide:grow-0 wide:basis-auto',
                   lane === l.key
                     ? 'bg-tint-brand text-brand-ink'
                     : 'text-foreground hover:bg-muted',
@@ -398,12 +417,24 @@ export function EmailPage(): JSX.Element {
                 <dd className="text-foreground">{selected.attempts}</dd>
               </dl>
 
-              {selected.last_error && (
-                <div className="mt-4 rounded-lg bg-tint-no-show p-3 text-sm text-status-no-show">
-                  <p className="font-medium">Last error</p>
-                  <p className="mt-0.5">{selected.last_error}</p>
-                </div>
-              )}
+              {/* One field, two meanings, so it is labelled by status rather
+                  than always shouting "Last error" in red. A withdrawn message
+                  never reached the mail server: the salon pulled it because
+                  the reason to send stopped existing (migration 0084), and
+                  eight of the twelve rows this screen used to call failures
+                  were exactly that. */}
+              {selected.last_error &&
+                (selected.status === 'cancelled' ? (
+                  <div className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground">Why it was not sent</p>
+                    <p className="mt-0.5">{selected.last_error}</p>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-lg bg-tint-no-show p-3 text-sm text-status-no-show">
+                    <p className="font-medium">Last error</p>
+                    <p className="mt-0.5">{selected.last_error}</p>
+                  </div>
+                ))}
 
               <div className="mt-4 border-t border-border pt-4">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

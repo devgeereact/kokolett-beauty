@@ -83,7 +83,11 @@ export function StatTrendTile({
             {Math.abs(change)}%
           </span>
         )}
-        <span className="text-muted-foreground">vs {previousLabel}</span>
+        <span className="text-muted-foreground">
+          {/* Without a percentage in front of it, a bare "vs previous period"
+              reads as a number that failed to load. Say why there isn't one. */}
+          {change === null ? `No ${previousLabel} to compare` : `vs ${previousLabel}`}
+        </span>
       </p>
     </Card>
   );

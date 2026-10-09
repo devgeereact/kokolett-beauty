@@ -16,6 +16,9 @@ import { publicButton, publicField } from '@/components/ui/controlClasses';
 
 type FormState = 'idle' | 'sending' | 'sent' | 'error';
 
+/** The single `role="alert"` line under the fields, linked from whichever one is wrong. */
+const CONTACT_ERROR_ID = 'contact-form-error';
+
 /**
  * Every real way to reach the salon, plus a message form for anything that
  * isn't a booking or an availability request (2026-08-25 rebrand). The form
@@ -35,6 +38,20 @@ export function ContactPage(): JSX.Element {
   const [message, setMessage] = useState('');
   const [errorText, setErrorText] = useState<string | null>(null);
   const [state, setState] = useState<FormState>('idle');
+  /*
+   * The three fields carried `required` and nothing else, so an empty submit
+   * was caught by the browser's own bubble: unstyled, gone on the next click,
+   * and nothing like the in-app message the booking form shows for exactly
+   * the same mistake. Two customer-facing forms, two different ways of being
+   * told off. This validates in the page instead, marks the field that is
+   * wrong, and puts the cursor in it so the fix is one keystroke away.
+   */
+  const [invalidField, setInvalidField] = useState<'name' | 'email' | 'message' | null>(
+    null,
+  );
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const sentRef = useRef<HTMLParagraphElement>(null);
 
   /* Sending replaces the whole form with the thank-you, so the element that
@@ -88,9 +105,44 @@ export function ContactPage(): JSX.Element {
     sameTab?: boolean;
   }[];
 
+  const reject = (
+    field: 'name' | 'email' | 'message',
+    control: HTMLElement | null,
+    text: string,
+  ): void => {
+    setInvalidField(field);
+    setErrorText(text);
+    setState('error');
+    control?.focus();
+  };
+
   const onSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setErrorText(null);
+    setInvalidField(null);
+
+    if (fullName.trim().length < 2) {
+      return reject(
+        'name',
+        nameRef.current,
+        'Please give your name so we know who we are replying to.',
+      );
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) {
+      return reject(
+        'email',
+        emailRef.current,
+        'Please give a valid email address, because our reply goes there.',
+      );
+    }
+    if (message.trim().length < 2) {
+      return reject(
+        'message',
+        messageRef.current,
+        'Please write your message before sending it.',
+      );
+    }
+
     setState('sending');
     try {
       await submitContactMessage({ fullName, email, message });
@@ -187,6 +239,7 @@ export function ContactPage(): JSX.Element {
               </p>
             ) : (
               <form
+                noValidate
                 onSubmit={(e) => void onSubmit(e)}
                 className="mt-6 flex flex-1 flex-col space-y-4"
               >
@@ -199,10 +252,15 @@ export function ContactPage(): JSX.Element {
                   </label>
                   <input
                     id="contact-name"
+                    ref={nameRef}
                     type="text"
                     autoComplete="name"
                     maxLength={200}
                     required
+                    aria-invalid={invalidField === 'name' || undefined}
+                    aria-describedby={
+                      invalidField === 'name' ? CONTACT_ERROR_ID : undefined
+                    }
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className={cn(publicField, 'h-11')}
@@ -215,15 +273,24 @@ export function ContactPage(): JSX.Element {
                   >
                     Email
                   </label>
+                  {/* `publicField`, not a hand-copied version of it: the inline
+                      string was the same rules minus the `aria-invalid` one, so
+                      this was the one control on the page that could be marked
+                      invalid without looking it. */}
                   <input
                     id="contact-email"
+                    ref={emailRef}
                     type="email"
                     autoComplete="email"
                     maxLength={320}
                     required
+                    aria-invalid={invalidField === 'email' || undefined}
+                    aria-describedby={
+                      invalidField === 'email' ? CONTACT_ERROR_ID : undefined
+                    }
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-11 w-full rounded-lg border border-border bg-input px-3.5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className={cn(publicField, 'h-11')}
                   />
                 </div>
                 <div>
@@ -235,9 +302,14 @@ export function ContactPage(): JSX.Element {
                   </label>
                   <textarea
                     id="contact-message"
+                    ref={messageRef}
                     required
                     maxLength={4000}
                     rows={4}
+                    aria-invalid={invalidField === 'message' || undefined}
+                    aria-describedby={
+                      invalidField === 'message' ? CONTACT_ERROR_ID : undefined
+                    }
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className={cn(publicField, 'resize-y py-2.5')}
@@ -245,7 +317,11 @@ export function ContactPage(): JSX.Element {
                 </div>
 
                 {state === 'error' && (
-                  <p role="alert" className="text-sm text-destructive">
+                  <p
+                    id={CONTACT_ERROR_ID}
+                    role="alert"
+                    className="text-sm text-destructive"
+                  >
                     {errorText ??
                       'That did not send. Please try again, or call or WhatsApp us directly.'}
                   </p>

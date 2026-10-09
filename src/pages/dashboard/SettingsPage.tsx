@@ -24,7 +24,7 @@ import { YourCalendarCard } from '@/components/dashboard/settings/YourCalendarCa
  * dead space at the bottom.
  *
  * Rows 1–2 use a 3-column track with the primary card spanning two of them,
- * so the "wide card + narrow card" pairing is just `md:col-span-2` on a
+ * so the "wide card + narrow card" pairing is just `lg:col-span-2` on a
  * 3-column grid rather than a one-off fractional template. Row 2's wide
  * column stacks Business Settings and Your Calendar on top of each other
  * (`space-y-6`) so their combined height matches Preferences alongside them,
@@ -33,6 +33,16 @@ import { YourCalendarCard } from '@/components/dashboard/settings/YourCalendarCa
  * `BusinessAndOwnerCard.tsx`) instead of a separate top-level card, so its
  * height naturally matches About Photo beside it. Row 3 is two equal
  * columns; row 4 is three; the last row is two.
+ *
+ * The columns arrive at `lg`, not `md`. `md` is 768px, and the sidebar takes
+ * 256px of it, so the three-column split ran on about 460px of content: the
+ * narrow track came out at ~160px, which wrapped "Kokolett Beauty UK" onto
+ * two lines and truncated the owner's own email address. A tablet gets the
+ * single column instead, which is the layout this page was designed to fall
+ * back to. Each grid names `grid-cols-1` for that base rather than leaving an
+ * implicit `auto` track: an `auto` track takes its widest item's min-content,
+ * which on a phone made the Links to Share card 415px wide inside a 390px
+ * viewport and scrolled the page sideways.
  *
  * DOM order equals mobile order, so the single-column collapse needs no
  * `order-*` classes: Business & Owner (+ Account & Security), About Photo,
@@ -46,33 +56,33 @@ export function SettingsPage(): JSX.Element {
       subtitle="Manage your account, business and app preferences."
     >
       <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             <BusinessAndOwnerCard />
           </div>
           <AboutPhotoCard />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="space-y-6 md:col-span-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
             <BusinessSettingsNavCard />
             <YourCalendarCard />
           </div>
           <PreferencesCard />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <SalonDetailsCard />
           <BookingRulesCard />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <LinksToShareCard />
           <MailingListCard />
           <GoogleReviewsCard />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <SupportCard />
           <BillingCard />
         </div>

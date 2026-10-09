@@ -178,7 +178,10 @@ export function NotificationsPage(): JSX.Element {
       {!events ? (
         <LoadingState label="Gathering recent activity…" />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+        /* `grid-cols-1` at the base: an implicit `auto` track takes its
+           widest item's min-content, which on a phone stretched this column
+           to 668px inside a 390px viewport and scrolled the page sideways. */
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_20rem]">
           <div>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div role="group" aria-label="Filter notifications" className={filterBar}>

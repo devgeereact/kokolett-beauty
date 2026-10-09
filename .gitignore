@@ -6,6 +6,10 @@ node_modules/
 .env
 .env.local
 .env.*.local
+# Backups of environment files. `.env` alone does not match these.
+.env.backup*
+.env.bak
+*.env.backup
 
 # Build & PWA outputs
 dist/

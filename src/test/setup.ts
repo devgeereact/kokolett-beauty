@@ -104,3 +104,23 @@ if (!window.matchMedia) {
       dispatchEvent: (): boolean => false,
     }) as MediaQueryList;
 }
+
+// jsdom has no layout engine, so it ships no `scrollIntoView` at all. The
+// dashboard sidebar calls it to pull the current nav entry back into the
+// scrolling list, which is a no-op worth keeping out of the component as a
+// defensive optional-call.
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function scrollIntoView(): void {};
+}
+
+// jsdom has no layout engine and no ResizeObserver. Anything that measures a
+// box to decide what fits (the Today timeline's blocks) needs one to exist;
+// a stub that never fires leaves the component on its pre-measurement
+// defaults, which is the right behaviour for a test that is not about size.
+if (!('ResizeObserver' in globalThis)) {
+  (globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  };
+}

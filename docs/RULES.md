@@ -54,6 +54,17 @@ do not merge.
   exactly three breakpoints (`md` 768px, `lg` 1024px, `wide` 1440px), replacing
   Tailwind's defaults rather than extending them, so any other prefix emits nothing
   at all. Four ranges result: base, `md`, `lg`, `wide`.
+- **A colour written by hand needs the `rgb()` wrapper: `rgb(var(--token))`.** Tokens
+  are bare RGB channels and only `tailwind.config.ts` wraps them, so `var(--primary)`
+  in an SVG `stroke`/`fill`/`stopColor` or a gradient string is the text `194 77 44`,
+  not a colour, and renders nothing at all (docs/DESIGN.md §2.1).
+- **A `grid` names `grid-cols-1` at the base** whenever its only column template is
+  behind a breakpoint. An implicit `auto` track sizes to its widest item's min-content
+  and takes the page sideways on a phone (§5.2). `min-w-0` on the child does not fix it.
+- **Decide what fits from a measured height, not from a breakpoint,** when the element
+  is sized by its data rather than by the viewport. A calendar block's height is its
+  booking's length; one `ResizeObserver` on its container answers the question for every
+  block at once (`ScheduleTimeline`).
 - Compose conditional classes with `cn()` (never string-concatenate classes).
 - **A `Card` takes a `pad` role, never a `p-*` class.** `none` / `record` / `compact` /
   `standard` / `roomy` — docs/DESIGN.md §16.1. The role is the decision; the number is
@@ -144,6 +155,12 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
   engine must survive both.
 - `day_of_week` is 0–6 with **0 = Sunday**, matching Postgres `extract(dow …)`.
   JavaScript's `getDay()` agrees; `date-fns` defaults do not always. Be explicit.
+- **"Tomorrow" is a property of the date, so read it off the date.** Never derive a
+  day count by rounding elapsed milliseconds. `formatRelative` did, and at 23:19 on a
+  Wednesday two appointments on the same Friday were 1.49 and 1.74 days out, so one
+  read "Tomorrow" and the other "In 2 days" on the same card. Compare local midnights
+  instead, and round after the division so a 23- or 25-hour BST day still counts as
+  one (`src/lib/format.ts`, fixed 2026-09-10).
 
 ### 9.3 Booking integrity
 
@@ -164,6 +181,19 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
 - A customer is "returning" only if they have a **completed** appointment. Cancellations
   and no-shows do not count. This rule lives in `book_appointment()` — do not
   reimplement it in TypeScript, because two implementations will diverge.
+
+### 9.4b Email status
+
+- **Only `supabase/functions/send-emails` may write `status = 'failed'`.** That status
+  means the message was handed to SMTP and refused. A message the salon pulled before
+  it could send is `cancelled`, because nothing failed: the appointment moved, or was
+  cancelled, declined, un-cancelled or un-completed, and the reason to send stopped
+  existing. `daily_close_summary()` and `owner_dashboard_summary()` count
+  `('failed','bounced')`, so mixing the two turns the one number on that screen that
+  should mean something into noise. It read 12 for four real failures until `0084`.
+- `last_error` carries the reason in both cases and is labelled by status in the UI,
+  "Last error" against a failure and "Why it was not sent" against a withdrawal. Do not
+  add a second column for the same concept (`docs/SCHEMA.md` §3, `email_messages`).
 
 ### 9.5 Customer data (UK GDPR)
 

@@ -98,6 +98,33 @@ export function NextWeeksGlanceCard({
               </div>
             ))}
           </div>
+          {/* The dots carried their whole meaning in colour, and the only
+              explanation was a per-dot tooltip on a non-focusable span — so
+              the hollow ring, the one state that needs the owner to do
+              something, was undiscoverable without a mouse. */}
+          <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-2xs text-muted-foreground">
+            <li className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 shrink-0 rounded-full bg-status-completed"
+              />
+              Times published
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-status-no-show bg-transparent"
+              />
+              Usually open, nothing published
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 shrink-0 rounded-full bg-border"
+              />
+              Closed or already past
+            </li>
+          </ul>
         </>
       )}
 

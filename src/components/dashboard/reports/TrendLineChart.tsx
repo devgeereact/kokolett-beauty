@@ -7,6 +7,8 @@ const HEIGHT = 200;
 const PAD_LEFT = 36;
 const PAD_BOTTOM = 20;
 const PAD_TOP = 10;
+/** Half the widest date label ('Wed 9 Sept') at 10px — enough to keep an end tick inside the viewBox. */
+const X_LABEL_HALF = 30;
 
 /** A single-series area/line chart, hand-rolled in SVG — no charting library in this project (see `today/BookingsOverviewChart`). */
 export function TrendLineChart({
@@ -71,10 +73,10 @@ export function TrendLineChart({
                   x2={WIDTH}
                   y1={y}
                   y2={y}
-                  stroke="var(--border)"
+                  stroke="rgb(var(--border))"
                   strokeWidth="1"
                 />
-                <text x={0} y={y + 4} fontSize="10" fill="var(--muted-foreground)">
+                <text x={0} y={y + 4} fontSize="10" fill="rgb(var(--muted-foreground))">
                   {formatValue(t)}
                 </text>
               </g>
@@ -95,8 +97,17 @@ export function TrendLineChart({
                 x={c.x}
                 y={HEIGHT - 4}
                 fontSize="10"
-                textAnchor="middle"
-                fill="var(--muted-foreground)"
+                /* A centred label on the last tick sits half outside the
+                   viewBox and gets clipped mid-word ("Wed 9 S"). Anchor the
+                   end ticks inwards instead of centring them. */
+                textAnchor={
+                  c.x > WIDTH - X_LABEL_HALF
+                    ? 'end'
+                    : c.x < PAD_LEFT + X_LABEL_HALF
+                      ? 'start'
+                      : 'middle'
+                }
+                fill="rgb(var(--muted-foreground))"
               >
                 {formatDateShort(`${c.date}T00:00:00Z`)}
               </text>

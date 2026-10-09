@@ -24,6 +24,8 @@ that was never built; this list used to repeat it.
       being live, instead of only via a follow-up migration (`docs/SCHEMA.md:10`'s own
       rule). `0026` already redid the fix correctly; the violation itself needs no
       further code change, but the next in-place edit should get caught in review.
+      `0084` is the counter-example to copy: it corrected `0024`'s two email
+      retirements by re-creating the function in a new file, leaving `0024` untouched.
 - [ ] **Growth-nav is under-built relative to the PRD's own money metrics** — booking
       conversion, returning-customer rate and request-conversion have no dedicated
       surface. **Hold until the owner confirms the real constraint is booking
@@ -48,9 +50,16 @@ that was never built; this list used to repeat it.
       shared interaction primitives to `DESIGN.md` §15.4b, extended `HOOKS.md` §8/§18
       for fields those hooks had grown, and closed an `rls_test.sql` coverage gap for
       two tables (`email_template_revisions`, `product_events`) that had shipped
-      without being added to the probe list, violating `RULES.md` §1's own rule. This
-      drifts every ~1-2 weeks of active work — next pass due whenever migrations pass
-      roughly `0075` or another Edge Function ships.
+      without being added to the probe list, violating `RULES.md` §1's own rule. A
+      fourth pass ran 2026-09-10 alongside the design/UI/UX review (migrations now at
+      `0084`, Edge Functions still 11): `SCHEMA.md` §3 gained the `failed` vs
+      `cancelled` split on `email_messages` and §23 the `0084` correction to `0024`;
+      `DESIGN.md` gained two new **RULE**s (§2.1 `rgb(var(--token))` outside Tailwind,
+      §5.2 `grid-cols-1` at the base) and a 1.0.1 changelog entry; `RULES.md` gained
+      §4's three layout rules, §9.2's calendar-day rule and a new §9.4b on email
+      status; `PRD.md` §7 records the Services duration decision; `KOKO_GAP.md` §12 is
+      the review itself. This drifts every ~1-2 weeks of active work — next pass due
+      whenever migrations pass roughly `0090` or another Edge Function ships.
 - [x] ~~`google_place_id` is unset~~ — **resolved.** It is now set in Settings →
       Business, `GOOGLE_PLACES_API_KEY` is set as an Edge Function secret, and reviews
       are syncing live: `google_place_snapshot` shows `rating: 5.0, rating_count: 11,

@@ -143,6 +143,17 @@ the chair, not quoted online. The owner logs what was actually charged after the
 appointment (`docs/SCHEMA.md` migration `0027`) and the Today page's "Collected
 today" reflects that log, not a price list.
 
+**No fixed duration either, until the owner sets one.** The public Services page
+quotes a per-style length only when the lengths actually differ. Every one of the
+44 live `service_menu` rows is 45 minutes, so the page had been printing "~45m"
+44 times: it distinguished nothing, and the same number beside "Box braids" and
+beside "Full colour" implied a precision the salon has not committed to. The
+promise the page makes instead is the one it can keep, that the right amount of
+time is kept aside once the customer says what she is after. The rule is derived
+from the data rather than switched off, so the day the owner gives one style its
+own length in Services, the durations come back on every style, with no code
+change (`src/pages/ServicesPage.tsx`, decided 2026-09-10).
+
 **Booking** — live availability, slot selection, details capture, review, submit,
 instant confirmation, confirmation email with `.ics`, reminders, self-service cancel
 and reschedule, one-tap rebook.

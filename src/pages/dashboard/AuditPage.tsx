@@ -159,7 +159,12 @@ export function AuditPage(): JSX.Element {
           description="Booking changes, erasures, payments and sign-in link changes will appear here as they happen."
         />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[14rem_1fr]">
+        /* `grid-cols-1` at the base. Without it the single column is an
+           implicit `auto` track, which sizes to its widest item's
+           min-content: a log line reading "Appointment KB-XXXXXX rescheduled
+           from ... to ..." pushed the track to 824px inside a 390px phone,
+           and the whole page scrolled sideways. */
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[14rem_1fr]">
           <div className="space-y-1">
             {LANES.map((l) => (
               <button

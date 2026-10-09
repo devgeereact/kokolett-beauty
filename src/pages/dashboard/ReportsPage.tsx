@@ -193,14 +193,14 @@ export function ReportsPage(): JSX.Element {
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <TrendLineChart
               title="Appointments over time"
               points={overview.seriesByDay.map((d) => ({
                 date: d.date,
                 value: d.appointments,
               }))}
-              colorVar="var(--primary)"
+              colorVar="rgb(var(--primary))"
               formatValue={(n) => String(n)}
             />
             <TrendLineChart
@@ -209,12 +209,12 @@ export function ReportsPage(): JSX.Element {
                 date: d.date,
                 value: d.revenuePence / 100,
               }))}
-              colorVar="var(--chart-3)"
+              colorVar="rgb(var(--chart-3))"
               formatValue={(n) => `£${n}`}
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Card pad="standard" className="lg:col-span-2">
               <CardHeading size="compact" title="Recent bookings" />
               {overview.recentBookings.length === 0 ? (
@@ -304,7 +304,7 @@ export function ReportsPage(): JSX.Element {
                 period and the one before it, this is where the trends appear.
               </p>
             ) : (
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="flex items-start gap-3">
                   <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-tint-in-service text-status-in-service">
                     <TrendingUp aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
@@ -362,7 +362,7 @@ export function ReportsPage(): JSX.Element {
           </Card>
 
           {legacy && (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Card pad="standard">
                 <CardHeading size="standard" title="Bookings by day of week" />
                 <DayOfWeekChart trend={legacy.dayOfWeek} />

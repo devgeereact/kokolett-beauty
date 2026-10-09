@@ -263,8 +263,17 @@ export function DashboardLayout({
                   )}
                 </div>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <div className="hidden md:block">
+              {/* `min-w-0` and no `shrink-0`: the row carried `flex-wrap` but
+                  could not shrink, so between 768px and 1023px the 256px
+                  search box pushed "New booking" half off the right edge and
+                  the notification bell fully off it. `<main>`'s column is
+                  `overflow-x: hidden`, so there was no scrollbar either: the
+                  bell was simply unreachable on a tablet. */}
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+                {/* `lg`, not `md`: the launcher is a fixed 16rem, which is a
+                    third of the content width on a tablet. Its ⌘K shortcut
+                    lives with it, exactly as it already did below 768px. */}
+                <div className="hidden lg:block">
                   <QuickActionLauncher />
                 </div>
                 {actions}

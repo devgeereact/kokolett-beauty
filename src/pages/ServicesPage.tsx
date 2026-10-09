@@ -27,6 +27,24 @@ export function ServicesPage(): JSX.Element {
   });
   const { groups, loading } = useServiceMenu();
 
+  /*
+   * The per-style duration chip earns its place only when the durations
+   * differ. Every one of the 44 live menu rows is 45 minutes, so the page
+   * printed "~45m" forty-four times: it distinguished nothing, and putting the
+   * same number beside "Box braids" and beside "Full colour" implied a
+   * precision the salon has not committed to. The paragraph above already
+   * makes the real promise, which is that the right amount of time is kept
+   * aside once you say what you are after.
+   *
+   * Derived rather than switched off, so the moment the owner gives one style
+   * its own length in Services the chips come back on their own, everywhere,
+   * with no code change.
+   */
+  const durations = new Set(
+    groups.flatMap((group) => group.items.map((item) => item.duration_min)),
+  );
+  const durationsVary = durations.size > 1;
+
   /* Built from the live `service_menu` rather than hand-written, so the
      structured data cannot drift from what the owner has in the console.
      Attached to the salon's own `@id` from index.html, so Google reads it as
@@ -108,9 +126,11 @@ export function ServicesPage(): JSX.Element {
                         <p className="mt-1 text-sm text-muted-foreground">{item.note}</p>
                       )}
                     </div>
-                    <span className="font-mono shrink-0 whitespace-nowrap rounded-md border border-border px-2 py-1 text-xs text-muted-foreground">
-                      &sim;{formatDuration(item.duration_min)}
-                    </span>
+                    {durationsVary && (
+                      <span className="font-mono shrink-0 whitespace-nowrap rounded-md border border-border px-2 py-1 text-xs text-muted-foreground">
+                        &sim;{formatDuration(item.duration_min)}
+                      </span>
+                    )}
                   </Card>
                 ))}
               </div>

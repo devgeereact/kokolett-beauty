@@ -91,6 +91,11 @@ Three build-time gates in CI are easy to trip without noticing:
   defaults rather than extending them, so `bg-red-500` and `z-50` do not resolve — add
   a token instead of reaching for `text-[11px]`. Tints are `color-mix()` strings and
   cannot take an alpha modifier: `bg-tint-brand/40` renders nothing, silently.
+  Outside a Tailwind class, always `rgb(var(--token))`: a bare `var(--primary)` in
+  an SVG attribute or a gradient string is the channel triplet `194 77 44`, not a
+  colour, and renders nothing. A `grid` whose only column template sits behind a
+  breakpoint needs `grid-cols-1` at the base, or its implicit `auto` track sizes to
+  min-content and the page scrolls sideways on a phone (`docs/DESIGN.md` §2.1, §5.2).
 - **Offloaded systems:** Supabase (Auth/DB + RLS, eleven Deno Edge Functions,
   `pg_cron` jobs), ImageKit (transformed URLs for service images only), Sentry
   (monitoring). There is no Inngest — the email pipeline is a Postgres trigger plus

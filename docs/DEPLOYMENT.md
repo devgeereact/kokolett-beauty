@@ -68,6 +68,19 @@ needs no Docker and persists nothing.
 supabase db query --linked --file /tmp/dry.sql
 ```
 
+**`0084` was applied this way on 2026-09-10** and is the worked example. The dry-run
+file ended with a `do $$ … $$` block that raised its result as errcode `22000`, so the
+assertion came back through `db query` rather than vanishing into a `raise notice`:
+
+```
+ERROR:  22000: PASS: failed=4 cancelled=11 stale=0
+```
+
+The outbox was re-counted afterwards to prove the rollback had held (still 12 and 3),
+then `supabase db push --linked` applied it for real and the same count came back 4
+and 11. A migration that backfills rows earns that second look: an exit code says the
+statements ran, not that they did what they were written to do.
+
 What `0072` to `0076` changed, one line each:
 
 | Migration | Change |

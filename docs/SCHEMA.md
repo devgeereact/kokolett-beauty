@@ -1,9 +1,10 @@
 # Database Schema — Kokolett Beauty UK
 
-Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0080`,
+Postgres on Supabase. Migrations are numbered and append-only, `0001` through `0084`,
 applied in filename order. **Never edit an applied migration**; correct it with a
 follow-up file. (`0024`/`0025` were edited in place once, after they were live; `0026`
-redid the fix properly.)
+redid the fix properly. `0084` is the pattern to copy: it corrects two statements
+inside `0024`'s function by re-creating the function in a new file.)
 
 `0001_init.sql` creates `profiles`, `app_settings`, `set_updated_at()` and
 `handle_new_user()`. `0002_salon.sql` creates the salon domain. Everything after that
@@ -41,7 +42,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0060_customer_communication_preferences.sql`       | Added `customer_communication_preferences()` and `customer_set_marketing_consent()` — no new table, no new column. Session-scoped RPCs (via `customer_from_session()`, `0021`) so a customer on `/my` can read and change her own `customers.marketing_consent` without asking the owner. |
 | `0061_email_template_history.sql`                   | Added `email_template_revisions` (append-only) and a `before update` trigger on `email_templates` that logs the old subject/html_body whenever either actually changes. No revert RPC — a revert is just a normal update with an earlier revision's content, which the same trigger logs again. |
 | `0062_customer_session_revocation.sql`              | Added `revoke_customer_sessions()` and a new `customer.sessions_revoked` value in `audit_events.action`'s check constraint — no new table. Marks a customer's live `customer_access_tokens` (`purpose = 'session'`) as used, which `customer_from_session()` (`0021`) already treats as invalid. |
-| `0063_undo_cancellation.sql`                        | `set_appointment_status()` now allows `cancelled` → confirmed/checked_in/in_service (previously nothing), clearing `cancelled_at`/`cancellation_reason` on the way back. `notify_appointment_status_changed()` gained a matching branch: fails the queued cancellation-notice emails and re-queues the reminders the cancellation retired. |
+| `0063_undo_cancellation.sql`                        | `set_appointment_status()` now allows `cancelled` → confirmed/checked_in/in_service (previously nothing), clearing `cancelled_at`/`cancellation_reason` on the way back. `notify_appointment_status_changed()` gained a matching branch: withdraws the queued cancellation-notice emails and re-queues the reminders the cancellation retired. (That branch wrote `failed` until `0084` corrected it to `cancelled`.) |
 | `0064_product_events.sql`                           | Added `product_events` (no personal data — event name from a fixed vocabulary, a random client-generated session id, timestamp), `track_product_event()` (anon-callable, rate-limited) and `product_event_funnel_summary()` (owner-only). First-party booking-funnel counts. |
 | `0065_copy_dashes_and_owner_name.sql`               | Data-only. Removes four em dashes from the customer-facing `email_templates` bodies seeded by `0032`, and corrects the owner's name from "Koko"/"Koko Lett" to Christy in the confirmation sign-off and the password-reset greeting. |
 | `0066_retire_locs.sql`                              | Data-only. Deactivates the five loc styles seeded by `0018` and renames the `service_menu` group from "Twists and locs" to "Twists". The salon does not do locs. |
@@ -49,6 +50,7 @@ reshapes it, and some of it is load-bearing for reading the rest of this documen
 | `0070_rls_initplan.sql` | Wraps `auth.uid()` in a scalar subquery in the four `profiles`/`app_settings` policies, so it is evaluated once per query rather than once per row. Semantically identical. |
 | `0069_trigger_functions_are_not_callable.sql` | Revokes EXECUTE on all eight trigger functions from `anon` and `authenticated`. `log_email_template_revision` was the only one with a client grant; `0061` had revoked it from `PUBLIC`, which does not touch their explicit grants. Also documents why `secret_login_attempts` has RLS with no policies. |
 | `0068_locs_safety_net.sql`                          | Data-only. Deactivates any `service_menu` row whose name matches the word "loc", and renames any such group to "Twists". `0066` matched five exact strings inside one group name, all owner-editable; this matches on the word instead. A no-op today. |
+| `0084_a_withdrawn_email_is_not_a_failure.sql`       | Finishes what `0040`/`0041` started. Four retirement statements in three functions still wrote `status = 'failed'`, and three of them landed after `0041`: `reschedule_appointment_as_owner()` (two), the un-cancel branch of `notify_appointment_status_changed()` and the un-complete branch of `set_appointment_status()`. All four now write `cancelled` with a plain-English reason, and the 8 stale rows are backfilled. Daily Close's `failed_email_count` went from 12 to 4, which is the number of real SMTP refusals. |
 
 ### Every table, and where it is documented
 
@@ -311,6 +313,26 @@ Delivery log and retry queue: `template`, `to_email`, `subject`, optional
 `sent_at`. `cancelled` arrived in `0040` and is written by `0041`; it was missing
 from this list, so a query filtering on the documented five silently dropped every
 retired reminder, which is the exact miscount `0040` was written to fix.
+
+**`failed` and `cancelled` are not two shades of the same thing, and nothing but
+the sender may write `failed`.**
+
+| Status      | Means                                                                 | Written by |
+| ----------- | --------------------------------------------------------------------- | ---------- |
+| `failed`    | The message was handed to SMTP and the server refused it, after retries | `supabase/functions/send-emails` only |
+| `cancelled` | The message never reached SMTP. The salon pulled it because the reason to send stopped existing: the appointment moved, was cancelled, was declined, was un-cancelled or was un-completed | The database functions above |
+
+`failed_email_count` in both `daily_close_summary()` and
+`owner_dashboard_summary()` counts `('failed','bounced')`, so the split is what
+makes that number mean anything. Before `0084` it read 12 when 4 emails had
+actually failed, and a number that overstates by three times is a number the
+owner learns to ignore.
+
+`last_error` is the one free-text "what became of this" field and carries the
+reason in both cases. That is deliberate: a second, mutually exclusive column
+for the same concept would be worse shaped. `EmailPage` labels it by status,
+"Last error" on a failure and "Why it was not sent" on a withdrawal, and
+`EmailStatusBadge` renders `cancelled` as "Withdrawn" in a neutral tone.
 
 A row can also sit in `sending`: `send-emails` claims it there before handing it to
 SMTP. Since 2026-09-05 that function sweeps anything stranded in `sending` for more
@@ -921,6 +943,12 @@ collides" safety. The function auto-publishes the destination time (the owner
 declaring a new time on her own calendar IS her publishing availability) and
 skips customer-protection guards — the owner is looking at the calendar, not a
 booking form.
+
+`0024`'s two email retirements wrote `status = 'failed'` on the notices the move
+made untrue. `0084` corrected them to `cancelled`: nothing was handed to SMTP,
+so nothing failed. Eight rows in the live outbox were sitting at `failed` for
+exactly this, which was two thirds of everything Daily Close was calling a
+delivery failure. See §3's `email_messages` table for the split.
 
 **`0025` — race condition and duration fix.** Two bugs in `customer_reschedule_appointment`:
 (1) No row lock, so two concurrent calls on the same appointment both pass the

@@ -208,7 +208,7 @@ export function BookingsOverviewChart({
                 className="flex h-full flex-1 items-end gap-3"
                 style={{
                   backgroundImage:
-                    'repeating-linear-gradient(to top, var(--border) 0, var(--border) 1px, transparent 1px, transparent 25%)',
+                    'repeating-linear-gradient(to top, rgb(var(--border)) 0, rgb(var(--border)) 1px, transparent 1px, transparent 25%)',
                 }}
               >
                 {DISPLAY_ORDER.map((dow) => {

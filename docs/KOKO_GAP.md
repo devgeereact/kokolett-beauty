@@ -1,6 +1,6 @@
 # KOKO_GAP — Gap Analysis vs. the Transformation Brief
 
-**Date:** 2026-08-29, updated through 2026-09-03 as P1/P2 items shipped (see §5's checked items for exact dates). Two passes ran on 2026-09-03: a PWA production audit (§4's fourth pass, §7) and, after it deployed, a full production-readiness audit covering functional QA, responsive, navigation, conversion, SEO, social, accessibility, performance, security, privacy, analytics, error handling, content, media, trust, forms, links, code quality and production config (§8). The second found three P1s the first did not look for.
+**Date:** 2026-08-29, updated through 2026-09-10 as P1/P2 items shipped (see §5's checked items for exact dates). §14 is the most recent pass: a verification audit run against a local Supabase stack, which found the live site had lost its Google rating. Two passes ran on 2026-09-03: a PWA production audit (§4's fourth pass, §7) and, after it deployed, a full production-readiness audit covering functional QA, responsive, navigation, conversion, SEO, social, accessibility, performance, security, privacy, analytics, error handling, content, media, trust, forms, links, code quality and production config (§8). The second found three P1s the first did not look for.
 **Scope:** Verified against the actual codebase (frontend, Supabase schema, Edge Functions, cron, tests), not against what docs or the brief *claim* exists.
 
 ## 0. Framing
@@ -1327,3 +1327,154 @@ reachable. Consent and Offline were rendered together at 320px: 256px and 85px t
 edge to edge, no overlap. Modals, drawers and confirmation dialogs are covered by
 their own unit tests plus the focus-trap suite. Toast placement is covered by
 `useBottomNotice.test.tsx`.
+
+## 14. Verification audit, 2026-09-09/10
+
+A full "does what is built actually work" pass, run against a **local Supabase
+stack** rather than the live project: a detached worktree with `project_id` and
+ports moved into the 553xx range, every migration applied from scratch, an owner
+seeded, and a production build served by `vite preview`. Nothing in this pass
+booked, cancelled or emailed anything on the live site. Two exceptions are named
+below, both deliberate.
+
+### Baseline, before any change
+
+Every gate green: `typecheck`, `lint`, `format:check`, `lint:copy`, `test:hooks`,
+`lint:classes`, the CSP script-hash assertion, the PWA artefact assertion, a build
+from a clean checkout with no env file, `deno check` across all thirteen functions,
+20 Deno tests, 366 Vitest tests, and the pgTAP RLS suite at 71 of 71. The database
+job was run the way CI runs it, from a fresh Postgres.
+
+### Journeys exercised in a real browser
+
+Booking start to finish, with the confirmed row, the UTC/BST conversion and the
+three queued emails checked in the database afterwards. A booked slot leaving the
+picker, and returning after a cancellation. The slot being taken between choosing
+it and confirming, which produced the intended "Sorry, that slot was taken while
+you were booking" rather than a crash. First-time approval holding its slot, then
+the owner approving it. Reschedule, including the old reminders being cancelled
+and new ones queued for the new time. Customer magic link, single use, replay
+refused, session surviving a reload. Cancellation from the customer's side. The
+contact form and the availability request, each traced through to the owner's
+inbox. All nineteen dashboard routes with an owner session, four of them swept
+with axe. Anonymous and signed-in-non-owner access to five sensitive tables,
+which returned nothing. Empty, invalid, over-long and double-submitted input.
+Offline reload. 390px width and keyboard traversal.
+
+### Found and fixed
+
+- **The Google rating was missing from the live site.**
+  `google_place_snapshot` lost its singleton row in the 2026-09-06 data clear, and
+  `sync-reviews` only ever `update`d that row, so three days of hourly syncs stored
+  the reviews and silently discarded the rating. `/testimonials` showed reviews
+  with no star line and no `AggregateRating`. The row was restored in production
+  and the sync now `upsert`s both writes, so it heals itself. Verified on the live
+  page: "5.0 from 13 Google reviews", and the structured data back.
+  See `docs/SCHEMA.md` §16 and `docs/DEPLOYMENT.md`.
+- **A WCAG 1.4.1 failure on `/testimonials`.** The empty-state link sat at 1.39:1
+  against the surrounding muted text with an underline only on hover. The
+  project's own axe sweep caught it once the page had no reviews to show. Now
+  permanently underlined; clean in both colour schemes.
+- **The Approvals empty state contradicted the setting.** It told the owner to
+  "Turn on first-time approval in Settings" even when it was already on. The copy
+  now follows `approve_first_time`, with two regression tests in
+  `src/pages/dashboard/InboxPage.test.tsx`.
+
+### Integrations, verified for the first time
+
+Each was run for real rather than mocked.
+
+| Integration | How it was proved |
+|---|---|
+| ImageKit | Sign, upload, deliver, transform and delete round trip with the real keys. The probe asset was removed. |
+| pg_cron email drain | `drain_email_queue()` to pg_net to `send-emails`, locally end to end: 200 with a JSON summary, the row claimed, attempted, error recorded and backed off. In production, all eight jobs succeeded on schedule and 78 of 78 pg_net calls returned 200 in 24 hours. |
+| SMTP | Production is healthy: 26 messages sent, the most recent that morning; the twelve failures are five bogus `@123.com` addresses and seven superseded owner notices. |
+| AI assistant and draft-copy | Called against the deployed functions under a real owner session. Both answered in about seven seconds, on brand, no price, no locs. A non-owner is refused. |
+| Google reviews sync | Hourly, five reviews, fetched 43 minutes before the check. |
+| Cron secret gates | `send-emails` and `sync-reviews` both refuse a missing or wrong `x-cron-secret` with 403. |
+| Owner sign-in gate | Correct slug resolves, wrong slugs do not, and five attempts in fifteen minutes lock out even the correct one. |
+| Bundle secrets | Every value in `.env` was scanned against all 170 built files: no server-side secret reaches `dist/`. |
+
+### Two deliberate touches to production
+
+Both were judged worth it and are recorded here rather than left implicit:
+
+1. The `google_place_snapshot` row was re-inserted and `sync_google_reviews()` run
+   once, which is the fix described above.
+2. The AI check signed in as the owner and then signed out with `scope=global`,
+   which ends every other owner session too. Christy has to sign in again. Use
+   `scope=local` next time.
+
+### Open, and needing the owner
+
+- The `SMTP_PASSWORD` and `OPENROUTER_API_KEY` in the local `.env` are stale, and
+  fail with `535: Incorrect authentication data` and `401 User not found`. Only
+  local testing is affected; production reads its own Supabase secrets. Refresh
+  them from cPanel and OpenRouter to test either path locally.
+- `sync-reviews` carries the `upsert` fix in the repo but has **not been
+  redeployed**. Production is already correct without it; the fix stops the
+  failure recurring, so it can ride the next deploy.
+
+### Not covered
+
+No message body was delivered over the real relay, since `denomailer` refuses to
+authenticate over a plaintext connection and the local sink has no TLS on 465. The
+rendering itself is covered by the fifteen template tests. `calendar-feed`,
+`email-diagnostics`, `owner-password-reset` and `render-email-preview` were type
+checked but not exercised.
+
+---
+
+## 12. Design, UI and UX review, 2026-09-10
+
+A pass over every implemented route at 390 / 820 / 1440, light and dark, driven by a
+headless owner sign-in against the real project (`docs/DEPLOYMENT.md` and the
+visual-verification notes). 152 route renders, axe `wcag2a`/`wcag2aa`/`wcag21a`/
+`wcag21aa` on each. Four of the findings were functional rather than cosmetic.
+
+### Fixed
+
+| Found | Evidence | Change |
+|---|---|---|
+| Both Reports charts had never drawn a line, dots or gridlines, and the dashboard's Bookings overview had no gridlines. | `stroke="var(--primary)"` resolves to the text `194 77 44`. An invalid `stroke` falls back to `none`, an invalid gradient stop to black, and nothing is logged. | `rgb(var(--token))` throughout `TrendLineChart`, `ReportsPage` and `BookingsOverviewChart`. Now a **RULE** in DESIGN.md §2.1. |
+| The last x-axis date label was clipped mid-word ("Wed 9 S"). | A centred label on the final tick sits half outside the 600-unit viewBox. | End ticks anchor inwards. |
+| Every Reports tile read "vs previous period" with no number. | `percentChange` returns `null` when the previous period is zero, correctly; the label rendered anyway and looked like a value that failed to load. | "No previous period to compare". |
+| Two appointments on the same Friday read "Tomorrow" and "In 2 days" on the same card. | At 23:19 on the Wednesday they were 1.49 and 1.74 days out, and `formatRelative` rounded the ratio. | Calendar-day arithmetic, rounded after the division so BST's 23- and 25-hour days still count as one. Five tests, built from local date components so they hold under `TZ=UTC`, BST and `America/New_York`. |
+| `/dashboard/email` was 500px wide inside a 390px phone: 126 elements past the right edge, unreachable. | The detail pane's min-content sized the implicit `auto` grid track. | `grid-cols-1` at the base. Now a **RULE** in DESIGN.md §5.2. |
+| Audit (824px), Notifications (668px) and Settings (436px) scrolled sideways at 390px. | Same implicit `auto` track. `<main>` is the horizontal scroller, so there is no console error to catch it. | Same fix. All 38 routes now measure zero horizontal scroll at 390, 820 and 1440. |
+| The notification bell was entirely off-screen from 768px to 1023px, and "New booking" half-cut. | Right edge 908px in an 820px viewport, inside an `overflow-x: hidden` column: no scrollbar, no way to reach it. | The header actions row loses `shrink-0` and gains `min-w-0`, so its own `flex-wrap` can work. The 16rem command launcher moves from `md:` to `lg:`. |
+| Settings split into three columns from 768px. | 768px minus the 256px sidebar and gutters leaves ~460px, so the narrow track came out at ~160px: the business name wrapped and the owner's email truncated. | Columns from `lg:`. |
+| Today's schedule was 216px tall below `lg`, 18px an hour. A 55-minute booking was a 17px sliver and flex squashed the customer's name to **1px**. | Measured at 390, 820 and 1000. | `min-h-[480px]`, matching `CALENDAR_GRID_HEIGHT_CLASS`, plus `shrink-0` on the name. |
+| The calendar opened on Week at 390px, where seven columns truncated every block to one character ("0 H", "1 A"). | Screenshot. | Day below `md`. The switcher is unchanged. |
+| Arriving on Audit Log, System Health, Broadcasts or Settings showed a sidebar with no highlight at all. | The nav scrolls inside the sidebar and nothing scrolled the current entry back into it. | `scrollIntoView({ block: 'nearest' })` on the active entry. |
+| Contact fell back to the browser's own validation bubble while Book validated in the page. | Two customer-facing forms, two different ways of being told off. | Both now mark the field, link it to the message and move the cursor into it. Book's error moved from the foot of the form onto the field via `Field`'s own `error` prop. |
+| The Contact email input was a hand-copy of `publicField` missing its `aria-invalid` rule. | It was the one control on the page that could be marked invalid without looking it. | Uses `publicField`. |
+| "Show advanced options" drew a short rule the width of its own label. | `border-t` was on the button. | On the section. |
+| "Next 4 weeks at a glance" carried its whole meaning in colour, explained only by a tooltip on a non-focusable span. | The hollow ring, the one state that needs the owner to act, was undiscoverable without a mouse. | A three-item legend. |
+| The Appointments service column truncated to "Hair Appointm...". | `max-w-[130px]`. | `max-w-48`, a scale value. |
+| A timeline block announced `aria-expanded` for content that never appears inline. | It opens a modal. | `aria-haspopup="dialog"` alongside it. |
+| Daily Close showed a red "Failed emails 12" for four real failures. | 8 of the 12 carried `last_error = 'Rescheduled by the salon'`. | `0084`. See SCHEMA.md §3 and RULES.md §9.4b. |
+| The Services page printed "~45m" on all 44 styles. | Every live `service_menu` row is 45 minutes. | The chip renders only when the durations differ, derived from the data so it returns on its own. See PRD.md §7. |
+| A timeline block's second line was governed by `hidden lg:flex`. | That hid the time and status on a tablet block with room to spare, and still let a short desktop block clip. | One `ResizeObserver` on the hour axis; the block shows its second line at 56px and above. Now a rule in RULES.md §4. |
+
+### Verified, and how
+
+- 38 routes at 390 / 820 / 1440 plus 38 in dark at 1440: **0 axe violations** across
+  152 renders, **0 routes** with horizontal scroll.
+- Booking journey to the point of writing, contact validation, keyboard tab order and
+  focus ring, skip link, command palette, notification popover, the New booking modal
+  (labelled, `aria-modal`, focus trapped over 25 tabs, Escape closes) and the mobile
+  drawer.
+- No dead controls, `href="#"` or unnamed controls across 25 routes.
+- `0084` dry-run in a rolled-back transaction, applied, then re-counted: the outbox
+  went from 12 failed / 3 cancelled to 4 / 11, and the Email screen's detail pane reads
+  "Why it was not sent" against a withdrawal.
+
+### Still open after this pass
+
+| Item | Why | Priority |
+|---|---|---|
+| Firefox and WebKit | Only Chromium is installed here | P2 |
+| Populated Customers / Approvals / Requests / Messages queues | The live project has none, so long-name and large-count behaviour is **NOT TESTED** at the rendered level | P3 |
+| The timeline's second line on today's own data | Today had no bookings at the time of the pass, so the 56px rule is covered by `ScheduleTimeline.test.tsx` at both axis heights rather than by a screenshot of a live short block | P3 |
+| Roughly 40 more `grid gap-* lg:grid-cols-*` sites | None of them currently overflows. Measure before editing: `main.scrollWidth > main.clientWidth` | P3 |

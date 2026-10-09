@@ -361,7 +361,11 @@ export function InboxPage(): JSX.Element {
               {rows.length === 0 ? (
                 <EmptyState
                   title="Nothing waiting"
-                  description="Your published hours book instantly for everyone, so nothing needs a decision. Turn on first-time approval in Settings if you would rather check new customers yourself first."
+                  description={
+                    settings?.approve_first_time
+                      ? 'Nobody new is waiting on you. A first-time booking lands here the moment it is made, with its slot already held.'
+                      : 'Your published hours book instantly for everyone, so nothing needs a decision. Turn on first-time approval in Settings if you would rather check new customers yourself first.'
+                  }
                   action={
                     <Button
                       variant="ghost"

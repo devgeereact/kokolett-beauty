@@ -77,6 +77,18 @@ do not merge.
 - Assume RLS is the last line of defense — still scope every query to the user.
 - Never ship a secret. Browser-exposed keys must be write-only or RLS-guarded.
   The `service_role` key is server-only.
+- **A `VITE_` prefix is a publication decision, not a naming style.** Vite inlines
+  any `VITE_*` member that `src/lib/env.ts` reads straight into a public bundle, and
+  this repository is public. So the prefix belongs only on values you are content to
+  hand a stranger: the app URL, the Supabase URL and anon key, the ImageKit URL
+  endpoint, the Sentry DSN. Everything else keeps its bare name, which is also what
+  the Edge Functions read. `.env.example` is the authority on which name each
+  variable takes, and it says so at the top of its server block. Renaming
+  `IMAGEKIT_PRIVATE_KEY` to `VITE_IMAGEKIT_PRIVATE_KEY` in a local `.env` (seen
+  2026-09-10) both invites that inlining and stops `owner-photo-upload` finding the
+  key, so the About photo uploader answers 503 instead. To check a build: search
+  every file in `dist/` for each value in your env file, and expect hits only on the
+  publishable ones.
 
 ## 6. Errors & logging
 
@@ -218,6 +230,13 @@ required for this OSS repository` and **passes** the check, so a PR can look ful
   `aria-pressed` because it is a toggle group, and that is the right answer, not a
   compromise.
 - Do not remove the global `:focus-visible` ring.
+- **An inline link inside a paragraph carries a permanent underline.** Colour alone
+  does not distinguish it, and `hover:underline` is not a substitute: a hover state
+  does not exist on touch and does not help someone who cannot separate the two
+  colours. `text-brand-ink hover:underline` inside `text-muted-foreground` on
+  `/testimonials` measured 1.39:1 link against surrounding text and failed WCAG
+  1.4.1 in both colour schemes (fixed 2026-09-09). Standalone links, nav items and
+  buttons are not affected: the rule is about a link sitting inside a run of text.
 
 ### 9.9 Business identity has one home, and copy carries no dashes
 

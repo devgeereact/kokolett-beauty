@@ -36,7 +36,8 @@ Never in a file.
 - `npm test` — Vitest, single run · `npm run test:watch` — watch mode · `npm run test:coverage` — V8 coverage
 - `npm run lint:copy` — no em or en dashes in copy (`scripts/check-copy.py`); a CI gate
 - `npm run test:hooks` — verifies the tracked hookify safety rules; a CI gate
-- `npm run test:e2e` / `test:e2e:ui` — Playwright, against a real Supabase project
+- `npm run lint:secrets` — after a build, fails if a non-publishable value from `.env` reached `dist/`. Local only: CI builds without an env file, so there is nothing to compare and it exits 0
+- `npm run test:e2e` / `test:e2e:ui` — Playwright, against a real Supabase project. For a whole journey without touching the live site, run a local Supabase stack instead (README, "Testing a whole journey without touching the live site")
 - Single test file: `npx vitest run path/to/file.test.ts` (tests are colocated with their source, e.g. `src/hooks/useAvailability.test.ts`)
 - `npm run preview` — serve the production `dist/` build locally
 
@@ -98,6 +99,12 @@ Three build-time gates in CI are easy to trip without noticing:
 - **`src/lib/env.ts` is the only file that may read `import.meta.env`**, and only as
   static `import.meta.env.VITE_*` members. A dynamic `import.meta.env[key]` defeats
   Vite's replacement and inlines every variable into the public bundle.
+- **A `VITE_` prefix publishes the value.** It belongs only on things a stranger may
+  have: app URL, Supabase URL and anon key, ImageKit URL endpoint and public key,
+  Sentry DSN. Server-side secrets keep their bare names, which is also what the Edge
+  Functions read, so `VITE_IMAGEKIT_PRIVATE_KEY` both risks the bundle and stops
+  `owner-photo-upload` finding the key (seen and fixed 2026-09-10). `.env.example`
+  is the authority; `npm run lint:secrets` is the check.
 - **`.htaccess` is not in `dist/`.** It lives at the repo root, carries the CSP and the
   SPA rewrite, and has to be copied to the docroot separately — `cpanel-deploy` excludes
   it unless passed `--with-htaccess`. Without it every deep link 404s while the home

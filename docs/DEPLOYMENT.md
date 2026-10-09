@@ -324,6 +324,18 @@ must also be deployed as the `SMTP_PASSWORD` Edge Function secret, or `send-emai
 cannot authenticate and the outbox stops draining. `.env` itself is never
 committed.
 
+> **The two copies drift, and the local one is the stale one.** Measured
+> 2026-09-10: the `SMTP_PASSWORD` in `.env` is rejected by the relay with
+> `535: Incorrect authentication data`, and the `OPENROUTER_API_KEY` there is
+> rejected with `401 User not found`, while production was sending mail that
+> morning and both model-backed functions answered in about seven seconds. So a
+> function that fails when you run it locally is not evidence of a live fault,
+> and a healthy live site is not evidence that a fresh clone can send anything.
+> Confirm the live side against `email_messages` and `net._http_response` rather
+> than against your own machine, and refresh the local copies from cPanel and
+> OpenRouter before trusting a local run. `IMAGEKIT_PUBLIC_KEY` /
+> `IMAGEKIT_PRIVATE_KEY` were still valid at that date.
+
 **Why the cron secret is in the Vault, not in a migration.** `send-emails` is
 deployed `--no-verify-jwt`, so `EMAIL_CRON_SECRET` is the only thing between the
 internet and the salon's mail queue. This repository is public and a migration is
@@ -446,6 +458,21 @@ produced a `REQUEST_DENIED` that looks like a key problem.
 
 Until both exist, `sync-reviews` returns 503 and the marketing page simply omits
 the reviews section — it never shows an empty heading or invented testimonials.
+
+**A fourth thing, learned the hard way on 2026-09-10.** The rating and review
+count live in `google_place_snapshot`, a singleton row seeded by migration
+`0017`. Production lost that row in the 2026-09-06 data clear, and because the
+function only ever `update`d it, three days of hourly syncs stored the reviews
+and silently discarded the rating: the site showed reviews with no stars and no
+`AggregateRating`. The function now `upsert`s, so the row comes back on its own.
+If reviews appear on the site but the rating does not, check that row first:
+
+```sql
+select * from public.google_place_snapshot;                       -- one row, id = true
+insert into public.google_place_snapshot (id) values (true)
+  on conflict (id) do nothing;                                    -- restore it
+select public.sync_google_reviews();                              -- refill it now
+```
 
 Google returns at most five reviews and chooses which. No API returns all of
 them; anything claiming to is scraping, which breaks Google's terms and stops

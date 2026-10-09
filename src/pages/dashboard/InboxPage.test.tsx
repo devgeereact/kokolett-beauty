@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -58,8 +58,17 @@ vi.mock('@/hooks/useSupabaseAuth', () => ({
   useSupabaseAuth: () => ({ user: { email: 'owner@example.invalid' }, signOut: vi.fn() }),
 }));
 
+/* The Approvals empty state reads `approve_first_time`, so the settings this
+   hook returns have to be settable per test rather than fixed at `null`. */
+const settingsBus = vi.hoisted(() => ({
+  settings: null as { approve_first_time: boolean } | null,
+}));
+
 vi.mock('@/hooks/useBusinessSettings', () => ({
-  useBusinessSettings: () => ({ timezone: 'Europe/London', settings: null }),
+  useBusinessSettings: () => ({
+    timezone: 'Europe/London',
+    settings: settingsBus.settings,
+  }),
 }));
 
 // Stable identity across renders, matching the real hook's `useCallback`'d
@@ -177,6 +186,11 @@ function renderInbox(initialPath: string): void {
  * once would leave the regression class unguarded going into that rewrite.
  */
 describe('InboxPage — default tab freeze', () => {
+  beforeEach(() => {
+    // Each test states the settings it needs; nothing carries over.
+    settingsBus.settings = null;
+  });
+
   it('does not swap tabs when summary alone changes, with no user action', async () => {
     approvalsBus.rows = [makeApproval('apt-1')];
     summaryBus.set({ pending_approval_count: 1, new_request_count: 3 });
@@ -231,6 +245,33 @@ describe('InboxPage — default tab freeze', () => {
     // Still Approvals. No click on Requests, no `?tab=` in the URL — the
     // tab must not have moved on its own.
     expect(activeTabLabel()).toBe('Approvals');
+  });
+
+  /**
+   * The empty state used to tell the owner to "Turn on first-time approval in
+   * Settings" whether or not it was already on — so the one screen that exists
+   * to show held bookings advised her to enable the feature it was already
+   * running. The copy has to follow the setting.
+   */
+  it('does not tell the owner to switch on approval she has already switched on', async () => {
+    settingsBus.settings = { approve_first_time: true };
+    approvalsBus.rows = [];
+    summaryBus.set({ pending_approval_count: 0, new_request_count: 0 });
+
+    renderInbox('/dashboard/inbox?tab=approvals');
+
+    expect(await screen.findByText(/Nobody new is waiting on you/)).toBeInTheDocument();
+    expect(screen.queryByText(/Turn on first-time approval/)).not.toBeInTheDocument();
+  });
+
+  it('still offers to switch approval on when it is off', async () => {
+    settingsBus.settings = { approve_first_time: false };
+    approvalsBus.rows = [];
+    summaryBus.set({ pending_approval_count: 0, new_request_count: 0 });
+
+    renderInbox('/dashboard/inbox?tab=approvals');
+
+    expect(await screen.findByText(/Turn on first-time approval/)).toBeInTheDocument();
   });
 
   it('still honours an explicit ?tab= over the frozen default', async () => {

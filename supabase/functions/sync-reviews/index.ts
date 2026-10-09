@@ -83,11 +83,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     auth: { persistSession: false },
   });
 
+  /* `upsert`, not `update`. The snapshot is a singleton seeded by migration
+     0017, and an `update` against a table that has lost that row matches
+     nothing and reports success — which is exactly what happened in
+     production: the row was deleted in the 2026-09-06 data clear, every
+     hourly sync stored its reviews and silently dropped the rating, and the
+     site showed reviews with no star rating for three days. Writing the row
+     back if it is missing makes the job heal itself instead. */
   const note = async (message: string | null): Promise<void> => {
     await supabase
       .from('google_place_snapshot')
-      .update({ last_error: message, fetched_at: new Date().toISOString() })
-      .eq('id', true);
+      .upsert(
+        { id: true, last_error: message, fetched_at: new Date().toISOString() },
+        { onConflict: 'id' },
+      );
   };
 
   const key = env('GOOGLE_PLACES_API_KEY');
@@ -189,15 +198,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
   }
 
-  await supabase
-    .from('google_place_snapshot')
-    .update({
+  await supabase.from('google_place_snapshot').upsert(
+    {
+      id: true,
       rating: payload.rating ?? null,
       rating_count: payload.userRatingCount ?? null,
       fetched_at: now,
       last_error: null,
-    })
-    .eq('id', true);
+    },
+    { onConflict: 'id' },
+  );
 
   return Response.json({
     rating: payload.rating ?? null,

@@ -390,7 +390,7 @@ export function ReportsPage(): JSX.Element {
                       href={settings.google_review_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-medium text-brand-ink hover:underline"
+                      className="font-medium text-brand-ink underline underline-offset-2"
                     >
                       View your review link
                     </a>

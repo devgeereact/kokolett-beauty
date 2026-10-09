@@ -1,4 +1,4 @@
-import { type JSX, memo, useMemo } from 'react';
+import { type JSX, memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   hourGridlines,
   hourLabels,
@@ -74,6 +74,14 @@ function assignCustomerTints(appointments: AppointmentDetailed[]): Map<string, s
   return tintByAppointment;
 }
 
+/**
+ * The height a block needs before its second line is worth rendering: the
+ * name (22px), the time and status row (22px), 6px of padding either side and
+ * the border. Measured, not guessed, against the desktop widget where both
+ * lines have always fitted.
+ */
+const META_MIN_PX = 56;
+
 const TimelineBlock = memo(function TimelineBlock({
   appointment,
   timezone,
@@ -82,6 +90,7 @@ const TimelineBlock = memo(function TimelineBlock({
   isNextUp,
   expanded,
   onToggle,
+  axisHeight,
 }: {
   appointment: AppointmentDetailed;
   timezone: string;
@@ -90,16 +99,29 @@ const TimelineBlock = memo(function TimelineBlock({
   isNextUp: boolean;
   expanded: boolean;
   onToggle: () => void;
+  /** Measured pixel height of the hour axis, or 0 before the first measure. */
+  axisHeight: number;
 }): JSX.Element {
   const start = minutesSinceMidnight(appointment.starts_at, timezone);
   const end = minutesSinceMidnight(appointment.ends_at, timezone);
   const top = offsetPercent(start, range);
   const height = offsetPercent(end, range) - top;
+  /*
+   * Whether the second line fits is a fact about this block's real height, so
+   * it is decided from this block's real height. A breakpoint cannot answer
+   * it: at any one width a 30-minute booking and a five-hour one are wildly
+   * different boxes, and `hidden lg:flex` hid the row on a tablet block with
+   * room to spare while still leaving a short desktop block to clip.
+   */
+  const showMeta = (height / 100) * axisHeight >= META_MIN_PX;
 
   return (
     <button
       type="button"
       onClick={onToggle}
+      // The block opens the appointment in a modal, so it announces a dialog.
+      // `aria-expanded` alone promised inline content that never appears.
+      aria-haspopup="dialog"
       aria-expanded={expanded}
       style={{ top: `${top}%`, height: `${height}%` }}
       className={cn(
@@ -117,15 +139,21 @@ const TimelineBlock = memo(function TimelineBlock({
         isNextUp && 'ring-2 ring-inset ring-primary',
       )}
     >
-      <span className="truncate text-sm font-medium text-foreground">
+      {/* `shrink-0`: in a block too short for both lines, flex used to squash
+          the name to a 1px sliver while the row below, held open by the status
+          chip, kept its full height. The owner's own day named nobody. The
+          name always gets the first line; the rest appears when it fits. */}
+      <span className="shrink-0 truncate text-sm font-medium text-foreground">
         {appointment.customer_name}
       </span>
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate font-mono text-xs text-muted-foreground">
-          {formatTime(appointment.starts_at, timezone)}
-        </span>
-        <StatusChip status={appointment.status} className="shrink-0" />
-      </div>
+      {showMeta && (
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate font-mono text-xs text-muted-foreground">
+            {formatTime(appointment.starts_at, timezone)}
+          </span>
+          <StatusChip status={appointment.status} className="shrink-0" />
+        </div>
+      )}
     </button>
   );
 });
@@ -158,8 +186,35 @@ export function ScheduleTimeline({
 
   const tints = useMemo(() => assignCustomerTints(appointments), [appointments]);
 
+  /*
+   * The axis is a percentage-positioned box that stretches to whatever height
+   * its card gives it, so nothing in the markup knows how tall a block will
+   * actually be. One observer on the axis answers that for every block at
+   * once, at any viewport, and re-answers it when the card resizes.
+   */
+  const axisRef = useRef<HTMLDivElement>(null);
+  const [axisHeight, setAxisHeight] = useState(0);
+  useEffect(() => {
+    const el = axisRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      setAxisHeight(entry?.contentRect.height ?? 0);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-card">
+    /*
+     * `min-h-[480px]` (the same floor `CALENDAR_GRID_HEIGHT_CLASS` uses),
+     * not `min-h-0`: the timeline stretches to whatever height its card
+     * gives it, and on a phone that card collapsed to 216px. Twelve opening
+     * hours in 216px is 18px an hour, so a 55-minute booking rendered as a
+     * 17px sliver with its name and status chip cut through the middle. The
+     * desktop card is already taller than this floor, so nothing there
+     * changes.
+     */
+    <div className="flex min-h-[480px] flex-1 overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex flex-col">
         {labels.map((label) => (
           <div
@@ -171,6 +226,7 @@ export function ScheduleTimeline({
         ))}
       </div>
       <div
+        ref={axisRef}
         className="relative flex-1"
         style={{ backgroundImage: hourGridlines(labels.length) }}
       >
@@ -184,6 +240,7 @@ export function ScheduleTimeline({
             isNextUp={appointment.id === nextUpId}
             expanded={expandedId === appointment.id}
             onToggle={() => onToggle(appointment.id)}
+            axisHeight={axisHeight}
           />
         ))}
 

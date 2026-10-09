@@ -59,7 +59,19 @@ export function CalendarPage(): JSX.Element {
   const { timezone } = useBusinessSettings();
   const today = toSalonDate(new Date(), timezone);
 
-  const [view, setView] = useState<CalendarView>('week');
+  /*
+   * Week on a desktop, Day on a phone. Seven columns inside a 390px viewport
+   * leave each day about 40px, which truncated every block to a single
+   * character ("0 H", "1 A") — the owner's main screen, unreadable, on the
+   * device she is most likely holding at the chair. Day view at the same
+   * width is the full hour grid with names intact. This only picks the
+   * starting view; the Day/Week/Month/Agenda switch still works everywhere.
+   */
+  const [view, setView] = useState<CalendarView>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+      ? 'day'
+      : 'week',
+  );
   const [anchor, setAnchor] = useState(today);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);

@@ -4,6 +4,7 @@ import {
   addMonths,
   formatCountdown,
   formatMoney,
+  formatRelative,
   greetingForHour,
   minutesSinceMidnight,
   parseMoney,
@@ -185,5 +186,47 @@ describe('addMonths', () => {
   it('handles a leap February and rolls over the year', () => {
     expect(addMonths('2028-01-31', 1)).toBe('2028-02-29');
     expect(addMonths('2026-11-30', 3)).toBe('2027-02-28');
+  });
+});
+
+describe('formatRelative counts calendar days, not elapsed hours', () => {
+  /*
+   * The bug this guards: two appointments on the same Friday, read late on
+   * the Wednesday evening, were 1.49 and 1.74 days away. Rounding the ratio
+   * called the first "tomorrow" and the second "in 2 days", so the owner's
+   * Next up card gave two different answers for one date.
+   *
+   * Every date here is built from local components rather than a `Z` string.
+   * "Late on Wednesday" has to be late on Wednesday wherever the test runs:
+   * CI pins `TZ=UTC`, a developer's machine does not, and 23:19Z is already
+   * Thursday in BST.
+   */
+  const lateWednesday = new Date(2026, 8, 9, 23, 19);
+  const local = (day: number, hour: number, minute = 0): Date =>
+    new Date(2026, 8, day, hour, minute);
+
+  it('calls both of one Friday two days away, late on the Wednesday', () => {
+    expect(formatRelative(local(11, 11), lateWednesday)).toBe('in 2 days');
+    expect(formatRelative(local(11, 17), lateWednesday)).toBe('in 2 days');
+  });
+
+  it('still says tomorrow once the next calendar day is a day or more off', () => {
+    expect(formatRelative(local(10, 23, 59), lateWednesday)).toBe('tomorrow');
+  });
+
+  it('prefers the sharper unit when tomorrow is only hours away', () => {
+    // 09:00 tomorrow, read at 23:19 tonight, is 10 hours out. "In 10 hours"
+    // is the more useful of the two true answers, so the day unit only takes
+    // over from 24 hours.
+    expect(formatRelative(local(10, 9), lateWednesday)).toBe('in 10 hours');
+  });
+
+  it('counts backwards the same way', () => {
+    expect(formatRelative(local(7, 9), lateWednesday)).toBe('2 days ago');
+    expect(formatRelative(local(8, 22), lateWednesday)).toBe('yesterday');
+  });
+
+  it('leaves sub-hour distances on the minute unit', () => {
+    expect(formatRelative(local(9, 23, 49), lateWednesday)).toBe('in 30 minutes');
   });
 });

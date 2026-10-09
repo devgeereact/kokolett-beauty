@@ -106,16 +106,36 @@ export function formatRelative(iso: string | Date, now: Date = new Date()): stri
 
   const diffMs = date.getTime() - now.getTime();
   const rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' });
-  const units: [Intl.RelativeTimeFormatUnit, number][] = [
-    ['day', 86_400_000],
-    ['hour', 3_600_000],
-    ['minute', 60_000],
-  ];
 
-  for (const [unit, ms] of units) {
-    if (Math.abs(diffMs) >= ms) return rtf.format(Math.round(diffMs / ms), unit);
+  /*
+   * Days are counted between calendar days, not by rounding elapsed
+   * milliseconds. At 23:19 on a Wednesday, two appointments on the same
+   * Friday were 1.49 and 1.74 days out, so `Math.round` labelled one
+   * "tomorrow" and the other "in 2 days" — the same date, two different
+   * answers, on the same card. Only one of them was even right. "Tomorrow"
+   * is a property of the date, so it has to be read off the date.
+   */
+  if (Math.abs(diffMs) >= 86_400_000) {
+    return rtf.format(calendarDaysBetween(now, date), 'day');
+  }
+  if (Math.abs(diffMs) >= 3_600_000) {
+    return rtf.format(Math.round(diffMs / 3_600_000), 'hour');
+  }
+  if (Math.abs(diffMs) >= 60_000) {
+    return rtf.format(Math.round(diffMs / 60_000), 'minute');
   }
   return 'now';
+}
+
+/**
+ * Whole days from `from`'s calendar day to `to`'s, in the runtime's own zone.
+ * Rounding after the division absorbs the 23- and 25-hour days either side of
+ * a BST transition.
+ */
+function calendarDaysBetween(from: Date, to: Date): number {
+  const midnight = (d: Date): number =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.round((midnight(to) - midnight(from)) / 86_400_000);
 }
 
 /**

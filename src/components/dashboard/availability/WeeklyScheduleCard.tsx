@@ -238,13 +238,18 @@ export function WeeklyScheduleCard({
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onShowAdvancedChange(!showAdvanced)}
-        className="mt-3 rounded border-t border-border pt-2 text-sm font-medium text-brand-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {showAdvanced ? 'Hide advanced options' : 'Show advanced options'}
-      </button>
+      {/* The rule belongs to the section, not to the control. On the button
+          itself `border-t` drew a short line the width of the label, floating
+          above it like a rendering fault rather than separating anything. */}
+      <div className="mt-3 border-t border-border pt-2">
+        <button
+          type="button"
+          onClick={() => onShowAdvancedChange(!showAdvanced)}
+          className="rounded text-sm font-medium text-brand-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {showAdvanced ? 'Hide advanced options' : 'Show advanced options'}
+        </button>
+      </div>
 
       {showAdvanced && (
         <div className="mt-3 rounded-md border border-border bg-muted p-3">

@@ -74,6 +74,24 @@ translucent fill.
 **RULE** — When adding a colour token, add the channel triplet with the hex in a trailing
 comment. Never add a hex-valued colour custom property.
 
+**RULE** — Outside a Tailwind class, always write `rgb(var(--token))`. The `rgb()` wrapper
+lives in `tailwind.config.ts` and nowhere else, so a bare `var(--primary)` in an SVG
+`stroke`/`fill`/`stopColor` attribute, or in a `backgroundImage` gradient string, resolves to
+the literal text `194 77 44`, which is not a colour. Nothing reports this: an invalid
+`stroke` falls back to `none` and an invalid gradient stop falls back to black.
+
+Found 2026-09-09. Both Reports charts had rendered no line, no dots and no gridlines since
+they shipped, and the dashboard's Bookings overview had no gridlines, for exactly this
+reason. `src/lib/calendar.ts`'s `hourGridlines()` had it right all along and is the pattern
+to copy:
+
+```ts
+const line = 'rgb(var(--border) / 0.5)'; // correct
+const line = 'var(--border)'; // silently renders nothing
+```
+
+Grep for `var(--` outside `rgb(var(` and `color-mix(` before trusting any hand-rolled visual.
+
 ### 2.2 Naming
 
 `--{role}` and `--{role}-foreground` for anything that carries text on top of itself.
@@ -338,6 +356,20 @@ Tailwind's default 4px scale, unmodified: `4 8 12 16 20 24 32 40 48 64 80 96`.
 12 columns, 1440px max width, 24px gutter — available as `.layout-grid`. `max-w-content` is
 the same 1440px cap for non-grid containers; `max-w-page` is the app-shell alias for the same
 value (§15).
+
+**RULE** — A grid whose only column template sits behind a breakpoint must still name
+`grid-cols-1` for the base. `<div className="grid gap-6 lg:grid-cols-3">` is not a safe
+single column below `lg`: with no base template the grid gets one implicit `auto` track,
+and an `auto` track sizes to its widest item's min-content, so one long unbreakable child
+drags the whole column past the viewport. `grid-cols-1` emits `minmax(0, 1fr)`, which caps
+the track at the container. `min-w-0` on the child does not help, because the track itself
+is already too wide.
+
+Measured at 390px on 2026-09-09, before the fix: Email 500px, Audit 824px, Notifications
+668px, Settings 436px. `<main>` is the horizontal scroller and its parent is
+`overflow-x: hidden`, so the symptom is a page that scrolls sideways or silently clips,
+never a console error. Check it by measuring, not by eye:
+`main.scrollWidth > main.clientWidth`.
 
 ### 5.3 Breakpoints
 
@@ -612,6 +644,45 @@ review item.
 ---
 
 ## 13. Changelog
+
+### 1.0.1 — 2026-09-10, the UI and UX review
+
+A full pass over all 38 routes at 390/820/1440, light and dark. Two of the rules
+above were written because this pass found the same mistake in several places at
+once; the rest are one-line corrections recorded here so the reasoning is not
+lost with the diff.
+
+- **§2.1's `rgb(var())` rule.** `TrendLineChart` and `BookingsOverviewChart` were
+  passing bare `var(--token)` into SVG attributes and a gradient string. Both
+  Reports charts had never drawn a line, dots or gridlines, and the dashboard's
+  Bookings overview had no gridlines.
+- **§5.2's base-column rule.** Four pages sized an implicit `auto` grid track to
+  min-content and scrolled sideways on a phone: Email, Audit, Notifications,
+  Settings.
+- **The dashboard header now wraps.** Its actions row carried `flex-wrap` but
+  `shrink-0`, so between 768px and 1023px the notification bell sat entirely off
+  the right edge of an `overflow-x: hidden` column, unreachable. The command
+  launcher (a fixed 16rem) now appears from `lg` rather than `md`.
+- **Settings moved its columns from `md` to `lg`.** A three-column split on the
+  ~460px of content a 768px tablet leaves after the 256px sidebar gave the narrow
+  track about 160px.
+- **Today's schedule got a `min-h-[480px]` floor**, matching
+  `CALENDAR_GRID_HEIGHT_CLASS`. Below `lg` its card had been collapsing to 216px
+  for twelve opening hours, and a 55-minute booking rendered as a 17px sliver.
+- **A timeline block decides what fits from its own measured height**, not from a
+  breakpoint. One `ResizeObserver` on the hour axis; a block shows its time and
+  status line at 56px and above. A breakpoint cannot answer this, because at any
+  one width a 30-minute booking and a five-hour one are different boxes.
+- **The calendar opens on Day below `md`.** Seven columns in 390px truncated every
+  block to a single character.
+- **Field-level validation on both customer forms.** Contact was falling back to
+  the browser's own validation bubble while Book validated in-app; both now mark
+  the field, move the cursor to it, and say the same kind of thing.
+- Smaller: end ticks on a trend chart anchor inwards instead of clipping;
+  `StatTrendTile` says "No previous period to compare" rather than a bare "vs
+  previous period"; the sidebar scrolls the current entry back into view;
+  "Show advanced options" no longer draws a `border-t` the width of its own
+  label; "Next 4 weeks at a glance" has a legend instead of colour alone.
 
 ### 1.0.0
 

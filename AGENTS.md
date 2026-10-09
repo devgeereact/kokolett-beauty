@@ -71,6 +71,15 @@ The build target is a **static** PWA on cPanel.
   token; do not reach for an arbitrary `text-[11px]`.
 - Tints are `color-mix()` strings and **cannot** take an alpha modifier.
   `bg-tint-brand/40` silently renders nothing.
+- **Outside a Tailwind class, write `rgb(var(--token))`.** Colour tokens are bare RGB
+  channels and the `rgb()` wrapper lives only in `tailwind.config.ts`, so a raw
+  `var(--primary)` in an SVG `stroke`/`fill`/`stopColor` or a gradient string is the
+  string `194 77 44`, not a colour. It fails silently: an invalid `stroke` falls back
+  to `none`, an invalid gradient stop to black. Both Reports charts had drawn nothing
+  since they shipped for exactly this (docs/DESIGN.md §2.1).
+- **A `grid` needs `grid-cols-1` at the base** whenever its only column template is
+  behind a breakpoint. Otherwise the implicit `auto` track sizes to its widest item's
+  min-content and the page scrolls sideways on a phone (docs/DESIGN.md §5.2).
 
 ## 4. Data access
 - All Supabase reads/writes go through `src/services/*` or `src/lib/supabase.ts`.

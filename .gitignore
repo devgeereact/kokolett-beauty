@@ -87,3 +87,8 @@ docs/COMMIT_MESSAGE.md
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Local environment files may contain credentials. Keep only the example public.
+.env
+.env.*
+!.env.example
